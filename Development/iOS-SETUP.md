@@ -27,3 +27,21 @@
 Macへ独立コピーを移し、同一UnityバージョンとiOS Build Supportで開く → Configure iOS → Build Xcode project → Xcodeで固有Bundle ID/Team/署名を設定 → 接続したiPhone/iPadでRun。配布用はDevelopment buildを外しArchive。 / Open on Mac with matching Unity/iOS support, export, select your bundle ID and signing team, then run on a device. Use a non-development build and Archive for distribution.
 
 実機確認項目：左右横向き、ノッチ/home indicatorとのsafe area、移動と照準/発射の同時タッチ、日英UI、セーブ再起動、30fps/発熱/大量敵。 / Device checks: both landscape directions, safe areas, simultaneous movement/aim/fire, both languages, save persistence, frame pacing and thermals under enemy load.
+
+## タッチ操作 / Touch controls
+
+- 左の半透明スティックでアナログ移動。右スティックを押してドラッグすると照準・連射、離すと射撃停止。移動と射撃を別の指で同時操作。 / Left analog movement; hold/drag the right stick to aim and fire, release to stop.
+- 装填、拾得（チェスト・弾薬箱の開封も兼用）、回避、近接、武器切替、調べる、装備、一時停止。 / Reload, take/open containers, dodge, melee, swap, interact, inventory and pause.
+- 装備一覧はドラッグ、都市地図はドラッグ＋2本指ピンチ。商店・返済・スキル・メーカー図鑑・報酬も大きな専用ボタン。 / Drag inventory, pan/pinch city map, large buttons for shops, debt, skills, makers and rewards.
+- 画面切替・フォーカス喪失・中断時に保持入力を解除。装備画面などの表示中は戦闘操作を停止。 / Held input clears on transitions, focus loss and suspension; modal menus block combat input.
+- `OpenUnity.bat` でこのコピーを開く。`PreviewTouch.bat` でタッチUI付きWindowsプレビューを起動。 / Launchers open this independent copy or its Windows touch preview.
+
+端末用署名情報の保存エラーはゲーム実装とは別途のUnity Cloud設定。証明書・秘密鍵・パスワードをこのドキュメントやチャットに記録しない。 / Unity Cloud credential errors require separate signing configuration; never record private keys or passwords here.
+
+## 最終検証 / Validation (2026-10-17)
+
+Windowsタッチプレビュー: `QA/Mobile24final/mobile-review-result.txt` 221 checks / 0 failures。iPhone/iPad相当各日英、計32枚。独立QAは戦闘HUD・装備・商店・都市地図を目視。疑似ポインター検証であり実機検証ではない。 / Synthetic input and Windows framebuffers only.
+
+Xcode source export: `Builds/iOS/Xcode/Unity-iPhone.xcodeproj`、修正版export成功。人物シェーダーをfull precision化しMetalコンパイルエラーを解消、再export区間 `QA/metal-recheck.log` にShader errorなし。Windows previewの221検証はこの精度修正前の同一UI版。 / Corrected Metal shader compilation passed and source project exported; device rendering and performance remain unverified.
+
+署名済みIPA・実機インストールは未実施。Mac/Xcodeまたは適切な署名情報を設定したビルド環境で実施する。 / No signed IPA or device installation has been produced.

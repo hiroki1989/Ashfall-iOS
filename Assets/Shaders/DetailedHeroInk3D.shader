@@ -29,10 +29,10 @@ Shader "NeonVault/DetailedHeroInk3D"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
-            float _Outline; fixed4 _InkColor;
+            float _Outline; float4 _InkColor;
             struct v2f { float4 pos:SV_POSITION; };
             v2f vert(appdata_base v) { v2f o; o.pos=UnityObjectToClipPos(v.vertex + float4(v.normal*_Outline,0)); return o; }
-            fixed4 frag(v2f i):SV_Target { return _InkColor; }
+            float4 frag(v2f i):SV_Target { return _InkColor; }
             ENDCG
         }
         CGPROGRAM
@@ -40,12 +40,14 @@ Shader "NeonVault/DetailedHeroInk3D"
         #pragma target 3.0
         #include "UnityCG.cginc"
         #include "UnityGlobalIllumination.cginc"
-        fixed4 _Color, _InkColor;
-        half _SurfaceKind,_Glossiness,_Metallic,_Grain,_CreaseInk;
+        float4 _Color, _InkColor;
+        float _SurfaceKind,_Glossiness,_Metallic,_Grain,_CreaseInk;
         sampler2D _MaterialAtlas;
-        half _AtlasStrength;
+        float _AtlasStrength;
         sampler2D _CreatureAtlas;
-        half _CreatureSurface,_MicroRelief;
+        float _CreatureSurface,_MicroRelief;
+        // Full precision avoids Metal cross-compiler min-precision bytecode failures.
+        struct SurfaceOutputSurvivor { float3 Albedo; float3 Normal; float3 Emission; float Specular; float Gloss; float Alpha; };
         struct Input { float3 worldPos; float3 geometricNormal; float4 detailTangent; };
         void SurfaceVertex(inout appdata_full v,out Input o)
         {
@@ -83,30 +85,30 @@ Shader "NeonVault/DetailedHeroInk3D"
             float scale=_CreatureSurface<1.5?4.5:3.5;
             return CreaturePlane(p.zy*scale,cell)*w.x+CreaturePlane(p.xz*scale,cell)*w.y+CreaturePlane(p.xy*scale,cell)*w.z;
         }
-        half4 LightingSurvivor(SurfaceOutput s, half3 viewDir, UnityGI gi)
+        float4 LightingSurvivor(SurfaceOutputSurvivor s, float3 viewDir, UnityGI gi)
         {
-            half3 lightDir=gi.light.dir;
-            half nl=dot(s.Normal,lightDir);
+            float3 lightDir=gi.light.dir;
+            float nl=dot(s.Normal,lightDir);
             // Soft boundaries avoid temporal sparkle while keeping five drawn value groups.
-            half value=.15+.17*smoothstep(-.28,-.12,nl)+.24*smoothstep(.02,.20,nl)+.28*smoothstep(.32,.52,nl)+.28*smoothstep(.64,.84,nl);
-            half spec=pow(saturate(dot(s.Normal,normalize(lightDir+viewDir))),lerp(18,95,s.Specular))*s.Gloss;
-            half3 c=s.Albedo*(gi.light.color*value+gi.indirect.diffuse*.85);
-            half3 specTint=lerp(s.Albedo,half3(.65,.65,.60),step(2.5,_SurfaceKind)*step(_SurfaceKind,3.5));
-            if(_SurfaceKind>5.5 && _SurfaceKind<6.5)specTint=half3(.38,.28,.20);
-            if(_SurfaceKind>6.5) specTint=half3(.7,.8,.8);
+            float value=.15+.17*smoothstep(-.28,-.12,nl)+.24*smoothstep(.02,.20,nl)+.28*smoothstep(.32,.52,nl)+.28*smoothstep(.64,.84,nl);
+            float spec=pow(saturate(dot(s.Normal,normalize(lightDir+viewDir))),lerp(18,95,s.Specular))*s.Gloss;
+            float3 c=s.Albedo*(gi.light.color*value+gi.indirect.diffuse*.85);
+            float3 specTint=lerp(s.Albedo,float3(.65,.65,.60),step(2.5,_SurfaceKind)*step(_SurfaceKind,3.5));
+            if(_SurfaceKind>5.5 && _SurfaceKind<6.5)specTint=float3(.38,.28,.20);
+            if(_SurfaceKind>6.5) specTint=float3(.7,.8,.8);
             c+=gi.light.color*specTint*spec*.65;
             if(_SurfaceKind>6.5)
             {
-                half fresnel=pow(1-saturate(dot(s.Normal,viewDir)),3);
+                float fresnel=pow(1-saturate(dot(s.Normal,viewDir)),3);
                 c+=s.Albedo*(.22+fresnel*.75);
             }
-            return half4(c,s.Alpha);
+            return float4(c,s.Alpha);
         }
-        void LightingSurvivor_GI(SurfaceOutput s, UnityGIInput data, inout UnityGI gi)
+        void LightingSurvivor_GI(SurfaceOutputSurvivor s, UnityGIInput data, inout UnityGI gi)
         {
             gi=UnityGlobalIllumination(data,1,s.Normal);
         }
-        void surf(Input IN, inout SurfaceOutput o)
+        void surf(Input IN, inout SurfaceOutputSurvivor o)
         {
             // Object coordinates follow moving limbs and prevent swimming world-space texture.
             float3 p=mul(unity_WorldToObject,float4(IN.worldPos,1)).xyz;

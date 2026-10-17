@@ -5,6 +5,7 @@ namespace NeonVault.Editor {
  [InitializeOnLoad] static class MobileBuildRequest {
   static MobileBuildRequest() { EditorApplication.delayCall += Run; }
   static void Run() {
+   if(File.Exists("Development/ios-export.request")){ File.Move("Development/ios-export.request","Development/ios-export."+DateTime.UtcNow.Ticks+".started"); try{IOSProjectBuilder.BuildXcode();File.WriteAllText("Development/ios-export.result","PASS "+DateTime.UtcNow.ToString("O"));}catch(Exception e){File.WriteAllText("Development/ios-export.result",e.ToString());UnityEngine.Debug.LogException(e);}return;}
    const string request="Development/mobile-preview.request";
    if(!File.Exists(request)) return;
    File.Move(request,request+"."+DateTime.UtcNow.Ticks+".started");
@@ -13,3 +14,4 @@ namespace NeonVault.Editor {
   }
  }
 }
+// Final Metal precision re-export.

@@ -1,0 +1,223 @@
+PASS Review game and mobile controls exist
+PASS Framebuffer resolution (2532, 1170)
+PASS (2532, 1170) safe rect 0
+PASS (2532, 1170) minimum target 0
+PASS (2532, 1170) safe rect 1
+PASS (2532, 1170) minimum target 1
+PASS (2532, 1170) no overlap 0/1
+PASS (2532, 1170) safe rect 2
+PASS (2532, 1170) minimum target 2
+PASS (2532, 1170) no overlap 0/2
+PASS (2532, 1170) no overlap 1/2
+PASS (2532, 1170) safe rect 3
+PASS (2532, 1170) minimum target 3
+PASS (2532, 1170) no overlap 0/3
+PASS (2532, 1170) no overlap 1/3
+PASS (2532, 1170) no overlap 2/3
+PASS (2532, 1170) safe rect 4
+PASS (2532, 1170) minimum target 4
+PASS (2532, 1170) no overlap 0/4
+PASS (2532, 1170) no overlap 1/4
+PASS (2532, 1170) no overlap 2/4
+PASS (2532, 1170) no overlap 3/4
+PASS (2532, 1170) safe rect 5
+PASS (2532, 1170) minimum target 5
+PASS (2532, 1170) no overlap 0/5
+PASS (2532, 1170) no overlap 1/5
+PASS (2532, 1170) no overlap 2/5
+PASS (2532, 1170) no overlap 3/5
+PASS (2532, 1170) no overlap 4/5
+PASS (2532, 1170) safe rect 6
+PASS (2532, 1170) minimum target 6
+PASS (2532, 1170) no overlap 0/6
+PASS (2532, 1170) no overlap 1/6
+PASS (2532, 1170) no overlap 2/6
+PASS (2532, 1170) no overlap 3/6
+PASS (2532, 1170) no overlap 4/6
+PASS (2532, 1170) no overlap 5/6
+PASS (2532, 1170) safe rect 7
+PASS (2532, 1170) minimum target 7
+PASS (2532, 1170) no overlap 0/7
+PASS (2532, 1170) no overlap 1/7
+PASS (2532, 1170) no overlap 2/7
+PASS (2532, 1170) no overlap 3/7
+PASS (2532, 1170) no overlap 4/7
+PASS (2532, 1170) no overlap 5/7
+PASS (2532, 1170) no overlap 6/7
+PASS (2532, 1170) safe rect 8
+PASS (2532, 1170) minimum target 8
+PASS (2532, 1170) no overlap 0/8
+PASS (2532, 1170) no overlap 1/8
+PASS (2532, 1170) no overlap 2/8
+PASS (2532, 1170) no overlap 3/8
+PASS (2532, 1170) no overlap 4/8
+PASS (2532, 1170) no overlap 5/8
+PASS (2532, 1170) no overlap 6/8
+PASS (2532, 1170) no overlap 7/8
+PASS (2532, 1170) safe rect 9
+PASS (2532, 1170) minimum target 9
+PASS (2532, 1170) no overlap 0/9
+PASS (2532, 1170) no overlap 1/9
+PASS (2532, 1170) no overlap 2/9
+PASS (2532, 1170) no overlap 3/9
+PASS (2532, 1170) no overlap 4/9
+PASS (2532, 1170) no overlap 5/9
+PASS (2532, 1170) no overlap 6/9
+PASS (2532, 1170) no overlap 7/9
+PASS (2532, 1170) no overlap 8/9
+PASS Movement center deadzone
+PASS Movement analog half strength
+PASS Independent simultaneous move and fire
+PASS Aim GUI to screen axis
+PASS Aim world conversion
+PASS Move release retains aim finger
+PASS Aim cancel retains move finger and clamps magnitude
+PASS Move cancellation
+PASS Button queued Reload
+PASS Button consumed once Reload
+PASS Button queued Pickup
+PASS Button consumed once Pickup
+PASS Button queued Dodge
+PASS Button consumed once Dodge
+PASS Button queued Melee
+PASS Button consumed once Melee
+PASS Button queued SwitchWeapon
+PASS Button consumed once SwitchWeapon
+PASS Button queued Interact
+PASS Button consumed once Interact
+PASS Button queued Inventory
+PASS Button consumed once Inventory
+PASS Button queued Pause
+PASS Button consumed once Pause
+PASS Focus/pause reset path clears held fingers and actions
+PASS Inventory blocks firing input
+PASS Inventory blocks active combat
+PASS Pause blocks firing input
+PASS Visible framebuffer captured iphone-combat-en
+PASS Visible framebuffer captured iphone-inventory-guns-en
+PASS Visible framebuffer captured iphone-inventory-modules-en
+PASS Visible framebuffer captured iphone-pause-en
+PASS Visible framebuffer captured iphone-hub-en
+PASS Visible framebuffer captured iphone-city-en
+PASS Visible framebuffer captured iphone-shop-en
+PASS Visible framebuffer captured iphone-makers-en
+PASS Visible framebuffer captured iphone-combat-ja
+PASS Visible framebuffer captured iphone-inventory-guns-ja
+PASS Visible framebuffer captured iphone-inventory-modules-ja
+PASS Visible framebuffer captured iphone-pause-ja
+PASS Visible framebuffer captured iphone-hub-ja
+PASS Visible framebuffer captured iphone-city-ja
+PASS Visible framebuffer captured iphone-shop-ja
+PASS Visible framebuffer captured iphone-makers-ja
+PASS Framebuffer resolution (1600, 1200)
+PASS (1600, 1200) safe rect 0
+PASS (1600, 1200) minimum target 0
+PASS (1600, 1200) safe rect 1
+PASS (1600, 1200) minimum target 1
+PASS (1600, 1200) no overlap 0/1
+PASS (1600, 1200) safe rect 2
+PASS (1600, 1200) minimum target 2
+PASS (1600, 1200) no overlap 0/2
+PASS (1600, 1200) no overlap 1/2
+PASS (1600, 1200) safe rect 3
+PASS (1600, 1200) minimum target 3
+PASS (1600, 1200) no overlap 0/3
+PASS (1600, 1200) no overlap 1/3
+PASS (1600, 1200) no overlap 2/3
+PASS (1600, 1200) safe rect 4
+PASS (1600, 1200) minimum target 4
+PASS (1600, 1200) no overlap 0/4
+PASS (1600, 1200) no overlap 1/4
+PASS (1600, 1200) no overlap 2/4
+PASS (1600, 1200) no overlap 3/4
+PASS (1600, 1200) safe rect 5
+PASS (1600, 1200) minimum target 5
+PASS (1600, 1200) no overlap 0/5
+PASS (1600, 1200) no overlap 1/5
+PASS (1600, 1200) no overlap 2/5
+PASS (1600, 1200) no overlap 3/5
+PASS (1600, 1200) no overlap 4/5
+PASS (1600, 1200) safe rect 6
+PASS (1600, 1200) minimum target 6
+PASS (1600, 1200) no overlap 0/6
+PASS (1600, 1200) no overlap 1/6
+PASS (1600, 1200) no overlap 2/6
+PASS (1600, 1200) no overlap 3/6
+PASS (1600, 1200) no overlap 4/6
+PASS (1600, 1200) no overlap 5/6
+PASS (1600, 1200) safe rect 7
+PASS (1600, 1200) minimum target 7
+PASS (1600, 1200) no overlap 0/7
+PASS (1600, 1200) no overlap 1/7
+PASS (1600, 1200) no overlap 2/7
+PASS (1600, 1200) no overlap 3/7
+PASS (1600, 1200) no overlap 4/7
+PASS (1600, 1200) no overlap 5/7
+PASS (1600, 1200) no overlap 6/7
+PASS (1600, 1200) safe rect 8
+PASS (1600, 1200) minimum target 8
+PASS (1600, 1200) no overlap 0/8
+PASS (1600, 1200) no overlap 1/8
+PASS (1600, 1200) no overlap 2/8
+PASS (1600, 1200) no overlap 3/8
+PASS (1600, 1200) no overlap 4/8
+PASS (1600, 1200) no overlap 5/8
+PASS (1600, 1200) no overlap 6/8
+PASS (1600, 1200) no overlap 7/8
+PASS (1600, 1200) safe rect 9
+PASS (1600, 1200) minimum target 9
+PASS (1600, 1200) no overlap 0/9
+PASS (1600, 1200) no overlap 1/9
+PASS (1600, 1200) no overlap 2/9
+PASS (1600, 1200) no overlap 3/9
+PASS (1600, 1200) no overlap 4/9
+PASS (1600, 1200) no overlap 5/9
+PASS (1600, 1200) no overlap 6/9
+PASS (1600, 1200) no overlap 7/9
+PASS (1600, 1200) no overlap 8/9
+PASS Movement center deadzone
+PASS Movement analog half strength
+PASS Independent simultaneous move and fire
+PASS Aim GUI to screen axis
+PASS Aim world conversion
+PASS Move release retains aim finger
+PASS Aim cancel retains move finger and clamps magnitude
+PASS Move cancellation
+PASS Button queued Reload
+PASS Button consumed once Reload
+PASS Button queued Pickup
+PASS Button consumed once Pickup
+PASS Button queued Dodge
+PASS Button consumed once Dodge
+PASS Button queued Melee
+PASS Button consumed once Melee
+PASS Button queued SwitchWeapon
+PASS Button consumed once SwitchWeapon
+PASS Button queued Interact
+PASS Button consumed once Interact
+PASS Button queued Inventory
+PASS Button consumed once Inventory
+PASS Button queued Pause
+PASS Button consumed once Pause
+PASS Focus/pause reset path clears held fingers and actions
+PASS Inventory blocks firing input
+PASS Inventory blocks active combat
+PASS Pause blocks firing input
+PASS Visible framebuffer captured ipad-combat-en
+PASS Visible framebuffer captured ipad-inventory-guns-en
+PASS Visible framebuffer captured ipad-inventory-modules-en
+PASS Visible framebuffer captured ipad-pause-en
+PASS Visible framebuffer captured ipad-hub-en
+PASS Visible framebuffer captured ipad-city-en
+PASS Visible framebuffer captured ipad-shop-en
+PASS Visible framebuffer captured ipad-makers-en
+PASS Visible framebuffer captured ipad-combat-ja
+PASS Visible framebuffer captured ipad-inventory-guns-ja
+PASS Visible framebuffer captured ipad-inventory-modules-ja
+PASS Visible framebuffer captured ipad-pause-ja
+PASS Visible framebuffer captured ipad-hub-ja
+PASS Visible framebuffer captured ipad-city-ja
+PASS Visible framebuffer captured ipad-shop-ja
+PASS Visible framebuffer captured ipad-makers-ja
+Synthetic pointer injection only; physical touch, Metal, IL2CPP and device performance remain unverified.
+Checks=221 Failures=0
