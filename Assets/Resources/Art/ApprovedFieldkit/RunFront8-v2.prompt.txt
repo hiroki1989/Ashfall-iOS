@@ -1,0 +1,10 @@
+Use case: precise-object-edit. This is a FRONT VIEW eight-frame running LOWER BODY animation atlas. Keep exact1536x1024 canvas4columns2rows, same clothing/ink quality, same camera looking down35.264degrees, same waist position/scale. Fix running cycle so the support leg ALTERNATES EXACTLY ONCE per half cycle. In front view character RIGHT leg appears on IMAGE LEFT, character LEFT leg on IMAGE RIGHT. BOTH LEGS must exchange poses. Top row all4frames RIGHT leg support/dominant in front (imageLEFT) and LEFT leg recovery behind (imageRIGHT); bottom row all4frames LEFT leg support/dominant in front (imageRIGHT) and RIGHT leg recovery behind (imageLEFT). Make each frame different:
+0 top-left RIGHT heel reaches forward for contact, LEFT toe behind.
+1 top-second RIGHT knee supports weight straight/down, LEFT heel folds sharply UP behind toward buttock.
+2 top-third RIGHT foot pushes back, LEFT thigh begins swinging forward, flight.
+3 top-fourth RIGHT trailing toe, LEFT lower leg starts extending for upcoming contact, do not switch support until next.
+4 bottom-left LEFT heel reaches forward contact (IMAGE RIGHT boot low/forward), RIGHT toe behind.
+5 bottom-second LEFT knee supports weight down, RIGHT heel folds UP behind toward buttock (IMAGE LEFT boot high behind).
+6 bottom-third LEFT foot pushes back, RIGHT thigh swings forward, flight.
+7 bottom-fourth LEFT trailing toe, RIGHT leg extends preparing next contact.
+Critical BOTTOM row imageRIGHT boot must be the DOWNWARD FORWARD/supporting boot in frames4/5, while imageLEFT boot is lifted/folded BEHIND. Do NOT repeat top-row same support leg in bottom row. Every frame2legs/2boots, knees bend naturally, boot soles visible on lifted heels. Only waist-down brown canvas cargo trousers, thigh straps/pouches, rusted steel kneepads, brown laceboots. Same elevated orthographic front camera. Alpha transparency, no shadow/floor/text/grid. Waist seam fixed across all8poses.

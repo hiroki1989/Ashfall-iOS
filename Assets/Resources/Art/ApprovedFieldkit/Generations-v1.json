@@ -1,0 +1,462 @@
+{
+  "records": [
+    {
+      "asset": "LowUpper8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "LowUpper8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-af873ff4-e2a8-4ea4-9ff6-9e1c9dc6d49b.png"
+    },
+    {
+      "asset": "LowUpperFrontLeft-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReadyFrontLeft-v1.png",
+      "prompt": "LowUpperFrontLeft-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-27d54cea-cc0c-4436-a79f-8bb87db43a55.png"
+    },
+    {
+      "asset": "AimUpper8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "Aim8-v2.png",
+      "prompt": "AimUpper8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-3655bacd-8c38-49cb-aa0b-216fa19f199d.png"
+    },
+    {
+      "asset": "CompactUpper8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v2.png",
+      "prompt": "CompactUpper8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-127d45a6-9158-4ba8-a8fd-2410494087a2.png"
+    },
+    {
+      "asset": "BaseLow8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "BaseLow8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-0e0ceeb8-2044-4dc1-8f3d-46ab5d7067f5.png"
+    },
+    {
+      "asset": "BaseAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "Aim8-v3.png",
+      "prompt": "BaseAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-84651b16-d0dc-46c8-af90-f742b978a891.png"
+    },
+    {
+      "asset": "BaseCompactAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v2.png",
+      "prompt": "BaseCompactAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-b5801f61-78c3-4a7d-b033-19964dd503fd.png"
+    },
+    {
+      "asset": "BaseCompactLow8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactLowReady8-v1.png",
+      "prompt": "BaseCompactLow8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-6d52016f-814d-4320-a366-994772afcd70.png"
+    },
+    {
+      "asset": "BaseLowFrontLeft-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReadyFrontLeft-v1.png",
+      "prompt": "BaseLowFrontLeft-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-71ee9f32-73aa-48a1-84f4-e6f9fdee3ac2.png"
+    },
+    {
+      "asset": "WeaponlessLow8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "WeaponlessLow8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-8e4040c8-0d23-49d6-abef-27c50ea3aebb.png"
+    },
+    {
+      "asset": "WeaponlessAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "Aim8-v3.png",
+      "prompt": "WeaponlessAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-a42c7619-1513-43f9-aec8-7fbed248acb0.png"
+    },
+    {
+      "asset": "WeaponlessCompactAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v2.png",
+      "prompt": "WeaponlessCompactAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-5e7c37b9-9c90-4525-b46b-3c79629cd520.png"
+    },
+    {
+      "asset": "WeaponlessCompactLow8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactLowReady8-v1.png",
+      "prompt": "WeaponlessCompactLow8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-aa967784-187f-4625-a662-43e73a6bebd1.png"
+    },
+    {
+      "asset": "WeaponlessLowFrontLeft-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReadyFrontLeft-v1.png",
+      "prompt": "WeaponlessLowFrontLeft-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-0c91472f-6af7-444d-be72-521f44779ca6.png"
+    },
+    {
+      "asset": "RunFront8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunFront8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-29c032bb-eded-439a-9a47-222a6f5bc26c.png"
+    },
+    {
+      "asset": "RunFrontRight8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunFrontRight8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-2354b6c4-2716-4a1d-b4f5-0f5c94d3312d.png"
+    },
+    {
+      "asset": "RunRight8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunRight8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-0d28457a-b12b-4dc9-a6b2-88dca5bdce2d.png"
+    },
+    {
+      "asset": "RunBackRight8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunBackRight8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-81849e3f-d219-4970-b3c2-b26ab69431d7.png"
+    },
+    {
+      "asset": "RunBack8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunBack8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-ab16238d-5198-4273-a974-cdaa87747071.png"
+    },
+    {
+      "asset": "RunBackLeft8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunBackLeft8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-d9423bbd-2a77-4c5e-a2e9-0d8787b5857b.png"
+    },
+    {
+      "asset": "RunLeft8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunLeft8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-4d1c2ee0-8999-4f44-8cd0-5aaf770e2737.png"
+    },
+    {
+      "asset": "RunFrontLeft8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-v1.png",
+      "prompt": "RunFrontLeft8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-defbfd0f-97ab-4027-8616-255204ded154.png"
+    },
+    {
+      "asset": "LowReady8-draft1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "../../../ArtSamples/PoseTarget/GunHoldingTarget-v1.png",
+      "prompt": "LowReady8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-b1fa4516-e215-4e3c-8139-ed7929ff708f.png"
+    },
+    {
+      "asset": "LowReady8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-draft1.png",
+      "prompt": "LowReady8-v1.fix.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-c3a74b6d-4030-4096-b773-bf4c47d83f2f.png"
+    },
+    {
+      "asset": "LowReadyFrontLeft-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "../../../ArtSamples/PoseTarget/GunHoldingTarget-v1.png",
+      "prompt": "LowReadyFrontLeft-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-20ce73cf-0bc6-43df-8bde-8a650b2e9e79.png"
+    },
+    {
+      "asset": "Aim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "LowReady8-draft1.png",
+      "prompt": "Aim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-08cae953-b7cf-4fed-9cc7-3bcf3d43ddcf.png",
+      "additionalReference": "../../../ArtSamples/PoseTarget/GunHoldingTarget-v1.png"
+    },
+    {
+      "asset": "Aim8-v2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "Aim8-v1.png",
+      "prompt": "Aim8-v2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-369adec2-f351-40e4-8eb4-bc4806f8f3d1.png"
+    },
+    {
+      "asset": "Aim8-v3.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "Aim8-v2.png",
+      "prompt": "Aim8-v3.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-b4dfe22a-cb36-4665-a568-45ef00116bc6.png"
+    },
+    {
+      "asset": "CompactAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "Aim8-v1.png",
+      "prompt": "CompactAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-a9c63dea-6ee4-49a3-91c4-b21562f569bd.png"
+    },
+    {
+      "asset": "CompactAim8-v2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v1.png",
+      "prompt": "CompactAim8-v2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-1f599f6a-1fdc-433c-848e-38e825cb7a14.png"
+    },
+    {
+      "asset": "CompactAim8-v3.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v2.png",
+      "prompt": "CompactAim8-v3.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-3ee77685-ee45-4662-808d-deab82aabf25.png"
+    },
+    {
+      "asset": "CompactAim8-v4.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v3.png",
+      "prompt": "CompactAim8-v4.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-39ac52cc-ade2-4f05-bcdc-8412baa454d6.png"
+    },
+    {
+      "asset": "CompactLowReady8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v2.png",
+      "prompt": "CompactLowReady8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-dae78097-255a-40aa-b728-d81c2c5489ca.png"
+    },
+    {
+      "asset": "BaseCompactAim8-v2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "CompactAim8-v4.png",
+      "prompt": "BaseCompactAim8-v2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-50cb08d5-39db-48e1-9e91-bfbd117e33ea.png"
+    },
+    {
+      "asset": "BaseWeaponlessLow8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "BaseLow8-v1.png",
+      "prompt": "BaseWeaponlessLow8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-6cf76887-cf0f-4680-ae64-5987530be73c.png"
+    },
+    {
+      "asset": "BaseWeaponlessAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "BaseAim8-v1.png",
+      "prompt": "BaseWeaponlessAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-0bf5fcd9-6cd2-440e-b843-4c7e654a61b4.png"
+    },
+    {
+      "asset": "BaseWeaponlessCompactAim8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "BaseCompactAim8-v1.png",
+      "prompt": "BaseWeaponlessCompactAim8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-0b0d298e-298b-4255-b0bc-086c92f0d582.png"
+    },
+    {
+      "asset": "BaseWeaponlessCompactLow8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "BaseCompactLow8-v1.png",
+      "prompt": "BaseWeaponlessCompactLow8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-f1282b7b-3a49-4c4b-96f7-095e608118f1.png"
+    },
+    {
+      "asset": "BaseWeaponlessLowFrontLeft-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "BaseLowFrontLeft-v1.png",
+      "prompt": "BaseWeaponlessLowFrontLeft-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-20c04daf-2d3b-4832-85e2-aa3464095cca.png"
+    },
+    {
+      "asset": "RunFront8-v2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFront8-v1.png",
+      "prompt": "RunFront8-v2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-7f0f1dc8-1785-41a8-8611-aa9d9dd137df.png",
+      "status": "selected"
+    },
+    {
+      "asset": "RunFrontRight8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFrontRight8-v1.png",
+      "prompt": "RunFrontRight8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-86c5dd7d-9001-4031-9846-eedf49a78823.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunFrontRightLeftSupport-draft1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFrontRight8-v1.png",
+      "prompt": "RunFrontRightLeftSupport-draft1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-b7fb3511-199a-4ad4-9545-47dae8ce8192.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunRight8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunRight8-v1.png",
+      "prompt": "RunRight8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-2bf58ccf-b64d-4f54-9a63-a0986e0b7549.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunBackRight8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunBackRight8-v1.png",
+      "prompt": "RunBackRight8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-9f92d0f2-6a2d-4009-8027-8874e2973273.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunBack8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunBack8-v1.png",
+      "prompt": "RunBack8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-8f8020fc-1428-436f-8355-3b6f1695b78f.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunBackLeft8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunBackLeft8-v1.png",
+      "prompt": "RunBackLeft8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-dc96a0ab-125c-4ca0-a482-481ed59a7a25.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunLeft8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunLeft8-v1.png",
+      "prompt": "RunLeft8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-0ccadc1f-baaf-4421-a297-222cf67fad44.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunFrontLeft8-draft2.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFrontLeft8-v1.png",
+      "prompt": "RunFrontLeft8-draft2.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-ab83aff9-9474-44b8-8ca0-4db3d314486c.png",
+      "status": "rejected: support phase repeated"
+    },
+    {
+      "asset": "RunBaseFront8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFront8-v2.png",
+      "prompt": "RunBaseFront8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-7106b3d9-9544-4613-bdb4-faaacc9897e3.png"
+    },
+    {
+      "asset": "RunBaseFrontRight8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFrontRight8-v1.png",
+      "prompt": "RunBaseFrontRight8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-67c5fe72-912c-4e34-9dd9-f83c9f01e393.png"
+    },
+    {
+      "asset": "RunBaseRight8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunRight8-v1.png",
+      "prompt": "RunBaseRight8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-22affad8-609d-42a2-a829-fb39b91f3b62.png"
+    },
+    {
+      "asset": "RunBaseBackRight8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunBackRight8-v1.png",
+      "prompt": "RunBaseBackRight8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-a0dc0e1a-6428-440c-9047-763803c51d9d.png"
+    },
+    {
+      "asset": "RunBaseBack8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunBack8-v1.png",
+      "prompt": "RunBaseBack8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-63148a80-355a-456c-8614-b89c9ac967a2.png"
+    },
+    {
+      "asset": "RunBaseBackLeft8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunBackLeft8-v1.png",
+      "prompt": "RunBaseBackLeft8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-7e95b089-cf68-49c9-9b20-e77cda422997.png"
+    },
+    {
+      "asset": "RunBaseLeft8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunLeft8-v1.png",
+      "prompt": "RunBaseLeft8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-9bf66da1-ee4f-48ca-b21f-2a7c6bb444ef.png"
+    },
+    {
+      "asset": "RunBaseFrontLeft8-v1.png",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "reference": "RunFrontLeft8-v1.png",
+      "prompt": "RunBaseFrontLeft8-v1.prompt.txt",
+      "original": "C:\\Users\\hiroki\\.codex\\generated_images\\01a13f65-306a-71f0-8a85-d4d6362b292e\\exec-f1c92ccf-51df-445a-8db7-92a68aa7d164.png"
+    }
+  ]
+}

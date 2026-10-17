@@ -1,0 +1,55 @@
+{
+  "source": "LowReady8-v1",
+  "direction": 1,
+  "rect": {
+    "x": 465,
+    "y": 19,
+    "width": 293,
+    "height": 484
+  },
+  "bodyHeightPixels": 478,
+  "visibleHem": {
+    "x": 117,
+    "y": 265
+  },
+  "rightHip": {
+    "x": 82,
+    "y": 277
+  },
+  "rightKnee": {
+    "x": 66,
+    "y": 347
+  },
+  "rightAnkle": {
+    "x": 40,
+    "y": 420
+  },
+  "rightSole": {
+    "x": 40,
+    "y": 475
+  },
+  "rightBootWidthPixels": 48,
+  "rightThighWidthPixels": 65,
+  "rightShinWidthPixels": 60,
+  "leftHip": {
+    "x": 145,
+    "y": 276
+  },
+  "leftKnee": {
+    "x": 181,
+    "y": 335
+  },
+  "leftAnkle": {
+    "x": 186,
+    "y": 398
+  },
+  "leftSole": {
+    "x": 201,
+    "y": 450
+  },
+  "leftBootWidthPixels": 81,
+  "leftThighWidthPixels": 66,
+  "leftShinWidthPixels": 55,
+  "note": "Independent visual native-pixel measurement; hidden hip/ankle anatomy estimated within 4-8px. Widths include cloth silhouette, not joint length. Near/image-left leg is anatomical right.",
+  "widthMeasurement": "horizontal alpha>128 contiguous span containing joint axis midpoint: right thigh y312 x37..101, shin y384 x10..69, boot y448 x9..56; left thigh y306 x125..190, shin y366 x142..196, boot y424 x150..230. Pouches are included only when intersecting line; no subjective cloth-only exclusion."
+}

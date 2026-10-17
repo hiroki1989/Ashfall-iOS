@@ -1,0 +1,5 @@
+# Unity-only 3D target concept
+Built-in imagegen; aspirational illustration, NOT Unity-rendered evidence or guaranteed achievable output.
+Reference: user clipboard 4f086c09-e29d-4157-9dc8-253a20765a6d / approved pose sheet.
+Prompt specification: honest aspirational visualization of a highly detailed realtime Unity mesh/skeletal/procedural-material hero. Three full-body views: waist low-ready rifle, right-shouldered rifle, rear two-hand handgun. Reference equipment/realistic adult proportions preserved. Geometry folds/seams/rivets/pouches/laces, procedural olive fabric/leather/wood/scratched rusty steel/glass, coherent cel lighting and ink-like contours. Clearly volumetric rather than pasted 2D; no UI/text/Unity logo. No imported sculpt or hand-painted texture assumed. Camera requested elevated35degrees; generated image is shallower and is a material/shape target rather than camera validation.
+Source: C:/Users/hiroki/.codex/generated_images/01a12e24-2a7c-7762-9cd9-15ed31ba4c30/exec-ea4b3d5c-cc2e-49f4-98ba-c720fabd12ca.png

@@ -1,0 +1,1006 @@
+{
+  "threshold": 96,
+  "method": "Old ROI semantic order, row/column gap boundaries, alpha components >=100 px, 2 px pad, no PNG modification",
+  "reports": [
+    {
+      "direction": 0,
+      "name": "Front",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "zeroFraction": 0.5451569332203933,
+      "alphaIoU": 0.9246359861815926,
+      "rowBoundaries": [
+        0,
+        312,
+        616,
+        928,
+        1254
+      ],
+      "parts": [
+        {
+          "cell": 0,
+          "bbox": [
+            58,
+            6,
+            310,
+            310
+          ],
+          "alphaPixels": 56454,
+          "groups": 1
+        },
+        {
+          "cell": 1,
+          "bbox": [
+            327,
+            10,
+            682,
+            309
+          ],
+          "alphaPixels": 72410,
+          "groups": 1
+        },
+        {
+          "cell": 2,
+          "bbox": [
+            759,
+            2,
+            893,
+            312
+          ],
+          "alphaPixels": 26731,
+          "groups": 1
+        },
+        {
+          "cell": 3,
+          "bbox": [
+            1041,
+            3,
+            1177,
+            312
+          ],
+          "alphaPixels": 27992,
+          "groups": 1
+        },
+        {
+          "cell": 4,
+          "bbox": [
+            112,
+            312,
+            247,
+            614
+          ],
+          "alphaPixels": 29671,
+          "groups": 1
+        },
+        {
+          "cell": 5,
+          "bbox": [
+            448,
+            312,
+            582,
+            614
+          ],
+          "alphaPixels": 29759,
+          "groups": 1
+        },
+        {
+          "cell": 6,
+          "bbox": [
+            736,
+            333,
+            893,
+            613
+          ],
+          "alphaPixels": 32292,
+          "groups": 1
+        },
+        {
+          "cell": 7,
+          "bbox": [
+            1025,
+            332,
+            1178,
+            613
+          ],
+          "alphaPixels": 32323,
+          "groups": 1
+        },
+        {
+          "cell": 8,
+          "bbox": [
+            32,
+            619,
+            292,
+            928
+          ],
+          "alphaPixels": 58515,
+          "groups": 1
+        },
+        {
+          "cell": 9,
+          "bbox": [
+            310,
+            622,
+            722,
+            928
+          ],
+          "alphaPixels": 88044,
+          "groups": 1
+        },
+        {
+          "cell": 10,
+          "bbox": [
+            756,
+            620,
+            903,
+            928
+          ],
+          "alphaPixels": 28588,
+          "groups": 1
+        },
+        {
+          "cell": 11,
+          "bbox": [
+            1041,
+            620,
+            1190,
+            928
+          ],
+          "alphaPixels": 29519,
+          "groups": 1
+        },
+        {
+          "cell": 12,
+          "bbox": [
+            81,
+            928,
+            227,
+            1241
+          ],
+          "alphaPixels": 34038,
+          "groups": 1
+        },
+        {
+          "cell": 13,
+          "bbox": [
+            439,
+            928,
+            581,
+            1241
+          ],
+          "alphaPixels": 33452,
+          "groups": 1
+        },
+        {
+          "cell": 14,
+          "bbox": [
+            737,
+            948,
+            903,
+            1225
+          ],
+          "alphaPixels": 33906,
+          "groups": 1
+        },
+        {
+          "cell": 15,
+          "bbox": [
+            1025,
+            947,
+            1192,
+            1225
+          ],
+          "alphaPixels": 34289,
+          "groups": 1
+        }
+      ]
+    },
+    {
+      "direction": 1,
+      "name": "FrontRight",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "zeroFraction": 0.5384593861048155,
+      "alphaIoU": 0.9292718551020684,
+      "rowBoundaries": [
+        0,
+        317,
+        620,
+        926,
+        1254
+      ],
+      "parts": [
+        {
+          "cell": 0,
+          "bbox": [
+            59,
+            11,
+            329,
+            317
+          ],
+          "alphaPixels": 57228,
+          "groups": 2
+        },
+        {
+          "cell": 1,
+          "bbox": [
+            352,
+            10,
+            663,
+            317
+          ],
+          "alphaPixels": 66585,
+          "groups": 2
+        },
+        {
+          "cell": 2,
+          "bbox": [
+            764,
+            8,
+            942,
+            317
+          ],
+          "alphaPixels": 30173,
+          "groups": 1
+        },
+        {
+          "cell": 3,
+          "bbox": [
+            1057,
+            8,
+            1182,
+            317
+          ],
+          "alphaPixels": 26676,
+          "groups": 1
+        },
+        {
+          "cell": 4,
+          "bbox": [
+            107,
+            317,
+            247,
+            618
+          ],
+          "alphaPixels": 31957,
+          "groups": 1
+        },
+        {
+          "cell": 5,
+          "bbox": [
+            450,
+            317,
+            595,
+            617
+          ],
+          "alphaPixels": 31140,
+          "groups": 1
+        },
+        {
+          "cell": 6,
+          "bbox": [
+            731,
+            339,
+            953,
+            618
+          ],
+          "alphaPixels": 39032,
+          "groups": 1
+        },
+        {
+          "cell": 7,
+          "bbox": [
+            1027,
+            338,
+            1223,
+            614
+          ],
+          "alphaPixels": 33864,
+          "groups": 1
+        },
+        {
+          "cell": 8,
+          "bbox": [
+            39,
+            621,
+            326,
+            926
+          ],
+          "alphaPixels": 61870,
+          "groups": 2
+        },
+        {
+          "cell": 9,
+          "bbox": [
+            337,
+            621,
+            699,
+            926
+          ],
+          "alphaPixels": 78950,
+          "groups": 1
+        },
+        {
+          "cell": 10,
+          "bbox": [
+            760,
+            626,
+            949,
+            926
+          ],
+          "alphaPixels": 31108,
+          "groups": 1
+        },
+        {
+          "cell": 11,
+          "bbox": [
+            1069,
+            623,
+            1207,
+            926
+          ],
+          "alphaPixels": 28406,
+          "groups": 1
+        },
+        {
+          "cell": 12,
+          "bbox": [
+            90,
+            926,
+            242,
+            1235
+          ],
+          "alphaPixels": 34500,
+          "groups": 1
+        },
+        {
+          "cell": 13,
+          "bbox": [
+            457,
+            926,
+            617,
+            1236
+          ],
+          "alphaPixels": 35152,
+          "groups": 1
+        },
+        {
+          "cell": 14,
+          "bbox": [
+            744,
+            947,
+            956,
+            1228
+          ],
+          "alphaPixels": 38337,
+          "groups": 1
+        },
+        {
+          "cell": 15,
+          "bbox": [
+            1032,
+            947,
+            1226,
+            1226
+          ],
+          "alphaPixels": 35820,
+          "groups": 1
+        }
+      ]
+    },
+    {
+      "direction": 2,
+      "name": "Right",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "zeroFraction": 0.6294473315374851,
+      "alphaIoU": 0.9039994017579114,
+      "rowBoundaries": [
+        0,
+        328,
+        624,
+        932,
+        1254
+      ],
+      "parts": [
+        {
+          "cell": 0,
+          "bbox": [
+            63,
+            26,
+            296,
+            309
+          ],
+          "alphaPixels": 45845,
+          "groups": 1
+        },
+        {
+          "cell": 1,
+          "bbox": [
+            391,
+            28,
+            616,
+            320
+          ],
+          "alphaPixels": 42896,
+          "groups": 1
+        },
+        {
+          "cell": 2,
+          "bbox": [
+            755,
+            27,
+            892,
+            328
+          ],
+          "alphaPixels": 22613,
+          "groups": 1
+        },
+        {
+          "cell": 3,
+          "bbox": [
+            1032,
+            29,
+            1157,
+            328
+          ],
+          "alphaPixels": 21660,
+          "groups": 1
+        },
+        {
+          "cell": 4,
+          "bbox": [
+            109,
+            328,
+            259,
+            612
+          ],
+          "alphaPixels": 27212,
+          "groups": 1
+        },
+        {
+          "cell": 5,
+          "bbox": [
+            430,
+            328,
+            576,
+            612
+          ],
+          "alphaPixels": 25570,
+          "groups": 1
+        },
+        {
+          "cell": 6,
+          "bbox": [
+            698,
+            381,
+            944,
+            613
+          ],
+          "alphaPixels": 33095,
+          "groups": 1
+        },
+        {
+          "cell": 7,
+          "bbox": [
+            1013,
+            379,
+            1238,
+            609
+          ],
+          "alphaPixels": 30942,
+          "groups": 1
+        },
+        {
+          "cell": 8,
+          "bbox": [
+            59,
+            635,
+            304,
+            932
+          ],
+          "alphaPixels": 49616,
+          "groups": 2
+        },
+        {
+          "cell": 9,
+          "bbox": [
+            385,
+            635,
+            636,
+            932
+          ],
+          "alphaPixels": 48222,
+          "groups": 2
+        },
+        {
+          "cell": 10,
+          "bbox": [
+            739,
+            635,
+            901,
+            932
+          ],
+          "alphaPixels": 25479,
+          "groups": 1
+        },
+        {
+          "cell": 11,
+          "bbox": [
+            1028,
+            638,
+            1161,
+            932
+          ],
+          "alphaPixels": 23665,
+          "groups": 1
+        },
+        {
+          "cell": 12,
+          "bbox": [
+            110,
+            932,
+            271,
+            1219
+          ],
+          "alphaPixels": 30833,
+          "groups": 1
+        },
+        {
+          "cell": 13,
+          "bbox": [
+            442,
+            932,
+            607,
+            1219
+          ],
+          "alphaPixels": 30059,
+          "groups": 1
+        },
+        {
+          "cell": 14,
+          "bbox": [
+            707,
+            932,
+            946,
+            1218
+          ],
+          "alphaPixels": 33602,
+          "groups": 2
+        },
+        {
+          "cell": 15,
+          "bbox": [
+            1031,
+            932,
+            1230,
+            1218
+          ],
+          "alphaPixels": 30216,
+          "groups": 2
+        }
+      ]
+    },
+    {
+      "direction": 3,
+      "name": "BackRight",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "zeroFraction": 0.5369865870999087,
+      "alphaIoU": 0.9273653966955095,
+      "rowBoundaries": [
+        0,
+        329,
+        629,
+        930,
+        1254
+      ],
+      "parts": [
+        {
+          "cell": 0,
+          "bbox": [
+            61,
+            27,
+            319,
+            329
+          ],
+          "alphaPixels": 52862,
+          "groups": 2
+        },
+        {
+          "cell": 1,
+          "bbox": [
+            343,
+            35,
+            677,
+            329
+          ],
+          "alphaPixels": 66945,
+          "groups": 2
+        },
+        {
+          "cell": 2,
+          "bbox": [
+            746,
+            28,
+            941,
+            329
+          ],
+          "alphaPixels": 29124,
+          "groups": 1
+        },
+        {
+          "cell": 3,
+          "bbox": [
+            975,
+            27,
+            1155,
+            329
+          ],
+          "alphaPixels": 29408,
+          "groups": 1
+        },
+        {
+          "cell": 4,
+          "bbox": [
+            123,
+            329,
+            289,
+            622
+          ],
+          "alphaPixels": 35101,
+          "groups": 1
+        },
+        {
+          "cell": 5,
+          "bbox": [
+            421,
+            329,
+            587,
+            626
+          ],
+          "alphaPixels": 34781,
+          "groups": 1
+        },
+        {
+          "cell": 6,
+          "bbox": [
+            714,
+            351,
+            933,
+            618
+          ],
+          "alphaPixels": 35319,
+          "groups": 1
+        },
+        {
+          "cell": 7,
+          "bbox": [
+            1001,
+            351,
+            1191,
+            623
+          ],
+          "alphaPixels": 33223,
+          "groups": 1
+        },
+        {
+          "cell": 8,
+          "bbox": [
+            58,
+            633,
+            322,
+            930
+          ],
+          "alphaPixels": 55934,
+          "groups": 2
+        },
+        {
+          "cell": 9,
+          "bbox": [
+            340,
+            632,
+            690,
+            930
+          ],
+          "alphaPixels": 71214,
+          "groups": 2
+        },
+        {
+          "cell": 10,
+          "bbox": [
+            746,
+            632,
+            947,
+            930
+          ],
+          "alphaPixels": 31087,
+          "groups": 1
+        },
+        {
+          "cell": 11,
+          "bbox": [
+            980,
+            637,
+            1177,
+            930
+          ],
+          "alphaPixels": 30022,
+          "groups": 1
+        },
+        {
+          "cell": 12,
+          "bbox": [
+            114,
+            930,
+            292,
+            1228
+          ],
+          "alphaPixels": 38331,
+          "groups": 1
+        },
+        {
+          "cell": 13,
+          "bbox": [
+            418,
+            930,
+            590,
+            1231
+          ],
+          "alphaPixels": 37348,
+          "groups": 1
+        },
+        {
+          "cell": 14,
+          "bbox": [
+            711,
+            957,
+            937,
+            1229
+          ],
+          "alphaPixels": 36911,
+          "groups": 1
+        },
+        {
+          "cell": 15,
+          "bbox": [
+            987,
+            930,
+            1216,
+            1229
+          ],
+          "alphaPixels": 39263,
+          "groups": 2
+        }
+      ]
+    },
+    {
+      "direction": 4,
+      "name": "Back",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "zeroFraction": 0.559046775994648,
+      "alphaIoU": 0.935475504694155,
+      "rowBoundaries": [
+        0,
+        332,
+        622,
+        928,
+        1254
+      ],
+      "parts": [
+        {
+          "cell": 0,
+          "bbox": [
+            51,
+            23,
+            304,
+            332
+          ],
+          "alphaPixels": 52586,
+          "groups": 2
+        },
+        {
+          "cell": 1,
+          "bbox": [
+            335,
+            26,
+            709,
+            332
+          ],
+          "alphaPixels": 74763,
+          "groups": 2
+        },
+        {
+          "cell": 2,
+          "bbox": [
+            758,
+            21,
+            892,
+            332
+          ],
+          "alphaPixels": 27857,
+          "groups": 1
+        },
+        {
+          "cell": 3,
+          "bbox": [
+            1042,
+            20,
+            1175,
+            332
+          ],
+          "alphaPixels": 28238,
+          "groups": 1
+        },
+        {
+          "cell": 4,
+          "bbox": [
+            110,
+            332,
+            244,
+            617
+          ],
+          "alphaPixels": 28591,
+          "groups": 1
+        },
+        {
+          "cell": 5,
+          "bbox": [
+            454,
+            332,
+            590,
+            617
+          ],
+          "alphaPixels": 28768,
+          "groups": 1
+        },
+        {
+          "cell": 6,
+          "bbox": [
+            740,
+            332,
+            892,
+            619
+          ],
+          "alphaPixels": 29938,
+          "groups": 2
+        },
+        {
+          "cell": 7,
+          "bbox": [
+            1039,
+            332,
+            1193,
+            619
+          ],
+          "alphaPixels": 30170,
+          "groups": 2
+        },
+        {
+          "cell": 8,
+          "bbox": [
+            49,
+            631,
+            305,
+            928
+          ],
+          "alphaPixels": 51881,
+          "groups": 2
+        },
+        {
+          "cell": 9,
+          "bbox": [
+            326,
+            627,
+            720,
+            928
+          ],
+          "alphaPixels": 82593,
+          "groups": 1
+        },
+        {
+          "cell": 10,
+          "bbox": [
+            755,
+            626,
+            898,
+            928
+          ],
+          "alphaPixels": 28811,
+          "groups": 1
+        },
+        {
+          "cell": 11,
+          "bbox": [
+            1037,
+            626,
+            1179,
+            928
+          ],
+          "alphaPixels": 29180,
+          "groups": 1
+        },
+        {
+          "cell": 12,
+          "bbox": [
+            107,
+            928,
+            249,
+            1216
+          ],
+          "alphaPixels": 30991,
+          "groups": 1
+        },
+        {
+          "cell": 13,
+          "bbox": [
+            449,
+            928,
+            593,
+            1216
+          ],
+          "alphaPixels": 31111,
+          "groups": 1
+        },
+        {
+          "cell": 14,
+          "bbox": [
+            737,
+            928,
+            897,
+            1217
+          ],
+          "alphaPixels": 32307,
+          "groups": 2
+        },
+        {
+          "cell": 15,
+          "bbox": [
+            1035,
+            928,
+            1195,
+            1218
+          ],
+          "alphaPixels": 32362,
+          "groups": 2
+        }
+      ]
+    }
+  ]
+}

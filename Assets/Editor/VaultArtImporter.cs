@@ -1,0 +1,37 @@
+using UnityEditor;
+namespace NeonVault.Editor
+{
+    public sealed class VaultArtImporter : AssetPostprocessor
+    {
+        [InitializeOnLoadMethod]
+        static void RepairPlayerSurfaces()
+        {
+            EditorApplication.delayCall+=()=>
+            {
+                foreach(string name in new[]{"WastelandCloth","WastelandLeather"})
+                {
+                    string path="Assets/Resources/Art/"+name+".png";
+                    AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);
+                }
+                UnityEngine.Debug.Log("ASHFALL_PLAYER_SURFACES_READY");
+            };
+        }
+        void OnPreprocessTexture()
+        {
+            if(!assetPath.StartsWith("Assets/Resources/Art/"))return;
+            var importer=(TextureImporter)assetImporter;
+            importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;importer.maxTextureSize=2048;
+            importer.textureCompression=TextureImporterCompression.Uncompressed;
+            if(assetPath.Contains("/ApprovedFieldkit/")){importer.npotScale=TextureImporterNPOTScale.None;importer.maxTextureSize=4096;importer.filterMode=UnityEngine.FilterMode.Bilinear;}
+            importer.isReadable=assetPath.Contains("/LayeredPlayer/")||assetPath.Contains("/LayeredEnemies/")||assetPath.Contains("Directions")||assetPath.Contains("Props")||assetPath.Contains("WeaponAtlas")||assetPath.Contains("32Walk")||assetPath.Contains("ItemPortrait")||assetPath.Contains("KeyEquipment")||assetPath.Contains("Yaw")||assetPath.Contains("Shooting32");
+            bool tiled=assetPath.Contains("Floor")||assetPath.Contains("ArmorSurface")||assetPath.Contains("WastelandSurface")||assetPath.Contains("WastelandCloth")||assetPath.Contains("WastelandLeather");
+            importer.alphaIsTransparency=true;importer.mipmapEnabled=tiled;
+            importer.wrapMode=tiled?UnityEngine.TextureWrapMode.Repeat:UnityEngine.TextureWrapMode.Clamp;
+            if(tiled){importer.filterMode=UnityEngine.FilterMode.Trilinear;importer.anisoLevel=8;}
+            if(assetPath.Contains("/SurvivorMaterials/")||assetPath.Contains("/Environment/"))
+            {importer.mipmapEnabled=true;importer.filterMode=UnityEngine.FilterMode.Trilinear;importer.anisoLevel=8;importer.wrapMode=UnityEngine.TextureWrapMode.Clamp;importer.npotScale=TextureImporterNPOTScale.None;importer.alphaIsTransparency=false;}
+            if(assetPath.Contains("/LayeredPlayer/")||assetPath.Contains("/LayeredEnemies/")){importer.mipmapEnabled=true;importer.filterMode=UnityEngine.FilterMode.Trilinear;importer.anisoLevel=4;importer.maxTextureSize=2048;}
+        }
+    }
+}
+

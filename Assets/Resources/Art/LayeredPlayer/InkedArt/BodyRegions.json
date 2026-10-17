@@ -1,0 +1,1631 @@
+{
+  "regions": [
+    {
+      "direction": 0,
+      "cell": 0,
+      "x": 0.06220095693779904,
+      "y": 0.05741626794258373,
+      "width": 0.1379585326953748,
+      "height": 0.19218500797448165
+    },
+    {
+      "direction": 0,
+      "cell": 1,
+      "x": 0.27352472089314195,
+      "y": 0.05661881977671451,
+      "width": 0.20972886762360446,
+      "height": 0.21291866028708134
+    },
+    {
+      "direction": 0,
+      "cell": 2,
+      "x": 0.5223285486443381,
+      "y": 0.1076555023923445,
+      "width": 0.20733652312599682,
+      "height": 0.14513556618819776
+    },
+    {
+      "direction": 0,
+      "cell": 3,
+      "x": 0.8189792663476874,
+      "y": 0.051834130781499205,
+      "width": 0.12280701754385964,
+      "height": 0.21451355661881977
+    },
+    {
+      "direction": 0,
+      "cell": 4,
+      "x": 0.07974481658692185,
+      "y": 0.28708133971291866,
+      "width": 0.10287081339712918,
+      "height": 0.2065390749601276
+    },
+    {
+      "direction": 0,
+      "cell": 5,
+      "x": 0.3133971291866029,
+      "y": 0.29904306220095694,
+      "width": 0.13157894736842105,
+      "height": 0.1937799043062201
+    },
+    {
+      "direction": 0,
+      "cell": 6,
+      "x": 0.5637958532695375,
+      "y": 0.28548644338118023,
+      "width": 0.13237639553429026,
+      "height": 0.21690590111642744
+    },
+    {
+      "direction": 0,
+      "cell": 7,
+      "x": 0.8261562998405104,
+      "y": 0.2926634768740032,
+      "width": 0.10287081339712918,
+      "height": 0.20334928229665072
+    },
+    {
+      "direction": 0,
+      "cell": 8,
+      "x": 0.05582137161084529,
+      "y": 0.5478468899521531,
+      "width": 0.13157894736842105,
+      "height": 0.17703349282296652
+    },
+    {
+      "direction": 0,
+      "cell": 9,
+      "x": 0.30462519936204147,
+      "y": 0.5175438596491229,
+      "width": 0.13875598086124402,
+      "height": 0.21770334928229665
+    },
+    {
+      "direction": 0,
+      "cell": 10,
+      "x": 0.5749601275917066,
+      "y": 0.5159489633173844,
+      "width": 0.11562998405103668,
+      "height": 0.21850079744816586
+    },
+    {
+      "direction": 0,
+      "cell": 11,
+      "x": 0.8189792663476874,
+      "y": 0.5207336523125997,
+      "width": 0.11483253588516747,
+      "height": 0.20494417862838915
+    },
+    {
+      "direction": 0,
+      "cell": 12,
+      "x": 0.05901116427432217,
+      "y": 0.74481658692185,
+      "width": 0.145933014354067,
+      "height": 0.21850079744816586
+    },
+    {
+      "direction": 0,
+      "cell": 13,
+      "x": 0.3157894736842105,
+      "y": 0.7464114832535885,
+      "width": 0.11084529505582137,
+      "height": 0.21770334928229665
+    },
+    {
+      "direction": 0,
+      "cell": 14,
+      "x": 0.5733652312599681,
+      "y": 0.7575757575757576,
+      "width": 0.11642743221690591,
+      "height": 0.19776714513556617
+    },
+    {
+      "direction": 1,
+      "cell": 0,
+      "x": 0.04784688995215311,
+      "y": 0.023923444976076555,
+      "width": 0.16666666666666666,
+      "height": 0.23046251993620415
+    },
+    {
+      "direction": 1,
+      "cell": 1,
+      "x": 0.2703349282296651,
+      "y": 0.007974481658692184,
+      "width": 0.21929824561403508,
+      "height": 0.26156299840510366
+    },
+    {
+      "direction": 1,
+      "cell": 2,
+      "x": 0.5279106858054227,
+      "y": 0.05582137161084529,
+      "width": 0.22727272727272727,
+      "height": 0.19138755980861244
+    },
+    {
+      "direction": 1,
+      "cell": 3,
+      "x": 0.8086124401913876,
+      "y": 0.009569377990430622,
+      "width": 0.15231259968102073,
+      "height": 0.25199362041467305
+    },
+    {
+      "direction": 1,
+      "cell": 4,
+      "x": 0.06937799043062201,
+      "y": 0.26395534290271133,
+      "width": 0.1331738437001595,
+      "height": 0.22248803827751196
+    },
+    {
+      "direction": 1,
+      "cell": 5,
+      "x": 0.3149920255183413,
+      "y": 0.26953748006379585,
+      "width": 0.14114832535885166,
+      "height": 0.21610845295055822
+    },
+    {
+      "direction": 1,
+      "cell": 6,
+      "x": 0.5717703349282297,
+      "y": 0.2543859649122807,
+      "width": 0.13636363636363635,
+      "height": 0.24162679425837322
+    },
+    {
+      "direction": 1,
+      "cell": 7,
+      "x": 0.8365231259968102,
+      "y": 0.2679425837320574,
+      "width": 0.10685805422647528,
+      "height": 0.2240829346092504
+    },
+    {
+      "direction": 1,
+      "cell": 8,
+      "x": 0.04704944178628389,
+      "y": 0.5127591706539075,
+      "width": 0.1507177033492823,
+      "height": 0.20893141945773525
+    },
+    {
+      "direction": 1,
+      "cell": 9,
+      "x": 0.30701754385964913,
+      "y": 0.49362041467304624,
+      "width": 0.15629984051036683,
+      "height": 0.24561403508771928
+    },
+    {
+      "direction": 1,
+      "cell": 10,
+      "x": 0.5797448165869219,
+      "y": 0.49760765550239233,
+      "width": 0.11881977671451356,
+      "height": 0.23923444976076555
+    },
+    {
+      "direction": 1,
+      "cell": 11,
+      "x": 0.8205741626794258,
+      "y": 0.5039872408293461,
+      "width": 0.16586921850079744,
+      "height": 0.23125996810207336
+    },
+    {
+      "direction": 1,
+      "cell": 12,
+      "x": 0.06060606060606061,
+      "y": 0.7320574162679426,
+      "width": 0.16028708133971292,
+      "height": 0.24720893141945774
+    },
+    {
+      "direction": 1,
+      "cell": 13,
+      "x": 0.3189792663476874,
+      "y": 0.7416267942583732,
+      "width": 0.11881977671451356,
+      "height": 0.24003189792663476
+    },
+    {
+      "direction": 1,
+      "cell": 14,
+      "x": 0.5653907496012759,
+      "y": 0.75518341307815,
+      "width": 0.1674641148325359,
+      "height": 0.22567783094098884
+    },
+    {
+      "direction": 2,
+      "cell": 0,
+      "x": 0.049441786283891544,
+      "y": 0.01594896331738437,
+      "width": 0.1850079744816587,
+      "height": 0.23205741626794257
+    },
+    {
+      "direction": 2,
+      "cell": 1,
+      "x": 0.3094098883572568,
+      "y": 0.011164274322169059,
+      "width": 0.16985645933014354,
+      "height": 0.25757575757575757
+    },
+    {
+      "direction": 2,
+      "cell": 2,
+      "x": 0.5366826156299841,
+      "y": 0.05422647527910686,
+      "width": 0.16905901116427433,
+      "height": 0.18899521531100477
+    },
+    {
+      "direction": 2,
+      "cell": 3,
+      "x": 0.7990430622009569,
+      "y": 0.011164274322169059,
+      "width": 0.1507177033492823,
+      "height": 0.2503987240829346
+    },
+    {
+      "direction": 2,
+      "cell": 4,
+      "x": 0.07256778309409888,
+      "y": 0.2687400318979266,
+      "width": 0.13157894736842105,
+      "height": 0.21690590111642744
+    },
+    {
+      "direction": 2,
+      "cell": 5,
+      "x": 0.32615629984051037,
+      "y": 0.2743221690590112,
+      "width": 0.11483253588516747,
+      "height": 0.20893141945773525
+    },
+    {
+      "direction": 2,
+      "cell": 6,
+      "x": 0.5725677830940988,
+      "y": 0.26156299840510366,
+      "width": 0.1379585326953748,
+      "height": 0.23763955342902712
+    },
+    {
+      "direction": 2,
+      "cell": 7,
+      "x": 0.8341307814992025,
+      "y": 0.2743221690590112,
+      "width": 0.10366826156299841,
+      "height": 0.22169059011164274
+    },
+    {
+      "direction": 2,
+      "cell": 8,
+      "x": 0.07814992025518341,
+      "y": 0.5135566188197768,
+      "width": 0.12679425837320574,
+      "height": 0.20494417862838915
+    },
+    {
+      "direction": 2,
+      "cell": 9,
+      "x": 0.30701754385964913,
+      "y": 0.49362041467304624,
+      "width": 0.14513556618819776,
+      "height": 0.23843700159489634
+    },
+    {
+      "direction": 2,
+      "cell": 10,
+      "x": 0.580542264752791,
+      "y": 0.5023923444976076,
+      "width": 0.1076555023923445,
+      "height": 0.23285486443381181
+    },
+    {
+      "direction": 2,
+      "cell": 11,
+      "x": 0.7902711323763956,
+      "y": 0.5175438596491229,
+      "width": 0.20175438596491227,
+      "height": 0.21850079744816586
+    },
+    {
+      "direction": 2,
+      "cell": 12,
+      "x": 0.06299840510366826,
+      "y": 0.7304625199362041,
+      "width": 0.17065390749601275,
+      "height": 0.24561403508771928
+    },
+    {
+      "direction": 2,
+      "cell": 13,
+      "x": 0.3237639553429027,
+      "y": 0.7400318979266348,
+      "width": 0.11084529505582137,
+      "height": 0.23843700159489634
+    },
+    {
+      "direction": 2,
+      "cell": 14,
+      "x": 0.5414673046251993,
+      "y": 0.7583732057416268,
+      "width": 0.22248803827751196,
+      "height": 0.215311004784689
+    },
+    {
+      "direction": 3,
+      "cell": 0,
+      "x": 0.06220095693779904,
+      "y": 0.01594896331738437,
+      "width": 0.17703349282296652,
+      "height": 0.23763955342902712
+    },
+    {
+      "direction": 3,
+      "cell": 1,
+      "x": 0.2926634768740032,
+      "y": 0.011961722488038277,
+      "width": 0.19457735247208932,
+      "height": 0.2503987240829346
+    },
+    {
+      "direction": 3,
+      "cell": 2,
+      "x": 0.529505582137161,
+      "y": 0.05980861244019139,
+      "width": 0.19856459330143542,
+      "height": 0.19617224880382775
+    },
+    {
+      "direction": 3,
+      "cell": 3,
+      "x": 0.7934609250398724,
+      "y": 0.012759170653907496,
+      "width": 0.19856459330143542,
+      "height": 0.2535885167464115
+    },
+    {
+      "direction": 3,
+      "cell": 4,
+      "x": 0.07496012759170653,
+      "y": 0.2703349282296651,
+      "width": 0.1507177033492823,
+      "height": 0.22248803827751196
+    },
+    {
+      "direction": 3,
+      "cell": 5,
+      "x": 0.32057416267942584,
+      "y": 0.2759170653907496,
+      "width": 0.1283891547049442,
+      "height": 0.20414673046251994
+    },
+    {
+      "direction": 3,
+      "cell": 6,
+      "x": 0.5414673046251993,
+      "y": 0.2623604465709729,
+      "width": 0.16666666666666666,
+      "height": 0.23843700159489634
+    },
+    {
+      "direction": 3,
+      "cell": 7,
+      "x": 0.835725677830941,
+      "y": 0.2743221690590112,
+      "width": 0.12041467304625199,
+      "height": 0.22488038277511962
+    },
+    {
+      "direction": 3,
+      "cell": 8,
+      "x": 0.07575757575757576,
+      "y": 0.5095693779904307,
+      "width": 0.13556618819776714,
+      "height": 0.20334928229665072
+    },
+    {
+      "direction": 3,
+      "cell": 9,
+      "x": 0.29904306220095694,
+      "y": 0.4880382775119617,
+      "width": 0.17942583732057416,
+      "height": 0.24481658692185007
+    },
+    {
+      "direction": 3,
+      "cell": 10,
+      "x": 0.5685805422647527,
+      "y": 0.5007974481658692,
+      "width": 0.1251993620414673,
+      "height": 0.23444976076555024
+    },
+    {
+      "direction": 3,
+      "cell": 11,
+      "x": 0.7902711323763956,
+      "y": 0.5191387559808612,
+      "width": 0.19696969696969696,
+      "height": 0.2065390749601276
+    },
+    {
+      "direction": 3,
+      "cell": 12,
+      "x": 0.06618819776714513,
+      "y": 0.722488038277512,
+      "width": 0.18341307814992025,
+      "height": 0.2551834130781499
+    },
+    {
+      "direction": 3,
+      "cell": 13,
+      "x": 0.3229665071770335,
+      "y": 0.733652312599681,
+      "width": 0.12599681020733652,
+      "height": 0.24401913875598086
+    },
+    {
+      "direction": 3,
+      "cell": 14,
+      "x": 0.5446570972886763,
+      "y": 0.7527910685805422,
+      "width": 0.20972886762360446,
+      "height": 0.215311004784689
+    },
+    {
+      "direction": 4,
+      "cell": 0,
+      "x": 0.05661881977671451,
+      "y": 0.03189792663476874,
+      "width": 0.15629984051036683,
+      "height": 0.23125996810207336
+    },
+    {
+      "direction": 4,
+      "cell": 1,
+      "x": 0.2822966507177033,
+      "y": 0.028708133971291867,
+      "width": 0.20813397129186603,
+      "height": 0.24162679425837322
+    },
+    {
+      "direction": 4,
+      "cell": 2,
+      "x": 0.5231259968102073,
+      "y": 0.06060606060606061,
+      "width": 0.22647527910685805,
+      "height": 0.20494417862838915
+    },
+    {
+      "direction": 4,
+      "cell": 3,
+      "x": 0.8046251993620415,
+      "y": 0.03349282296650718,
+      "width": 0.1547049441786284,
+      "height": 0.24800637958532695
+    },
+    {
+      "direction": 4,
+      "cell": 4,
+      "x": 0.07256778309409888,
+      "y": 0.2886762360446571,
+      "width": 0.12280701754385964,
+      "height": 0.22488038277511962
+    },
+    {
+      "direction": 4,
+      "cell": 5,
+      "x": 0.3118022328548644,
+      "y": 0.30701754385964913,
+      "width": 0.14035087719298245,
+      "height": 0.19537480063795853
+    },
+    {
+      "direction": 4,
+      "cell": 6,
+      "x": 0.5390749601275917,
+      "y": 0.2894736842105263,
+      "width": 0.16427432216905902,
+      "height": 0.23684210526315788
+    },
+    {
+      "direction": 4,
+      "cell": 7,
+      "x": 0.8181818181818182,
+      "y": 0.2902711323763955,
+      "width": 0.12599681020733652,
+      "height": 0.22488038277511962
+    },
+    {
+      "direction": 4,
+      "cell": 8,
+      "x": 0.05901116427432217,
+      "y": 0.5223285486443381,
+      "width": 0.1467304625199362,
+      "height": 0.19617224880382775
+    },
+    {
+      "direction": 4,
+      "cell": 9,
+      "x": 0.30701754385964913,
+      "y": 0.5159489633173844,
+      "width": 0.1722488038277512,
+      "height": 0.21451355661881977
+    },
+    {
+      "direction": 4,
+      "cell": 10,
+      "x": 0.5582137161084529,
+      "y": 0.5287081339712919,
+      "width": 0.12599681020733652,
+      "height": 0.21052631578947367
+    },
+    {
+      "direction": 4,
+      "cell": 11,
+      "x": 0.80622009569378,
+      "y": 0.5279106858054227,
+      "width": 0.12679425837320574,
+      "height": 0.215311004784689
+    },
+    {
+      "direction": 4,
+      "cell": 12,
+      "x": 0.04704944178628389,
+      "y": 0.7440191387559809,
+      "width": 0.17783094098883573,
+      "height": 0.22647527910685805
+    },
+    {
+      "direction": 4,
+      "cell": 13,
+      "x": 0.3253588516746411,
+      "y": 0.7432216905901117,
+      "width": 0.13157894736842105,
+      "height": 0.22488038277511962
+    },
+    {
+      "direction": 4,
+      "cell": 14,
+      "x": 0.5629984051036683,
+      "y": 0.7607655502392344,
+      "width": 0.13078149920255183,
+      "height": 0.21052631578947367
+    }
+  ],
+  "sourceOrigin": "top-left",
+  "alphaThreshold": 96,
+  "componentConnectivity": 8,
+  "selection": "largest-cell-overlap-full-atlas-component",
+  "measurements": [
+    {
+      "file": "Body_Front.png",
+      "width": 1254,
+      "height": 1254,
+      "transparentFraction": 0.661723,
+      "sha256": "ce54f70e9f49e0607926ebe43493c87e151059e314ecee776fba54a66b1236c9",
+      "parts": [
+        {
+          "cell": 0,
+          "pixels": 31239,
+          "component": 3,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            78,
+            72,
+            173,
+            241
+          ]
+        },
+        {
+          "cell": 1,
+          "pixels": 52820,
+          "component": 2,
+          "cellOverlap": 0.952594,
+          "metadataSplitY": null,
+          "bbox": [
+            343,
+            71,
+            263,
+            267
+          ]
+        },
+        {
+          "cell": 2,
+          "pixels": 40337,
+          "component": 4,
+          "cellOverlap": 0.991745,
+          "metadataSplitY": null,
+          "bbox": [
+            655,
+            135,
+            260,
+            182
+          ]
+        },
+        {
+          "cell": 3,
+          "pixels": 28875,
+          "component": 1,
+          "cellOverlap": 0.956571,
+          "metadataSplitY": null,
+          "bbox": [
+            1027,
+            65,
+            154,
+            269
+          ]
+        },
+        {
+          "cell": 4,
+          "pixels": 26869,
+          "component": 6,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            100,
+            360,
+            129,
+            259
+          ]
+        },
+        {
+          "cell": 5,
+          "pixels": 26351,
+          "component": 8,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            393,
+            375,
+            165,
+            243
+          ]
+        },
+        {
+          "cell": 6,
+          "pixels": 33012,
+          "component": 5,
+          "cellOverlap": 0.997183,
+          "metadataSplitY": null,
+          "bbox": [
+            707,
+            358,
+            166,
+            272
+          ]
+        },
+        {
+          "cell": 7,
+          "pixels": 25915,
+          "component": 7,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1036,
+            367,
+            129,
+            255
+          ]
+        },
+        {
+          "cell": 8,
+          "pixels": 24594,
+          "component": 12,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            70,
+            687,
+            165,
+            222
+          ]
+        },
+        {
+          "cell": 9,
+          "pixels": 37637,
+          "component": 10,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            382,
+            649,
+            174,
+            273
+          ]
+        },
+        {
+          "cell": 10,
+          "pixels": 30635,
+          "component": 9,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            721,
+            647,
+            145,
+            274
+          ]
+        },
+        {
+          "cell": 11,
+          "pixels": 27668,
+          "component": 11,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1027,
+            653,
+            144,
+            257
+          ]
+        },
+        {
+          "cell": 12,
+          "pixels": 39272,
+          "component": 13,
+          "cellOverlap": 0.989254,
+          "metadataSplitY": null,
+          "bbox": [
+            74,
+            934,
+            183,
+            274
+          ]
+        },
+        {
+          "cell": 13,
+          "pixels": 31046,
+          "component": 14,
+          "cellOverlap": 0.992624,
+          "metadataSplitY": null,
+          "bbox": [
+            396,
+            936,
+            139,
+            273
+          ]
+        },
+        {
+          "cell": 14,
+          "pixels": 27088,
+          "component": 15,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            719,
+            950,
+            146,
+            248
+          ]
+        }
+      ]
+    },
+    {
+      "file": "Body_FrontRight.png",
+      "width": 1254,
+      "height": 1254,
+      "transparentFraction": 0.578533,
+      "sha256": "304c184d82e474e5aed553816f07a375b223225f366d3343b3eef254fd4943aa",
+      "parts": [
+        {
+          "cell": 0,
+          "pixels": 44666,
+          "component": 3,
+          "cellOverlap": 0.996216,
+          "metadataSplitY": null,
+          "bbox": [
+            60,
+            30,
+            209,
+            289
+          ]
+        },
+        {
+          "cell": 1,
+          "pixels": 67946,
+          "component": 1,
+          "cellOverlap": 0.979631,
+          "metadataSplitY": null,
+          "bbox": [
+            339,
+            10,
+            275,
+            328
+          ]
+        },
+        {
+          "cell": 2,
+          "pixels": 54759,
+          "component": 4,
+          "cellOverlap": 0.997882,
+          "metadataSplitY": null,
+          "bbox": [
+            662,
+            70,
+            285,
+            240
+          ]
+        },
+        {
+          "cell": 3,
+          "pixels": 39693,
+          "component": 2,
+          "cellOverlap": 0.982793,
+          "metadataSplitY": null,
+          "bbox": [
+            1014,
+            12,
+            191,
+            316
+          ]
+        },
+        {
+          "cell": 4,
+          "pixels": 30736,
+          "component": 6,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            87,
+            331,
+            167,
+            279
+          ]
+        },
+        {
+          "cell": 5,
+          "pixels": 32602,
+          "component": 8,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            395,
+            338,
+            177,
+            271
+          ]
+        },
+        {
+          "cell": 6,
+          "pixels": 38314,
+          "component": 5,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            717,
+            319,
+            171,
+            303
+          ]
+        },
+        {
+          "cell": 7,
+          "pixels": 30754,
+          "component": 7,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1049,
+            336,
+            134,
+            281
+          ]
+        },
+        {
+          "cell": 8,
+          "pixels": 32233,
+          "component": 12,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            59,
+            643,
+            189,
+            262
+          ]
+        },
+        {
+          "cell": 9,
+          "pixels": 47275,
+          "component": 9,
+          "cellOverlap": 0.984622,
+          "metadataSplitY": null,
+          "bbox": [
+            385,
+            619,
+            196,
+            308
+          ]
+        },
+        {
+          "cell": 10,
+          "pixels": 36445,
+          "component": 10,
+          "cellOverlap": 0.996406,
+          "metadataSplitY": null,
+          "bbox": [
+            727,
+            624,
+            149,
+            300
+          ]
+        },
+        {
+          "cell": 11,
+          "pixels": 38961,
+          "component": 11,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1029,
+            632,
+            208,
+            290
+          ]
+        },
+        {
+          "cell": 12,
+          "pixels": 48130,
+          "component": 13,
+          "cellOverlap": 0.942655,
+          "metadataSplitY": null,
+          "bbox": [
+            76,
+            918,
+            201,
+            310
+          ]
+        },
+        {
+          "cell": 13,
+          "pixels": 37098,
+          "component": 14,
+          "cellOverlap": 0.97795,
+          "metadataSplitY": null,
+          "bbox": [
+            400,
+            930,
+            149,
+            301
+          ]
+        },
+        {
+          "cell": 14,
+          "pixels": 38065,
+          "component": 15,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            709,
+            947,
+            210,
+            283
+          ]
+        }
+      ]
+    },
+    {
+      "file": "Body_Right.png",
+      "width": 1254,
+      "height": 1254,
+      "transparentFraction": 0.591488,
+      "sha256": "75a7748388d7886b43d81b848fcfc2ab9380c8441c415b3f0643f13b70f5199e",
+      "parts": [
+        {
+          "cell": 0,
+          "pixels": 48667,
+          "component": 3,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            62,
+            20,
+            232,
+            291
+          ]
+        },
+        {
+          "cell": 1,
+          "pixels": 51475,
+          "component": 1,
+          "cellOverlap": 0.972841,
+          "metadataSplitY": null,
+          "bbox": [
+            388,
+            14,
+            213,
+            323
+          ]
+        },
+        {
+          "cell": 2,
+          "pixels": 40924,
+          "component": 4,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            673,
+            68,
+            212,
+            237
+          ]
+        },
+        {
+          "cell": 3,
+          "pixels": 36152,
+          "component": 2,
+          "cellOverlap": 0.985865,
+          "metadataSplitY": null,
+          "bbox": [
+            1002,
+            14,
+            189,
+            314
+          ]
+        },
+        {
+          "cell": 4,
+          "pixels": 29547,
+          "component": 6,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            91,
+            337,
+            165,
+            272
+          ]
+        },
+        {
+          "cell": 5,
+          "pixels": 24939,
+          "component": 7,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            409,
+            344,
+            144,
+            262
+          ]
+        },
+        {
+          "cell": 6,
+          "pixels": 35605,
+          "component": 5,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            718,
+            328,
+            173,
+            298
+          ]
+        },
+        {
+          "cell": 7,
+          "pixels": 29200,
+          "component": 8,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1046,
+            344,
+            130,
+            278
+          ]
+        },
+        {
+          "cell": 8,
+          "pixels": 25946,
+          "component": 11,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            98,
+            644,
+            159,
+            257
+          ]
+        },
+        {
+          "cell": 9,
+          "pixels": 42503,
+          "component": 9,
+          "cellOverlap": 0.983366,
+          "metadataSplitY": null,
+          "bbox": [
+            385,
+            619,
+            182,
+            299
+          ]
+        },
+        {
+          "cell": 10,
+          "pixels": 33212,
+          "component": 10,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            728,
+            630,
+            135,
+            292
+          ]
+        },
+        {
+          "cell": 11,
+          "pixels": 41188,
+          "component": 12,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            991,
+            649,
+            253,
+            274
+          ]
+        },
+        {
+          "cell": 12,
+          "pixels": 48092,
+          "component": 13,
+          "cellOverlap": 0.936954,
+          "metadataSplitY": null,
+          "bbox": [
+            79,
+            916,
+            214,
+            308
+          ]
+        },
+        {
+          "cell": 13,
+          "pixels": 34225,
+          "component": 14,
+          "cellOverlap": 0.970402,
+          "metadataSplitY": null,
+          "bbox": [
+            406,
+            928,
+            139,
+            299
+          ]
+        },
+        {
+          "cell": 14,
+          "pixels": 43893,
+          "component": 15,
+          "cellOverlap": 0.983733,
+          "metadataSplitY": null,
+          "bbox": [
+            679,
+            951,
+            279,
+            270
+          ]
+        }
+      ]
+    },
+    {
+      "file": "Body_BackRight.png",
+      "width": 1254,
+      "height": 1254,
+      "transparentFraction": 0.564754,
+      "sha256": "789448dc8c9a0d6705a76d4e61f5ac70ca190c35cb3b0d07bc7063d0841dfd53",
+      "parts": [
+        {
+          "cell": 0,
+          "pixels": 45100,
+          "component": 3,
+          "cellOverlap": 0.99918,
+          "metadataSplitY": null,
+          "bbox": [
+            78,
+            20,
+            222,
+            298
+          ]
+        },
+        {
+          "cell": 1,
+          "pixels": 58231,
+          "component": 1,
+          "cellOverlap": 0.969707,
+          "metadataSplitY": null,
+          "bbox": [
+            367,
+            15,
+            244,
+            314
+          ]
+        },
+        {
+          "cell": 2,
+          "pixels": 49761,
+          "component": 4,
+          "cellOverlap": 0.99168,
+          "metadataSplitY": null,
+          "bbox": [
+            664,
+            75,
+            249,
+            246
+          ]
+        },
+        {
+          "cell": 3,
+          "pixels": 46152,
+          "component": 2,
+          "cellOverlap": 0.984681,
+          "metadataSplitY": null,
+          "bbox": [
+            995,
+            16,
+            249,
+            318
+          ]
+        },
+        {
+          "cell": 4,
+          "pixels": 32276,
+          "component": 6,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            94,
+            339,
+            189,
+            279
+          ]
+        },
+        {
+          "cell": 5,
+          "pixels": 26372,
+          "component": 8,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            402,
+            346,
+            161,
+            256
+          ]
+        },
+        {
+          "cell": 6,
+          "pixels": 40499,
+          "component": 5,
+          "cellOverlap": 0.998963,
+          "metadataSplitY": 628,
+          "bbox": [
+            679,
+            329,
+            209,
+            299
+          ]
+        },
+        {
+          "cell": 7,
+          "pixels": 32088,
+          "component": 7,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1048,
+            344,
+            151,
+            282
+          ]
+        },
+        {
+          "cell": 8,
+          "pixels": 26477,
+          "component": 10,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            95,
+            639,
+            170,
+            255
+          ]
+        },
+        {
+          "cell": 9,
+          "pixels": 51090,
+          "component": 9,
+          "cellOverlap": 0.965629,
+          "metadataSplitY": null,
+          "bbox": [
+            375,
+            612,
+            225,
+            307
+          ]
+        },
+        {
+          "cell": 10,
+          "pixels": 37492,
+          "component": 5,
+          "cellOverlap": 1.0,
+          "metadataSplitY": 628,
+          "bbox": [
+            713,
+            628,
+            157,
+            294
+          ]
+        },
+        {
+          "cell": 11,
+          "pixels": 42144,
+          "component": 11,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            991,
+            651,
+            247,
+            259
+          ]
+        },
+        {
+          "cell": 12,
+          "pixels": 55712,
+          "component": 12,
+          "cellOverlap": 0.915548,
+          "metadataSplitY": null,
+          "bbox": [
+            83,
+            906,
+            230,
+            320
+          ]
+        },
+        {
+          "cell": 13,
+          "pixels": 40165,
+          "component": 13,
+          "cellOverlap": 0.945848,
+          "metadataSplitY": null,
+          "bbox": [
+            405,
+            920,
+            158,
+            306
+          ]
+        },
+        {
+          "cell": 14,
+          "pixels": 46016,
+          "component": 14,
+          "cellOverlap": 0.996588,
+          "metadataSplitY": null,
+          "bbox": [
+            683,
+            944,
+            263,
+            270
+          ]
+        }
+      ]
+    },
+    {
+      "file": "Body_Back.png",
+      "width": 1254,
+      "height": 1254,
+      "transparentFraction": 0.581103,
+      "sha256": "df3bae6f9a597ebc52ea4e73ebe4fba1e77aa4c25e44e135efdc3c33641886df",
+      "parts": [
+        {
+          "cell": 0,
+          "pixels": 43384,
+          "component": 2,
+          "cellOverlap": 0.956136,
+          "metadataSplitY": null,
+          "bbox": [
+            71,
+            40,
+            196,
+            290
+          ]
+        },
+        {
+          "cell": 1,
+          "pixels": 63231,
+          "component": 1,
+          "cellOverlap": 0.929275,
+          "metadataSplitY": null,
+          "bbox": [
+            354,
+            36,
+            261,
+            303
+          ]
+        },
+        {
+          "cell": 2,
+          "pixels": 61421,
+          "component": 4,
+          "cellOverlap": 0.94453,
+          "metadataSplitY": null,
+          "bbox": [
+            656,
+            76,
+            284,
+            257
+          ]
+        },
+        {
+          "cell": 3,
+          "pixels": 40653,
+          "component": 3,
+          "cellOverlap": 0.91821,
+          "metadataSplitY": null,
+          "bbox": [
+            1009,
+            42,
+            194,
+            311
+          ]
+        },
+        {
+          "cell": 4,
+          "pixels": 34068,
+          "component": 5,
+          "cellOverlap": 0.973553,
+          "metadataSplitY": null,
+          "bbox": [
+            91,
+            362,
+            154,
+            282
+          ]
+        },
+        {
+          "cell": 5,
+          "pixels": 29627,
+          "component": 8,
+          "cellOverlap": 0.998549,
+          "metadataSplitY": null,
+          "bbox": [
+            391,
+            385,
+            176,
+            245
+          ]
+        },
+        {
+          "cell": 6,
+          "pixels": 41039,
+          "component": 6,
+          "cellOverlap": 0.930505,
+          "metadataSplitY": null,
+          "bbox": [
+            676,
+            363,
+            206,
+            297
+          ]
+        },
+        {
+          "cell": 7,
+          "pixels": 34437,
+          "component": 7,
+          "cellOverlap": 0.967825,
+          "metadataSplitY": null,
+          "bbox": [
+            1026,
+            364,
+            158,
+            282
+          ]
+        },
+        {
+          "cell": 8,
+          "pixels": 30839,
+          "component": 10,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            74,
+            655,
+            184,
+            246
+          ]
+        },
+        {
+          "cell": 9,
+          "pixels": 45440,
+          "component": 9,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            385,
+            647,
+            216,
+            269
+          ]
+        },
+        {
+          "cell": 10,
+          "pixels": 34460,
+          "component": 12,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            700,
+            663,
+            158,
+            264
+          ]
+        },
+        {
+          "cell": 11,
+          "pixels": 34637,
+          "component": 11,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            1011,
+            662,
+            159,
+            270
+          ]
+        },
+        {
+          "cell": 12,
+          "pixels": 48453,
+          "component": 14,
+          "cellOverlap": 0.988112,
+          "metadataSplitY": null,
+          "bbox": [
+            59,
+            933,
+            223,
+            284
+          ]
+        },
+        {
+          "cell": 13,
+          "pixels": 38051,
+          "component": 13,
+          "cellOverlap": 0.984363,
+          "metadataSplitY": null,
+          "bbox": [
+            408,
+            932,
+            165,
+            282
+          ]
+        },
+        {
+          "cell": 14,
+          "pixels": 32904,
+          "component": 15,
+          "cellOverlap": 1.0,
+          "metadataSplitY": null,
+          "bbox": [
+            706,
+            954,
+            164,
+            264
+          ]
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}

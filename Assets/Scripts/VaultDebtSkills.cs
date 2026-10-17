@@ -1,0 +1,217 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace NeonVault
+{
+    public partial class VaultGame
+    {
+        const int InitialDebt = 1000000000;
+        const int DebtPerLevel = 25000000;
+        const int DebtLevelCap = 40;
+        const string DebtSaveKey = "Vault.DebtSkills.v1";
+
+        enum DebtSkillKind { Damage, FireRate, Accuracy, Reload, Ammo, Health, Recovery, WeaponSlot, DamageReduction, HealOnKill, AmmoPickup, ShopDiscount, KillChain, BossDamage }
+        [Serializable] class DebtSkillSave { public int version, paid; public bool introSeen; public List<string> unlocked; }
+        class DebtSkillNode
+        {
+            public string id, track, en, ja; public DebtSkillKind kind; public float value; public int modelFamily; public string[] requires;
+            public DebtSkillNode(string id,string track,string en,string ja,DebtSkillKind kind,float value,int family=-1,params string[] requires)
+            {this.id=id;this.track=track;this.en=en;this.ja=ja;this.kind=kind;this.value=value;modelFamily=family;this.requires=requires;}
+        }
+
+        readonly HashSet<string> unlockedDebtSkills = new HashSet<string>();
+        readonly List<DebtSkillNode> debtSkillNodes = BuildDebtSkillNodes();
+        int debtPaid; bool debtIntroSeen=true, debtPage, debtSkillTreePage; int debtTrack;
+        Vector2 debtSkillScroll;
+        readonly Vector3 debtCollectorPosition = new Vector3(0,.65f,5);
+
+        public int DebtLevel => Mathf.Clamp(1 + debtPaid / DebtPerLevel,1,DebtLevelCap);
+        public int DebtSkillPoints => Mathf.Max(0,DebtLevel-1-unlockedDebtSkills.Count);
+        public int DebtRemaining => Mathf.Max(0,InitialDebt-debtPaid);
+        public float DebtProgressRatio => DebtLevel>=DebtLevelCap?1f:(debtPaid%DebtPerLevel)/(float)DebtPerLevel;
+        public int DebtExtraWeaponSlots => (unlockedDebtSkills.Contains("survival_slot1")?1:0) + (unlockedDebtSkills.Contains("survival_slot2")?1:0);
+        bool DebtIntroReview => Array.IndexOf(Environment.GetCommandLineArgs(),"--debt-intro-review")>=0;
+        public bool DebtIntroVisible => !debtIntroSeen && (!smoke || DebtIntroReview);
+        public int DebtTotalPaid => debtPaid;
+
+        void DebtSkillsInitialize()
+        {
+            debtPaid=0;debtIntroSeen=true;unlockedDebtSkills.Clear();
+            if(smoke){debtIntroSeen=!DebtIntroReview;return;}
+            if(!PlayerPrefs.HasKey(DebtSaveKey)){debtIntroSeen=false;SaveDebtSkills();return;}
+            debtIntroSeen=false;
+            try
+            {
+                var saved=JsonUtility.FromJson<DebtSkillSave>(PlayerPrefs.GetString(DebtSaveKey));
+                if(saved==null||saved.version!=1){SaveDebtSkills();return;}
+                debtPaid=Mathf.Clamp(saved.paid,0,InitialDebt);debtIntroSeen=saved.introSeen;
+                if(saved.unlocked!=null)foreach(var id in saved.unlocked)if(FindDebtSkill(id)!=null)unlockedDebtSkills.Add(id);
+                // Invalid old/corrupt selections cannot grant more points than earned milestones.
+                while(unlockedDebtSkills.Count>DebtLevel-1){string last=null;foreach(var id in unlockedDebtSkills)last=id;if(last==null)break;unlockedDebtSkills.Remove(last);}
+            }
+            catch(Exception e){Debug.LogWarning("Debt skill load failed: "+e.GetType().Name);SaveDebtSkills();}
+        }
+        void SaveDebtSkills()
+        {
+            if(smoke)return;
+            var data=new DebtSkillSave{version=1,paid=debtPaid,introSeen=debtIntroSeen,unlocked=new List<string>(unlockedDebtSkills)};
+            PlayerPrefs.SetString(DebtSaveKey,JsonUtility.ToJson(data));PlayerPrefs.Save();
+        }
+        void MarkDebtIntroSeen(){debtIntroSeen=true;SaveDebtSkills();}
+        public bool RepayDebt(int requested)
+        {
+            if(requested<=0||Credits<=0||DebtRemaining<=0)return false;
+            int amount=Mathf.Min(Mathf.Min(requested,Credits),DebtRemaining);
+            Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();return amount>0;
+        }
+        public bool TryUnlockDebtSkill(string id)
+        {
+            var node=FindDebtSkill(id);if(node==null||unlockedDebtSkills.Contains(id)||DebtSkillPoints<=0)return false;
+            foreach(var requirement in node.requires)if(!unlockedDebtSkills.Contains(requirement))return false;
+            unlockedDebtSkills.Add(id);SaveDebtSkills();RefreshPermanentStats();return true;
+        }
+        DebtSkillNode FindDebtSkill(string id)=>debtSkillNodes.Find(n=>n.id==id);
+        bool DebtSkillAvailable(DebtSkillNode node)
+        {if(node==null||unlockedDebtSkills.Contains(node.id))return false;foreach(var id in node.requires)if(!unlockedDebtSkills.Contains(id))return false;return true;}
+        bool HasDebtSkill(DebtSkillKind kind,int family=-1)
+        {foreach(var node in debtSkillNodes)if(node.kind==kind&&unlockedDebtSkills.Contains(node.id)&&(family<0||node.modelFamily==family))return true;return false;}
+        float SumDebtSkill(DebtSkillKind kind,int family=-1)
+        {float total=0;foreach(var node in debtSkillNodes)if(node.kind==kind&&unlockedDebtSkills.Contains(node.id)&&(family<0||node.modelFamily==family))total+=node.value;return total;}
+
+        int DebtWeaponFamily(int model)
+        {
+            if(model==14||model==15||model==16||model==17)return 0; // handguns
+            if(model==3||model==4||model==5||model==13)return 1; // shotguns
+            if(model==1||model==6||model==9||model==10||model==12)return 2; // assault / automatic
+            if(model==2||model==7||model==8||model==11)return 3; // precision / long-range
+            return -1;
+        }
+        public float DebtDamageBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Damage,DebtWeaponFamily(weaponModel));
+        public float DebtFireRateBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.FireRate,DebtWeaponFamily(weaponModel));
+        public float DebtAccuracyBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Accuracy,DebtWeaponFamily(weaponModel));
+        public float DebtReloadBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Reload,DebtWeaponFamily(weaponModel));
+        public float DebtAmmoBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Ammo,DebtWeaponFamily(weaponModel));
+        public float DebtHealthBonus=>SumDebtSkill(DebtSkillKind.Health);
+        public float DebtRecoveryBonus=>SumDebtSkill(DebtSkillKind.Recovery);
+        public float DebtDamageReductionBonus=>SumDebtSkill(DebtSkillKind.DamageReduction);
+        public float DebtHealOnKill=>SumDebtSkill(DebtSkillKind.HealOnKill);
+        public float DebtAmmoPickupBonus=>SumDebtSkill(DebtSkillKind.AmmoPickup);
+        public float DebtShopDiscount=>SumDebtSkill(DebtSkillKind.ShopDiscount);
+        public float DebtKillChainBonus=>SumDebtSkill(DebtSkillKind.KillChain);
+        public float DebtBossDamageBonus=>SumDebtSkill(DebtSkillKind.BossDamage);
+
+        public float ArtifactAffixBonus(string type)
+        {
+            if(string.IsNullOrEmpty(type)||EquippedArtifacts==null)return 0;
+            float total=0;foreach(var item in EquippedArtifacts)if(item!=null&&item.affixes!=null)total+=GearScoring.AffixTotal(item.affixes,type);
+            return total;
+        }
+        public float EquippedWeaponAffixBonus(string type)
+        {
+            if(string.IsNullOrEmpty(type))return 0;float total=0;
+            for(int i=0;i<AvailableWeaponSlotCount;i++){var weapon=WeaponInSlot(i);if(weapon==null)continue;
+                if(type=="health")total+=weapon.bonusHealth;
+                else if(type=="mitigation")total+=weapon.damageReductionBonus;
+                else if(type=="moveSpeed")total+=weapon.movementBonus;
+                else if(type=="regen")total+=weapon.regenBonus;
+                else if(type=="ammo"&&weapon.affixes!=null)total+=GearScoring.AffixTotal(weapon.affixes,type);
+            }
+            return total;
+        }
+
+        void DrawDebtOffice()
+        {
+            Box(new Rect(0,0,1440,900),PanelInk);
+            Text(65,54,T("BRIGGS / DEBT OFFICE","ブリッグス / 借金返済窓口"),heading,new Color(1,.39f,.28f),1000);
+            Text(68,116,T("COLLAR BALANCE","首輪の残債")+"   "+DebtRemaining.ToString("N0")+" / 1,000,000,000",label,Mist,1100);
+            float progress=1-DebtRemaining/(float)InitialDebt;Box(new Rect(68,157,1070,14),new Color(.12f,.16f,.17f));Box(new Rect(68,157,1070*Mathf.Clamp01(progress),14),new Color(1,.34f,.23f));
+            Text(68,187,T("LEVEL ","レベル ")+DebtLevel+" / "+DebtLevelCap+"    ·    "+T("SKILL POINTS ","スキルポイント ")+DebtSkillPoints,small,Gold,900);
+            Text(68,217,T("PAID ","返済累計 ")+DebtTotalPaid.ToString("N0")+"    ·    "+T("NEXT LEVEL ","次のレベルまで ")+Mathf.Max(0,DebtPerLevel-debtPaid%DebtPerLevel).ToString("N0"),tiny,Cyan,1000);
+            if(debtSkillTreePage){DrawDebtSkillTree();}
+            else
+            {
+                Text(68,276,T("REPAYS ARE PERMANENT. EACH 25,000,000 PAID EARNS ONE LEVEL AND ONE POINT.","返済は取り消せません。累計2,500万ごとにレベルとスキルポイントを1獲得。"),small,Mist,1200);
+                int[] payments={1000000,5000000,25000000};string[] labels={"1,000,000","5,000,000","25,000,000"};
+                for(int i=0;i<payments.Length;i++)if(Button(new Rect(68+i*260,330,230,62),T("PAY ","返済 ")+labels[i]+T(" SCRAP"," スクラップ"),i==2))
+                {int before=DebtLevel;if(RepayDebt(payments[i]))Notify("Debt payment recorded. Level "+before+" → "+DebtLevel,"返済を記録。レベル "+before+" → "+DebtLevel);}
+                if(Button(new Rect(68,409,750,58),T("PAY ALL AVAILABLE  /  ","払える分をすべて返済  /  ")+Mathf.Min(Credits,DebtRemaining).ToString("N0"),true))RepayDebt(Mathf.Min(Credits,DebtRemaining));
+                Text(68,494,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
+                Text(68,542,T("The collar detonator stays with the Raider Boss. Clearing your balance is the only way out.","起爆装置はレイダーのボスが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
+                if(Button(new Rect(68,632,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
+            }
+            if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る")))screen=Screen.Hub;
+        }
+
+        void DrawDebtSkillTree()
+        {
+            string[] tracks={"HANDGUN","SHOTGUN","ASSAULT","PRECISION"};string[] ja={"ハンドガン","ショットガン","アサルト","精密射撃"};
+            for(int i=0;i<4;i++)if(Button(new Rect(68+i*220,266,202,46),T(tracks[i],ja[i]),i==debtTrack))debtTrack=i;
+            var nodes=debtSkillNodes.FindAll(n=>n.track==tracks[debtTrack]);
+            debtSkillScroll=GUI.BeginScrollView(new Rect(68,323,1280,425),debtSkillScroll,new Rect(0,0,1235,Mathf.Max(425,nodes.Count*82)));
+            for(int i=0;i<nodes.Count;i++)
+            {
+                var n=nodes[i];float y=i*82;bool unlocked=unlockedDebtSkills.Contains(n.id),available=DebtSkillAvailable(n);Panel(new Rect(0,y,1220,72),unlocked?Cyan:available?Gold*.8f:new Color(.24f,.31f,.32f));
+                string detail=DebtSkillDescription(n);Text(18,y+8,(VaultLanguage.Japanese?n.ja:n.en)+"   ·   "+detail,label,unlocked?Cyan:Color.white,900);
+                string prereq=n.requires.Length==0?T("ROOT","起点"):string.Join(" + ",n.requires);
+                Text(20,y+40,T("Requires: ","前提: ")+prereq,tiny,Mist,880);
+                if(unlocked)Text(1020,y+21,T("UNLOCKED","取得済み"),small,Cyan,180);
+                else if(available)
+                {
+                    bool hasPoints=DebtSkillPoints>0;
+                    if(Button(new Rect(1000,y+14,195,44),hasPoints?T("UNLOCK  /  1 PT","取得  /  1 pt"):T("NO POINTS","ポイント不足"),hasPoints)&&hasPoints)TryUnlockDebtSkill(n.id);
+                }
+                else Text(1020,y+21,T("LOCKED","未解放"),small,Mist,180);
+            }
+            GUI.EndScrollView();
+            Text(68,759,T("Four weapon paths · 10 nodes each · choose damage, cadence, precision, ammo, survival and slot synergies.","4系統・各10ノード。威力、連射、精度、弾薬、生存力、武器枠の相乗効果を選択。"),tiny,Mist,1220);
+            if(Button(new Rect(1025,790,320,52),T("BACK TO REPAYMENTS","返済画面へ戻る")))debtSkillTreePage=false;
+        }
+        string DebtSkillDescription(DebtSkillNode node)
+        {
+            string en=node.kind==DebtSkillKind.Damage?"damage":node.kind==DebtSkillKind.FireRate?"fire rate":node.kind==DebtSkillKind.Reload?"reload speed":node.kind==DebtSkillKind.DamageReduction?"damage reduction":node.kind==DebtSkillKind.AmmoPickup?"ammo pickup":node.kind==DebtSkillKind.ShopDiscount?"shop discount":node.kind==DebtSkillKind.KillChain?"kill chain":node.kind==DebtSkillKind.BossDamage?"boss damage":"bonus";
+            string ja=node.kind==DebtSkillKind.Damage?"威力":node.kind==DebtSkillKind.FireRate?"連射速度":node.kind==DebtSkillKind.Reload?"リロード速度":node.kind==DebtSkillKind.DamageReduction?"ダメージ軽減":node.kind==DebtSkillKind.AmmoPickup?"弾薬取得量":node.kind==DebtSkillKind.ShopDiscount?"購入割引":node.kind==DebtSkillKind.KillChain?"撃破連鎖":node.kind==DebtSkillKind.BossDamage?"ボス特効":"強化";
+            string value=node.kind==DebtSkillKind.Accuracy?"+"+(node.value*100).ToString("0")+T(" accuracy"," 命中率"):node.kind==DebtSkillKind.WeaponSlot?T("+1 weapon slot","武器枠 +1"):node.kind==DebtSkillKind.Health?"+"+node.value.ToString("0")+T(" max HP"," 最大HP"):node.kind==DebtSkillKind.HealOnKill?"+"+node.value.ToString("0")+T(" HP per kill"," 撃破HP回復"):node.kind==DebtSkillKind.Recovery?"+"+node.value.ToString("0.0")+T(" HP/s"," HP/秒"):node.kind==DebtSkillKind.Ammo?"+"+node.value.ToString("0")+T(" magazine rounds"," 装弾数"):"+"+(node.value*100).ToString("0")+"% "+T(en,ja);
+            return value;
+        }
+
+        static List<DebtSkillNode> BuildDebtSkillNodes()
+        {
+            var n=new List<DebtSkillNode>();string[] tracks={"HANDGUN","SHOTGUN","ASSAULT","PRECISION"};
+            string[][] titlesEn={
+                new[]{"Caliber I","Quick Draw I","Sight Picture I","Fresh Magazine I","Deep Pockets I","Caliber II","Reinforced Lining I","Impact Padding I","Emergency Recovery I","Last Stand Heal"},
+                new[]{"Heavy Payload I","Pump Rhythm I","Choke I","Shell Practice I","Shell Carrier I","Heavy Payload II","Reinforced Lining II","Impact Padding II","Emergency Recovery II","Scavenger's Reserve"},
+                new[]{"Pressure I","Sustained Fire I","Combat Sight I","Mag Drill I","Belt Carrier I","Pressure II","Ammo Scavenging I","Quartermaster I","Kill Chain I","Ammo Scavenging II"},
+                new[]{"Penetrator I","Bolt Timing I","Rangefinder I","Field Strip I","Long Case I","Penetrator II","Boss Hunter I","Third Weapon Slot","Fourth Weapon Slot","Boss Hunter II"}};
+            string[][] titlesJa={
+                new[]{"口径強化 I","速射 I","照準 I","素早い装填 I","深い弾倉 I","口径強化 II","防護ライニング I","衝撃緩和 I","応急回復 I","起死回生"},
+                new[]{"重装弾 I","ポンプ操作 I","集弾 I","装填訓練 I","弾薬携行 I","重装弾 II","防護ライニング II","衝撃緩和 II","応急回復 II","回収弾薬"},
+                new[]{"制圧火力 I","継続射撃 I","戦闘照準 I","高速装填 I","ベルト給弾 I","制圧火力 II","弾薬回収 I","仕入れの達人 I","撃破連鎖 I","弾薬回収 II"},
+                new[]{"貫通弾 I","操作短縮 I","測距 I","分解整備 I","長尺弾倉 I","貫通弾 II","対ボス戦 I","武器枠 第3","武器枠 第4","対ボス戦 II"}};
+            for(int f=0;f<4;f++)
+            {
+                string prefix="weapon"+f+"_";
+                n.Add(new DebtSkillNode(prefix+"damage1",tracks[f],titlesEn[f][0],titlesJa[f][0],DebtSkillKind.Damage,.12f,f));
+                n.Add(new DebtSkillNode(prefix+"fire1",tracks[f],titlesEn[f][1],titlesJa[f][1],DebtSkillKind.FireRate,.06f,f));
+                n.Add(new DebtSkillNode(prefix+"accuracy1",tracks[f],titlesEn[f][2],titlesJa[f][2],DebtSkillKind.Accuracy,.04f,f));
+                n.Add(new DebtSkillNode(prefix+"reload1",tracks[f],titlesEn[f][3],titlesJa[f][3],DebtSkillKind.Reload,.08f,f));
+                n.Add(new DebtSkillNode(prefix+"ammo1",tracks[f],titlesEn[f][4],titlesJa[f][4],DebtSkillKind.Ammo,2,f));
+                n.Add(new DebtSkillNode(prefix+"damage2",tracks[f],titlesEn[f][5],titlesJa[f][5],DebtSkillKind.Damage,.25f,f,prefix+"damage1",prefix+"fire1"));
+                DebtSkillKind[] utilityKinds=f==0?new[]{DebtSkillKind.Health,DebtSkillKind.DamageReduction,DebtSkillKind.Recovery,DebtSkillKind.HealOnKill}:
+                    f==1?new[]{DebtSkillKind.Health,DebtSkillKind.DamageReduction,DebtSkillKind.Recovery,DebtSkillKind.Ammo}:
+                    f==2?new[]{DebtSkillKind.AmmoPickup,DebtSkillKind.ShopDiscount,DebtSkillKind.KillChain,DebtSkillKind.AmmoPickup}:
+                    new[]{DebtSkillKind.BossDamage,DebtSkillKind.WeaponSlot,DebtSkillKind.WeaponSlot,DebtSkillKind.BossDamage};
+                float[] values=f==0?new[]{20f,.05f,.5f,3f}:f==1?new[]{25f,.06f,.6f,3f}:f==2?new[]{.2f,.05f,.12f,.25f}:new[]{.12f,1f,1f,.18f};
+                for(int j=0;j<4;j++)
+                {
+                    string id=f==3&&j==1?"survival_slot1":f==3&&j==2?"survival_slot2":prefix+"utility"+(j+1);
+                    string[] req=j==0?new[]{prefix+"accuracy1",prefix+"ammo1"}:j==1?new[]{prefix+"reload1",prefix+"damage2"}:j==2?new[]{prefix+"utility1",prefix+"damage2"}:new[]{prefix+"utility2",prefix+"utility3"};
+                    if(f==3&&j==2)req=new[]{"survival_slot1",prefix+"utility1"};
+                    var en=titlesEn[f][6+j];var ja=titlesJa[f][6+j];
+                    n.Add(new DebtSkillNode(id,tracks[f],en,ja,utilityKinds[j],values[j],-1,req));
+                }
+            }
+            return n;
+        }
+    }
+}
