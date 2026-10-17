@@ -3,7 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEditor.iOS;
+using iOSPlatformIconKind = UnityEditor.iOS.iOSPlatformIconKind;
 using UnityEngine;
 using UnityEngine.Rendering;
 
