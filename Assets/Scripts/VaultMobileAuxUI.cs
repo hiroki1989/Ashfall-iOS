@@ -5,8 +5,9 @@ namespace NeonVault
     {
         public Rect MobileCityView=>new Rect(40,140,1360,535);
         bool mobileMapEntered;int mobileShopPage,mobileSalePage,mobileCatalogPage,mobileSkillPage;
-        GUIStyle MobileCopy=>new GUIStyle(label){fontSize=26,wordWrap=true};
-        void MobileCopyAt(float x,float y,string text,Color color,float width=1000)=>Text(x,y,text,MobileCopy,color,width);
+        GUIStyle MobileCopy=>new GUIStyle(label){fontSize=34,wordWrap=true,clipping=TextClipping.Clip};
+        void MobileCopyAt(float x,float y,string text,Color color,float width=1000)
+        {GUIStyle style=MobileCopy;float height=Mathf.Clamp(style.CalcHeight(new GUIContent(text??""),width)+8,42,145);GUI.color=color;GUI.Label(new Rect(x,y,width,height),text??"",style);GUI.color=Color.white;}
         void DrawMobileCityMap()
         {
             if(!mobileMapEntered){expeditionCityZoom=1.6f;expeditionMapScroll=ExpeditionMap.CityPoint(expeditionMapSelection)*expeditionCityZoom-MobileCityView.size*.5f;mobileMapEntered=true;}

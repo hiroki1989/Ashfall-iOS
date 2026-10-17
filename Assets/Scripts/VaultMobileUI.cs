@@ -9,21 +9,23 @@ namespace NeonVault
             get
             {
                 Rect s=MobileTouchControls.SafeRect;if(s.width<1)s=new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height);
-                float scale=Mathf.Min(s.width/1440f,s.height/900f);
-                return Matrix4x4.TRS(new Vector3(s.x+(s.width-1440*scale)*.5f,s.y+(s.height-900*scale)*.5f,0),Quaternion.identity,Vector3.one*scale);
+                // Fit the mobile canvas to the complete safe area. The old uniform
+                // scale letterboxed landscape phones and made every label tiny.
+                return Matrix4x4.TRS(new Vector3(s.x,s.y,0),Quaternion.identity,new Vector3(s.width/1440f,s.height/900f,1));
             }
         }
         Vector2 MobileCanvasPoint(Vector2 bottomScreen)=>MobileCanvasMatrix.inverse.MultiplyPoint3x4(new Vector3(bottomScreen.x,UnityEngine.Screen.height-bottomScreen.y,0));
-        bool MobileButton(Rect r,string caption){Panel(r,Cyan);return GUI.Button(r,caption,new GUIStyle(centered){fontSize=29,wordWrap=true});}
+        bool MobileButton(Rect r,string caption){Panel(r,Cyan);return GUI.Button(r,caption,new GUIStyle(centered){fontSize=38,wordWrap=true,clipping=TextClipping.Clip});}
         void DrawMobileMenu()
         {
             if(menuArt)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
             Box(new Rect(0,0,770,900),new Color(.018f,.026f,.03f,.9f));
             Text(55,118,"ASHFALL",title,Gold,660);Text(60,222,T("MOBILE / LAST LIGHT","モバイル / 最後の灯"),heading,Cyan,670);
             Text(60,310,T("Left stick: move\nRight stick: aim\nHold FIRE to shoot","左スティック：移動\n右スティック：照準\n射撃ボタンを押して射撃"),new GUIStyle(label){fontSize=28,wordWrap=true},Mist,650);
-            if(MobileButton(new Rect(58,510,650,112),T("ENTER SAFEHOUSE","拠点へ")))EnterHub();
-            if(MobileButton(new Rect(58,645,650,112),T("EQUIPMENT","装備を確認")))ToggleInventory();
-            Text(60,805,T("Landscape / iPhone + iPad","横画面 / iPhone・iPad"),label,Mist,650);
+            if(MobileButton(new Rect(58,470,650,112),T("ENTER SAFEHOUSE","拠点へ")))EnterHub();
+            if(MobileButton(new Rect(58,605,650,112),T("EQUIPMENT","装備を確認")))ToggleInventory();
+            if(HasSavedRun&&MobileButton(new Rect(58,740,650,100),T("CONTINUE SAVED EXPEDITION","保存した探索を再開")))ResumeSavedRun();
+            Text(60,855,T("Landscape / iPhone + iPad","横画面 / iPhone・iPad"),small,Mist,650);
         }
         void DrawMobileHub()
         {
@@ -64,9 +66,16 @@ namespace NeonVault
                 string loot=drop!=null?VaultLanguage.GunName(drop.gun):armor!=null?Armory.Name(armor.item):module!=null?module.item.Name:melee!=null?MeleeWeaponCatalog.Name(melee.item):null;
                 if(loot!=null||NearbyAmmoCrate||NearbySupplyChest)
                 {
-                    Panel(new Rect(420,490,600,120),Gold);
-                    Text(440,510,loot??(NearbyAmmoCrate?T("AMMO CRATE","弾薬箱"):T("SUPPLY CHEST","物資チェスト")),new GUIStyle(label){fontSize=26,wordWrap=true},Gold,560);
-                    Text(440,566,T("Tap TAKE to collect / open","「拾得」で回収・開封"),new GUIStyle(label){fontSize=25},Mist,560);
+                    Panel(new Rect(365,480,710,160),Gold);
+                    if(drop!=null)ItemPortraits.Draw(new Rect(382,495,128,128),drop.gun);
+                    else if(armor!=null)ItemPortraits.Draw(new Rect(382,495,128,128),armor.item);
+                    else if(module!=null)ManufacturerBranding.ModulePortrait(new Rect(382,495,128,128),module.item);
+                    else if(melee!=null)DrawMeleeIcon(new Rect(382,495,128,128),melee.item.family);
+                    string rarity=drop!=null?VaultLanguage.RarityName(drop.gun.rarity):armor!=null?VaultLanguage.RarityName(armor.item.rarity):module!=null?VaultLanguage.RarityName(module.item.rarity):melee!=null?VaultLanguage.RarityName(melee.item.rarity):NearbyAmmoCrate?T("AMMO CRATE","弾薬箱"):T("SUPPLY CHEST","物資チェスト");
+                    int score=drop!=null?GearScoring.Score(drop.gun):armor!=null?GearScoring.Score(armor.item):module!=null?GearScoring.Score(module.item):melee!=null?MeleeWeaponCatalog.Score(melee.item):0;
+                    Text(528,494,loot??rarity,new GUIStyle(label){fontSize=34,wordWrap=true},Gold,520);
+                    Text(528,544,(score>0?T("SCORE ","評価 ")+score+"  / ":"")+rarity,new GUIStyle(label){fontSize=29,wordWrap=true},Mist,520);
+                    Text(528,595,T("Tap TAKE to collect / open","「拾得」で回収・開封"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,520);
                 }
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&foe.hp<foe.maxHp&&Layout.IsVisible(foe.transform.position))
                 {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),Gold);}
@@ -77,7 +86,8 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.01f,.02f,.025f,.88f));Text(300,190,T("EXPEDITION PAUSED","探索一時停止"),heading,Gold,900);
             if(MobileButton(new Rect(300,320,840,120),T("RESUME","探索を再開"))){screen=Screen.Playing;Time.timeScale=1;}
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
-            if(MobileButton(new Rect(300,620,840,120),T("RETURN TO SAFEHOUSE","拠点へ帰還"))){Time.timeScale=1;EnterHub();}
+            if(MobileButton(new Rect(300,610,405,120),T("SAVE & MENU","保存してメニューへ")))SaveRunAndReturnToMenu();
+            if(MobileButton(new Rect(735,610,405,120),T("RETURN TO SAFEHOUSE","拠点へ帰還"))){Time.timeScale=1;EnterHub();}
         }
         void DrawMobileOverlay()
         {

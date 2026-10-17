@@ -41,9 +41,9 @@ namespace NeonVault
         {
             if(mobileInventoryText==null)
             {
-                mobileInventoryText=new GUIStyle(label){fontSize=24,wordWrap=true,clipping=TextClipping.Clip};
-                mobileInventoryDetails=new GUIStyle(label){fontSize=21,wordWrap=true,clipping=TextClipping.Clip};
-                mobileInventoryButton=new GUIStyle(centered){fontSize=24,wordWrap=true};
+                mobileInventoryText=new GUIStyle(label){fontSize=31,wordWrap=true,clipping=TextClipping.Clip};
+                mobileInventoryDetails=new GUIStyle(label){fontSize=28,wordWrap=true,clipping=TextClipping.Clip};
+                mobileInventoryButton=new GUIStyle(centered){fontSize=30,wordWrap=true};
             }
             Box(new Rect(0,0,1440,900),new Color(.027f,.028f,.023f,.99f));
             MobileItemText(new Rect(40,18,1020,48),T("EQUIPMENT / choose an equip slot","装備 / 装備する枠を選択"),Gold);

@@ -365,3 +365,7 @@ D:/Unity/Ashfall-iOSに不透明1024pxのアプリアイコンとiPhone/iPad全1
 原因: iOS専用VaultMobileUI/VaultMobileInventoryUI/VaultMobileAuxUIの別描画経路が残り、PC側で追加した機能がiOSに反映されていなかった。D:/Unity/Ashfall-iOSのVaultUI.OnGUIをPC版共通のmanufacturer/inventory/menu/hub/shop/map/HUD/overlay描画へ統一。MobileTouchControlsは継続し、タッチ操作・safe area・モバイル照準入力だけ保持。iOS専用画面は通常描画経路で呼ばない。
 反映: 所持品破棄と比較スコア（銃は装備中の低い方、防具は同部位、module/近接は同系統）、説明文スクロール、売却一覧のイラスト/レア度/スコア、返済進捗/次レベル残額（初回100万、以降12%ずつ増加）、拾得module画像、出撃中checkpoint保存/メニューから再開、死亡/拠点帰還時のshake/checkpoint解除を共通コードで接続。拠点右スティックを含む既存モバイル操作入力は維持。
 検証: 2026-10-18ソース確認で共通UI route、各機能の実装箇所、mobile input component維持、git diff --checkを確認。過去のmobile-preview.resultは2026-10-17の旧結果につき今回の修正検証として扱わない。Unity Editorは起動中だが、最終変更後のcompile/buildログを確認できず、実機iOSの表示/タッチQAと新IPA作成は未実施。次はUnity再compile後、iOS previewと実機で一連の機能・見た目を再確認してから配信用buildを作る。
+
+## iOSモバイルUIの可読性を再調整（2026-10-18）
+前回PC共通UIへ統一した結果、スマートフォン表示の文字が小さくなったため、iOSではVaultMobileUI/VaultMobileInventoryUI/VaultMobileAuxUIの専用描画経路を再接続。safe area全幅へcanvasをfitし、ボタン/本文フォントを拡大。inventoryの破棄/比較/説明スクロール、売却の画像/score/rarity、返済残額/メーター、pickup画像、pause中の保存してメニューへ、saved run再開をモバイル画面に維持。拠点stickはMobileTouchControlsが従来通り表示する経路を確認。iOS専用描画へ分岐したためPC側描画コードは維持。
+検証: git diff --check pass、要求機能のiOSソース経路と拠点stick可視条件を確認。Editor.logは2026-10-17のため新しいcompile証跡ではない。最終Unity再compile/画面撮影/実機タッチQA/新IPA作成は未実施。

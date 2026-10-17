@@ -63,7 +63,21 @@ namespace NeonVault
             Styles();float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
-            if(DebtIntroVisible){DrawDebtIntro();if(MobileTouchControls.Enabled){if(MobileButton(new Rect(1080,15,320,110),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke);}else LanguageSelector();return;}
+            if(MobileTouchControls.Enabled)
+            {
+                if(DebtIntroVisible){DrawMobileDebtIntro();DrawMobileLanguageButton();return;}
+                if(manufacturerRegistry)DrawMobileManufacturer();
+                else if(InventoryOpen)DrawMobileInventory();
+                else if(screen==Screen.Menu)DrawMobileMenu();
+                else if(screen==Screen.Hub)DrawMobileHub();
+                else if(screen==Screen.Shop)DrawMobileShop();
+                else if(screen==Screen.DungeonSelect)DrawMobileCityMap();
+                else if(screen==Screen.Playing)DrawMobileHUD();
+                else if(screen==Screen.Pause){DrawMobileHUD();DrawMobilePause();}
+                else DrawMobileOverlay();
+                if(screen==Screen.Menu||screen==Screen.Hub)DrawMobileLanguageButton();return;
+            }
+            if(DebtIntroVisible){DrawDebtIntro();LanguageSelector();return;}
             if(manufacturerRegistry)DrawManufacturerRegistry();
             else if(InventoryOpen)DrawInventory();
             else if(screen==Screen.Menu)DrawMenu();
@@ -75,6 +89,16 @@ namespace NeonVault
                 DrawHUD();if(screen!=Screen.Playing)DrawOverlay();
             }
             LanguageSelector();
+        }
+        void DrawMobileLanguageButton()
+        { if(MobileButton(new Rect(1190,12,220,94),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke); }
+        void DrawMobileDebtIntro()
+        {
+            Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));Panel(new Rect(55,125,1330,660),new Color(1,.27f,.19f));
+            Text(95,160,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),new GUIStyle(heading){fontSize=42,wordWrap=true},new Color(1,.39f,.28f),1230);
+            Text(95,245,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Raider Boss owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはレイダーボス、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=31,wordWrap=true},Mist,1220);
+            Text(95,480,T("Repayment earns levels and skill points. Choose a weapon path, grow stronger, and survive long enough to clear the debt.","返済でレベルとスキルポイントを獲得する。武器系統を選んで強くなり、借金を返しきるまで生き残れ。"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,1220);
+            if(MobileButton(new Rect(300,640,840,120),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")))MarkDebtIntroSeen();
         }
         void DrawDebtIntro()
         {
