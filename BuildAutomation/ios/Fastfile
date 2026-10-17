@@ -1,0 +1,16 @@
+default_platform(:ios)
+
+platform :ios do
+  lane :upload do
+    ipas = Dir[File.join(ENV.fetch('IOS_WORK'), 'ipa', '*.ipa')]
+    UI.user_error!('Expected exactly one exported IPA') unless ipas.length == 1
+    upload_to_testflight(
+      ipa: ipas.first,
+      app_identifier: ENV.fetch('BUNDLE_ID'),
+      api_key_path: File.join(ENV.fetch('IOS_WORK'), 'asc-api-key.json'),
+      skip_submission: true,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+  end
+end

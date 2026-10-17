@@ -1,0 +1,84 @@
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      distribution:
+        description: 'Ad Hoc IPA artifact or App Store Connect upload'
+        type: choice
+        default: adhoc
+        options:
+          - adhoc
+          - app-store
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      BUNDLE_ID: com.hiroki1989.ashfall
+      SOURCE_TAG: ios-source-20261017
+      DISTRIBUTION: ${{ inputs.distribution }}
+      IOS_WORK: ${{ runner.temp }}/ashfall-ios
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate and install signing credentials
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: bash BuildAutomation/ios/signing.sh
+      - name: Download Unity Xcode export
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$IOS_WORK/source"
+          gh release download "$SOURCE_TAG" --repo "$GITHUB_REPOSITORY" --pattern Ashfall-Xcode.zip --dir "$IOS_WORK"
+          ditto -x -k "$IOS_WORK/Ashfall-Xcode.zip" "$IOS_WORK/source"
+          test -f "$IOS_WORK/source/Unity-iPhone.xcodeproj/project.pbxproj"
+          python3 BuildAutomation/ios/prepare_source.py
+      - name: Select installed stable Xcode
+        run: |
+          python3 BuildAutomation/ios/select_xcode.py
+          xcodebuild -version
+      - name: Install build automation dependencies
+        run: |
+          gem install --user-install fastlane --no-document
+          echo "$(ruby -e 'print Gem.user_dir')/bin" >> "$GITHUB_PATH"
+      - name: Configure Release signing and build number
+        run: ruby BuildAutomation/ios/configure.rb
+      - name: Archive and export IPA
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild -project "$IOS_WORK/source/Unity-iPhone.xcodeproj" -scheme Unity-iPhone -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$IOS_WORK/Ashfall.xcarchive" -derivedDataPath "$IOS_WORK/DerivedData" archive
+          xcodebuild -exportArchive -archivePath "$IOS_WORK/Ashfall.xcarchive" -exportPath "$IOS_WORK/ipa" -exportOptionsPlist "$IOS_WORK/ExportOptions.plist"
+      - name: Save signed IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ashfall-iOS-${{ github.run_number }}
+          path: ${{ env.IOS_WORK }}/ipa/*.ipa
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload to TestFlight
+        if: inputs.distribution == 'app-store'
+        working-directory: BuildAutomation/ios
+        run: fastlane ios upload
+      - name: Remove signing credentials
+        if: always()
+        run: bash BuildAutomation/ios/cleanup.sh
