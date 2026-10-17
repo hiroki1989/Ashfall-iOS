@@ -356,3 +356,7 @@ D:/Unity/Ashfall-iOSに不透明1024pxのアプリアイコンとiPhone/iPad全1
 
 ## Unity Cloud Build #5 の修正（2026-10-17）
 添付のbuild5.logでAssets/Editor/IOSProjectBuilder.csのCS0104を3箇所確認。using UnityEditor.iOSがUnityEditor.BuildPipelineとUnityEditor.iOS.BuildPipelineを曖昧化した。iOSPlatformIconKindだけの型エイリアスに変更、git diff --checkと名前解決の静的確認。main e90e004へpush。Unity Cloud再ビルドは未検証。
+
+## iOS日本語表示・射撃操作修正（2026-10-17）
+ユーザー実機で日本語UIの欠落を報告。OS依存フォントの代わりにNoto Sans JP変数TTFをResourcesへ同梱し、IMGUI UIと「回避」3D表示に共通フォントを設定。SIL OFLライセンス同梱。右スティックは照準のみ、独立した押し続け射撃ボタンを追加。拠点の移動スティックは既存ReadPlayerMovement→UpdateHub経路で動作し、拠点表示/可視条件を維持。旧ヘルプ説明を修正、MobileInputReviewの期待値も新入力へ同期したが実行はしていない。git diff --checkのみ確認。
+未完: インストール済IPAへの修正反映にはUnityでXcodeを書き出し直し、GitHub release `ios-source-20261017`のAshfall-Xcode.zipを更新後、`workflow_dispatch`でApp Store Connect配信用ビルドを実行する必要がある。UI操作基盤が起動できず今回Xcode再export/IPA uploadなし。プロジェクトのAssets変更のみ。実機表示・操作QA未実施。

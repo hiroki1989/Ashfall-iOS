@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    public enum MobileAction { Reload, Pickup, Dodge, Melee, SwitchWeapon, Interact, Inventory, Pause }
+    public enum MobileAction { Reload, Pickup, Dodge, Melee, SwitchWeapon, Interact, Inventory, Pause, Fire }
 
     /// <summary>Touch coordinates are screen pixels (bottom left); exposed layout rectangles use GUI pixels (top left).</summary>
     [DefaultExecutionOrder(-200)]
@@ -24,11 +24,12 @@ namespace NeonVault
         public static Rect SafeRect { get; private set; }
         readonly Dictionary<int, int> fingers = new Dictionary<int, int>();
         readonly HashSet<MobileAction> actions = new HashSet<MobileAction>();
-        readonly Rect[] buttons = new Rect[8];
-        readonly float[] feedback = new float[8];
+        readonly Rect[] buttons = new Rect[9];
+        readonly float[] feedback = new float[9];
         VaultGame game;
         int mode = -1, width, height;
         Rect previousSafe;
+        Vector2 aimStick;
         bool combat, hub, modal;
         Texture2D disc;
         GUIStyle textStyle;
@@ -93,6 +94,9 @@ namespace NeonVault
             buttons[(int)MobileAction.Interact] = new Rect(SafeRect.center.x - b / 2, SafeRect.yMax - pad - b, b, b);
             buttons[(int)MobileAction.Inventory] = new Rect(SafeRect.xMax - pad - 2 * b - gap, SafeRect.y + pad, b, b);
             buttons[(int)MobileAction.Pause] = new Rect(SafeRect.xMax - pad - b, SafeRect.y + pad, b, b);
+            // Keep fire as a distinct hold button immediately beside the aim stick.
+            // Use the open center of the action row above the aim stick, clear of reload/pickup.
+            buttons[(int)MobileAction.Fire] = new Rect((side + b + bx) * .5f - b * .5f, y - gap - b, b, b);
             if (LeftHanded)
             {
                 MoveRect = Mirror(MoveRect); AimRect = Mirror(AimRect);
@@ -103,7 +107,7 @@ namespace NeonVault
         bool Visible(int i)
         {
             if (combat) return true;
-            if (hub) return i == (int)MobileAction.Interact || i >= (int)MobileAction.Inventory;
+            if (hub) return i == (int)MobileAction.Interact || i == (int)MobileAction.Inventory || i == (int)MobileAction.Pause;
             if (modal) return false; // Full-screen menus provide their own large close/resume buttons.
             return false;
         }
@@ -116,7 +120,9 @@ namespace NeonVault
                 for (int i = 0; i < buttons.Length; i++)
                     if (Visible(i) && buttons[i].Contains(p))
                     {
-                        fingers[id] = i; actions.Add((MobileAction)i); feedback[i] = Time.unscaledTime + .14f; return;
+                        fingers[id] = i; actions.Add((MobileAction)i); feedback[i] = Time.unscaledTime + .14f;
+                        if (i == (int)MobileAction.Fire) Firing = true;
+                        return;
                     }
                 if ((combat || hub) && MoveRect.Contains(p) && !fingers.ContainsValue(-1)) fingers[id] = -1;
                 else if (combat && AimRect.Contains(p) && !fingers.ContainsValue(-2)) fingers[id] = -2;
@@ -131,21 +137,24 @@ namespace NeonVault
             else if (owner == -2)
             {
                 Vector2 v = (p - AimRect.center) / (AimRect.width * .38f);
+                aimStick = v.magnitude < .14f ? Vector2.zero : Vector2.ClampMagnitude(new Vector2(v.x, -v.y), 1);
                 if (v.magnitude > .14f) Aim = new Vector2(v.x, -v.y).normalized;
-                Firing = true;
             }
+            else if (owner == (int)MobileAction.Fire) Firing = true;
         }
         void Release(int id)
         {
             if (!fingers.TryGetValue(id, out int owner)) return;
             fingers.Remove(id);
             if (owner == -1) Movement = Vector2.zero;
-            if (owner == -2) Firing = false;
+            if (owner == -2) aimStick = Vector2.zero;
+            if (owner == (int)MobileAction.Fire) Firing = fingers.ContainsValue((int)MobileAction.Fire);
         }
         public static void ResetInput()
         {
             Movement = Vector2.zero; Firing = false;
             if (instance == null) return;
+            instance.aimStick = Vector2.zero;
             instance.fingers.Clear(); instance.actions.Clear(); Array.Clear(instance.feedback, 0, instance.feedback.Length);
         }
         void OnApplicationFocus(bool focus) { if (!focus) ResetInput(); }
@@ -167,9 +176,11 @@ namespace NeonVault
                     disc.Apply();
                 }
                 if (textStyle == null) textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true };
+                Font bundledFont = Resources.Load<Font>("Fonts/NotoSansJP");
+                if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
-                if (combat) Stick(AimRect, Firing ? Aim * .65f : Vector2.zero, Firing);
-                string[] labels = VaultLanguage.Japanese ? new[] { "装填", "拾得", "回避", "近接", "切替", "調べる", "装備", "停止" } : new[] { "LOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE" };
+                if (combat) Stick(AimRect, aimStick, fingers.ContainsValue(-2));
+                string[] labels = VaultLanguage.Japanese ? new[] { "装填", "拾得", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃" } : new[] { "LOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE" };
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {
                     Rect r = buttons[i]; bool down = fingers.ContainsValue(i) || Time.unscaledTime < feedback[i];

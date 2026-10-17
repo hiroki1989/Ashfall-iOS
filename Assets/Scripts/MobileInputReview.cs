@@ -108,15 +108,20 @@ namespace NeonVault
             Pointer(1,move,new Vector2(move.width*.19f,0),TouchPhase.Moved);
             Check(Mathf.Abs(MobileTouchControls.Movement.x-.5f)<.02f,"Movement analog half strength");
             Pointer(2,aim,new Vector2(0,-aim.height*.3f),TouchPhase.Began);
-            Check(MobileTouchControls.Firing && MobileTouchControls.Movement.x>.45f,"Independent simultaneous move and fire");
+            Check(!MobileTouchControls.Firing && MobileTouchControls.Movement.x>.45f,"Aim stick does not fire");
             Check(Vector2.Dot(MobileTouchControls.Aim,Vector2.up)>.99f,"Aim GUI to screen axis");
             Check((VaultMobileInputBridge.ToWorldMovement(Vector2.up)-Vector3.right).sqrMagnitude<.001f,"Aim world conversion");
+            Rect fire=MobileTouchControls.GetControlRect(MobileAction.Fire);
+            Pointer(3,fire,Vector2.zero,TouchPhase.Began);
+            Check(MobileTouchControls.Firing && MobileTouchControls.Movement.x>.45f,"Independent simultaneous move, aim, and fire");
             Pointer(1,move,Vector2.zero,TouchPhase.Ended);
-            Check(MobileTouchControls.Movement==Vector2.zero && MobileTouchControls.Firing,"Move release retains aim finger");
+            Check(MobileTouchControls.Movement==Vector2.zero && MobileTouchControls.Firing,"Move release retains fire hold");
             Pointer(1,move,Vector2.zero,TouchPhase.Began);
             Pointer(1,move,new Vector2(move.width*.6f,0),TouchPhase.Moved);
             Pointer(2,aim,Vector2.zero,TouchPhase.Canceled);
-            Check(!MobileTouchControls.Firing && MobileTouchControls.Movement.x>.99f,"Aim cancel retains move finger and clamps magnitude");
+            Check(MobileTouchControls.Firing && MobileTouchControls.Movement.x>.99f,"Aim cancel leaves fire hold and clamps movement");
+            Pointer(3,fire,Vector2.zero,TouchPhase.Canceled);
+            Check(!MobileTouchControls.Firing && MobileTouchControls.Movement.x>.99f,"Fire release retains move finger");
             Pointer(1,move,Vector2.zero,TouchPhase.Canceled);
             Check(MobileTouchControls.Movement==Vector2.zero,"Move cancellation");
             foreach(MobileAction action in Enum.GetValues(typeof(MobileAction)))
@@ -130,19 +135,20 @@ namespace NeonVault
             Pointer(1,move,Vector2.zero,TouchPhase.Began);
             Pointer(1,move,new Vector2(move.width*.6f,0),TouchPhase.Moved);
             Pointer(2,aim,new Vector2(aim.width*.3f,0),TouchPhase.Began);
-            Pointer(3,MobileTouchControls.GetControlRect(MobileAction.Reload),Vector2.zero,TouchPhase.Began);
+            Pointer(3,fire,Vector2.zero,TouchPhase.Began);
+            Pointer(4,MobileTouchControls.GetControlRect(MobileAction.Reload),Vector2.zero,TouchPhase.Began);
             MobileTouchControls.ResetInput();
             Check(MobileTouchControls.Movement==Vector2.zero && !MobileTouchControls.Firing && !MobileTouchControls.Consume(MobileAction.Reload),"Focus/pause reset path clears held fingers and actions");
         }
         IEnumerator VerifyModal()
         {
             game.ToggleInventory(); yield return null; yield return null;
-            Pointer(9,MobileTouchControls.AimRect,Vector2.zero,TouchPhase.Began);
+            Pointer(9,MobileTouchControls.GetControlRect(MobileAction.Fire),Vector2.zero,TouchPhase.Began);
             Check(!MobileTouchControls.Firing,"Inventory blocks firing input");
             Check(!game.Active,"Inventory blocks active combat");
             game.ToggleInventory(); yield return null; yield return null;
             game.screen=VaultGame.Screen.Pause; yield return null; yield return null;
-            Pointer(9,MobileTouchControls.AimRect,Vector2.zero,TouchPhase.Began);
+            Pointer(9,MobileTouchControls.GetControlRect(MobileAction.Fire),Vector2.zero,TouchPhase.Began);
             Check(!MobileTouchControls.Firing,"Pause blocks firing input");
             game.screen=VaultGame.Screen.Playing; yield return null; yield return null;
         }

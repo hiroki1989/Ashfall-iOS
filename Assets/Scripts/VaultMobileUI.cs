@@ -20,7 +20,7 @@ namespace NeonVault
             if(menuArt)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
             Box(new Rect(0,0,770,900),new Color(.018f,.026f,.03f,.9f));
             Text(55,118,"ASHFALL",title,Gold,660);Text(60,222,T("MOBILE / LAST LIGHT","モバイル / 最後の灯"),heading,Cyan,670);
-            Text(60,310,T("Left stick: move\nRight stick: drag to aim, hold to fire\nRelease to stop shooting","左スティック：移動\n右スティック：照準・押し続けて射撃\n指を離すと射撃停止"),new GUIStyle(label){fontSize=28,wordWrap=true},Mist,650);
+            Text(60,310,T("Left stick: move\nRight stick: aim\nHold FIRE to shoot","左スティック：移動\n右スティック：照準\n射撃ボタンを押して射撃"),new GUIStyle(label){fontSize=28,wordWrap=true},Mist,650);
             if(MobileButton(new Rect(58,510,650,112),T("ENTER SAFEHOUSE","拠点へ")))EnterHub();
             if(MobileButton(new Rect(58,645,650,112),T("EQUIPMENT","装備を確認")))ToggleInventory();
             Text(60,805,T("Landscape / iPhone + iPad","横画面 / iPhone・iPad"),label,Mist,650);

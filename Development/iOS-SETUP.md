@@ -30,7 +30,7 @@ Macへ独立コピーを移し、同一UnityバージョンとiOS Build Support�
 
 ## タッチ操作 / Touch controls
 
-- 左の半透明スティックでアナログ移動。右スティックを押してドラッグすると照準・連射、離すと射撃停止。移動と射撃を別の指で同時操作。 / Left analog movement; hold/drag the right stick to aim and fire, release to stop.
+- 左の半透明スティックでアナログ移動。拠点でも同じスティックで移動。右スティックは照準専用で、射撃ボタンを押している間だけ発射。移動・照準・射撃を別々の指で同時操作。 / Left analog stick moves both in combat and in the safehouse. The right stick only aims; hold the separate FIRE button to shoot. Move, aim, and fire can be controlled simultaneously with separate fingers.
 - 装填、拾得（チェスト・弾薬箱の開封も兼用）、回避、近接、武器切替、調べる、装備、一時停止。 / Reload, take/open containers, dodge, melee, swap, interact, inventory and pause.
 - 装備一覧はドラッグ、都市地図はドラッグ＋2本指ピンチ。商店・返済・スキル・メーカー図鑑・報酬も大きな専用ボタン。 / Drag inventory, pan/pinch city map, large buttons for shops, debt, skills, makers and rewards.
 - 画面切替・フォーカス喪失・中断時に保持入力を解除。装備画面などの表示中は戦闘操作を停止。 / Held input clears on transitions, focus loss and suspension; modal menus block combat input.
