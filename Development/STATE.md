@@ -353,3 +353,6 @@ illustrations23b結果: build HERO_BUILD_OK。QA-illustrations23b 16checks0fail�
 
 ## iOSアイコン設定（2026-10-17）
 D:/Unity/Ashfall-iOSに不透明1024pxのアプリアイコンとiPhone/iPad全19スロット用サイズを追加。ProjectSettingsのiOS Iconへ割当、IOSProjectBuilder.ConfigureIconsで再設定可能。PNG寸法/RGB・全19参照・git diff --check確認。GitHub main fda8877にpush。Unity Cloudの新ビルド/Apple受理は未確認。既存IPAへの遡及適用なし。
+
+## Unity Cloud Build #5 の修正（2026-10-17）
+添付のbuild5.logでAssets/Editor/IOSProjectBuilder.csのCS0104を3箇所確認。using UnityEditor.iOSがUnityEditor.BuildPipelineとUnityEditor.iOS.BuildPipelineを曖昧化した。iOSPlatformIconKindだけの型エイリアスに変更、git diff --checkと名前解決の静的確認。main e90e004へpush。Unity Cloud再ビルドは未検証。
