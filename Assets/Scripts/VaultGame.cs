@@ -105,6 +105,7 @@ namespace NeonVault
         }
         public void StartRun(int? fixedSeed=null)
         {
+            ClearRunCheckpoint();shake=0;
             InventoryOpen=false;Time.timeScale=1; seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
             route.Clear(); var cell=Vector2Int.zero; route.Add(cell);
             for(int i=1;i<CurrentDungeon.AreaCount;i++)
@@ -412,6 +413,7 @@ namespace NeonVault
         void Finish(bool victory)
         {
             screen=victory?Screen.Victory:Screen.Dead;
+            ClearRunCheckpoint();shake=0;
             SaveInventory();
             OnDungeonFinished(victory);
         }

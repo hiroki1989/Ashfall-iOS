@@ -360,3 +360,8 @@ D:/Unity/Ashfall-iOSに不透明1024pxのアプリアイコンとiPhone/iPad全1
 ## iOS日本語表示・射撃操作修正（2026-10-17）
 ユーザー実機で日本語UIの欠落を報告。OS依存フォントの代わりにNoto Sans JP変数TTFをResourcesへ同梱し、IMGUI UIと「回避」3D表示に共通フォントを設定。SIL OFLライセンス同梱。右スティックは照準のみ、独立した押し続け射撃ボタンを追加。拠点の移動スティックは既存ReadPlayerMovement→UpdateHub経路で動作し、拠点表示/可視条件を維持。旧ヘルプ説明を修正、MobileInputReviewの期待値も新入力へ同期したが実行はしていない。git diff --checkのみ確認。
 未完: インストール済IPAへの修正反映にはUnityでXcodeを書き出し直し、GitHub release `ios-source-20261017`のAshfall-Xcode.zipを更新後、`workflow_dispatch`でApp Store Connect配信用ビルドを実行する必要がある。UI操作基盤が起動できず今回Xcode再export/IPA uploadなし。プロジェクトのAssets変更のみ。実機表示・操作QA未実施。
+
+## iOS画面のPC版機能・表示 parity 修正（2026-10-18）
+原因: iOS専用VaultMobileUI/VaultMobileInventoryUI/VaultMobileAuxUIの別描画経路が残り、PC側で追加した機能がiOSに反映されていなかった。D:/Unity/Ashfall-iOSのVaultUI.OnGUIをPC版共通のmanufacturer/inventory/menu/hub/shop/map/HUD/overlay描画へ統一。MobileTouchControlsは継続し、タッチ操作・safe area・モバイル照準入力だけ保持。iOS専用画面は通常描画経路で呼ばない。
+反映: 所持品破棄と比較スコア（銃は装備中の低い方、防具は同部位、module/近接は同系統）、説明文スクロール、売却一覧のイラスト/レア度/スコア、返済進捗/次レベル残額（初回100万、以降12%ずつ増加）、拾得module画像、出撃中checkpoint保存/メニューから再開、死亡/拠点帰還時のshake/checkpoint解除を共通コードで接続。拠点右スティックを含む既存モバイル操作入力は維持。
+検証: 2026-10-18ソース確認で共通UI route、各機能の実装箇所、mobile input component維持、git diff --checkを確認。過去のmobile-preview.resultは2026-10-17の旧結果につき今回の修正検証として扱わない。Unity Editorは起動中だが、最終変更後のcompile/buildログを確認できず、実機iOSの表示/タッチQAと新IPA作成は未実施。次はUnity再compile後、iOS previewと実機で一連の機能・見た目を再確認してから配信用buildを作る。

@@ -1,0 +1,98 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace NeonVault
+{
+    public partial class VaultGame
+    {
+        const string RunSaveKey = "Vault.ExpeditionCheckpoint.v1";
+        [Serializable] sealed class RunCheckpoint
+        {
+            public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount;
+            public int[] routeX, routeY, ammoReserves, ammoCrateRooms, upgradeKeys, upgradeValues;
+            public float hp, baseMaxHp, damageBonus, fireBonus, runDamage, runFire, runVitality, runDash, runChain, runHarvest, runTime, artifactShield, artifactClock;
+            public float playerX, playerZ, aimX, aimZ;
+            public bool cleared, missionCompleted;
+            public List<FoeCheckpoint> foes=new List<FoeCheckpoint>();
+            public List<GunDropCheckpoint> guns=new List<GunDropCheckpoint>();
+            public List<ArmorDropCheckpoint> armor=new List<ArmorDropCheckpoint>();
+            public List<ArtifactDropCheckpoint> modules=new List<ArtifactDropCheckpoint>();
+            public List<MeleeDropCheckpoint> melee=new List<MeleeDropCheckpoint>();
+            public List<SupplyCheckpoint> supplies=new List<SupplyCheckpoint>();
+            public List<PositionCheckpoint> chests=new List<PositionCheckpoint>();
+            public List<AmmoCrateCheckpoint> ammoCrates=new List<AmmoCrateCheckpoint>();
+        }
+        [Serializable] sealed class FoeCheckpoint { public int kind; public float x,z,hp,maxHp,timer; }
+        [Serializable] sealed class GunDropCheckpoint { public Gun item; public Vector3 position; }
+        [Serializable] sealed class ArmorDropCheckpoint { public ArmorItem item; public Vector3 position; }
+        [Serializable] sealed class ArtifactDropCheckpoint { public ArtifactItem item; public Vector3 position; }
+        [Serializable] sealed class MeleeDropCheckpoint { public MeleeWeaponItem item; public Vector3 position; }
+        [Serializable] sealed class SupplyCheckpoint { public int credits,ammoType,ammoAmount; public Vector3 position; }
+        [Serializable] sealed class PositionCheckpoint { public Vector3 position; }
+        [Serializable] sealed class AmmoCrateCheckpoint { public Vector3 position; public int type,amount; }
+
+        public bool HasSavedRun => !smoke && PlayerPrefs.HasKey(RunSaveKey);
+        void ClearRunCheckpoint(){if(PlayerPrefs.HasKey(RunSaveKey)){PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();}}
+
+        public bool SaveRunCheckpoint()
+        {
+            if(smoke||screen!=Screen.Pause||player==null||world==null)return false;
+            var save=new RunCheckpoint
+            {
+                seed=seed,dungeon=DungeonIndex,stage=SelectedStageId,room=room,kills=kills,ammo=ammo,activeWeaponSlot=ActiveWeaponSlot,
+                missionKills=missionKills,missionCompleted=missionCompleted,debtChainCount=debtChainCount,chestRoomForRun=chestRoomForRun,
+                ammoCratePlanCount=ammoCratePlanCount,hp=hp,baseMaxHp=baseMaxHp,damageBonus=damageBonus,fireBonus=fireBonus,
+                runDamage=runDamage,runFire=runFire,runVitality=runVitality,runDash=runDash,runChain=runChain,runHarvest=runHarvest,
+                runTime=runTime,artifactShield=ArtifactShield,artifactClock=artifactCombatClock,playerX=player.position.x,playerZ=player.position.z,
+                aimX=aim.x,aimZ=aim.z,cleared=cleared,ammoReserves=SaveAmmoReserves(),ammoCrateRooms=ammoCrateRoomPlan.ToArray()
+            };
+            save.routeX=new int[route.Count];save.routeY=new int[route.Count];for(int i=0;i<route.Count;i++){save.routeX[i]=route[i].x;save.routeY[i]=route[i].y;}
+            var keys=new List<int>();var values=new List<int>();foreach(var pair in runUpgradeCounts){keys.Add(pair.Key);values.Add(pair.Value);}save.upgradeKeys=keys.ToArray();save.upgradeValues=values.ToArray();
+            foreach(var foe in Enemies)if(foe!=null&&!foe.dead)save.foes.Add(new FoeCheckpoint{kind=foe.kind,x=foe.transform.position.x,z=foe.transform.position.z,hp=foe.hp,maxHp=foe.maxHp,timer=foe.timer});
+            foreach(var d in drops)save.guns.Add(new GunDropCheckpoint{item=d.gun,position=d.position});
+            foreach(var d in armorDrops)save.armor.Add(new ArmorDropCheckpoint{item=d.item,position=d.position});
+            foreach(var d in artifactDrops)save.modules.Add(new ArtifactDropCheckpoint{item=d.item,position=d.position});
+            foreach(var d in meleeDrops)save.melee.Add(new MeleeDropCheckpoint{item=d.item,position=d.position});
+            foreach(var d in supplyDrops)save.supplies.Add(new SupplyCheckpoint{credits=d.credits,ammoType=(int)d.ammoType,ammoAmount=d.ammoAmount,position=d.position});
+            foreach(var chest in chests)if(chest!=null&&!chest.opened)save.chests.Add(new PositionCheckpoint{position=chest.position});
+            foreach(var crate in fieldAmmoCrates)if(crate!=null&&crate.visual!=null)save.ammoCrates.Add(new AmmoCrateCheckpoint{position=crate.position,type=(int)crate.type,amount=crate.amount});
+            SaveInventory();SaveProgression();PlayerPrefs.SetString(RunSaveKey,JsonUtility.ToJson(save));PlayerPrefs.Save();return true;
+        }
+
+        public bool ResumeSavedRun()
+        {
+            if(!HasSavedRun)return false;
+            RunCheckpoint save;
+            try{save=JsonUtility.FromJson<RunCheckpoint>(PlayerPrefs.GetString(RunSaveKey));}
+            catch(Exception e){Debug.LogWarning("Expedition checkpoint could not be read: "+e.GetType().Name);PlayerPrefs.DeleteKey(RunSaveKey);return false;}
+            if(save==null||save.version!=1||save.routeX==null||save.routeY==null||save.routeX.Length!=save.routeY.Length||save.routeX.Length==0||save.dungeon<0||save.dungeon>2)
+            {PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();return false;}
+            if(save.routeX.Length>DungeonCatalog.Get(save.dungeon).AreaCount){PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();return false;}
+            DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);InventoryOpen=false;Time.timeScale=1;seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
+            if(save.foes==null)save.foes=new List<FoeCheckpoint>();if(save.guns==null)save.guns=new List<GunDropCheckpoint>();if(save.armor==null)save.armor=new List<ArmorDropCheckpoint>();if(save.modules==null)save.modules=new List<ArtifactDropCheckpoint>();if(save.melee==null)save.melee=new List<MeleeDropCheckpoint>();if(save.supplies==null)save.supplies=new List<SupplyCheckpoint>();if(save.chests==null)save.chests=new List<PositionCheckpoint>();if(save.ammoCrates==null)save.ammoCrates=new List<AmmoCrateCheckpoint>();
+            route.Clear();for(int i=0;i<save.routeX.Length;i++)route.Add(new Vector2Int(save.routeX[i],save.routeY[i]));
+            kills=save.kills;ricochetEvents=0;splitEvents=0;runTime=save.runTime;baseMaxHp=save.baseMaxHp;runDamage=save.runDamage;runFire=save.runFire;runVitality=save.runVitality;runDash=save.runDash;runChain=save.runChain;runHarvest=save.runHarvest;
+            damageBonus=save.damageBonus;fireBonus=save.fireBonus;RecalculateArmor();hp=Mathf.Clamp(save.hp,1,maxHp);LoadAmmoReserves(save.ammoReserves);ActiveWeaponSlot=Mathf.Clamp(save.activeWeaponSlot,0,AvailableWeaponSlotCount-1);gun=WeaponInSlot(ActiveWeaponSlot)??WeaponInSlot(0)??Weapons[0];SelectedWeapon=Weapons.IndexOf(gun);ammo=Mathf.Clamp(save.ammo,0,EffectiveMagazine);reload=0;reloadPending=0;invincible=1;dodgeCooldown=0;dodgeTimer=0;fireTimer=0;debtChainCount=save.debtChainCount;
+            chestRoomForRun=save.chestRoomForRun;ammoCratePlanCount=save.ammoCratePlanCount;ammoCrateRoomPlan.Clear();if(save.ammoCrateRooms!=null)ammoCrateRoomPlan.AddRange(save.ammoCrateRooms);
+            ResetArtifactCombat();ArtifactShield=save.artifactShield;artifactCombatClock=save.artifactClock;missionKills=save.missionKills;missionCompleted=save.missionCompleted;
+            runUpgradeCounts.Clear();if(save.upgradeKeys!=null&&save.upgradeValues!=null)for(int i=0;i<Math.Min(save.upgradeKeys.Length,save.upgradeValues.Length);i++)runUpgradeCounts[save.upgradeKeys[i]]=save.upgradeValues[i];
+            screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);player.position=new Vector3(save.playerX,.65f,save.playerZ);aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
+            foreach(var state in save.foes){SpawnFoe(new Vector3(state.x,.65f,state.z),state.kind);var foe=Enemies[Enemies.Count-1];foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
+            foreach(var d in save.guns)if(d.item!=null)AddDrop(d.item,d.position);
+            foreach(var d in save.armor)if(d.item!=null)AddArmorDrop(d.item,d.position);
+            foreach(var d in save.modules)if(d.item!=null)AddArtifactDrop(d.item,d.position);
+            foreach(var d in save.melee)if(d.item!=null)AddMeleeDrop(d.item,d.position);
+            foreach(var d in save.supplies){if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,(AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1),d.ammoAmount);}
+            foreach(var c in save.chests){var obj=CreateLootPresentation("SUPPLY CHEST / [F] OPEN",c.position,new Vector3(1.4f,.88f,1.25f),new Color(1f,.53f,.12f),LootPresentationKind.Chest);chests.Add(new Chest{position=c.position,visual=obj});}
+            foreach(var c in save.ammoCrates){var type=(AmmoType)Mathf.Clamp(c.type,0,AmmoTypeCount-1);var obj=CreateLootPresentation(AmmoPickupName(type,c.amount),c.position,new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,c.amount);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,type=type,amount=c.amount,visual=obj});}
+            UpdateCamera(true);PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();Notify("EXPEDITION RESTORED / Checkpoint consumed","探索を再開 / 保存データを復元しました");return true;
+        }
+
+        void SaveRunAndReturnToMenu()
+        {
+            if(!SaveRunCheckpoint())return;
+            screen=Screen.Menu;Time.timeScale=1;InventoryOpen=false;shake=0;
+        }
+    }
+}

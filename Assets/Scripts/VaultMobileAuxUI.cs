@@ -62,7 +62,7 @@ namespace NeonVault
                 for(int i=0;i<4;i++)if(MobileButton(new Rect(40+i*340,260,325,105),tabs[i])){saleCategory=i;mobileSalePage=0;pendingSaleKey=null;}
                 var entries=SaleEntries(saleCategory);int pages=Mathf.Max(1,Mathf.CeilToInt(entries.Count/2f));mobileSalePage=Mathf.Clamp(mobileSalePage,0,pages-1);
                 for(int row=0;row<2;row++)
-                {int index=mobileSalePage*2+row;if(index>=entries.Count)break;var entry=entries[index];float y=380+row*177;Panel(new Rect(40,y,1360,165),Cyan);MobileCopyAt(60,y+12,entry.title,Gold,910);MobileCopyAt(60,y+70,entry.detail,Mist,910);
+                {int index=mobileSalePage*2+row;if(index>=entries.Count)break;var entry=entries[index];float y=380+row*177;Color rarity=MobileSaleRarity(entry);Panel(new Rect(40,y,1360,165),rarity);DrawMobileSalePortrait(entry,new Rect(56,y+13,138,138));MobileCopyAt(215,y+10,entry.title,rarity,770);MobileCopyAt(215,y+51,T("SCORE ","評価 ")+MobileSaleScore(entry)+" / "+MobileSaleRarityName(entry),Mist,770);MobileCopyAt(215,y+85,entry.detail,Mist,770);
                     if(!entry.equipped&&!entry.lastRequired&&MobileButton(new Rect(1010,y+22,360,115),T("SELL ","売却 ")+entry.price))pendingSaleKey=SaleKey(entry);
                     else if(entry.equipped||entry.lastRequired)MobileCopyAt(1025,y+50,T("PROTECTED","売却不可"),Cyan,300);
                 }
@@ -88,6 +88,48 @@ namespace NeonVault
             if(MobileButton(new Rect(300,650,240,110),T("NEXT","次へ")))mobileShopPage=Mathf.Min((shopStock.Count-1)/2,mobileShopPage+1);
             for(int i=0;i<4;i++){var ammoType=(AmmoType)i;if(MobileButton(new Rect(40+i*340,780,325,110),AmmoLabel(ammoType)+"\n"+AmmoPackCost(ammoType)))BuyAmmo(ammoType,1);}
         }
+        Color MobileSaleRarity(SaleEntry entry)
+        {
+            int tier=0;
+            switch(entry.kind)
+            {
+                case SaleKind.Gun: var gun=Weapons.Find(x=>x.id==entry.id);if(gun!=null)tier=(int)gun.rarity;break;
+                case SaleKind.Armor: var armor=ArmorInventory.Find(x=>x.id==entry.id);if(armor!=null)tier=(int)armor.rarity;break;
+                case SaleKind.Module: var module=ArtifactInventory.Find(x=>x.id==entry.id);if(module!=null)tier=(int)module.rarity;break;
+                case SaleKind.Melee: var melee=MeleeWeaponInventory.Find(x=>x.id==entry.id);if(melee!=null)tier=(int)melee.rarity;break;
+            }
+            return Arsenal.Colors[Mathf.Clamp(tier,0,Arsenal.Colors.Length-1)];
+        }
+        string MobileSaleRarityName(SaleEntry entry)
+        {
+            switch(entry.kind)
+            {
+                case SaleKind.Gun: var gun=Weapons.Find(x=>x.id==entry.id);return VaultLanguage.RarityName(gun==null?Rarity.Common:gun.rarity);
+                case SaleKind.Armor: var armor=ArmorInventory.Find(x=>x.id==entry.id);return VaultLanguage.RarityName(armor==null?Rarity.Common:armor.rarity);
+                case SaleKind.Module: var module=ArtifactInventory.Find(x=>x.id==entry.id);return VaultLanguage.RarityName(module==null?Rarity.Common:module.rarity);
+                default: var melee=MeleeWeaponInventory.Find(x=>x.id==entry.id);return VaultLanguage.RarityName(melee==null?Rarity.Common:melee.rarity);
+            }
+        }
+        int MobileSaleScore(SaleEntry entry)
+        {
+            switch(entry.kind)
+            {
+                case SaleKind.Gun: var gun=Weapons.Find(x=>x.id==entry.id);return gun==null?0:GearScoring.Score(gun);
+                case SaleKind.Armor: var armor=ArmorInventory.Find(x=>x.id==entry.id);return armor==null?0:GearScoring.Score(armor);
+                case SaleKind.Module: var module=ArtifactInventory.Find(x=>x.id==entry.id);return module==null?0:GearScoring.Score(module);
+                default: var melee=MeleeWeaponInventory.Find(x=>x.id==entry.id);return melee==null?0:MeleeWeaponCatalog.Score(melee);
+            }
+        }
+        void DrawMobileSalePortrait(SaleEntry entry,Rect rect)
+        {
+            switch(entry.kind)
+            {
+                case SaleKind.Gun: var gun=Weapons.Find(x=>x.id==entry.id);if(gun!=null)ItemPortraits.Draw(rect,gun);break;
+                case SaleKind.Armor: var armor=ArmorInventory.Find(x=>x.id==entry.id);if(armor!=null)ItemPortraits.Draw(rect,armor);break;
+                case SaleKind.Module: var module=ArtifactInventory.Find(x=>x.id==entry.id);if(module!=null)ManufacturerBranding.ModulePortrait(rect,module);break;
+                case SaleKind.Melee: var melee=MeleeWeaponInventory.Find(x=>x.id==entry.id);if(melee!=null)DrawMeleeIcon(rect,melee.family);break;
+            }
+        }
         void DrawMobileDebt()
         {
             Box(new Rect(0,0,1440,900),PanelInk);MobileCopyAt(40,25,T("DEBT ","残債 ")+DebtRemaining.ToString("N0")+" / Lv "+DebtLevel,Gold,1050);
@@ -95,8 +137,11 @@ namespace NeonVault
             MobileCopyAt(40,155,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" / POINTS "," / スキルポイント ")+DebtSkillPoints,Cyan,1300);
             if(!debtSkillTreePage)
             {
-                int[] payments={1000000,5000000,25000000};for(int i=0;i<3;i++)if(MobileButton(new Rect(40+i*455,270,440,130),T("REPAY ","返済 ")+payments[i].ToString("N0")))RepayDebt(payments[i]);
-                if(MobileButton(new Rect(40,450,1360,120),T("REPAY ALL AVAILABLE","払える分をすべて返済")))RepayDebt(Mathf.Min(Credits,DebtRemaining));
+                int levelCost=DebtNextLevelRequirement;int remainingToNext=DebtNextLevelRemaining;
+                MobileCopyAt(40,205,T("NEXT LEVEL ","次のレベルまで ")+remainingToNext.ToString("N0")+" / "+levelCost.ToString("N0"),Cyan,1000);
+                Rect progress=new Rect(40,245,1360,22);Box(progress,new Color(.12f,.16f,.17f));Box(new Rect(progress.x,progress.y,progress.width*DebtProgressRatio,progress.height),new Color(1,.34f,.23f));
+                int[] payments={1000000,5000000,25000000};for(int i=0;i<3;i++)if(MobileButton(new Rect(40+i*455,295,440,130),T("REPAY ","返済 ")+payments[i].ToString("N0")))RepayDebt(payments[i]);
+                if(MobileButton(new Rect(40,475,1360,120),T("REPAY ALL AVAILABLE","払える分をすべて返済")))RepayDebt(Mathf.Min(Credits,DebtRemaining));
                 if(MobileButton(new Rect(40,650,1360,130),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
                 return;
             }

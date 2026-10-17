@@ -24,8 +24,8 @@ namespace NeonVault
         {
             var result=new List<SaleEntry>();
             if(category==0)foreach(var item in Weapons)result.Add(new SaleEntry{kind=SaleKind.Gun,id=item.id,title=VaultLanguage.GunName(item),detail=GunNumbers(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=EquippedWeaponSlot(item)>=0,lastRequired=Weapons.Count<=1});
-            if(category==1)foreach(var item in ArmorInventory)result.Add(new SaleEntry{kind=SaleKind.Armor,id=item.id,title=Armory.Name(item),detail=Armory.SlotName(item.slot)+" / Lv "+item.level+" · "+Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=IsArmorEquipped(item)});
-            if(category==2)foreach(var item in ArtifactInventory)result.Add(new SaleEntry{kind=SaleKind.Module,id=item.id,title=item.Name,detail=item.Description+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=System.Array.IndexOf(EquippedArtifacts,item)>=0});
+            if(category==1)foreach(var item in ArmorInventory)result.Add(new SaleEntry{kind=SaleKind.Armor,id=item.id,title=Armory.Name(item),detail=Armory.SlotName(item.slot)+" / Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+" · "+Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=IsArmorEquipped(item)});
+            if(category==2)foreach(var item in ArtifactInventory)result.Add(new SaleEntry{kind=SaleKind.Module,id=item.id,title=item.Name,detail="Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+"\n"+item.Description+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=System.Array.IndexOf(EquippedArtifacts,item)>=0});
             if(category==3)foreach(var item in MeleeWeaponInventory)result.Add(new SaleEntry{kind=SaleKind.Melee,id=item.id,title=MeleeWeaponCatalog.Name(item)+" / Lv "+item.level,detail=T("DMG ","威力 ")+item.damage+" · "+T("RATE ","速度 ")+(1/Mathf.Max(.01f,item.interval)).ToString("0.0")+T("/s · RANGE ","/秒 · 射程 ")+item.range.ToString("0.0")+"m · "+T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(item),price=SaleValue(item),equipped=EquippedMeleeWeapon==item,lastRequired=MeleeWeaponInventory.Count<=1});
             return result;
         }
@@ -40,21 +40,26 @@ namespace NeonVault
             if(Button(new Rect(1110,62,225,48),T("BUY STOCK","商品を見る"))){shopSellingPage=false;pendingSaleKey=null;}
             string[] en={"GUNS","ARMOR","MODULES","MELEE"},ja={"銃","防具","モジュール","近接武器"};
             for(int i=0;i<4;i++)if(Button(new Rect(68+i*235,155,215,46),T(en[i],ja[i]),i==saleCategory))saleCategory=i;
-            var entries=SaleEntries(saleCategory);float contentHeight=Mathf.Max(516,entries.Count*112);
+            var entries=SaleEntries(saleCategory);float contentHeight=Mathf.Max(516,entries.Count*132);
             saleScroll=GUI.BeginScrollView(new Rect(68,215,1280,530),saleScroll,new Rect(0,0,1240,contentHeight));
             for(int i=0;i<entries.Count;i++)
             {
-                var entry=entries[i];float y=i*112;Color accent=entry.kind==SaleKind.Gun?entry.equipped?Cyan:Gold:entry.kind==SaleKind.Armor?Cyan:entry.kind==SaleKind.Module?new Color(.5f,.72f,1):Gold;
-                Panel(new Rect(0,y,1240,102),accent);
-                if(entry.kind==SaleKind.Gun)ItemPortraits.Draw(new Rect(10,y+10,78,78),Weapons.Find(w=>w.id==entry.id));
-                else if(entry.kind==SaleKind.Armor)ItemPortraits.Draw(new Rect(10,y+10,78,78),ArmorInventory.Find(a=>a.id==entry.id));
-                else if(entry.kind==SaleKind.Melee){var melee=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(melee!=null)DrawMeleeIcon(new Rect(23,y+24,52,52),melee.family);}
-                else Diamond(49,y+50,23,accent);
-                Text(104,y+7,entry.title,label,accent,710);
-                Text(104,y+37,entry.detail,new GUIStyle(tiny){wordWrap=true},Mist,810);
-                if(entry.equipped)Text(940,y+35,T("EQUIPPED / CANNOT SELL","装備中 / 売却不可"),small,Cyan,250);
-                else if(entry.lastRequired)Text(940,y+35,T("KEEP LAST ITEM","最後の1本は保持"),small,Mist,230);
-                else if(Button(new Rect(950,y+29,260,48),T("SELL FOR ","売却 ")+entry.price.ToString("N0")))pendingSaleKey=SaleKey(entry);
+                var entry=entries[i];float y=i*132;int score=0;Rarity rarity=Rarity.Common;Color accent=Arsenal.Colors[(int)rarity];
+                if(entry.kind==SaleKind.Gun){var item=Weapons.Find(w=>w.id==entry.id);if(item!=null){score=GearScoring.Score(item);rarity=item.rarity;accent=item.color;}}
+                else if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(a=>a.id==entry.id);if(item!=null){score=GearScoring.Score(item);rarity=item.rarity;accent=Arsenal.Colors[(int)rarity];}}
+                else if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(a=>a.id==entry.id);if(item!=null){score=GearScoring.Score(item);rarity=item.rarity;accent=Arsenal.Colors[(int)rarity];}}
+                else {var item=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(item!=null){score=MeleeWeaponCatalog.Score(item);rarity=item.rarity;accent=item.color;}}
+                Panel(new Rect(0,y,1240,122),accent);
+                if(entry.kind==SaleKind.Gun)ItemPortraits.Draw(new Rect(10,y+10,88,88),Weapons.Find(w=>w.id==entry.id));
+                else if(entry.kind==SaleKind.Armor)ItemPortraits.Draw(new Rect(10,y+10,88,88),ArmorInventory.Find(a=>a.id==entry.id));
+                else if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(a=>a.id==entry.id);if(item!=null)ManufacturerBranding.ModulePortrait(new Rect(10,y+10,88,88),item);}
+                else {var melee=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(melee!=null)DrawMeleeIcon(new Rect(25,y+25,58,58),melee.family);}
+                Text(108,y+6,entry.title,label,accent,690);
+                Text(108,y+34,VaultLanguage.RarityName(rarity)+" · "+T("SCORE ","評価 ")+score,new GUIStyle(tiny),accent,690);
+                Text(108,y+55,entry.detail,new GUIStyle(tiny){wordWrap=true},Mist,790);
+                if(entry.equipped)Text(940,y+44,T("EQUIPPED / CANNOT SELL","装備中 / 売却不可"),small,Cyan,250);
+                else if(entry.lastRequired)Text(940,y+44,T("KEEP LAST ITEM","最後の1本は保持"),small,Mist,230);
+                else if(Button(new Rect(950,y+37,260,48),T("SELL FOR ","売却 ")+entry.price.ToString("N0")))pendingSaleKey=SaleKey(entry);
             }
             GUI.EndScrollView();
             Text(70,758,T("Sale value combines item level, rarity and performance score. Equipped items and the last available weapon stay protected.","売却額は装備レベル・レア度・性能スコアで決定。装備中の品と最後の武器は保護されます。"),tiny,Mist,1200);

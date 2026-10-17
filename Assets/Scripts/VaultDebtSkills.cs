@@ -7,7 +7,8 @@ namespace NeonVault
     public partial class VaultGame
     {
         const int InitialDebt = 1000000000;
-        const int DebtPerLevel = 25000000;
+        const int FirstDebtLevelRequirement = 1000000;
+        const float DebtLevelRequirementGrowth = .12f;
         const int DebtLevelCap = 40;
         const string DebtSaveKey = "Vault.DebtSkills.v1";
 
@@ -26,10 +27,37 @@ namespace NeonVault
         Vector2 debtSkillScroll;
         readonly Vector3 debtCollectorPosition = new Vector3(0,.65f,5);
 
-        public int DebtLevel => Mathf.Clamp(1 + debtPaid / DebtPerLevel,1,DebtLevelCap);
+        public int DebtLevel
+        {
+            get
+            {
+                int level=1;
+                while(level<DebtLevelCap&&debtPaid>=DebtTotalForLevel(level+1))level++;
+                return level;
+            }
+        }
         public int DebtSkillPoints => Mathf.Max(0,DebtLevel-1-unlockedDebtSkills.Count);
         public int DebtRemaining => Mathf.Max(0,InitialDebt-debtPaid);
-        public float DebtProgressRatio => DebtLevel>=DebtLevelCap?1f:(debtPaid%DebtPerLevel)/(float)DebtPerLevel;
+        public int DebtNextLevelRemaining => DebtLevel>=DebtLevelCap?0:Mathf.Max(0,DebtTotalForLevel(DebtLevel+1)-debtPaid);
+        public int DebtNextLevelRequirement => DebtLevel>=DebtLevelCap?0:DebtRequirementForLevel(DebtLevel+1);
+        public float DebtProgressRatio
+        {
+            get
+            {
+                int level=DebtLevel;
+                if(level>=DebtLevelCap)return 1f;
+                int levelStart=DebtTotalForLevel(level);
+                int nextLevel=DebtTotalForLevel(level+1);
+                return Mathf.Clamp01((debtPaid-levelStart)/(float)Mathf.Max(1,nextLevel-levelStart));
+            }
+        }
+        int DebtRequirementForLevel(int level)=>Mathf.Max(1,Mathf.RoundToInt(FirstDebtLevelRequirement*(1f+DebtLevelRequirementGrowth*(level-2))));
+        int DebtTotalForLevel(int level)
+        {
+            int total=0;
+            for(int reached=2;reached<=level;reached++)total+=DebtRequirementForLevel(reached);
+            return total;
+        }
         public int DebtExtraWeaponSlots => (unlockedDebtSkills.Contains("survival_slot1")?1:0) + (unlockedDebtSkills.Contains("survival_slot2")?1:0);
         bool DebtIntroReview => Array.IndexOf(Environment.GetCommandLineArgs(),"--debt-intro-review")>=0;
         public bool DebtIntroVisible => !debtIntroSeen && (!smoke || DebtIntroReview);
@@ -127,11 +155,14 @@ namespace NeonVault
             Text(68,116,T("COLLAR BALANCE","首輪の残債")+"   "+DebtRemaining.ToString("N0")+" / 1,000,000,000",label,Mist,1100);
             float progress=1-DebtRemaining/(float)InitialDebt;Box(new Rect(68,157,1070,14),new Color(.12f,.16f,.17f));Box(new Rect(68,157,1070*Mathf.Clamp01(progress),14),new Color(1,.34f,.23f));
             Text(68,187,T("LEVEL ","レベル ")+DebtLevel+" / "+DebtLevelCap+"    ·    "+T("SKILL POINTS ","スキルポイント ")+DebtSkillPoints,small,Gold,900);
-            Text(68,217,T("PAID ","返済累計 ")+DebtTotalPaid.ToString("N0")+"    ·    "+T("NEXT LEVEL ","次のレベルまで ")+Mathf.Max(0,DebtPerLevel-debtPaid%DebtPerLevel).ToString("N0"),tiny,Cyan,1000);
+            Text(68,217,T("PAID ","返済累計 ")+DebtTotalPaid.ToString("N0")+"    ·    "+(DebtLevel>=DebtLevelCap?T("LEVEL CAP REACHED","レベル上限到達"):T("NEXT LEVEL IN ","次のレベルまで ")+DebtNextLevelRemaining.ToString("N0")),tiny,Cyan,1000);
+            Box(new Rect(68,244,1070,22),new Color(.09f,.13f,.15f));
+            Box(new Rect(68,244,1070*DebtProgressRatio,22),new Color(.12f,.82f,.73f));
+            Text(1150,244,DebtLevel>=DebtLevelCap?"100%":(DebtProgressRatio*100f).ToString("0")+"%",tiny,Cyan,110);
             if(debtSkillTreePage){DrawDebtSkillTree();}
             else
             {
-                Text(68,276,T("REPAYS ARE PERMANENT. EACH 25,000,000 PAID EARNS ONE LEVEL AND ONE POINT.","返済は取り消せません。累計2,500万ごとにレベルとスキルポイントを1獲得。"),small,Mist,1200);
+                Text(68,276,T("REPAYMENTS ARE PERMANENT. EACH LEVEL COSTS MORE THAN THE LAST.","返済は取り消せません。レベルが上がるほど次の必要額が増えます。"),small,Mist,1200);
                 int[] payments={1000000,5000000,25000000};string[] labels={"1,000,000","5,000,000","25,000,000"};
                 for(int i=0;i<payments.Length;i++)if(Button(new Rect(68+i*260,330,230,62),T("PAY ","返済 ")+labels[i]+T(" SCRAP"," スクラップ"),i==2))
                 {int before=DebtLevel;if(RepayDebt(payments[i]))Notify("Debt payment recorded. Level "+before+" → "+DebtLevel,"返済を記録。レベル "+before+" → "+DebtLevel);}
