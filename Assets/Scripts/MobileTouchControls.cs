@@ -125,7 +125,7 @@ namespace NeonVault
                         return;
                     }
                 if ((combat || hub) && MoveRect.Contains(p) && !fingers.ContainsValue(-1)) fingers[id] = -1;
-                else if (combat && AimRect.Contains(p) && !fingers.ContainsValue(-2)) fingers[id] = -2;
+                else if ((combat || hub) && AimRect.Contains(p) && !fingers.ContainsValue(-2)) fingers[id] = -2;
             }
             if (phase == TouchPhase.Ended || phase == TouchPhase.Canceled) { Release(id); return; }
             if (!fingers.TryGetValue(id, out int owner)) return;
@@ -179,7 +179,7 @@ namespace NeonVault
                 Font bundledFont = Resources.Load<Font>("Fonts/NotoSansJP");
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
-                if (combat) Stick(AimRect, aimStick, fingers.ContainsValue(-2));
+                if (combat || hub) Stick(AimRect, aimStick, fingers.ContainsValue(-2));
                 string[] labels = VaultLanguage.Japanese ? new[] { "装填", "拾得", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃" } : new[] { "LOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE" };
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {

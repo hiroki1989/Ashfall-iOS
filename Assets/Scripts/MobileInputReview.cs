@@ -71,6 +71,7 @@ namespace NeonVault
                 Check(Screen.width == size.x && Screen.height == size.y, "Framebuffer resolution " + size);
                 VerifyLayout(size.ToString());
                 VerifyInput();
+                yield return VerifyHubInput();
                 yield return VerifyModal();
                 yield return CaptureScreens(phone ? "iphone" : "ipad");
                 game.StartRun(240017); game.invincible=99999; foreach(var enemy in game.Enemies) if(enemy) enemy.enabled=false; game.enabled = false;
@@ -151,6 +152,35 @@ namespace NeonVault
             Pointer(9,MobileTouchControls.GetControlRect(MobileAction.Fire),Vector2.zero,TouchPhase.Began);
             Check(!MobileTouchControls.Firing,"Pause blocks firing input");
             game.screen=VaultGame.Screen.Playing; yield return null; yield return null;
+        }
+        IEnumerator VerifyHubInput()
+        {
+            MobileTouchControls.ResetInput();
+            game.enabled=true;
+            game.EnterHub();
+            yield return null; yield return null;
+            var visible=typeof(MobileTouchControls).GetMethod("Visible",BindingFlags.Instance|BindingFlags.NonPublic);
+            bool ButtonVisible(MobileAction action)=>visible!=null&&(bool)visible.Invoke(controls,new object[]{(int)action});
+            Check(game.screen==VaultGame.Screen.Hub,"Hub review entered safehouse");
+            Check(ButtonVisible(MobileAction.Interact)&&ButtonVisible(MobileAction.Inventory)&&ButtonVisible(MobileAction.Pause),"Hub keeps Interact, Inventory, and Pause buttons visible");
+            Check(!ButtonVisible(MobileAction.Fire),"Hub hides Fire button");
+            Rect move=MobileTouchControls.MoveRect, aim=MobileTouchControls.AimRect;
+            Pointer(31,move,Vector2.zero,TouchPhase.Began);
+            Pointer(31,move,new Vector2(move.width*.3f,0),TouchPhase.Moved);
+            Pointer(32,aim,Vector2.zero,TouchPhase.Began);
+            Pointer(32,aim,new Vector2(0,-aim.height*.3f),TouchPhase.Moved);
+            yield return null; yield return null;
+            Check(MobileTouchControls.Movement.x>.75f&&Vector2.Dot(MobileTouchControls.Aim,Vector2.up)>.99f,"Hub accepts simultaneous Move and Aim stick input");
+            Transform player=typeof(VaultGame).GetField("player",BindingFlags.Instance|BindingFlags.NonPublic)?.GetValue(game) as Transform;
+            Vector3 expected=VaultMobileInputBridge.ToWorldMovement(MobileTouchControls.Aim).normalized;
+            Check(player!=null&&Vector3.Dot(player.forward,expected)>.99f,"Hub update turns player toward held mobile Aim");
+            Pointer(33,MobileTouchControls.GetControlRect(MobileAction.Fire),Vector2.zero,TouchPhase.Began);
+            Check(!MobileTouchControls.Firing,"Hub Aim and Fire-button area never trigger firing");
+            Pointer(31,move,Vector2.zero,TouchPhase.Ended); Pointer(32,aim,Vector2.zero,TouchPhase.Ended); Pointer(33,MobileTouchControls.GetControlRect(MobileAction.Fire),Vector2.zero,TouchPhase.Ended);
+            MobileTouchControls.ResetInput();
+            game.StartRun(240017); game.invincible=99999;
+            foreach(var enemy in game.Enemies) if(enemy) enemy.enabled=false;
+            yield return null; yield return null;
         }
         IEnumerator CaptureScreens(string device)
         {
