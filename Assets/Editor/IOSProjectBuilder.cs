@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.iOS;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -36,11 +37,41 @@ namespace NeonVault.Editor
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
             PlayerSettings.defaultScreenWidth = 1280;
             PlayerSettings.defaultScreenHeight = 720;
+            ConfigureIcons();
             // Keep a developer's signing selection on subsequent configuration runs.
             // The independent copy initially has no team or provisioning profile.
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(StartupScene, true) };
             AssetDatabase.SaveAssets();
             Debug.Log("ASHFALL_IOS_CONFIGURED: landscape / IL2CPP ARM64 / Metal / iOS 15 / signing required on Mac.");
+        }
+
+        [MenuItem("Ashfall/iOS/Configure app icon")]
+        public static void ConfigureIcons()
+        {
+            var kinds = new[]
+            {
+                iOSPlatformIconKind.Application,
+                iOSPlatformIconKind.Marketing,
+                iOSPlatformIconKind.Settings,
+                iOSPlatformIconKind.Spotlight,
+                iOSPlatformIconKind.Notification
+            };
+            foreach (var kind in kinds)
+            {
+                var icons = PlayerSettings.GetPlatformIcons(NamedBuildTarget.iOS, kind);
+                for (var i = 0; i < icons.Length; i++)
+                {
+                    var icon = icons[i];
+                    var path = $"Assets/Art/IOS/AshfallAppIcon-{icon.width}.png";
+                    var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                    if (texture == null || texture.width != icon.width || texture.height != icon.height)
+                        throw new InvalidOperationException("Missing or invalid iOS icon: " + path);
+                    icon.SetTexture(texture);
+                }
+                PlayerSettings.SetPlatformIcons(NamedBuildTarget.iOS, kind, icons);
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log("ASHFALL_IOS_ICONS_CONFIGURED: app icons and 1024x1024 marketing icon.");
         }
 
         [MenuItem("Ashfall/iOS/Build Xcode project")]
