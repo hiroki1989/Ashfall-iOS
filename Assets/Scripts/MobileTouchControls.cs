@@ -60,6 +60,7 @@ namespace NeonVault
             combat = game != null && game.Active && !game.MobileModalVisible;
             hub = game != null && game.screen == VaultGame.Screen.Hub && !game.InventoryOpen && !game.MobileModalVisible;
             modal = game != null && (game.InventoryOpen || game.screen == VaultGame.Screen.Pause);
+            actions.Clear();
             foreach (Touch touch in Input.touches) InjectPointer(touch.fingerId, touch.position, touch.phase);
             if (!Application.isMobilePlatform && Input.touchCount == 0)
             {
@@ -103,7 +104,7 @@ namespace NeonVault
         {
             if (combat) return true;
             if (hub) return i == (int)MobileAction.Interact || i >= (int)MobileAction.Inventory;
-            if (modal) return game.InventoryOpen ? i == (int)MobileAction.Inventory : i == (int)MobileAction.Pause;
+            if (modal) return false; // Full-screen menus provide their own large close/resume buttons.
             return false;
         }
         public void InjectPointer(int id, Vector2 position, TouchPhase phase)

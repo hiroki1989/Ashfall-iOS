@@ -18,7 +18,7 @@ namespace NeonVault
 
         void SetCityZoom(float next, Vector2 anchor)
         {
-            next = Mathf.Clamp(next, .65f, 1.6f);
+            next = Mathf.Clamp(next, MobileTouchControls.Enabled?1.6f:.65f, MobileTouchControls.Enabled?3f:1.6f);
             Vector2 cityAnchor = (expeditionMapScroll + anchor) / expeditionCityZoom;
             expeditionMapScroll = cityAnchor * next - anchor;
             expeditionCityZoom = next;
@@ -134,12 +134,12 @@ namespace NeonVault
             Vector2 p = CityScale(ExpeditionMap.CityPoint(id));
             bool unlocked = stage.level <= DebtLevel, selected = id == expeditionMapSelection, done = clearedExpeditionStages.Contains(id);
             Color mark = selected ? Gold : done ? Cyan : unlocked ? new Color(.83f,.86f,.69f) : new Color(.43f,.47f,.47f);
-            float w = expeditionCityZoom > 1 ? 51 : 39, h = expeditionCityZoom > 1 ? 31 : 25;
+            float w = MobileTouchControls.Enabled?110:expeditionCityZoom > 1 ? 51 : 39, h = MobileTouchControls.Enabled?110:expeditionCityZoom > 1 ? 31 : 25;
             Rect r = new Rect(p.x-w*.5f,p.y-h*.5f,w,h);
             Box(new Rect(r.x-2,r.y-2,r.width+4,r.height+4),mark);
             Box(r,new Color(.025f,.045f,.05f,.98f));
             GUI.color = mark;
-            if (expeditionCitySiteStyle == null) expeditionCitySiteStyle = new GUIStyle(centered) { fontSize = 10, padding = new RectOffset(0, 0, 0, 0) };
+            if (expeditionCitySiteStyle == null) expeditionCitySiteStyle = new GUIStyle(centered) { fontSize = MobileTouchControls.Enabled?27:10, padding = new RectOffset(0, 0, 0, 0) };
             if(GUI.Button(r,(id+1).ToString("00")+"·L"+stage.level,expeditionCitySiteStyle)) expeditionMapSelection=id;
             GUI.color = Color.white;
             if(done) Box(new Rect(r.x,r.yMax-3,r.width,3),Cyan);

@@ -79,5 +79,18 @@ namespace NeonVault
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
             if(MobileButton(new Rect(300,620,840,120),T("RETURN TO SAFEHOUSE","拠点へ帰還"))){Time.timeScale=1;EnterHub();}
         }
-    }
+        void DrawMobileOverlay()
+        {
+            Box(new Rect(0,0,1440,900),PanelInk);
+            if(screen==Screen.Reward)
+            {
+                MobileCopyAt(50,70,T("CHOOSE YOUR AUGMENT","強化を選択"),Gold);
+                string[] names={T("OVERCHARGE / Damage +25%","威力 +25%"),T("REINFORCED / HP +30, heal 35","最大HP +30 / HP35回復"),T("RAPID CYCLER / Fire rate +22%","連射速度 +22%"),T("REPAIR / Restore all HP","HPを全回復"),T("SHOCK / Dash cooldown +35%","回避待機短縮 +35% / 衝撃波"),T("TESLA / 30% chain damage","威力30%の連鎖攻撃"),T("BIO / Heal 3 HP per kill","撃破ごとにHP3回復")};
+                for(int i=0;i<3;i++)if(MobileButton(new Rect(50,220+i*195,1340,155),names[choices[i]])){int c=choices[i];RecordRunUpgrade(c);ChooseReward(i);}
+                return;
+            }
+            MobileCopyAt(260,220,screen==Screen.Victory?T("ZONE SECURED","汚染区域を制圧"):T("SIGNAL LOST","生存信号を喪失"),Gold);
+            MobileCopyAt(260,340,Toast,Mist,940);
+            if(MobileButton(new Rect(260,550,920,140),T("RETURN TO SAFEHOUSE","拠点へ帰還")))EnterHub();
+        }    }
 }

@@ -41,7 +41,7 @@ namespace NeonVault
             if (game == null) game = FindAnyObjectByType<VaultGame>();
             if (Mode == 0) { ResetGestures(); return; }
             if (mode != Mode) { ResetGestures(); mode = Mode; }
-            Rect view = Mode == 1 ? game.MobileInventoryScrollRect : new Rect(42,150,952,663);
+            Rect view = Mode == 1 ? game.MobileInventoryScrollRect : game.MobileCityView;
             if (phase == TouchPhase.Began)
             {
                 if (view.Contains(Canvas(position))) pointers[id] = new Pointer { start = position, position = position };
@@ -112,8 +112,8 @@ namespace NeonVault
             if (!Mathf.Approximately(zoomRatio, 1)) SetCityZoom(expeditionCityZoom * zoomRatio, anchor);
             expeditionMapScroll -= canvasPan;
             Vector2 size = ExpeditionMap.CityCanvasSize * expeditionCityZoom;
-            expeditionMapScroll.x = Mathf.Clamp(expeditionMapScroll.x, 0, Mathf.Max(0, size.x - 952 + 18));
-            expeditionMapScroll.y = Mathf.Clamp(expeditionMapScroll.y, 0, Mathf.Max(0, size.y - 663 + 18));
+            expeditionMapScroll.x = Mathf.Clamp(expeditionMapScroll.x, 0, Mathf.Max(0, size.x - MobileCityView.width + 18));
+            expeditionMapScroll.y = Mathf.Clamp(expeditionMapScroll.y, 0, Mathf.Max(0, size.y - MobileCityView.height + 18));
         }
     }
 }

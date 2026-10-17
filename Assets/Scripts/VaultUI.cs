@@ -63,19 +63,19 @@ namespace NeonVault
             Styles();float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
-            if(DebtIntroVisible){DrawDebtIntro();LanguageSelector();return;}
-            if(manufacturerRegistry)DrawManufacturerRegistry();
+            if(DebtIntroVisible){DrawDebtIntro();if(MobileTouchControls.Enabled){if(MobileButton(new Rect(1080,15,320,110),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke);}else LanguageSelector();return;}
+            if(manufacturerRegistry){if(MobileTouchControls.Enabled)DrawMobileManufacturer();else DrawManufacturerRegistry();}
             else if(InventoryOpen){if(MobileTouchControls.Enabled)DrawMobileInventory();else DrawInventory();}
             else if(screen==Screen.Menu){if(MobileTouchControls.Enabled)DrawMobileMenu();else DrawMenu();}
             else if(screen==Screen.Hub&&MobileTouchControls.Enabled)DrawMobileHub();
             else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,340,50),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}}
-            else if(screen==Screen.Shop)DrawShop();
+            else if(screen==Screen.Shop){if(MobileTouchControls.Enabled)DrawMobileShop();else DrawShop();}
             else if(screen==Screen.DungeonSelect)DrawExpeditionWorldMap();
             else
             {
-                if(MobileTouchControls.Enabled){if(screen==Screen.Pause)DrawMobilePause();else {DrawMobileHUD();if(screen!=Screen.Playing)DrawOverlay();}}else{DrawHUD();if(screen!=Screen.Playing)DrawOverlay();}
+                if(MobileTouchControls.Enabled){if(screen==Screen.Pause)DrawMobilePause();else {DrawMobileHUD();if(screen!=Screen.Playing)DrawMobileOverlay();}}else{DrawHUD();if(screen!=Screen.Playing)DrawOverlay();}
             }
-            if(!MobileTouchControls.Enabled||screen==Screen.Menu||MobileModalVisible)LanguageSelector();
+            if(!MobileTouchControls.Enabled)LanguageSelector();else if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry){if(MobileButton(new Rect(1080,20,320,110),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke);}
         }
         void DrawDebtIntro()
         {
@@ -84,7 +84,7 @@ namespace NeonVault
             Text(250,190,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),heading,new Color(1,.39f,.28f),930);
             Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Raider Boss owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはレイダーボス、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
             Text(255,490,T("Every 25,000,000 paid grants a level and a skill point. Find Briggs at the safehouse to make payments and build your weapon path.","返済累計2,500万ごとにレベルとスキルポイントを獲得。拠点のブリッグスに話しかけ、返済と武器系統の強化を進めよう。"),small,Cyan,900);
-            if(Button(new Rect(505,640,430,64),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃"),true))MarkDebtIntroSeen();
+            if(MobileTouchControls.Enabled?MobileButton(new Rect(350,620,740,115),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")):Button(new Rect(505,640,430,64),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃"),true))MarkDebtIntroSeen();
         }
         void DrawMenu()
         {
@@ -221,7 +221,7 @@ namespace NeonVault
                 Box(new Rect(bar.x-1,bar.y-1,bar.width+2,bar.height+2),new Color(.008f,.012f,.018f,.95f));Box(bar,reticle);
             }
         }
-        void DrawExpeditionWorldMap() => DrawExpeditionCityMap();
+        void DrawExpeditionWorldMap(){if(MobileTouchControls.Enabled)DrawMobileCityMap();else DrawExpeditionCityMap();}
         void FillExpeditionPolygon(Vector2[] points,Color color)
         {
             float minY=points[0].y,maxY=minY;foreach(var p in points){minY=Mathf.Min(minY,p.y);maxY=Mathf.Max(maxY,p.y);}

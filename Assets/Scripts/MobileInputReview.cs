@@ -113,7 +113,8 @@ namespace NeonVault
             Check((VaultMobileInputBridge.ToWorldMovement(Vector2.up)-Vector3.right).sqrMagnitude<.001f,"Aim world conversion");
             Pointer(1,move,Vector2.zero,TouchPhase.Ended);
             Check(MobileTouchControls.Movement==Vector2.zero && MobileTouchControls.Firing,"Move release retains aim finger");
-            Pointer(1,move,new Vector2(move.width*.5f,0),TouchPhase.Began);
+            Pointer(1,move,Vector2.zero,TouchPhase.Began);
+            Pointer(1,move,new Vector2(move.width*.6f,0),TouchPhase.Moved);
             Pointer(2,aim,Vector2.zero,TouchPhase.Canceled);
             Check(!MobileTouchControls.Firing && MobileTouchControls.Movement.x>.99f,"Aim cancel retains move finger and clamps magnitude");
             Pointer(1,move,Vector2.zero,TouchPhase.Canceled);
@@ -126,7 +127,8 @@ namespace NeonVault
                 Check(!MobileTouchControls.Consume(action),"Button consumed once "+action);
                 Pointer(20+(int)action,r,Vector2.zero,TouchPhase.Ended);
             }
-            Pointer(1,move,new Vector2(move.width*.5f,0),TouchPhase.Began);
+            Pointer(1,move,Vector2.zero,TouchPhase.Began);
+            Pointer(1,move,new Vector2(move.width*.6f,0),TouchPhase.Moved);
             Pointer(2,aim,new Vector2(aim.width*.3f,0),TouchPhase.Began);
             Pointer(3,MobileTouchControls.GetControlRect(MobileAction.Reload),Vector2.zero,TouchPhase.Began);
             MobileTouchControls.ResetInput();
@@ -154,14 +156,20 @@ namespace NeonVault
                 game.StartRun(240017); game.invincible=99999; foreach(var enemy in game.Enemies) if(enemy) enemy.enabled=false; Time.timeScale=1;
                 yield return Capture(device+"-combat-"+lang);
                 game.ToggleInventory();
-                typeof(VaultGame).GetField("artifactPage",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,false);
+                typeof(VaultGame).GetField("mobileInventoryTab",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,0);
                 yield return Capture(device+"-inventory-guns-"+lang);
-                typeof(VaultGame).GetField("artifactPage",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,true);
+                typeof(VaultGame).GetField("mobileInventoryTab",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,2);
                 yield return Capture(device+"-inventory-modules-"+lang);
                 game.ToggleInventory(); game.screen=VaultGame.Screen.Pause; Time.timeScale=0;
                 yield return Capture(device+"-pause-"+lang);
                 game.EnterHub(); Time.timeScale=1;
                 yield return Capture(device+"-hub-"+lang);
+                game.screen=VaultGame.Screen.DungeonSelect; yield return Capture(device+"-city-"+lang);
+                game.screen=VaultGame.Screen.Shop; yield return Capture(device+"-shop-"+lang);
+                game.screen=VaultGame.Screen.Hub;
+                typeof(VaultGame).GetField("manufacturerRegistry",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,true);
+                yield return Capture(device+"-makers-"+lang);
+                typeof(VaultGame).GetField("manufacturerRegistry",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,false);
             }
             MobileTouchControls.ResetInput();
         }
