@@ -20,7 +20,7 @@ namespace NeonVault
         static List<SavedString> savedStrings;
         readonly List<string> results = new List<string>();
         VaultGame game;
-        bool drawInventory;
+        bool drawInventory,drawCatalog;
         bool inventoryDrawn;
         int checks, failures;
         string output;
@@ -99,6 +99,8 @@ namespace NeonVault
                     float content=game.MobileInventoryContentHeight;
                     Check(inventoryDrawn&&content>=550,"mobile inventory layout executed and allocated a scrollable content region");
                     yield return Capture("mobile-inventory-modules");
+                    for(int tab=0;tab<2;tab++){SetField(game,"mobileInventoryTab",tab);yield return Capture("mobile-inventory-"+(tab==0?"guns":"armor"));}
+                    drawInventory=false;drawCatalog=true;for(int kind=0;kind<3;kind++){game.SetManufacturerReview(0,kind);yield return Capture("mobile-catalog-"+kind);}drawCatalog=false;SetField(game,"manufacturerRegistry",false);
                     drawInventory=false; game.ToggleInventory();
 
                     float groundY=game.PlayerPosition.y;
@@ -132,10 +134,10 @@ namespace NeonVault
 
         void OnGUI()
         {
-            if(!drawInventory||!game) return;
+            if((!drawInventory&&!drawCatalog)||!game) return;
             Matrix4x4 old=GUI.matrix;
             GUI.matrix=VaultGame.MobileCanvasMatrix;
-            game.DrawMobileInventory();
+            if(drawCatalog)Invoke(game,"DrawMobileManufacturer");else game.DrawMobileInventory();
             GUI.matrix=old;
             inventoryDrawn=true;
         }

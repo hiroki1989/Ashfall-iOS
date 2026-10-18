@@ -8,6 +8,8 @@ namespace NeonVault
         DetailedHeroArsenal3D.ArmorVisuals equipment;
         DetailedHeroEquipment3D.WeaponSockets current;
         string weaponKey;
+        string failedWeaponKey;
+        public Transform EquippedWeaponRoot=>current?.root;
         Transform meleeVisual; string meleeKey;float meleeUntil;
         public void NotifyMelee(){meleeUntil=Time.time+.28f;}
         AimedWeapon weapon;
@@ -38,7 +40,8 @@ namespace NeonVault
             bool handgun=game&&game.gun!=null&&Arsenal.IsOneHanded(VaultLanguage.DisplayModel(game.gun));
             bool firing=Time.time<firingUntil||(game&&game.Active&&VaultMobileInputBridge.Firing&&game.reload<=0);
             string key=ManufacturerEquipment3D.WeaponKey(game?game.gun:null);
-            if(current==null||weaponKey!=key){if(current!=null){current.root.gameObject.SetActive(false);Destroy(current.root.gameObject);}current=ManufacturerEquipment3D.BuildWeapon(transform,game?game.gun:null);weaponKey=key;}
+            if(!ValidSockets(current)||(weaponKey!=key&&failedWeaponKey!=key))ReplaceWeapon(key);
+            if(!ValidSockets(current))return;
             Pose(body,current,handgun,firing,weapon.Direction,phase,velocity,moveBlend);
             if(game&&game.EquippedMeleeWeapon!=null)
             {
@@ -50,6 +53,40 @@ namespace NeonVault
             // Gameplay and visible barrel share the same sockets.
             weapon.muzzle=current.muzzle;weapon.grip=current.trigger;weapon.supportGrip=current.support;
         }
+        static bool ValidSockets(DetailedHeroEquipment3D.WeaponSockets sockets)=>sockets!=null&&sockets.root&&sockets.trigger&&sockets.support&&sockets.stock&&sockets.muzzle;
+        void ReplaceWeapon(string key)
+        {
+            // Build under an isolated identity transform: failed constructors must not leave
+            // orphan geometry, invalidate the live sockets, or interrupt movement through Aim.
+            var staging=new GameObject("Weapon replacement staging").transform;
+            staging.SetParent(transform,false);
+            DetailedHeroEquipment3D.WeaponSockets replacement=null;
+            try
+            {
+                replacement=ManufacturerEquipment3D.BuildWeapon(staging,game?game.gun:null);
+                if(!ValidSockets(replacement))throw new System.InvalidOperationException("Weapon assembly has missing sockets");
+                foreach(var socket in new[]{replacement.trigger,replacement.support,replacement.stock,replacement.muzzle})
+                    if(!Finite(socket.position))throw new System.InvalidOperationException("Weapon assembly has non-finite sockets");
+                replacement.root.SetParent(transform,false);
+                var previousWeapon=current;current=replacement;
+                // Building legacy items may infer identity. Cache the resulting identity once.
+                weaponKey=ManufacturerEquipment3D.WeaponKey(game?game.gun:null);failedWeaponKey=null;
+                if(previousWeapon?.root){previousWeapon.root.gameObject.SetActive(false);Destroy(previousWeapon.root.gameObject);}
+            }
+            catch(System.Exception error)
+            {
+                failedWeaponKey=ManufacturerEquipment3D.WeaponKey(game?game.gun:null);
+                Debug.LogError("Weapon presentation failed for "+key+". Retaining a usable weapon rig.\n"+error);
+                if(!ValidSockets(current))
+                {
+                    // A saved problematic item must still permit a fresh session to move/fire.
+                    current=DetailedHeroEquipment3D.BuildRifle(transform,DetailedHeroMaterials3D.Get);
+                    weaponKey=null;
+                }
+            }
+            finally {staging.gameObject.SetActive(false);Destroy(staging.gameObject);}
+        }
+        static bool Finite(Vector3 p)=>!float.IsNaN(p.x)&&!float.IsInfinity(p.x)&&!float.IsNaN(p.y)&&!float.IsInfinity(p.y)&&!float.IsNaN(p.z)&&!float.IsInfinity(p.z);
         void LateUpdate()
         {
             float dt=Mathf.Max(.001f,Time.deltaTime);

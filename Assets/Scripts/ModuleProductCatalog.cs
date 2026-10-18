@@ -6,7 +6,7 @@ namespace NeonVault {
   public float powerScale,cooldownScale; public string preferredAffix;
  }
  public static class ModuleProductCatalog {
-  public const int Count=720;
+  public const int Count=200;
   static readonly string[] Makers={"kestrel","ironwake","voltarc","mireline","cinder","aegis"};
   static readonly string[] Affixes={"accuracy","health","fireRate","regen","damage","mitigation"};
   static readonly string[] Codes={"capacitor","coil","relay","converter","bulwark","discharger","isotope"};
@@ -31,18 +31,22 @@ namespace NeonVault {
   static readonly ModuleProduct[] Products=Build();
   public static System.Collections.Generic.IReadOnlyList<ModuleProduct> All=>Products;
   static ModuleProduct[] Build(){
-   var result=new System.Collections.Generic.List<ModuleProduct>();var counts=new int[6];
-   for(int f=0;f<7;f++)for(int v=0;v<10;v++)Add(f,v);
-   for(int v=10;result.Count<Count;v++)for(int f=0;f<7;f++)if(counts[(v+f)%6]<120)Add(f,v);
-   return result.ToArray();
-   void Add(int f,int v){
-    int maker=(v+f)%6,basic=v%10;float[] power={.93f,1.22f,.87f,.91f,1.26f,1.04f};float[] cooldown={.92f,1.24f,.70f,1.06f,1.32f,.96f};
-    float output=ProductGeneration.Output(v),wait=ProductGeneration.Cycle(v);
-    result.Add(new ModuleProduct{id="module."+Codes[f]+"."+v.ToString("00"),family=f,designVariant=v,name=Names[f][basic]+ProductGeneration.Name(v,false),japanese=Japanese[f][basic]+ProductGeneration.Name(v,true),manufacturerId=Makers[maker],effect=(ArtifactEffect)(f<4?f:f-4),legendary=f>=4,powerScale=(f==3&&(maker==1||maker==4)?1/power[maker]:power[maker])*(.94f+.014f*basic)*output,cooldownScale=cooldown[maker]*(1.06f-.012f*basic)*wait,preferredAffix=Affixes[maker]});counts[maker]++;
-   }
+   var result=new System.Collections.Generic.List<ModuleProduct>();
+   foreach(var r in DistinctEquipmentDesigns.Modules){int f=r.family,maker=r.maker;float[] power={.93f,1.22f,.87f,.91f,1.26f,1.04f},cooldown={.92f,1.24f,.70f,1.06f,1.32f,.96f};
+    result.Add(new ModuleProduct{id=r.id,family=f,designVariant=r.index,name=r.name,japanese=r.japanese,manufacturerId=Makers[maker],effect=(ArtifactEffect)(f<4?f:f-4),legendary=r.legendary,powerScale=power[maker]*HousingPower(r.body)*CorePower(r.attachment,f),cooldownScale=cooldown[maker]*HousingCooldown(r.body)*CoreCooldown(r.attachment,f),preferredAffix=Affixes[maker]});
+   }return result.ToArray();
   }
-  public static ModuleProduct Get(int family,int variant){var p=Find("module."+Codes[Mathf.Clamp(family,0,6)]+"."+Mathf.Max(0,variant).ToString("00"));if(p==null)throw new System.ArgumentOutOfRangeException(nameof(variant));return p;}
+
+  // Housing: compact / armored / twin reservoir / ventilated / sealed / manifold.
+  static float HousingPower(int body)=>new[]{.86f,1.18f,1.28f,.94f,1.06f,1.12f}[body];
+  static float HousingCooldown(int body)=>new[]{.78f,1.12f,1.34f,.85f,.97f,1.08f}[body];
+  // Reserve stores more; Surge peaks harder; Echo cycles faster; Exchange favors conversion;
+  // Shelter prioritizes defensive families; Overload trades a long reset for a large pulse.
+  static float CorePower(int core,int family)=>new[]{1.12f,1.25f,.82f,family==3?1.24f:.96f,family==0||family==4?1.20f:1.04f,1.48f}[core];
+  static float CoreCooldown(int core,int family)=>new[]{1.16f,1.30f,.68f,family==2?.79f:1.04f,1.08f,1.61f}[core];
+  public static ModuleProduct Get(int family,int variant){var choices=new System.Collections.Generic.List<ModuleProduct>();foreach(var p in Products)if(p.family==Mathf.Clamp(family,0,6))choices.Add(p);return choices[Mathf.Abs(variant)%choices.Count];}
   public static ModuleProduct Roll(System.Random random,int family){ModuleProduct p;do{p=Products[random.Next(Products.Length)];}while(p.family!=family);return p;}
-  public static ModuleProduct Find(string id){if(string.IsNullOrEmpty(id))return null;foreach(var p in Products)if(p.id==id)return p;return null;}
+  public static ModuleProduct Find(string id){if(string.IsNullOrEmpty(id))return null;foreach(var p in Products)if(p.id==id)return p;
+   var bits=id.Split('.');if(bits.Length==3&&bits[0]=="module"&&int.TryParse(bits[2],out int v)){int f=System.Array.IndexOf(Codes,bits[1]);if(f>=0){int maker=(v+f)%6;return new ModuleProduct{id=id,family=f,designVariant=v,name=Names[f][v%10]+ProductGeneration.Name(v,false),japanese=Japanese[f][v%10]+ProductGeneration.Name(v,true),manufacturerId=Makers[maker],effect=(ArtifactEffect)(f<4?f:f-4),legendary=f>=4,powerScale=1,cooldownScale=1,preferredAffix=Affixes[maker]};}}return null;}
  }
 }

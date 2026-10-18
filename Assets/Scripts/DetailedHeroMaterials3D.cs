@@ -16,6 +16,21 @@ namespace NeonVault
             Color color; float kind = 0, gloss = .025f, metal = 0;
             switch (key)
             {
+                case "NavyCanvas":color=new Color(.065f,.085f,.115f);kind=1;break;
+                case "KestrelIvory":color=new Color(.29f,.29f,.245f);kind=3;gloss=.30f;metal=.35f;break;
+                case "KestrelTeal":color=new Color(.12f,.32f,.32f);kind=3;gloss=.3f;break;
+                case "IronwakeSteel":color=new Color(.155f,.17f,.18f);kind=3;gloss=.4f;metal=.65f;break;
+                case "IronwakeCopper":color=new Color(.37f,.21f,.12f);kind=3;gloss=.3f;metal=.6f;break;
+                case "VoltarcNavy":color=new Color(.055f,.09f,.145f);kind=3;gloss=.4f;metal=.45f;break;
+                case "VoltarcYellow":color=new Color(.39f,.26f,.055f);kind=3;gloss=.25f;break;
+                case "MirelineBone":color=new Color(.40f,.40f,.32f);kind=3;gloss=.24f;break;
+                case "MirelineOlive":color=new Color(.24f,.30f,.12f);kind=1;break;
+                case "MirelineFluid":color=new Color(.19f,.44f,.055f);kind=7;gloss=.88f;break;
+                case "CinderOrange":color=new Color(.34f,.115f,.045f);kind=3;gloss=.18f;metal=.25f;break;
+                case "AegisBlue":color=new Color(.07f,.105f,.16f);kind=3;gloss=.30f;metal=.5f;break;
+                case "AegisWhite":color=new Color(.40f,.40f,.36f);kind=3;gloss=.25f;break;
+                case "ProductSteel":color=new Color(.17f,.19f,.20f);kind=3;gloss=.16f;metal=.35f;break;
+                case "ProductCopper":color=new Color(.30f,.18f,.09f);kind=3;gloss=.14f;metal=.35f;break;
                 case "Skin": color = new Color(.66f,.43f,.28f); kind=5; break;
                 case "Hair": color = new Color(.105f,.075f,.052f); kind=6; gloss=.38f; break;
                 case "HairHighlight": color = new Color(.145f,.103f,.071f); kind=6; gloss=.38f; break;
@@ -32,12 +47,16 @@ namespace NeonVault
                 case "Wood": color = new Color(.265f,.14f,.065f); kind=4; gloss=.12f; break;
                 default: color = new Color(.065f,.068f,.06f); break;
             }
+            bool product=key.StartsWith("Kestrel")||key.StartsWith("Ironwake")||key.StartsWith("Voltarc")||key.StartsWith("Mireline")||key.StartsWith("Cinder")||key.StartsWith("Aegis")||key.StartsWith("Product");
+            if(product){gloss=Mathf.Min(gloss,.16f);metal=Mathf.Min(metal,.35f);}
             var shader = Shader.Find(ShaderName);
             if (!shader || !shader.isSupported) shader = Shader.Find("Standard");
             if (!shader) shader = Shader.Find("Legacy Shaders/Diffuse");
             if (!shader) shader = Shader.Find("Hidden/InternalErrorShader");
             var mat = new Material(shader) { name = "Detailed survivor / " + key, hideFlags = HideFlags.DontSave };
             mat.color = color;
+            if(product&&mat.HasProperty("_RustAmount"))mat.SetFloat("_RustAmount",key.StartsWith("Cinder")?.18f:key.StartsWith("Ironwake")?.10f:.025f);
+            if(product&&mat.HasProperty("_AtlasStrength"))mat.SetFloat("_AtlasStrength",0f);
             if(mat.HasProperty("_SurfaceKind")) mat.SetFloat("_SurfaceKind",kind);
             if(mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness",gloss);
             if(mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic",metal);
@@ -45,7 +64,7 @@ namespace NeonVault
             if(atlas&&kind>=1&&kind<=4&&mat.HasProperty("_MaterialAtlas"))
             {
                 mat.SetTexture("_MaterialAtlas",atlas);
-                mat.SetFloat("_AtlasStrength",kind==3?.85f:.68f);
+                mat.SetFloat("_AtlasStrength",product?.62f:kind==3?.85f:.68f);
             }
             if((key=="Hair"||key=="HairHighlight")&&mat.HasProperty("_Outline"))mat.SetFloat("_Outline",.00012f);
             cache[key]=mat;

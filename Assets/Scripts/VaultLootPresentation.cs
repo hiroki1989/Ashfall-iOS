@@ -6,6 +6,22 @@ namespace NeonVault
 
     public partial class VaultGame
     {
+        void ApplyProductDropModel(GameObject root,object item)
+        {
+            if(!root)return;
+            foreach(Transform child in root.transform)if(!child.name.StartsWith("Loot locator")){child.gameObject.SetActive(false);Destroy(child.gameObject);}
+            Transform model=null;
+            if(item is Gun gun)model=ManufacturerEquipment3D.BuildWeapon(root.transform,gun).root;
+            else if(item is ArmorItem armor)model=BespokeLegendaryDesigns.Index(armor)>=0?BespokeLegendaryModels3D.BuildArmor(root.transform,armor,BespokeLegendaryDesigns.Index(armor)):DistinctEquipmentModels3D.BuildArmor(root.transform,armor,DistinctEquipmentDesigns.For(armor));
+            else if(item is ArtifactItem module)model=DistinctEquipmentModels3D.BuildModule(root.transform,module);
+            if(!model)return;
+            model.localPosition=Vector3.zero;model.localRotation=Quaternion.Euler(0,35,-12);
+            var renderers=model.GetComponentsInChildren<Renderer>();if(renderers.Length==0)return;
+            Bounds bounds=renderers[0].bounds;foreach(var renderer in renderers)bounds.Encapsulate(renderer.bounds);
+            float scale=.82f/Mathf.Max(.01f,Mathf.Max(bounds.size.x,Mathf.Max(bounds.size.y,bounds.size.z)));
+            Vector3 offset=model.position-bounds.center;model.localScale*=scale;model.position=root.transform.position+offset*scale+Vector3.up*.08f;
+        }
+
         /// <summary>Lower-frequency salvage rewards plus ammo drops with visible, testable outcomes.</summary>
         public bool TryRollScrapDrop(bool boss, out int amount)
         {

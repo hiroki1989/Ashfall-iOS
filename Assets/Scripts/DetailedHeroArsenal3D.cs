@@ -40,7 +40,7 @@ namespace NeonVault
             mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);var uv=new Vector2[vertices.Count];for(int i=0;i<uv.Length;i++)uv[i]=new Vector2(vertices[i].z*5+vertices[i].x*3,vertices[i].y*5);mesh.uv=uv;mesh.RecalculateNormals();mesh.RecalculateTangents();mesh.RecalculateBounds();
             t.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;t.gameObject.AddComponent<MeshRenderer>().sharedMaterial=material;t.gameObject.AddComponent<Resources>().meshes.Add(mesh);return t;
         }
-        static void Compact(Transform root)
+        internal static void Compact(Transform root)
         {
             var groups=new Dictionary<Material,List<CombineInstance>>();var remove=new List<Transform>();
             foreach(var f in root.GetComponentsInChildren<MeshFilter>())
@@ -49,7 +49,7 @@ namespace NeonVault
             foreach(var t in remove)Release(t);
         }
         // Closed bevel extrusion, ear-clipped caps support concave stock/grip/blade polygons.
-        static Transform Profile(string name,Transform p,Material m,float width,params Vector2[] outline)
+        internal static Transform Profile(string name,Transform p,Material m,float width,params Vector2[] outline)
         {
             int n=outline.Length;Vector2 center=Vector2.zero;foreach(var q in outline)center+=q;center/=n;
             var v=new List<Vector3>();var ix=new List<int>();
@@ -62,20 +62,20 @@ namespace NeonVault
             if(poly.Count==3)cap.AddRange(poly);for(int i=0;i<cap.Count;i+=3)ix.AddRange(new[]{cap[i],cap[i+1],cap[i+2],3*n+cap[i],3*n+cap[i+2],3*n+cap[i+1]});return MeshPart(name,p,m,v,ix);
         }
         static Vector2 P(float z,float y)=>new Vector2(z,y);
-        static Transform Tube(string name,Transform p,Material m,Vector3 start,float radius,float length,float bore=.55f,float endRadius=-1,int sides=32)
+        internal static Transform Tube(string name,Transform p,Material m,Vector3 start,float radius,float length,float bore=.55f,float endRadius=-1,int sides=32)
         {
             if(endRadius<0)endRadius=radius;var v=new List<Vector3>();var ix=new List<int>();
             for(int ring=0;ring<4;ring++)for(int i=0;i<=sides;i++){float a=i*Mathf.PI*2/sides,r=(ring%2==0?radius:endRadius)*(ring<2?1:bore);v.Add(start+V(Mathf.Cos(a)*r,Mathf.Sin(a)*r,ring%2*length));}
             int[] ra={0,3,2,1},rb={1,2,0,3};for(int j=0;j<4;j++)for(int i=0;i<sides;i++){int a=ra[j]*(sides+1)+i,b=rb[j]*(sides+1)+i;ix.AddRange(new[]{a,a+1,b,a+1,b+1,b});}return MeshPart(name,p,m,v,ix);
         }
-        static Transform Rod(string n,Transform p,Material m,Vector3 a,Vector3 b,float radius)
+        internal static Transform Rod(string n,Transform p,Material m,Vector3 a,Vector3 b,float radius)
         {var t=Tube(n,p,m,Vector3.zero,radius,Vector3.Distance(a,b),.015f,-1,12);t.localPosition=a;t.localRotation=Quaternion.LookRotation(b-a);return t;}
-        static void Line(string n,Transform p,Material m,float radius,params Vector3[] points){for(int i=1;i<points.Length;i++)Rod(n,p,m,points[i-1],points[i],radius);}
+        internal static void Line(string n,Transform p,Material m,float radius,params Vector3[] points){for(int i=1;i<points.Length;i++)Rod(n,p,m,points[i-1],points[i],radius);}
         static void Band(string n,Transform p,Material m,float y,float rx,float rz,float width,float start=0,float span=Mathf.PI*2)
         {
             const int N=40;var v=new List<Vector3>();var ix=new List<int>();for(int j=0;j<2;j++)for(int i=0;i<=N;i++){float a=start+span*i/N;v.Add(V(Mathf.Cos(a)*rx,y+(j-.5f)*width,Mathf.Sin(a)*rz));}for(int i=0;i<N;i++){int a=i,b=a+N+1;ix.AddRange(new[]{a,b,a+1,a+1,b,b+1});}MeshPart(n,p,m,v,ix);
         }
-        static void Shell(string n,Transform p,Material m,Vector3 center,Vector2 size,float curve)
+        internal static void Shell(string n,Transform p,Material m,Vector3 center,Vector2 size,float curve)
         {
             const int R=8,N=36;var v=new List<Vector3>{center+V(0,0,curve)};var ix=new List<int>();for(int j=1;j<=R;j++)for(int i=0;i<=N;i++){float a=i*Mathf.PI*2/N,r=j/(float)R;v.Add(center+V(Mathf.Cos(a)*size.x*.5f*r,Mathf.Sin(a)*size.y*.5f*r,curve*Mathf.Sqrt(1-r*r*.9f)+Mathf.Sin(a*5+r*12)*.001f*r));}for(int i=0;i<N;i++)ix.AddRange(new[]{0,i+1,i+2});for(int j=0;j<R-1;j++)for(int i=0;i<N;i++){int a=1+j*(N+1)+i,b=a+N+1;ix.AddRange(new[]{a,b,a+1,a+1,b,b+1});}MeshPart(n,p,m,v,ix);
             Vector3 last=Vector3.zero;for(int i=0;i<=N;i++){float a=i*Mathf.PI*2/N;Vector3 q=center+V(Mathf.Cos(a)*size.x*.5f,Mathf.Sin(a)*size.y*.5f,curve*.32f);if(i>0)Rod("Rolled steel hem",p,M("Steel"),last,q,.0026f);if(i%6==0)Tube("Plate rivet",p,M("Brass"),q,.0037f,.002f,.03f,-1,12);last=q;}
@@ -86,9 +86,9 @@ namespace NeonVault
         {for(int s=-1;s<=1;s+=2)Rod("Notch sight ear",g,M("Steel"),V(s*.009f,.03f,rear),V(s*.009f,height,rear),.003f);Rod("Front blade sight",g,M("Steel"),V(0,.015f,front),V(0,height,front),.0035f);}
         static void Scope(Transform g,float z,float length=.23f)
         {Tube("Scope optical barrel",g,M("Dark"),V(0,.10f,z),.028f,length,.72f);for(int i=0;i<2;i++){float at=z+.035f+i*(length-.07f);Tube("Scope machined clamp",g,M("Steel"),V(0,.10f,at),.032f,.013f,.87f);Rod("Scope mount",g,M("Steel"),V(0,.031f,at),V(0,.085f,at),.012f);}Tube("Teal objective glass",g,M("TealGlass"),V(0,.10f,z+length-.003f),.020f,.003f,.015f);}
-        static void Grip(Transform g,bool wood=false,float z=-.025f)
+        internal static void Grip(Transform g,bool wood=false,float z=-.025f)
         {Profile("Contoured pistol grip",g,M(wood?"Wood":"LeatherDark"),.046f,P(z-.035f,-.02f),P(z+.025f,-.032f),P(z+.004f,-.139f),P(z-.055f,-.13f));for(int i=0;i<7;i++)Rod("Grip checkered rib",g,M("Leather"),V(.024f,-.055f-i*.009f,z-.034f),V(.024f,-.057f-i*.009f,z+.008f),.001f);}
-        static void Guard(Transform g,float z=0)
+        internal static void Guard(Transform g,float z=0)
         {Line("Open trigger guard",g,M("Steel"),.0035f,V(0,-.035f,z+.045f),V(0,-.093f,z+.041f),V(0,-.104f,z-.013f),V(0,-.047f,z-.035f));Line("Curved trigger",g,M("Steel"),.0025f,V(0,-.036f,z+.005f),V(0,-.067f,z+.011f),V(0,-.079f,z+.002f));}
         static void Stock(Transform g,float rear=-.35f,bool wood=true,bool skeletal=false)
         {
@@ -102,7 +102,7 @@ namespace NeonVault
         {Profile("Beveled steel receiver",g,M("Steel"),width,P(-.10f,-.040f),P(-.10f,.025f),P(front-.035f,.033f),P(front,.010f),P(front,-.042f));Profile("Recessed ejection port",g,M("Dark"),width+.001f,P(.005f,.009f),P(.005f,.026f),P(.078f,.026f),P(.078f,.009f));Fasteners(g,-.07f,front-.02f,width*.51f,-.015f,5);Rod("Charging handle",g,M("Steel"),V(width*.5f,.008f,.01f),V(width*.85f,.008f,.01f),.005f);}
         static void Handguard(Transform g,float start,float end,bool pump=false)
         {Profile(pump?"Ribbed sliding pump":"Sculpted ventilated fore-end",g,M(pump?"Wood":"Dark"),.078f,P(start,-.055f),P(start,.019f),P(end,.015f),P(end,-.044f));for(int i=0;i<8;i++){float z=Mathf.Lerp(start+.015f,end-.015f,i/7f);for(int s=-1;s<=1;s+=2)Rod(pump?"Pump grip rib":"Handguard vent",g,M(pump?"LeatherDark":"Steel"),V(s*.040f,-.036f,z),V(s*.040f,.005f,z),.002f);}}
-        static DetailedHeroEquipment3D.WeaponSockets Finish(Transform g,Vector3 trigger,Vector3 support,Vector3 stock,Vector3 muzzle)
+        internal static DetailedHeroEquipment3D.WeaponSockets Finish(Transform g,Vector3 trigger,Vector3 support,Vector3 stock,Vector3 muzzle)
         {Compact(g);return new DetailedHeroEquipment3D.WeaponSockets{root=g,trigger=G("Trigger grip socket",g,trigger),support=G("Support grip socket",g,support),stock=G("Shoulder stock socket",g,stock),muzzle=G("True +Z firing axis",g,muzzle)};}
         public static DetailedHeroEquipment3D.WeaponSockets BuildWeapon(Transform parent,int model,string visualSet)
         {
@@ -196,17 +196,20 @@ namespace NeonVault
             public void SetItems(ArmorItem[] items)
             {
                 var selected=new ArmorItem[5];if(items!=null)foreach(var a in items)if(a!=null&&(int)a.slot>=0&&(int)a.slot<5)selected[(int)a.slot]=a;
-                SetHairVisible(selected[0]==null||selected[0].visualVariant==4);
-                bool replacementChest=selected[1]!=null&&selected[1].visualVariant!=4;
-                bool replacementArms=selected[2]!=null&&selected[2].visualVariant!=4;
+                SetHairVisible(selected[0]==null||BespokeLegendaryDesigns.Index(selected[0])==20||(DistinctEquipmentDesigns.For(selected[0])==null&&selected[0].visualVariant==4));
+                bool replacementChest=selected[1]!=null&&DistinctEquipmentDesigns.For(selected[1])==null&&selected[1].visualVariant!=4;
+                bool replacementArms=selected[2]!=null&&DistinctEquipmentDesigns.For(selected[2])==null&&selected[2].visualVariant!=4;
                 body.SetBaseJacketVisible(!replacementChest,!replacementChest,!replacementArms);
-                body.SetBaseTrouserVisible(selected[3]==null||selected[3].visualVariant==4);
-                if(selected[3]==null||selected[3].visualVariant==4)body.SetSeatFabric(null);
+                body.SetBaseTrouserVisible(selected[3]==null||DistinctEquipmentDesigns.For(selected[3])!=null||selected[3].visualVariant==4);
+                if(selected[3]==null||DistinctEquipmentDesigns.For(selected[3])!=null||selected[3].visualVariant==4)body.SetSeatFabric(null);
                 AppliedCount=0;for(int slot=0;slot<5;slot++){
                     var item=selected[slot];if(item!=null)AppliedCount++;
-                    string key=item==null?"empty":item.visualVariant.ToString();
+                    string key=item==null?"empty":item.catalogId+"/"+item.visualVariant;
                     if(keys[slot]==key)continue;keys[slot]=key;foreach(var t in roots[slot])Release(t);roots[slot].Clear();foreach(var m in owned[slot])if(m)UnityEngine.Object.Destroy(m);owned[slot].Clear();baseline.SetSlot((ArmorSlot)slot,false);
                     if(item==null)continue;
+                    // The menu-reference set uses its individually authored cloth, harness and respirator rig.
+                    if(BespokeLegendaryDesigns.Index(item)>=20&&BespokeLegendaryDesigns.Index(item)<=24){baseline.SetSlot((ArmorSlot)slot,true);continue;}
+                    if(DistinctEquipmentDesigns.For(item)!=null)continue;
                     if(Mathf.Clamp(item.visualVariant,0,4)==4){baseline.SetSlot((ArmorSlot)slot,true);continue;}
                     var palette=new Dictionary<string,Material>();
                     Material Local(string materialKey)

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -56,6 +56,7 @@ namespace NeonVault
         {var t=new GameObject(name).transform;t.SetParent(parent,false);t.localPosition=p;return t;}
         void Build()
         {
+            if(TryBuildSharedGeometry())return;
             bool brute=kind==3,gaunt=kind==4||kind==9,soldier=kind==2||kind==5||kind==8;
             girth=brute?.39f:kind==7?.35f:kind==6?.31f:kind==8?.28f:kind==2?.26f:gaunt?.175f:.215f;
             armLength=kind==4?.40f:brute?.36f:.30f;legLength=brute?.40f:.43f;headHeight=kind==4?1.62f:1.78f;baseLean=kind==4?26:kind==9?13:brute?8:kind==7?3:8;
@@ -92,7 +93,7 @@ namespace NeonVault
             Belt();
             if(kind==2||kind==5)Firearm();
             else muzzle=Joint("Mouth attack origin",head,V(0,-.01f,.14f));
-            SculptDetails();Batch(rig);Ready=true;previous=transform.position;LateUpdate();
+            SculptDetails();Batch(rig);CacheSharedGeometry();Ready=true;previous=transform.position;LateUpdate();
         }
         void SculptDetails()
         {

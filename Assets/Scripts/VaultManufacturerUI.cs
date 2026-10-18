@@ -14,18 +14,13 @@ namespace NeonVault
             else if(manufacturerKind==1){foreach(var product in ArmorProductCatalog.All)if(product.manufacturerId==id)manufacturerProducts.Add(Armory.CreateCatalog(product.id,Rarity.Common,1));}
             else if(manufacturerKind==2){foreach(var product in ModuleProductCatalog.All)if(product.manufacturerId==id)manufacturerProducts.Add(ArtifactCatalog.CreateCatalog(product.id,product.legendary?Rarity.Legendary:Rarity.Common,1));}
             else if(manufacturerKind==3){for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){var item=MeleeWeaponCatalog.Catalog(i);if(ManufacturerBranding.Maker(item)==id)manufacturerProducts.Add(item);}}
-            if(manufacturerKind==0||manufacturerKind==1)for(int i=0;i<30;i++)
-            {
-                object item=manufacturerKind==0?(object)LegendaryCatalog.CreateGun(i,new System.Random(17000+i),1):LegendaryCatalog.CreateArmor(i,new System.Random(18000+i),1);
-                string maker=item is Gun gun?ManufacturerBranding.Maker(gun):ManufacturerBranding.Maker((ArmorItem)item);
-                if(maker==id)manufacturerProducts.Add(item);
-            }
+
         }
         void DrawManufacturerRegistry()
         {
             Box(new Rect(0,0,1440,900),PanelInk);
             Text(44,29,T("THE SIX / FIELD MANUFACTURERS","荒野の6社 / 装備メーカー"),heading,Gold,1160);
-            Text(46,88,T("1800 FIREARMS · 2520 ARMOR · 720 MODULES · 50 MELEE / 5150 PRODUCTS (+60 LEGENDARY)", "銃1800・防具2520・モジュール720・近接50 / 合計5150製品（固有伝説60を含む）"),small,Mist,1250);
+            Text(46,88,T(Arsenal.CatalogCount+" FIREARMS · "+ArmorProductCatalog.Count+" ARMOR · "+ModuleProductCatalog.Count+" MODULES / INCLUDING 60 NAMED LEGENDARIES", "銃"+Arsenal.CatalogCount+"・防具"+ArmorProductCatalog.Count+"・モジュール"+ModuleProductCatalog.Count+" / 固有伝説60種を含む"),small,Mist,1250);
             if(Button(new Rect(1230,848,165,42),T("BACK","戻る")))manufacturerRegistry=false;
             for(int maker=0;maker<6;maker++)
             {

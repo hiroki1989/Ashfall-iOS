@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -57,9 +57,10 @@ namespace NeonVault
         static readonly Color Cyan=new Color(.25f,.78f,.82f), Gold=new Color(.98f,.66f,.30f), Ink=new Color(.025f,.038f,.052f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
+        static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
         void Awake()
         {
+            Time.timeScale=1;
             Application.targetFrameRate=MobileTouchControls.Enabled?30:120;
             if(MobileTouchControls.Enabled)QualitySettings.vSyncCount=0;
             cores=PlayerPrefs.GetInt("Vault.Cores",0); rank=PlayerPrefs.GetInt("Vault.Rank",0);
@@ -106,7 +107,7 @@ namespace NeonVault
         public void StartRun(int? fixedSeed=null)
         {
             ClearRunCheckpoint();shake=0;
-            InventoryOpen=false;Time.timeScale=1; seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
+            ResetGameplayOverlays(); seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
             route.Clear(); var cell=Vector2Int.zero; route.Add(cell);
             for(int i=1;i<CurrentDungeon.AreaCount;i++)
             {
@@ -137,7 +138,7 @@ namespace NeonVault
         public void BuildRoom(bool populate)
         {
             if(world!=null) { world.gameObject.SetActive(false); Destroy(world.gameObject); }
-            foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();
+            foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();
             world=new GameObject("Generated sector "+room).transform; satellites.Clear();
             ClearArtifactDrops();Layout=new SectorLayout(new System.Random(seed+room*7919),DungeonIndex);
             halfWidth=Layout.Columns*SectorLayout.Cell/2;halfDepth=Layout.Rows*SectorLayout.Cell/2;cleared=false;
@@ -159,12 +160,36 @@ namespace NeonVault
                 {
                     Vector3 p; int attempts=0;
                     do {var cell=Layout.chambers[rng.Next(Layout.chambers.Count)];p=Layout.Center(cell)+new Vector3((float)rng.NextDouble()*6-3,0,(float)rng.NextDouble()*4-2);attempts++;} while((Blocked(p,.8f)||!Layout.SpawnSafe(p))&&attempts<200);
-                    if(!Blocked(p,.8f)&&Layout.SpawnSafe(p)) SpawnFoe(p,CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)]);
+                    if(Blocked(p,.8f)||!Layout.SpawnSafe(p)) p=FindEnemySpawn();
+                    SpawnFoe(p,CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)]);
                 }
                 SpawnRoomChest();
                 SpawnAmmoCratesForCurrentRoom();
+                ReconcileFloorCompletion();
             }
             cam.orthographicSize=7.5f;UpdateCamera(true);
+        }
+        Vector3 FindEnemySpawn()
+        {
+            // Exhaustive finite fallback: never silently omit an encounter after random misses.
+            var candidates=new List<Vector3>();
+            for(int x=0;x<Layout.Columns;x++)for(int y=0;y<Layout.Rows;y++)
+            {
+                var p=Layout.Center(new Vector2Int(x,y));
+                if(Layout.SpawnSafe(p)&&!Blocked(p,.8f))candidates.Add(p);
+            }
+            if(candidates.Count==0)throw new InvalidOperationException("Generated floor has no safe enemy spawn: "+seed+" / "+room);
+            return candidates[rng.Next(candidates.Count)];
+        }
+        void ReconcileFloorCompletion()
+        {
+            // Called at construction/restore boundaries, never as an exception-hiding frame repair.
+            bool alive=false;foreach(var foe in Enemies)if(foe!=null&&!foe.dead){alive=true;break;}
+            cleared=!alive;
+        }
+        void ResetGameplayOverlays()
+        {
+            InventoryOpen=false;manufacturerRegistry=false;Time.timeScale=1;
         }
         void SpawnFoe(Vector3 position,int kind)
         {
@@ -345,7 +370,7 @@ namespace NeonVault
         {
             p.y=.3f;
             var obj=CreateLootPresentation(weapon.name,p,new Vector3(.65f,.28f,1.05f),weapon.color,LootPresentationKind.Weapon);
-            drops.Add(new Drop {gun=weapon,position=p,visual=obj});
+            ApplyProductDropModel(obj,weapon);drops.Add(new Drop {gun=weapon,position=p,visual=obj});
         }
         void AddMeleeDrop(MeleeWeaponItem item,Vector3 p)
         {
@@ -403,7 +428,7 @@ namespace NeonVault
         }
         public void Advance()
         {
-            if(!cleared)return;
+            if(screen!=Screen.Playing||!cleared)return;
             if(room>=CurrentDungeon.AreaCount-1){Finish(true);return;}
             choices=new[]{0,1,2,3,4,5,6};
             for(int i=choices.Length-1;i>0;i--) { int j=rng.Next(i+1); int a=choices[i];choices[i]=choices[j];choices[j]=a; }
@@ -411,8 +436,9 @@ namespace NeonVault
         }
         public void ChooseReward(int index)
         {
+            if(screen!=Screen.Reward||index<0||index>=choices.Length)return;
             switch(choices[index]) { case 0:damageBonus+=.25f;runDamage+=.25f;break;case 1:baseMaxHp+=30;runVitality+=30;RecalculateArmor();hp=Mathf.Min(maxHp,hp+35);break;case 2:fireBonus+=.22f;runFire+=.22f;break;case 3:hp=maxHp;break;case 4:runDash+=.35f;break;case 5:runChain+=.30f;break;case 6:runHarvest+=3;break; }
-            room++; reload=0;reloadPending=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
+            room++; ResetGameplayOverlays();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
         }
         void Finish(bool victory)
         {

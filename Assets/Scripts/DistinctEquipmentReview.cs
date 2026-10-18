@@ -1,0 +1,82 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using UnityEngine;
+namespace NeonVault
+{
+    // Explicit, finite source-revision self verification. Normal sessions never instantiate this component.
+    public sealed class DistinctEquipmentReview:MonoBehaviour
+    {
+        const string Flag="--distinct-equipment-review";
+        static readonly string[] ints={"Vault.Language","Vault.Cores","Vault.Rank","Vault.FirstBossLegendaryD0"};
+        static readonly string[] strings={"Vault.Progression.v1","Vault.Loadout.v1","Vault.DebtSkills.v1","Vault.ExpeditionCheckpoint.v1"};
+        static readonly Dictionary<string,int> oldInts=new Dictionary<string,int>();
+        static readonly Dictionary<string,string> oldStrings=new Dictionary<string,string>();
+        static readonly HashSet<string> existed=new HashSet<string>();
+        readonly List<string> log=new List<string>();readonly List<Card> cards=new List<Card>();
+        sealed class Card{public EquipmentRecipe recipe;public Gun gun;public ArmorItem armor;public ArtifactItem module;public Texture2D mesh;}
+        Transform studio;Camera camera3D;Font font;string title,output="D:/Unity/QA-distinct-equipment";int checks,failures,guiFrames;bool drawing;
+        static bool Requested()=>Array.IndexOf(Environment.GetCommandLineArgs(),Flag)>=0;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void Backup(){if(!Requested())return;existed.Clear();oldInts.Clear();oldStrings.Clear();foreach(var k in ints){if(PlayerPrefs.HasKey(k))existed.Add(k);oldInts[k]=PlayerPrefs.GetInt(k);}foreach(var k in strings){if(PlayerPrefs.HasKey(k))existed.Add(k);oldStrings[k]=PlayerPrefs.GetString(k);}}
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Boot(){if(Requested())new GameObject("Distinct equipment finite revision review").AddComponent<DistinctEquipmentReview>();}
+        IEnumerator Start()
+        {
+            var args=Environment.GetCommandLineArgs();int at=Array.IndexOf(args,"--qa-output");if(at>=0&&at+1<args.Length)output=args[at+1];Directory.CreateDirectory(output);font=Resources.Load<Font>("Fonts/NotoSansJP");
+            var work=Run();while(true){bool next;try{next=work.MoveNext();}catch(Exception e){Check(false,"exception "+e);break;}if(!next)break;yield return work.Current;}
+            drawing=false;ClearCards();Restore();log.Add("Checks="+checks+" Failures="+failures);log.Add("Source revision self verification. Physical iOS/Metal/touch and long-play performance untested.");File.WriteAllLines(output+"/result.txt",log);Debug.Log("DISTINCT_EQUIPMENT_REVIEW checks="+checks+" failures="+failures);Application.Quit(failures==0?0:1);
+        }
+        IEnumerator Run()
+        {
+            var args=Environment.GetCommandLineArgs();foreach(string other in new[]{"--manufacturer-expansion-review","--gameplay-revision-review","--hero3d-review","--hero3d-playcheck","--smoke"})if(Array.IndexOf(args,other)>=0){Check(false,"conflicting review flag "+other);yield break;}
+            yield return null;foreach(var game in FindObjectsByType<VaultGame>(FindObjectsSortMode.None)){typeof(VaultGame).GetField("smoke",BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public).SetValue(game,true);game.enabled=false;}
+            foreach(var c in FindObjectsByType<Camera>(FindObjectsSortMode.None))c.enabled=false;
+            var display=new GameObject("Review framebuffer camera").AddComponent<Camera>();display.cullingMask=0;display.clearFlags=CameraClearFlags.SolidColor;display.backgroundColor=new Color(.018f,.024f,.035f);
+            studio=new GameObject("Review isolated mesh stage").transform;studio.position=new Vector3(1000,1000,1000);
+            camera3D=new GameObject("Review mesh camera").AddComponent<Camera>();camera3D.enabled=false;camera3D.orthographic=true;camera3D.clearFlags=CameraClearFlags.SolidColor;camera3D.backgroundColor=new Color(.035f,.045f,.06f);camera3D.cullingMask=1<<30;camera3D.nearClipPlane=.01f;camera3D.farClipPlane=30;
+            var light=new GameObject("Review key light").AddComponent<Light>();light.type=LightType.Directional;light.intensity=1.4f;light.transform.rotation=Quaternion.Euler(40,-35,0);light.cullingMask=1<<30;
+            Check(font!=null,"bundled Japanese font");
+            int kind=0;foreach(var pool in new[]{DistinctEquipmentDesigns.Guns,DistinctEquipmentDesigns.Armor,DistinctEquipmentDesigns.Modules})
+            {
+                var ids=new HashSet<string>();var shapes=new HashSet<string>();var en=new HashSet<string>();var jp=new HashSet<string>();var counts=new int[6];
+                Check(pool.Length==(kind==2?200:500),"catalog size category "+kind);
+                foreach(var r in pool){counts[r.maker]++;Check(ids.Add(r.id),"unique ID "+r.id);string shape=r.maker+"/"+(kind==1?r.slot:0)+"/"+r.body+"/"+(kind==0?r.barrel:0)+"/"+(kind==0?r.stock:r.attachment);Check(shapes.Add(shape),"unique visible assembly "+r.id);Check(!string.IsNullOrEmpty(r.name)&&en.Add(r.name),"unique English name "+r.id);Check(!string.IsNullOrEmpty(r.japanese)&&jp.Add(r.japanese),"unique Japanese name "+r.id);
+                    Transform root;
+                    if(kind==0){var gun=Arsenal.FromRecipe(r,Rarity.Rare);string saved=JsonUtility.ToJson(gun);var w=ManufacturerEquipment3D.BuildWeapon(studio,gun);Check(saved==JsonUtility.ToJson(gun),"presentation preserves gun stats and identity "+r.id);Check(gun.damage>0&&gun.interval>0&&gun.magazine>0&&gun.pellets>0,"usable gun stats "+r.id);root=w.root;if(r.legendary)Check(root.name.StartsWith("Bespoke legendary"),"dedicated legendary construction "+r.id);Check(w.trigger&&w.support&&w.stock&&w.muzzle&&Finite(w.trigger.position)&&Finite(w.support.position)&&Finite(w.stock.position)&&Finite(w.muzzle.position),"finite sockets "+r.id);Check(DistinctEquipmentDesigns.For(gun)==r,"gun recipe roundtrip "+r.id);}
+                    else if(kind==1){var armor=Armory.CreateCatalog(r.id,Rarity.Rare,3);string saved=JsonUtility.ToJson(armor);root=BespokeLegendaryDesigns.Index(armor)>=0?BespokeLegendaryModels3D.BuildArmor(studio,armor,BespokeLegendaryDesigns.Index(armor)):DistinctEquipmentModels3D.BuildArmor(studio,armor,r);Check(saved==JsonUtility.ToJson(armor),"presentation preserves armor stats and identity "+r.id);if(r.legendary)Check(root.name.StartsWith("Bespoke legendary"),"dedicated legendary construction "+r.id);Check(DistinctEquipmentDesigns.For(armor)==r,"armor recipe roundtrip "+r.id);}
+                    else{var module=ArtifactCatalog.CreateCatalog(r.id,Rarity.Rare,3);string saved=JsonUtility.ToJson(module);root=DistinctEquipmentModels3D.BuildModule(studio,module);Check(saved==JsonUtility.ToJson(module),"presentation preserves module stats and identity "+r.id);Check(module.power>0&&module.cooldown>=0,"usable module stats "+r.id);Check(DistinctEquipmentDesigns.For(module)==r,"module recipe roundtrip "+r.id);}
+                    Check(HasFiniteGeometry(root),"finite nonempty 3D "+r.id);root.gameObject.SetActive(false);Destroy(root.gameObject);if(r.index%8==0)yield return null;
+                }
+                int low=int.MaxValue,high=0;for(int m=0;m<6;m++){low=Math.Min(low,counts[m]);high=Math.Max(high,counts[m]);log.Add("CATEGORY "+kind+" maker="+m+" count="+counts[m]);}Check(high-low<=1,"balanced six manufacturers category "+kind);log.Add("CATEGORY "+kind+" unique visible assemblies="+shapes.Count);kind++;
+            }
+            drawing=true;
+            for(int maker=0;maker<6;maker++)
+            {
+                var guns=new List<EquipmentRecipe>();for(int body=0;body<6;body++)guns.Add(Find(DistinctEquipmentDesigns.Guns,maker,body,-1,false));foreach(var r in DistinctEquipmentDesigns.Guns)if(r.maker==maker&&r.legendary)guns.Add(r);
+                for(int page=0;page<2;page++){ClearCards();title="MAKER "+maker+" / GUNS / "+(page+1)+" : painted illustration | actual Unity mesh";for(int i=page*6;i<Math.Min(page*6+6,guns.Count);i++)Add(guns[i],0);yield return Capture("maker-"+maker+"-guns-"+page);}
+                ClearCards();title="MAKER "+maker+" / BESPOKE LEGENDARY GUNS";foreach(var relic in DistinctEquipmentDesigns.Guns)if(relic.maker==maker&&relic.legendary)Add(relic,0);yield return Capture("maker-"+maker+"-bespoke-guns");
+                ClearCards();title="MAKER "+maker+" / ARMOR : painted illustration | actual Unity mesh";for(int slot=0;slot<5;slot++)Add(Find(DistinctEquipmentDesigns.Armor,maker,-1,slot,true),1);yield return Capture("maker-"+maker+"-armor");
+                ClearCards();title="MAKER "+maker+" / MODULES : painted illustration | actual Unity mesh";for(int body=0;body<3;body++)Add(Find(DistinctEquipmentDesigns.Modules,maker,body,-1,false),2);yield return Capture("maker-"+maker+"-modules");
+                ClearCards();title="MAKER "+maker+" / FIVE EQUIPPED ARMOR SLOTS / neutral front, side and rear";var hero=DetailedHero3D.Create(studio,DetailedHeroMaterials3D.Get);var equipped=new ArmorItem[5];for(int slot=0;slot<5;slot++)equipped[slot]=Armory.CreateCatalog(Find(DistinctEquipmentDesigns.Armor,maker,-1,slot,true).id,Rarity.Rare,3);DetailedHeroArsenal3D.ApplyArmor(hero,equipped);ManufacturerEquipment3D.ApplyArmor(hero,equipped);var menuGun=Arsenal.FromRecipe(DistinctEquipmentDesigns.Guns[maker*5],Rarity.Legendary);var held=ManufacturerEquipment3D.BuildWeapon(hero.transform,menuGun);for(int angle=0;angle<3;angle++){DetailedHeroPlayer3D.Pose(hero,held,false,angle==1,Quaternion.Euler(0,angle*120,0)*Vector3.forward,-1);Check(Vector3.Distance(hero.rightHand.position,held.trigger.position+held.root.up*(.065f*hero.transform.lossyScale.y)-held.root.forward*(.01f*hero.transform.lossyScale.y))<.02f,"equipped legendary right hand contact "+maker+"/"+angle);cards.Add(new Card{mesh=Render(hero.transform),recipe=new EquipmentRecipe{id="equipped / angle "+angle*120,name="Five equipped armor slots",japanese="5部位装備"}});}hero.gameObject.SetActive(false);Destroy(hero.gameObject);yield return Capture("maker-"+maker+"-equipped-hero");
+            }
+        }
+        static EquipmentRecipe Find(EquipmentRecipe[] pool,int maker,int body,int slot,bool allowLegend){foreach(var r in pool)if(r.maker==maker&&(body<0||r.body==body)&&(slot<0||r.slot==slot)&&(allowLegend||!r.legendary))return r;foreach(var r in pool)if(r.maker==maker&&(body<0||r.body==body))return r;throw new InvalidOperationException("Missing representative");}
+        void Add(EquipmentRecipe r,int kind){Check(r!=null,"gallery recipe exists");Check(Resources.Load<Texture2D>("Art/DistinctEquipment/"+ManufacturerCatalog.Id(r.maker)+"-"+new[]{"gun","armor","module"}[kind]+"-parts-v1")!=null,"painted sheet present "+r.id);if(r.legendary&&kind<2){string path="Art/BespokeLegendaries/"+ManufacturerCatalog.Id(r.maker)+"-legendaries-v1";Check(Resources.Load<Texture2D>(path)!=null,"bespoke whole illustration "+r.id);var data=Resources.Load<TextAsset>(path+"-bounds");Check(data&&DistinctEquipmentPortraits.ParseBounds(data.text,10)!=null,"bespoke bounds "+r.id);}var card=new Card{recipe=r};Transform root;if(kind==0){card.gun=Arsenal.FromRecipe(r,Rarity.Rare);root=ManufacturerEquipment3D.BuildWeapon(studio,card.gun).root;}else if(kind==1){card.armor=Armory.CreateCatalog(r.id,Rarity.Rare,3);root=BespokeLegendaryDesigns.Index(card.armor)>=0?BespokeLegendaryModels3D.BuildArmor(studio,card.armor,BespokeLegendaryDesigns.Index(card.armor)):DistinctEquipmentModels3D.BuildArmor(studio,card.armor,r);}else{card.module=ArtifactCatalog.CreateCatalog(r.id,Rarity.Rare,3);root=DistinctEquipmentModels3D.BuildModule(studio,card.module);}card.mesh=Render(root);root.gameObject.SetActive(false);Destroy(root.gameObject);cards.Add(card);}
+        Texture2D Render(Transform root)
+        {
+            foreach(var t in root.GetComponentsInChildren<Transform>())t.gameObject.layer=30;bool found=false;var bounds=new Bounds();foreach(var r in root.GetComponentsInChildren<Renderer>())if(r.enabled&&r.gameObject.activeInHierarchy){if(!found){bounds=r.bounds;found=true;}else bounds.Encapsulate(r.bounds);}Check(found,"renderable bounds");
+            camera3D.transform.position=bounds.center+(root.GetComponent<DetailedHero3D>()!=null?new Vector3(2,1.15f,1.4f):(root.name.StartsWith("Distinct product")||root.name.StartsWith("Bespoke legendary weapon"))?new Vector3(3,.65f,.25f):new Vector3(.8f,.65f,3));camera3D.transform.LookAt(bounds.center);bool isHero=root.GetComponent<DetailedHero3D>()!=null;int rw=isHero?600:850,rh=isHero?850:500;camera3D.aspect=rw/(float)rh;float px=0,py=0;for(int ix=-1;ix<=1;ix+=2)for(int iy=-1;iy<=1;iy+=2)for(int iz=-1;iz<=1;iz+=2){var corner=Vector3.Scale(bounds.extents,new Vector3(ix,iy,iz));px=Mathf.Max(px,Mathf.Abs(Vector3.Dot(corner,camera3D.transform.right)));py=Mathf.Max(py,Mathf.Abs(Vector3.Dot(corner,camera3D.transform.up)));}camera3D.orthographicSize=Mathf.Max(.08f,Mathf.Max(py,px/camera3D.aspect)*1.12f);var rt=new RenderTexture(rw,rh,24);var old=RenderTexture.active;camera3D.targetTexture=rt;camera3D.Render();RenderTexture.active=rt;var tex=new Texture2D(rw,rh,TextureFormat.RGB24,false);tex.ReadPixels(new Rect(0,0,rw,rh),0,0);tex.Apply();camera3D.targetTexture=null;RenderTexture.active=old;rt.Release();Destroy(rt);return tex;
+        }
+        IEnumerator Capture(string name){int before=guiFrames;yield return null;yield return null;yield return new WaitForEndOfFrame();Check(guiFrames>before,"review GUI drew "+name);var image=ScreenCapture.CaptureScreenshotAsTexture();Check(image&&image.width>=960&&image.height>=540,"actual framebuffer "+name);if(image){File.WriteAllBytes(output+"/"+name+".png",image.EncodeToPNG());Destroy(image);}log.Add("CAPTURE "+name);}
+        void OnGUI(){if(!drawing)return;GUI.depth=-10000;GUI.matrix=Matrix4x4.Scale(new Vector3(Screen.width/1920f,Screen.height/1080f,1));GUI.color=new Color(.018f,.024f,.035f);GUI.DrawTexture(new Rect(0,0,1920,1080),Texture2D.whiteTexture);GUI.color=Color.white;var style=new GUIStyle(GUI.skin.label){font=font,fontSize=19,wordWrap=true};GUI.Label(new Rect(24,8,1870,42),title,style);if(cards.Count==3&&cards[0].gun==null&&cards[0].armor==null&&cards[0].module==null){for(int h=0;h<3;h++){GUI.DrawTexture(new Rect(20+h*630,80,600,900),cards[h].mesh,ScaleMode.ScaleToFit);GUI.Label(new Rect(30+h*630,990,590,55),cards[h].recipe.id,style);}if(Event.current.type==EventType.Repaint)guiFrames++;return;}for(int i=0;i<cards.Count;i++){var card=cards[i];float x=20+(i%2)*950,y=58+(i/2)*335;GUI.Box(new Rect(x,y,930,322),GUIContent.none);GUI.Label(new Rect(x+10,y+5,910,30),card.recipe.id+" / "+card.recipe.name,style);GUI.Label(new Rect(x+10,y+35,910,30),card.recipe.japanese,style);var art=new Rect(x+8,y+72,444,238);if(card.gun!=null)ItemPortraits.Draw(art,card.gun);else if(card.armor!=null)ItemPortraits.Draw(art,card.armor);else if(card.module!=null)ManufacturerBranding.ModulePortrait(art,card.module);GUI.DrawTexture(new Rect(x+468,y+72,450,238),card.mesh,ScaleMode.ScaleToFit);}if(Event.current.type==EventType.Repaint)guiFrames++;}
+        bool HasFiniteGeometry(Transform root){if(!root)return false;int vertices=0;foreach(var f in root.GetComponentsInChildren<MeshFilter>())if(f.gameObject.activeInHierarchy&&f.sharedMesh){foreach(var v in f.sharedMesh.vertices)if(!Finite(v))return false;vertices+=f.sharedMesh.vertexCount;}return vertices>0;}
+        static bool Finite(Vector3 v)=>!(float.IsNaN(v.x)||float.IsInfinity(v.x)||float.IsNaN(v.y)||float.IsInfinity(v.y)||float.IsNaN(v.z)||float.IsInfinity(v.z));
+        void ClearCards(){foreach(var c in cards)if(c.mesh)Destroy(c.mesh);cards.Clear();}
+        void Check(bool pass,string label){checks++;if(!pass)failures++;if(!pass||checks%500==0||label.StartsWith("balanced")||label.StartsWith("actual framebuffer"))log.Add((pass?"PASS ":"FAIL ")+label);}
+        static void Restore(){if(!Requested())return;foreach(var k in ints)if(existed.Contains(k))PlayerPrefs.SetInt(k,oldInts[k]);else PlayerPrefs.DeleteKey(k);foreach(var k in strings)if(existed.Contains(k))PlayerPrefs.SetString(k,oldStrings[k]);else PlayerPrefs.DeleteKey(k);PlayerPrefs.Save();}
+        void OnApplicationQuit(){Restore();}
+    }
+}

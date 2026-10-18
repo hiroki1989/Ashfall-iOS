@@ -12,8 +12,8 @@ namespace NeonVault
         public static string GunDescription(Gun g,bool ja)=>ManufacturerCatalog.Name(Maker(g),ja)+" · "+ManufacturerCatalog.Description(Maker(g),ja);
         public static string Design(string id,bool ja)
         {
-            string[] en={"Machined rails, narrow vents, blue enamel datum marks, ivory grip inserts.","Forged ribbed steel, exposed rivets, oxblood leather and copper braces.","Ceramic coil banks, brass conductors, yellow warning tabs and navy housings.","Olive fabric, translucent green reservoirs, bone-white fittings and woven hoses.","Welded patchwork, scratched orange plates, reclaimed timber and mismatched fasteners.","Layered ballistic plates, blue cloth panels, pale serial bands and reinforced buckles."};
-            string[] jp={"切削レール・細い放熱孔。青い計測印と象牙色グリップ。","鍛造鋼の補強リブと鋲。赤褐色の革、銅の支柱。","セラミックコイルと真鍮導体。黄の警告片、紺の筐体。","オリーブ布地と緑の薬液槽。骨白の継手、編組ホース。","溶接した継ぎ当てと傷んだ橙の鋼板。再生木材、不揃いな留め具。","積層防弾板と青い布地。白い識別帯、補強バックル。"};
+            string[] en={"Modern precision guns: blued steel, oiled walnut, olive canvas and compact mechanical sights. Small analogue range dials support accuracy and quick servicing.","Old military and industrial equipment: forged steel, riveted repair plates, oxblood leather and hydraulic recoil buffers. Heavy impact and protection trade speed for stability.","Modern firearms rebuilt with valve-era electrics: ceramic terminals, compact copper coils and amber vacuum tubes. Burst power and rapid fire demand larger batteries and cooling.","Medical and civil-defence equipment: olive fabric, rubber respirators, glass medicine reservoirs and pressure valves. Siphon and healing systems trade direct impact for sustain.","Reclaimed field equipment: worn timber, repaired steel, leather slings and small furnace chambers. Blast pressure and ammunition recovery use visible pipes and salvage mechanisms.","Security and supply equipment: dark navy ballistic canvas, practical plate carriers, reinforced boots and pale identification marks. Analogue capacitor packs power short protective barriers."};
+            string[] jp={"現代精密銃：黒染め鋼・油を含んだ木製銃床・オリーブ布・小型照準器。機械式測距ダイヤルが精度と整備性を支える。","旧軍・重工装備：鍛造鋼・鋲留め修理板・赤褐色の革・油圧緩衝器。重量と動作速度を代償に威力・防護を確保。","現代銃＋真空管時代の電装：碍子・小型銅コイル・琥珀色真空管。連射と瞬間出力を支える電池・冷却部を外観に反映。","医療・民間防衛装備：オリーブ布・ゴム製防毒面・薬液ガラス瓶・圧力弁。直接威力を抑え、吸命と回復で継戦。","再生野戦装備：傷んだ木材・補修鋼・革スリング・小型燃焼室。配管と再利用機構で爆圧・弾薬回収を支える。","警備・兵站装備：濃紺の防弾布・実用プレートキャリア・補強靴・淡い識別帯。アナログ蓄電装置で短時間の障壁を展開。"};
             return (ja?jp:en)[Mathf.Max(0,ManufacturerCatalog.Index(id))];
         }
         static float Segment(Vector2 p,Vector2 a,Vector2 b){Vector2 d=b-a;return Vector2.Distance(p,a+d*Mathf.Clamp01(Vector2.Dot(p-a,d)/d.sqrMagnitude));}
@@ -58,6 +58,7 @@ namespace NeonVault
         public static bool ModuleIllustrationAvailable=>Resources.Load<Texture2D>("Art/Manufacturers/ModuleIllustrations-v1")!=null;
         public static void ModulePortrait(Rect r,ArtifactItem item)
         {
+            if(DistinctEquipmentPortraits.Draw(r,item))return;
             if(!moduleIllustrations)moduleIllustrations=Resources.Load<Texture2D>("Art/Manufacturers/ModuleIllustrations-v1");
             if(!moduleIllustrations){ModulePortraitFallback(r,item);return;}
             var old=GUI.color;GUI.color=new Color(.025f,.04f,.05f);GUI.DrawTexture(r,Texture2D.whiteTexture);

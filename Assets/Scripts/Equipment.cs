@@ -36,16 +36,18 @@ namespace NeonVault
         public static ArmorItem RollForDungeon(System.Random random,int dungeon,bool boss=false)=>CreateForDungeon(random,dungeon,DungeonCatalog.RollRarity(random,boss),DungeonCatalog.ItemLevel(random,dungeon));
         public static ArmorItem CreateForDungeon(System.Random random,int dungeon,Rarity rarity,int level)
         {
-            if(rarity==Rarity.Legendary&&random.NextDouble()<.5)return LegendaryCatalog.CreateArmor(random.Next(30),random,level);
+            if(rarity==Rarity.Legendary)return LegendaryCatalog.CreateArmor(random.Next(30),random,level);
             var item=Create((ArmorSlot)random.Next(5),rarity,level,random);
             if(rarity==Rarity.Legendary){item.dungeon=dungeon;item.uniqueEffect=dungeon+1;item.name=Name(item,false);}
             return item;
         }
         static ArmorItem Create(ArmorSlot slot,Rarity rarity,int level,System.Random random,ArmorProduct product=null)
         {
+            var recipe=product==null?null:DistinctEquipmentDesigns.Find(product.id);if(recipe!=null&&recipe.legendary)rarity=Rarity.Legendary;
             float power=1+.16f*((int)rarity+Mathf.Max(1,level)-1);
-            if(product==null)product=random==null?ArmorProductCatalog.Get(slot,0,0):ArmorProductCatalog.Roll(random,slot);
+            if(product==null)product=random==null?ArmorProductCatalog.Default(slot):ArmorProductCatalog.Roll(random,slot);
             var a=new ArmorItem{ id=System.Guid.NewGuid().ToString("N"),slot=slot,rarity=rarity,level=level,color=ArmorColor(slot,rarity,random),visualVariant=product.visualVariant,catalogId=product.id,manufacturerId=product.manufacturerId,designVariant=product.designVariant };
+            if(recipe!=null&&recipe.legendary)a.legendaryKey=LegendaryCatalog.Key(true,recipe.index);
             a.damageReduction=RollValue(random,(slot==ArmorSlot.Chest?.045f:.018f)*power);
             switch(slot)
             {
@@ -93,7 +95,8 @@ namespace NeonVault
         public static string Name(ArmorItem item,bool? japanese=null)
         {
             bool ja=japanese??VaultLanguage.Japanese;
-            if(!string.IsNullOrEmpty(item.legendaryKey))return LegendaryCatalog.ArmorName(item,ja);
+            if(LegendaryCatalog.Index(item.legendaryKey)>=0)return LegendaryCatalog.ArmorName(item,ja);
+            var displayRecipe=DistinctEquipmentDesigns.For(item);if(displayRecipe!=null)return ja?displayRecipe.japanese:displayRecipe.name;
             var product=ArmorProductCatalog.Find(item.catalogId);
             if(product!=null)return ArmorProductCatalog.Name(product,ja)+(item.uniqueEffect>0?(ja?" / 固有装備":" / UNIQUE"):"");
             if(item.visualVariant==4)return ja?"トレイルウォーデン・"+new[]{"防毒ヘルメット","野戦ジャケット","装甲グローブ","野戦パンツ","戦闘ブーツ"}[(int)item.slot]:"TRAIL WARDEN / "+new[]{"FILTER HELMET","FIELD JACKET","ARMORED GLOVES","FIELD TROUSERS","COMBAT BOOTS"}[(int)item.slot];

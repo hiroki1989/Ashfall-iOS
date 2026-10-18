@@ -54,6 +54,8 @@ namespace NeonVault
         public static int ArmorCell(ArmorItem item)=>12+Mathf.Min((int)item.slot,3);
         public static void Draw(Rect rect,Gun item)
         {
+            if(BespokeLegendaryPortraits.Draw(rect,item))return;
+            if(DistinctEquipmentPortraits.Draw(rect,item))return;
             DrawLegacy(rect,item);
             ManufacturerBranding.Badge(new Rect(rect.x+3,rect.yMax-Mathf.Min(25,rect.height*.3f)-3,Mathf.Min(25,rect.width*.3f),Mathf.Min(25,rect.height*.3f)),ManufacturerBranding.Maker(item));
         }
@@ -68,6 +70,8 @@ namespace NeonVault
         }
         public static void Draw(Rect rect,ArmorItem item)
         {
+            if(BespokeLegendaryPortraits.Draw(rect,item))return;
+            if(DistinctEquipmentPortraits.Draw(rect,item))return;
             DrawLegacy(rect,item);
             ManufacturerBranding.Badge(new Rect(rect.x+3,rect.yMax-Mathf.Min(25,rect.height*.3f)-3,Mathf.Min(25,rect.width*.3f),Mathf.Min(25,rect.height*.3f)),ManufacturerBranding.Maker(item));
         }

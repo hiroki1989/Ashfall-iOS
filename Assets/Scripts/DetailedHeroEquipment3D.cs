@@ -209,6 +209,10 @@ namespace NeonVault
         public static Transform BuildChest(Transform chest,Func<string,Material> m)
         {
             var g=Group("Trail Warden / load-bearing harness",chest,Vector3.zero);
+            float JacketDepth(float x,float y){
+                float[] heights={-.29f,-.24f,-.14f,-.03f,.07f,.16f,.20f};float[] widths={.205f,.226f,.192f,.19f,.232f,.246f,.152f};float[] depths={.129f,.137f,.123f,.133f,.145f,.128f,.085f};
+                int row=0;while(row<5&&y>heights[row+1])row++;float t=Mathf.InverseLerp(heights[row],heights[row+1],y);float rx=Mathf.Lerp(widths[row],widths[row+1],t),rz=Mathf.Lerp(depths[row],depths[row+1],t);float u=Mathf.Clamp(x/rx,-.98f,.98f);return rz*Mathf.Sqrt(1-u*u)+.014f;
+            }
                         // Collapsed field hood: a broad draped shell with a recessed opening and an actual rolled edge.
             var hood=new List<Vector3>();var hoodIndices=new List<int>();
             const int hn=64,hr=28;
@@ -243,12 +247,18 @@ namespace NeonVault
             for(int row=0;row<10;row++)for(int col=0;col<16;col++){int a=row*17+col,b=a+17;si.AddRange(new[]{a,b,a+1,a+1,b,b+1});}Surface("Draped scarf front bib",g,sv,si,m,"Cloth");
             for(int col=1;col<16;col+=2){Vector3 q=sv[10*17+col];Rod("Frayed scarf hem thread",g,m,"Cloth",q,q+new Vector3(.001f,-.004f-(col%3)*.001f,.001f),.0008f);}
             for(int s=-1;s<=1;s+=2){
-                Vector3 a=new Vector3(s*.16f,.19f,.115f),b=new Vector3(s*.125f,-.25f,.15f);
-                Ribbon("Shoulder to belt harness",g,m,"Leather",a,b,.040f,.012f);
-                Seam(g,m,a+Vector3.right*.014f,b+Vector3.right*.014f,32);Seam(g,m,a-Vector3.right*.014f,b-Vector3.right*.014f,32);
-                Buckle(g,m,Vector3.Lerp(a,b,.33f)+Vector3.forward*.01f,.046f,.055f);
-                for(int i=0;i<5;i++)Rivet(g,m,Vector3.Lerp(a,b,.49f+i*.08f)+Vector3.forward*.008f,.0035f);
-                Ribbon("Rear crossed harness",g,m,"Leather",new Vector3(s*.16f,.18f,-.12f),new Vector3(-s*.125f,-.23f,-.15f),.039f,.012f);
+                Vector3 a=new Vector3(s*.14f,.16f,0),b=new Vector3(s*.125f,-.25f,0);a.z=JacketDepth(a.x,a.y);b.z=JacketDepth(b.x,b.y);
+                Vector3 previousFront=a;
+                for(int segment=1;segment<=20;segment++){Vector3 nextFront=Vector3.Lerp(a,b,segment/20f);nextFront.z=JacketDepth(nextFront.x,nextFront.y);Ribbon("Conforming shoulder harness",g,m,"Leather",previousFront,nextFront,.040f,.008f);Seam(g,m,previousFront+Vector3.right*.014f,nextFront+Vector3.right*.014f,2);Seam(g,m,previousFront-Vector3.right*.014f,nextFront-Vector3.right*.014f,2);previousFront=nextFront;}
+                Vector3 clasp=Vector3.Lerp(a,b,.33f);clasp.z=JacketDepth(clasp.x,clasp.y)+.006f;Buckle(g,m,clasp,.046f,.055f);
+                for(int i=0;i<5;i++){Vector3 q=Vector3.Lerp(a,b,.49f+i*.08f);q.z=JacketDepth(q.x,q.y)+.007f;Rivet(g,m,q,.0035f);}
+                // A straight rear strap cut through the convex jacket and only its
+                // triangular ends remained visible. Follow the garment surface.
+                Vector3 lastBack=new Vector3(s*.14f,.16f,-JacketDepth(s*.14f,.16f));
+                for(int segment=1;segment<=16;segment++){
+                    float t=segment/16f;Vector3 nextBack=new Vector3(Mathf.Lerp(s*.14f,-s*.125f,t),Mathf.Lerp(.16f,-.23f,t),0);nextBack.z=-JacketDepth(nextBack.x,nextBack.y);
+                    Ribbon("Rear harness conforming segment",g,m,"Leather",lastBack,nextBack,.039f,.008f);lastBack=nextBack;
+                }
                 Pouch(g,m,new Vector3(s*.115f,-.265f,.17f),new Vector3(.092f,.15f,.065f));
                 Pouch(g,m,new Vector3(s*.235f,-.25f,.015f),new Vector3(.075f,.145f,.07f));
             }

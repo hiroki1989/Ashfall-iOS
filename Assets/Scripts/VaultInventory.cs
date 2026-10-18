@@ -223,7 +223,7 @@ namespace NeonVault
         {
             p.y=.35f;string displayName=Armory.Name(item);var shape=CreateLootPresentation(displayName,p,new Vector3(.6f,.35f,.65f),item.color,LootPresentationKind.Armor);
 
-            armorDrops.Add(new ArmorDrop{item=item,position=p,visual=shape});
+            ApplyProductDropModel(shape,item);armorDrops.Add(new ArmorDrop{item=item,position=p,visual=shape});
         }
     }
 }

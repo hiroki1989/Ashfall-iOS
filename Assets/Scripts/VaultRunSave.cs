@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -65,20 +65,19 @@ namespace NeonVault
             if(!HasSavedRun)return false;
             RunCheckpoint save;
             try{save=JsonUtility.FromJson<RunCheckpoint>(PlayerPrefs.GetString(RunSaveKey));}
-            catch(Exception e){Debug.LogWarning("Expedition checkpoint could not be read: "+e.GetType().Name);PlayerPrefs.DeleteKey(RunSaveKey);return false;}
-            if(save==null||save.version!=1||save.routeX==null||save.routeY==null||save.routeX.Length!=save.routeY.Length||save.routeX.Length==0||save.dungeon<0||save.dungeon>2)
-            {PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();return false;}
-            if(save.routeX.Length>DungeonCatalog.Get(save.dungeon).AreaCount){PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();return false;}
-            DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);InventoryOpen=false;Time.timeScale=1;seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
+            catch(Exception e){Debug.LogWarning("Expedition checkpoint could not be read: "+e.GetType().Name);return false;}
+            if(!ValidateCheckpoint(save))
+            {Debug.LogWarning("Expedition checkpoint is invalid; retained without changing equipment or progression.");return false;}
+            DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);ResetGameplayOverlays();shake=0;meleeAttack?.ResetCooldown();seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
             if(save.foes==null)save.foes=new List<FoeCheckpoint>();if(save.guns==null)save.guns=new List<GunDropCheckpoint>();if(save.armor==null)save.armor=new List<ArmorDropCheckpoint>();if(save.modules==null)save.modules=new List<ArtifactDropCheckpoint>();if(save.melee==null)save.melee=new List<MeleeDropCheckpoint>();if(save.supplies==null)save.supplies=new List<SupplyCheckpoint>();if(save.chests==null)save.chests=new List<PositionCheckpoint>();if(save.ammoCrates==null)save.ammoCrates=new List<AmmoCrateCheckpoint>();
             route.Clear();for(int i=0;i<save.routeX.Length;i++)route.Add(new Vector2Int(save.routeX[i],save.routeY[i]));
             kills=save.kills;ricochetEvents=0;splitEvents=0;runTime=save.runTime;baseMaxHp=save.baseMaxHp;runDamage=save.runDamage;runFire=save.runFire;runVitality=save.runVitality;runDash=save.runDash;runChain=save.runChain;runHarvest=save.runHarvest;
-            damageBonus=save.damageBonus;fireBonus=save.fireBonus;RecalculateArmor();hp=Mathf.Clamp(save.hp,1,maxHp);LoadAmmoReserves(save.ammoReserves);ActiveWeaponSlot=Mathf.Clamp(save.activeWeaponSlot,0,AvailableWeaponSlotCount-1);gun=WeaponInSlot(ActiveWeaponSlot)??WeaponInSlot(0)??Weapons[0];SelectedWeapon=Weapons.IndexOf(gun);ammo=Mathf.Clamp(save.ammo,0,EffectiveMagazine);reload=0;reloadPending=0;invincible=1;dodgeCooldown=0;dodgeTimer=0;fireTimer=0;debtChainCount=save.debtChainCount;
+            damageBonus=save.damageBonus;fireBonus=save.fireBonus;RecalculateArmor();hp=Mathf.Clamp(save.hp,1,maxHp);LoadAmmoReserves(save.ammoReserves);ActiveWeaponSlot=Mathf.Clamp(save.activeWeaponSlot,0,AvailableWeaponSlotCount-1);gun=WeaponInSlot(ActiveWeaponSlot)??WeaponInSlot(0)??Weapons[0];ActiveWeaponSlot=Mathf.Max(0,EquippedWeaponSlot(gun));SelectedWeapon=Weapons.IndexOf(gun);ammo=Mathf.Clamp(save.ammo,0,EffectiveMagazine);reload=0;reloadPending=0;invincible=1;dodgeCooldown=0;dodgeTimer=0;fireTimer=0;debtChainCount=save.debtChainCount;
             chestRoomForRun=save.chestRoomForRun;ammoCratePlanCount=save.ammoCratePlanCount;ammoCrateRoomPlan.Clear();if(save.ammoCrateRooms!=null)ammoCrateRoomPlan.AddRange(save.ammoCrateRooms);
             ResetArtifactCombat();ArtifactShield=save.artifactShield;artifactCombatClock=save.artifactClock;missionKills=save.missionKills;missionCompleted=save.missionCompleted;
             runUpgradeCounts.Clear();if(save.upgradeKeys!=null&&save.upgradeValues!=null)for(int i=0;i<Math.Min(save.upgradeKeys.Length,save.upgradeValues.Length);i++)runUpgradeCounts[save.upgradeKeys[i]]=save.upgradeValues[i];
-            screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);float groundedPlayerY=player.position.y;player.position=new Vector3(save.playerX,groundedPlayerY,save.playerZ);aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
-            foreach(var state in save.foes){SpawnFoe(new Vector3(state.x,.65f,state.z),state.kind);var foe=Enemies[Enemies.Count-1];foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
+            screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);float groundedPlayerY=player.position.y;var savedPosition=new Vector3(save.playerX,groundedPlayerY,save.playerZ);player.position=Blocked(savedPosition,.45f)?new Vector3(Layout.Entry.x,groundedPlayerY,Layout.Entry.z):savedPosition;aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
+            foreach(var state in save.foes){var position=new Vector3(state.x,.65f,state.z);if(Blocked(position,.8f))position=FindEnemySpawn();SpawnFoe(position,state.kind);var foe=Enemies[Enemies.Count-1];foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
             foreach(var d in save.guns)if(d.item!=null)AddDrop(d.item,d.position);
             foreach(var d in save.armor)if(d.item!=null)AddArmorDrop(d.item,d.position);
             foreach(var d in save.modules)if(d.item!=null)AddArtifactDrop(d.item,d.position);
@@ -86,7 +85,38 @@ namespace NeonVault
             foreach(var d in save.supplies){if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,(AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1),d.ammoAmount);}
             foreach(var c in save.chests){var obj=CreateLootPresentation("SUPPLY CHEST / [F] OPEN",c.position,new Vector3(1.4f,.88f,1.25f),new Color(1f,.53f,.12f),LootPresentationKind.Chest);chests.Add(new Chest{position=c.position,visual=obj});}
             foreach(var c in save.ammoCrates){var type=(AmmoType)Mathf.Clamp(c.type,0,AmmoTypeCount-1);var obj=CreateLootPresentation(AmmoPickupName(type,c.amount),c.position,new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,c.amount);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,type=type,amount=c.amount,visual=obj});}
+            ReconcileFloorCompletion();Layout.BuildDistanceField(PlayerPosition);Layout.Discover(PlayerPosition);
             UpdateCamera(true);PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();Notify("EXPEDITION RESTORED / Checkpoint consumed","探索を再開 / 保存データを復元しました");return true;
+        }
+
+        static bool ValidPosition(Vector3 p)=>Finite(p.x)&&Finite(p.y)&&Finite(p.z);
+        static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
+        static bool ValidateCheckpoint(RunCheckpoint save)
+        {
+            if(save==null||save.version!=1||save.dungeon<0||save.dungeon>2)return false;
+            int count=DungeonCatalog.Get(save.dungeon).AreaCount;
+            if(save.room<0||save.room>=count||save.routeX==null||save.routeY==null||save.routeX.Length!=count||save.routeY.Length!=count)return false;
+            var visited=new HashSet<Vector2Int>();
+            for(int i=0;i<count;i++)
+            {
+                var c=new Vector2Int(save.routeX[i],save.routeY[i]);
+                if(Math.Abs((long)c.x)>count||Math.Abs((long)c.y)>count||!visited.Add(c))return false;
+                if(i==0&&c!=Vector2Int.zero)return false;
+                if(i>0&&Math.Abs(c.x-save.routeX[i-1])+Math.Abs(c.y-save.routeY[i-1])!=1)return false;
+            }
+            foreach(float value in new[]{save.hp,save.baseMaxHp,save.damageBonus,save.fireBonus,save.runDamage,save.runFire,save.runVitality,save.runDash,save.runChain,save.runHarvest,save.runTime,save.artifactShield,save.artifactClock,save.playerX,save.playerZ,save.aimX,save.aimZ})if(!Finite(value))return false;
+            if(save.hp<=0||save.baseMaxHp<=0||save.runDash<0||save.runTime<0)return false;
+            if(save.foes!=null&&save.foes.Count>2048)return false;
+            if(save.guns!=null)foreach(var d in save.guns)if(d==null||!ValidPosition(d.position))return false;
+            if(save.armor!=null)foreach(var d in save.armor)if(d==null||!ValidPosition(d.position))return false;
+            if(save.modules!=null)foreach(var d in save.modules)if(d==null||!ValidPosition(d.position))return false;
+            if(save.melee!=null)foreach(var d in save.melee)if(d==null||!ValidPosition(d.position))return false;
+            if(save.supplies!=null)foreach(var d in save.supplies)if(d==null||!ValidPosition(d.position))return false;
+            if(save.chests!=null)foreach(var d in save.chests)if(d==null||!ValidPosition(d.position))return false;
+            if(save.ammoCrates!=null)foreach(var d in save.ammoCrates)if(d==null||!ValidPosition(d.position))return false;
+            if(save.foes!=null)foreach(var foe in save.foes)
+                if(foe==null||foe.kind<0||foe.kind>9||!Finite(foe.x)||!Finite(foe.z)||!Finite(foe.hp)||!Finite(foe.maxHp)||!Finite(foe.timer)||foe.hp<=0||foe.maxHp<=0)return false;
+            return true;
         }
 
         void SaveRunAndReturnToMenu()

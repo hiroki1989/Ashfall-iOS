@@ -8,6 +8,7 @@ Shader "NeonVault/DetailedHeroInk3D"
         _Metallic ("Metal", Range(0,1)) = 0
         _InkColor ("Ink", Color) = (.035,.028,.022,1)
         _Outline ("Contour width", Range(0,.015)) = .00085
+        _RustAmount ("Exposed rust", Range(0,1)) = .72
         _Grain ("Surface grain", Range(0,1)) = .55
         _CreaseInk ("Crease ink", Range(0,1)) = .18
         _MaterialAtlas ("Painted canvas / leather / steel / walnut", 2D) = "white" {}
@@ -41,7 +42,7 @@ Shader "NeonVault/DetailedHeroInk3D"
         #include "UnityCG.cginc"
         #include "UnityGlobalIllumination.cginc"
         float4 _Color, _InkColor;
-        float _SurfaceKind,_Glossiness,_Metallic,_Grain,_CreaseInk;
+        float _SurfaceKind,_Glossiness,_Metallic,_Grain,_CreaseInk,_RustAmount;
         sampler2D _MaterialAtlas;
         float _AtlasStrength;
         sampler2D _CreatureAtlas;
@@ -136,7 +137,7 @@ Shader "NeonVault/DetailedHeroInk3D"
             else if(_SurfaceKind<3.5 && _SurfaceKind>2.5)
             {
                 float rust=smoothstep(.61,.79,noise3(p*31)+.08*noise3(p*95));
-                color=lerp(color,float3(.19,.075,.028),rust*.72);
+                color=lerp(color,float3(.19,.075,.028),rust*_RustAmount);
                 pigment+=(fine-.5)*.10;
                 mark=smoothstep(.84,.94,noise3(p*float3(170,9,35)))*.22;
             }

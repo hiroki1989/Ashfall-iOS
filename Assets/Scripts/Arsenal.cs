@@ -35,14 +35,43 @@ namespace NeonVault
         public static readonly string[] ModelJapanese={"ダストランナー","リベットSMG","ロングウォッチ","スクラップハンマー","トレンチスイーパー","ソードサンダー","アイアンベルト","ニードルドライバー","コイルランス","レッドスプリッター","アイソトープスウォーム","真空エンジン","フィールドカービン","ブリーチポンプ","遺産の六輪","九式サービス","大口径ブレーカー","静音ナイン"};
         public static int ModelCount=>ModelNames.Length;
         public const int DesignsPerModel=100;
-        public static int CatalogCount=>ModelCount*DesignsPerModel;
-        public static int CatalogIndex(Gun gun)=>gun==null?0:Mathf.Clamp(gun.modelVariant,0,ModelCount-1)+Mathf.Clamp(gun.designVariant,0,DesignsPerModel-1)*ModelCount;
+        public static int CatalogCount=>DistinctEquipmentDesigns.Guns.Length;
+        public static int CatalogIndex(Gun gun)=>DistinctEquipmentDesigns.For(gun)!=null?DistinctEquipmentDesigns.For(gun).index:gun==null?0:Mathf.Clamp(gun.modelVariant,0,ModelCount-1)+Mathf.Clamp(gun.designVariant,0,DesignsPerModel-1)*ModelCount;
         static readonly string[] DesignEnglish={"Standard","Scout","Bastion","Cyclone","Sharpsight","Breach","Expedition","Surge","Vanguard","Prototype"};
         static readonly string[] DesignJapanese={"標準型","斥候型","要塞型","旋風型","照準型","突破型","遠征型","急襲型","先鋒型","試作型"};
         public static string DesignName(int design,bool japanese)=>(japanese?DesignJapanese:DesignEnglish)[Mathf.Clamp(design,0,DesignsPerModel-1)%10]+ProductGeneration.Name(design,japanese);
         public static Gun Catalog(int index,Rarity rarity=Rarity.Common)
         {
-            index=Mathf.Clamp(index,0,CatalogCount-1);int model=index%ModelCount,design=index/ModelCount;
+            return FromRecipe(DistinctEquipmentDesigns.Guns[Mathf.Clamp(index,0,CatalogCount-1)],rarity);
+        }
+        public static Gun FromRecipe(EquipmentRecipe r,Rarity rarity)
+        {
+            if(r.legendary)return BespokeLegendaryDesigns.CreateBase(r.index);
+            var g=BaseModel(r.family,rarity);g.catalogId=r.id;g.manufacturerId=ManufacturerCatalog.Id(r.maker);g.designVariant=r.index;g.name=r.name;
+            // Barrel engineering changes how the weapon fires, with explicit costs.
+            switch(r.barrel){
+                case 0:g.accuracy+=8;g.speed*=1.18f;g.reloadSeconds*=1.12f;g.movementBonus-=.018f;break;
+                case 1:g.movementBonus+=.035f;g.reloadSeconds*=.80f;g.accuracy-=9;g.speed*=.88f;break;
+                case 2:g.pellets+=1;g.damage*=.63f;g.interval*=1.30f;g.magazine=Mathf.Max(1,g.magazine-2);break;
+                case 3:g.interval*=.77f;g.damage*=.90f;g.reloadSeconds*=1.13f;break;
+                case 4:g.accuracy+=5;g.interval*=1.06f;g.speed*=1.06f;break;
+                case 5:g.pellets+=2;g.damage*=.47f;g.accuracy-=16;g.interval*=1.19f;g.reloadSeconds*=1.14f;break;
+            }
+            switch(r.stock){
+                case 0:g.accuracy+=4;g.movementBonus-=.012f;break;
+                case 1:g.movementBonus+=.028f;g.accuracy-=3;break;
+                case 2:g.reloadSeconds*=.83f;g.accuracy-=2;break;
+                case 3:g.accuracy+=7;g.interval*=1.07f;break;
+                case 4:g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*1.35f));g.reloadSeconds*=1.18f;break;
+                case 5:g.reloadSeconds*=.91f;g.interval*=.95f;g.movementBonus+=.012f;g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*.88f));break;
+            }
+            if(r.barrel==2||r.barrel==5)g.effect=GunEffect.Scatter;
+            g.accuracy=Mathf.Clamp(g.accuracy,1,100);
+            ManufacturerCatalog.Apply(g);if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
+        }
+        public static Gun LegacyCatalog(int index,Rarity rarity=Rarity.Common)
+        {
+            index=Mathf.Clamp(index,0,ModelCount*DesignsPerModel-1);int model=index%ModelCount,design=index/ModelCount;
             if(design==0)return Model(model,rarity);
             int basic=design%10;
             // Recreate the baseline, then apply one design and one manufacturer's tuning.
@@ -61,6 +90,13 @@ namespace NeonVault
             gun.name=ModelNames[model]+" / "+DesignName(design,false);
             gun.subtitle=DesignName(design,false)+" engineering · "+ModelDescription(model);
             ManufacturerCatalog.Apply(gun);ProductGeneration.Apply(gun);return gun;
+        }
+        // Compatibility lookup is creation-only; loading retained items uses serialized stats.
+        public static Gun FindCatalog(string id,Rarity rarity=Rarity.Common){
+            var r=DistinctEquipmentDesigns.Find(id);if(r!=null&&id.StartsWith("distinct.gun."))return FromRecipe(r,rarity);
+            if(string.IsNullOrEmpty(id))return null;var parts=id.Split('-');
+            if(parts.Length==3&&parts[0]=="gun"&&int.TryParse(parts[1],out int model)&&int.TryParse(parts[2],out int design)&&model>=0&&model<ModelCount&&design>=0&&design<DesignsPerModel)return LegacyCatalog(model+design*ModelCount,rarity);
+            return null;
         }
         // SMGs keep a two-hand grip; short shotguns and sidearms remain one-handed.
         public static bool IsOneHanded(int model)=>model==5||(model>=14&&model<=17);
@@ -84,13 +120,13 @@ namespace NeonVault
             item.name=sidearm?"Warden Sidearm":"Warden Woodstock";
             item.subtitle=sidearm?"Trail Warden service sidearm":"Trail Warden wood-stock rifle";return item;
         }
-        public static Gun Starter()=>Model(0,Rarity.Common);
+        public static Gun Starter()=>Catalog(30,Rarity.Common);
         public static Gun Model(int variant,Rarity rarity)
         {
             var gun=BaseModel(variant,rarity);gun.catalogId="gun-"+gun.modelVariant.ToString("00")+"-00";
             gun.manufacturerId=ManufacturerCatalog.ForDesign(gun.modelVariant,0);ManufacturerCatalog.Apply(gun);return gun;
         }
-        static Gun BaseModel(int variant,Rarity rarity)
+        internal static Gun BaseModel(int variant,Rarity rarity)
         {
             variant=Mathf.Clamp(variant,0,ModelCount-1);
             float[] damage={15,9,45,10,8,15,12,27,60,26,18,30,16,12,31,14,56,19};
@@ -106,7 +142,7 @@ namespace NeonVault
         {
             return Model(9+(index%3+3)%3,Rarity.Legendary);
         }
-        public static Gun Legendary(int index, System.Random random, int level) => random.NextDouble()<.5?LegendaryCatalog.CreateGun(random.Next(30),random,level):Randomize(Catalog(9+(index%3+3)%3+random.Next(DesignsPerModel)*ModelCount,Rarity.Legendary),random,level);
+        public static Gun Legendary(int index, System.Random random, int level) => LegendaryCatalog.CreateGun(random.Next(30),random,level);
         public static Gun RollCatalogStats(Gun gun,System.Random random,int level)=>Randomize(gun,random,level);
         public static Gun Roll(System.Random random, int depth)
         {
@@ -117,7 +153,7 @@ namespace NeonVault
         public static Gun CreateForDungeon(System.Random random,int dungeon,Rarity rarity,int level)
         {
             if(rarity==Rarity.Legendary)return Legendary(dungeon,random,level);
-            var item=Catalog(random.Next(CatalogCount),rarity);
+            var item=Catalog(30+random.Next(CatalogCount-30),rarity);
             return Randomize(item,random,level);
         }
         static Gun Randomize(Gun gun,System.Random random,int level)

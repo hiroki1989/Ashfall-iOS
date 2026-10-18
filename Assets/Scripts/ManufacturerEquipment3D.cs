@@ -8,10 +8,13 @@ namespace NeonVault
     {
         static Vector3 V(float x,float y,float z)=>new Vector3(x,y,z);
         static Transform Root(string name,Transform parent){var t=new GameObject(name).transform;t.SetParent(parent,false);return t;}
-        public static string WeaponKey(Gun gun)=>gun==null?"default":gun.modelVariant+"/"+gun.visualSet+"/"+gun.manufacturerId+"/"+gun.designVariant;
+        public static string WeaponKey(Gun gun)=>gun==null?"default":gun.catalogId+"/"+gun.id+"/"+gun.modelVariant+"/"+gun.visualSet+"/"+gun.manufacturerId+"/"+gun.designVariant;
         public static DetailedHeroEquipment3D.WeaponSockets BuildWeapon(Transform parent,Gun gun)
         {
-            if(gun!=null)ManufacturerCatalog.InferGunIdentity(gun);
+
+            int bespoke=BespokeLegendaryDesigns.Index(gun);if(bespoke>=0)return BespokeLegendaryModels3D.BuildWeapon(parent,gun,bespoke);
+            var recipe=DistinctEquipmentDesigns.For(gun);
+            if(recipe!=null)return DistinctEquipmentModels3D.BuildWeapon(parent,gun,recipe);
             int model=gun==null?12:VaultLanguage.DisplayModel(gun);
             var weapon=DetailedHeroArsenal3D.BuildWeapon(parent,model,gun?.visualSet);
             if(gun!=null){var root=Root("Manufacturer weapon fittings",weapon.root);root.localPosition=V(0,.063f,.015f);if(Arsenal.IsOneHanded(model))root.localScale=Vector3.one*.65f;Build(root,gun.manufacturerId,gun.designVariant);}
@@ -45,9 +48,23 @@ namespace NeonVault
             {
                 for(int slot=0;slot<5;slot++){
                     ArmorItem item=null;if(items!=null)foreach(var candidate in items)if(candidate!=null&&(int)candidate.slot==slot){item=candidate;break;}
-                    string key=item==null?"":ManufacturerBranding.Maker(item)+"/"+item.designVariant+"/"+item.visualVariant;
+                    string key=item==null?"":item.catalogId+"/"+item.id+"/"+ManufacturerBranding.Maker(item)+"/"+item.designVariant+"/"+item.visualVariant;
                     if(keys[slot]==key)continue;keys[slot]=key;
                     foreach(var root in roots[slot])if(root){root.gameObject.SetActive(false);Object.Destroy(root.gameObject);}roots[slot].Clear();if(item==null)continue;
+                    // Cinder menu-reference set is owned exclusively by ArmorVisuals baseline rig.
+                    int menuSet=BespokeLegendaryDesigns.Index(item);if(menuSet>=20&&menuSet<=24)continue;
+                    var recipe=DistinctEquipmentDesigns.For(item);
+                    if(recipe!=null){
+                        switch((ArmorSlot)slot){
+                            case ArmorSlot.Head:AddDistinct(body.head);break;
+                            case ArmorSlot.Chest:AddDistinct(body.chest);break;
+                            case ArmorSlot.Arms:AddDistinct(body.leftForearm);AddDistinct(body.rightForearm);break;
+                            case ArmorSlot.Legs:AddDistinct(body.leftShin);AddDistinct(body.rightShin);break;
+                            case ArmorSlot.Feet:AddDistinct(body.leftFoot);AddDistinct(body.rightFoot);break;
+                        }
+                        int bespoke=BespokeLegendaryDesigns.Index(item);roots[slot].AddRange(bespoke>=0?BespokeLegendaryModels3D.ApplyArmorSupplement(body,item,bespoke):DistinctEquipmentModels3D.ApplyArmorSupplement(body,item,recipe));
+                        continue;
+                    }
                     switch((ArmorSlot)slot){
                         case ArmorSlot.Head:Add(body.head,V(.092f,.065f,.018f),new Vector3(0,0,-90),.55f);break;
                         case ArmorSlot.Chest:Add(body.chest,V(0,.055f,.19f),V(90,0,0),1.25f);break;
@@ -55,6 +72,7 @@ namespace NeonVault
                         case ArmorSlot.Legs:Add(body.leftShin,V(0,-.15f,.105f),V(90,0,0),.70f);Add(body.rightShin,V(0,-.15f,.105f),V(90,0,0),.70f);break;
                         case ArmorSlot.Feet:Add(body.leftFoot,V(0,-.015f,-.065f),V(90,180,0),.5f);Add(body.rightFoot,V(0,-.015f,-.065f),V(90,180,0),.5f);break;
                     }
+                    void AddDistinct(Transform bone){if(bone)roots[slot].Add(BespokeLegendaryDesigns.Index(item)>=0?BespokeLegendaryModels3D.BuildArmor(bone,item,BespokeLegendaryDesigns.Index(item)):DistinctEquipmentModels3D.BuildArmor(bone,item,recipe));}
                     void Add(Transform bone,Vector3 position,Vector3 rotation,float scale){if(!bone)return;var root=Root("Catalog "+item.slot+" fittings",bone);root.localPosition=position;root.localEulerAngles=rotation;root.localScale=Vector3.one*scale;roots[slot].Add(root);Build(root,ManufacturerBranding.Maker(item),item.designVariant);}
                 }
             }

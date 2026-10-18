@@ -49,9 +49,8 @@ namespace NeonVault
         public static Gun CreateGun(int index,System.Random random,int level)
         {
             if(random==null)throw new ArgumentNullException(nameof(random));index=Mathf.Clamp(index,0,29);
-            int maker=index/5,variant=index%5,model=(maker*3+variant)%Arsenal.ModelCount;
-            int design=(maker-model%6+6)%6+variant*6;
-            var item=Arsenal.RollCatalogStats(Arsenal.Catalog(model+design*Arsenal.ModelCount,Rarity.Legendary),random,level);
+            int maker=index/5;
+            var item=Arsenal.RollCatalogStats(Arsenal.Catalog(index,Rarity.Legendary),random,level);
             item.legendaryKey=Key(false,index);item.manufacturerId=ManufacturerCatalog.Id(maker);
             item.name=GunName(item,false);item.subtitle=Description(item,false);
             item.color=Arsenal.Colors[(int)Rarity.Legendary];return item;
@@ -61,7 +60,7 @@ namespace NeonVault
             if(random==null)throw new ArgumentNullException(nameof(random));index=Mathf.Clamp(index,0,29);
             int maker=index/5,variant=index%5;string makerId=ManufacturerCatalog.Id(maker);
             ArmorProduct product=null;
-            foreach(var p in ArmorProductCatalog.All)if(p.manufacturerId==makerId&&p.slot==(ArmorSlot)variant){product=p;break;}
+            foreach(var p in ArmorProductCatalog.All)if(p.id==DistinctEquipmentDesigns.Armor[index].id){product=p;break;}
             var item=Armory.CreateCatalog(product.id,Rarity.Legendary,level,random);
             item.legendaryKey=Key(true,index);item.manufacturerId=makerId;item.uniqueEffect=0;
             item.name=ArmorName(item,false);item.subtitle=Description(item,false);return item;

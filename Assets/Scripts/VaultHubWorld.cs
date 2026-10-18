@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -9,7 +9,7 @@ namespace NeonVault
         public void BuildHub()
         {
             if(world!=null){world.gameObject.SetActive(false);Destroy(world.gameObject);}
-            foreach(var material in materials)if(material!=null)Destroy(material);materials.Clear();Enemies.Clear();drops.Clear();armorDrops.Clear();ClearArtifactDrops();satellites.Clear();
+            foreach(var material in materials)if(material!=null)Destroy(material);materials.Clear();Enemies.Clear();drops.Clear();meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();ClearArtifactDrops();satellites.Clear();
             world=new GameObject("LAST LIGHT / survivor safehouse").transform;
             Layout=new SectorLayout(new System.Random(17017));System.Array.Clear(Layout.open,0,Layout.open.Length);
             for(int x=0;x<Layout.Columns;x++)for(int y=0;y<Layout.Rows;y++){var p=Layout.Center(new Vector2Int(x,y));if(new Vector2(p.x,p.z).magnitude<13.5f)Layout.open[x,y]=true;}

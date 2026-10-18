@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace NeonVault
 {
     public static class VaultLanguage
@@ -10,7 +10,8 @@ namespace NeonVault
         {return Japanese?new[]{"コモン","アンコモン","レア","エピック","レジェンダリー"}[(int)rarity]:rarity.ToString().ToUpper();}
         public static string GunName(Gun gun,bool? japanese=null)
         {
-            if(!string.IsNullOrEmpty(gun.legendaryKey))return LegendaryCatalog.GunName(gun,japanese??Japanese);
+            if(LegendaryCatalog.Index(gun.legendaryKey)>=0)return LegendaryCatalog.GunName(gun,japanese??Japanese);
+            var recipe=DistinctEquipmentDesigns.For(gun);if(recipe!=null)return (japanese??Japanese)?recipe.japanese:recipe.name;
             int variant=DisplayModel(gun);
             if(gun.visualSet==Arsenal.TrailWardenVisualSet)return (japanese??Japanese)?(variant==15?"ウォーデン・サイドアーム":"ウォーデン・ウッドストック"):(variant==15?"Warden Sidearm":"Warden Woodstock");
             return ((japanese??Japanese)?Arsenal.ModelJapanese[variant]:Arsenal.ModelNames[variant])+(gun.designVariant>0?" / "+Arsenal.DesignName(gun.designVariant,japanese??Japanese):"");
@@ -36,6 +37,7 @@ namespace NeonVault
         }
         public static int DisplayModel(Gun gun)
         {
+            int bespoke=BespokeLegendaryDesigns.Index(gun);if(bespoke>=0)return BespokeLegendaryDesigns.Model(bespoke);
             // Legacy saves keep their IDs, statistics and stored names; presentation migrates only.
             if(gun.effect==GunEffect.Ricochet)return 9;
             if(gun.effect==GunEffect.Orbit)return 10;
