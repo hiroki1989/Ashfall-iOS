@@ -1,9 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
     {
-        public Rect MobileCityView=>new Rect(40,140,1360,535);
+        public Rect MobileCityView=>new Rect(40,140,1360,490);
         bool mobileMapEntered;int mobileShopPage,mobileSalePage,mobileCatalogPage,mobileSkillPage;
         GUIStyle MobileCopy=>new GUIStyle(label){fontSize=34,wordWrap=true,clipping=TextClipping.Clip};
         void MobileCopyAt(float x,float y,string text,Color color,float width=1000)
@@ -16,8 +16,8 @@ namespace NeonVault
             expeditionMapScroll=Vector2.Max(Vector2.zero,Vector2.Min(expeditionMapScroll,size-view.size));
             expeditionMapScroll=GUI.BeginScrollView(view,expeditionMapScroll,new Rect(0,0,size.x,size.y));DrawCityAtlas();GUI.EndScrollView();
             var stage=ExpeditionMap.Get(expeditionMapSelection);bool unlocked=stage.level<=DebtLevel;
-            MobileCopyAt(42,687,stage.Name+" / Lv "+stage.level+"  ("+T("YOU ","現在 ")+DebtLevel+")",unlocked?Cyan:Gold);
-            MobileCopyAt(42,732,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese)+" / "+ExpeditionRewardDescription(stage.id),Mist,1350);
+            MobileCopyAt(42,640,stage.Name+" / Lv "+stage.level+"  ("+T("YOU ","現在 ")+DebtLevel+")",unlocked?Cyan:Gold);
+            MobileCopyAt(42,694,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese)+" / "+ExpeditionRewardDescription(stage.id),Mist,1350);
             if(MobileButton(new Rect(40,780,270,110),T("BACK","拠点へ"))){mobileMapEntered=false;screen=Screen.Hub;}
             if(MobileButton(new Rect(330,780,125,110),"−"))SetCityZoom(expeditionCityZoom/1.2f,view.size*.5f);
             if(MobileButton(new Rect(475,780,125,110),"+"))SetCityZoom(expeditionCityZoom*1.2f,view.size*.5f);

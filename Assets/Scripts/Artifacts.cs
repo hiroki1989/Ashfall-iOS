@@ -7,7 +7,7 @@ namespace NeonVault {
   public static ArtifactItem Create(System.Random random,int dungeon,Rarity rarity,int level){
    if(random==null)throw new System.ArgumentNullException(nameof(random));
    int family=rarity==Rarity.Legendary?4+Mathf.Clamp(dungeon,0,2):random.Next(4);
-   return CreateCatalog(ModuleProductCatalog.Get(family,random.Next(10)).id,rarity,level,random,dungeon);
+   return CreateCatalog(ModuleProductCatalog.Roll(random,family).id,rarity,level,random,dungeon);
   }
   public static ArtifactItem CreateCatalog(string catalogId,Rarity rarity,int level,System.Random random=null,int dungeon=0){
    var product=ModuleProductCatalog.Find(catalogId);
@@ -20,13 +20,13 @@ namespace NeonVault {
   }
   static void RollAffixes(ArtifactItem a,System.Random r)
   {
-   int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo"};
+   int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage"};
    var used=new System.Collections.Generic.HashSet<int>();a.affixes=new GearAffix[count];
    if(r==null)return;
    for(int i=0;i<count;i++)
    {
     int p;if(i==0&&!string.IsNullOrEmpty(a.manufacturerId)){var product=ModuleProductCatalog.Find(a.catalogId);p=product==null?r.Next(types.Length):System.Array.IndexOf(types,product.preferredAffix);if(p<0)p=r.Next(types.Length);used.Add(p);}else{do{p=r.Next(types.Length);}while(!used.Add(p));}
-    float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f};
+    float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.015f,.06f};
     a.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*a.power*Arsenal.Range(r,.85f,1.15f)};
    }
   }

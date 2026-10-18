@@ -23,14 +23,22 @@ namespace NeonVault
         public static System.Collections.Generic.IReadOnlyList<ArmorProduct> All=>System.Array.AsReadOnly(products);
         static ArmorProduct[] Build()
         {
-            var result=new ArmorProduct[250];int i=0;
-            for(int slot=0;slot<5;slot++)for(int visual=0;visual<5;visual++)for(int design=0;design<10;design++)result[i++]=new ArmorProduct((ArmorSlot)slot,visual,design);
-            return result;
+            var result=new System.Collections.Generic.List<ArmorProduct>();var counts=new int[6];
+            for(int slot=0;slot<5;slot++)for(int visual=0;visual<5;visual++)for(int design=0;design<10;design++)Add(new ArmorProduct((ArmorSlot)slot,visual,design));
+            for(int design=10;result.Count<2520;design++)for(int slot=0;slot<5;slot++)for(int visual=0;visual<5;visual++)
+            {var p=new ArmorProduct((ArmorSlot)slot,visual,design);if(counts[ManufacturerCatalog.Index(p.manufacturerId)]<420)Add(p);}
+            return result.ToArray();
+            void Add(ArmorProduct p){result.Add(p);counts[ManufacturerCatalog.Index(p.manufacturerId)]++;}
         }
         public static ArmorProduct Get(ArmorSlot slot,int visual,int design)
         {
-            if((int)slot<0||(int)slot>4||visual<0||visual>4||design<0||design>9)throw new System.ArgumentOutOfRangeException();
-            return products[(int)slot*50+visual*10+design];
+            var p=Find("armor-"+slot.ToString().ToLowerInvariant()+"-"+visual+"-"+design);
+            if(p==null)throw new System.ArgumentOutOfRangeException();return p;
+        }
+        public static ArmorProduct Roll(System.Random random,ArmorSlot slot)
+        {
+            // Rejection samples the complete pool uniformly within this body slot.
+            ArmorProduct p;do{p=products[random.Next(products.Length)];}while(p.slot!=slot);return p;
         }
         public static ArmorProduct Find(string id)
         {if(string.IsNullOrEmpty(id))return null;foreach(var product in products)if(product.id==id)return product;return null;}
@@ -40,7 +48,7 @@ namespace NeonVault
             string[] jp={"回収兵","突破兵","遊撃兵","守備兵","トレイルウォーデン"};
             string[] designEn={"Patrol","Ballistic","Marksman","Assault","Courier","Survivor","Gunner","Pathfinder","Medic","Bulwark"};
             string[] designJa={"巡回","防弾","狙撃","突撃","伝令","生存","銃手","先導","衛生","防塁"};
-            return ManufacturerCatalog.Name(p.manufacturerId,ja)+" / "+(ja?jp[p.visualVariant]+"・"+designJa[p.designVariant]:en[p.visualVariant]+" "+designEn[p.designVariant])+" / "+Armory.SlotName(p.slot,ja);
+            return ManufacturerCatalog.Name(p.manufacturerId,ja)+" / "+(ja?jp[p.visualVariant]+"・"+designJa[p.designVariant%10]+ProductGeneration.Name(p.designVariant,true):en[p.visualVariant]+" "+designEn[p.designVariant%10]+ProductGeneration.Name(p.designVariant,false))+" / "+Armory.SlotName(p.slot,ja);
         }
         public static string Description(ArmorItem item,bool ja)
         {
@@ -69,7 +77,8 @@ namespace NeonVault
                 case "cinder":a.damageBonus+=.055f*power;a.damageReduction-=.012f*power;a.maxHealth-=2*power;break;
                 case "aegis":a.damageReduction+=.018f*power;a.maxHealth+=4*power;break;
             }
-            switch(a.designVariant)
+            ProductGeneration.Apply(a,power);
+            switch(a.designVariant%10)
             {
                 case 0:a.moveBonus+=.012f*power;a.accuracyBonus+=.01f*power;break;
                 case 1:a.damageReduction+=.014f*power;a.maxHealth+=2*power;break;

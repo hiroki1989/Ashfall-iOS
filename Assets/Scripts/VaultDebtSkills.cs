@@ -12,7 +12,7 @@ namespace NeonVault
         const int DebtLevelCap = 40;
         const string DebtSaveKey = "Vault.DebtSkills.v1";
 
-        enum DebtSkillKind { Damage, FireRate, Accuracy, Reload, Ammo, Health, Recovery, WeaponSlot, DamageReduction, HealOnKill, AmmoPickup, ShopDiscount, KillChain, BossDamage }
+        enum DebtSkillKind { Damage, FireRate, Accuracy, Reload, Ammo, Health, Recovery, WeaponSlot, DamageReduction, HealOnKill, AmmoPickup, ShopDiscount, KillChain, BossDamage, CriticalChance, CriticalDamage, AmmoCapacity }
         [Serializable] class DebtSkillSave { public int version, paid; public bool introSeen; public List<string> unlocked; }
         class DebtSkillNode
         {
@@ -120,6 +120,9 @@ namespace NeonVault
         public float DebtAccuracyBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Accuracy,DebtWeaponFamily(weaponModel));
         public float DebtReloadBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Reload,DebtWeaponFamily(weaponModel));
         public float DebtAmmoBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Ammo,DebtWeaponFamily(weaponModel));
+        public float DebtCriticalChanceBonus(int model)=>SumDebtSkill(DebtSkillKind.CriticalChance,DebtWeaponFamily(model));
+        public float DebtCriticalDamageBonus(int model)=>SumDebtSkill(DebtSkillKind.CriticalDamage,DebtWeaponFamily(model));
+        public float DebtAmmoCapacityBonus(int model)=>SumDebtSkill(DebtSkillKind.AmmoCapacity,DebtWeaponFamily(model));
         public float DebtHealthBonus=>SumDebtSkill(DebtSkillKind.Health);
         public float DebtRecoveryBonus=>SumDebtSkill(DebtSkillKind.Recovery);
         public float DebtDamageReductionBonus=>SumDebtSkill(DebtSkillKind.DamageReduction);
@@ -195,13 +198,13 @@ namespace NeonVault
                 else Text(1020,y+21,T("LOCKED","未解放"),small,Mist,180);
             }
             GUI.EndScrollView();
-            Text(68,759,T("Four weapon paths · 10 nodes each · choose damage, cadence, precision, ammo, survival and slot synergies.","4系統・各10ノード。威力、連射、精度、弾薬、生存力、武器枠の相乗効果を選択。"),tiny,Mist,1220);
+            Text(68,759,T("Four weapon paths · 13 nodes each · choose damage, cadence, precision, ammo, survival and slot synergies.","4系統・各13ノード。威力、連射、精度、弾薬、生存力、武器枠の相乗効果を選択。"),tiny,Mist,1220);
             if(Button(new Rect(1025,790,320,52),T("BACK TO REPAYMENTS","返済画面へ戻る")))debtSkillTreePage=false;
         }
         string DebtSkillDescription(DebtSkillNode node)
         {
-            string en=node.kind==DebtSkillKind.Damage?"damage":node.kind==DebtSkillKind.FireRate?"fire rate":node.kind==DebtSkillKind.Reload?"reload speed":node.kind==DebtSkillKind.DamageReduction?"damage reduction":node.kind==DebtSkillKind.AmmoPickup?"ammo pickup":node.kind==DebtSkillKind.ShopDiscount?"shop discount":node.kind==DebtSkillKind.KillChain?"kill chain":node.kind==DebtSkillKind.BossDamage?"boss damage":"bonus";
-            string ja=node.kind==DebtSkillKind.Damage?"威力":node.kind==DebtSkillKind.FireRate?"連射速度":node.kind==DebtSkillKind.Reload?"リロード速度":node.kind==DebtSkillKind.DamageReduction?"ダメージ軽減":node.kind==DebtSkillKind.AmmoPickup?"弾薬取得量":node.kind==DebtSkillKind.ShopDiscount?"購入割引":node.kind==DebtSkillKind.KillChain?"撃破連鎖":node.kind==DebtSkillKind.BossDamage?"ボス特効":"強化";
+            string en=node.kind==DebtSkillKind.CriticalChance?"critical chance":node.kind==DebtSkillKind.CriticalDamage?"critical damage":node.kind==DebtSkillKind.AmmoCapacity?"reserve capacity":node.kind==DebtSkillKind.Damage?"damage":node.kind==DebtSkillKind.FireRate?"fire rate":node.kind==DebtSkillKind.Reload?"reload speed":node.kind==DebtSkillKind.DamageReduction?"damage reduction":node.kind==DebtSkillKind.AmmoPickup?"ammo pickup":node.kind==DebtSkillKind.ShopDiscount?"shop discount":node.kind==DebtSkillKind.KillChain?"kill chain":node.kind==DebtSkillKind.BossDamage?"boss damage":"bonus";
+            string ja=node.kind==DebtSkillKind.CriticalChance?"クリティカル率":node.kind==DebtSkillKind.CriticalDamage?"クリティカル倍率":node.kind==DebtSkillKind.AmmoCapacity?"予備弾上限":node.kind==DebtSkillKind.Damage?"威力":node.kind==DebtSkillKind.FireRate?"連射速度":node.kind==DebtSkillKind.Reload?"リロード速度":node.kind==DebtSkillKind.DamageReduction?"ダメージ軽減":node.kind==DebtSkillKind.AmmoPickup?"弾薬取得量":node.kind==DebtSkillKind.ShopDiscount?"購入割引":node.kind==DebtSkillKind.KillChain?"撃破連鎖":node.kind==DebtSkillKind.BossDamage?"ボス特効":"強化";
             string value=node.kind==DebtSkillKind.Accuracy?"+"+(node.value*100).ToString("0")+T(" accuracy"," 命中率"):node.kind==DebtSkillKind.WeaponSlot?T("+1 weapon slot","武器枠 +1"):node.kind==DebtSkillKind.Health?"+"+node.value.ToString("0")+T(" max HP"," 最大HP"):node.kind==DebtSkillKind.HealOnKill?"+"+node.value.ToString("0")+T(" HP per kill"," 撃破HP回復"):node.kind==DebtSkillKind.Recovery?"+"+node.value.ToString("0.0")+T(" HP/s"," HP/秒"):node.kind==DebtSkillKind.Ammo?"+"+node.value.ToString("0")+T(" magazine rounds"," 装弾数"):"+"+(node.value*100).ToString("0")+"% "+T(en,ja);
             return value;
         }
@@ -228,6 +231,9 @@ namespace NeonVault
                 n.Add(new DebtSkillNode(prefix+"reload1",tracks[f],titlesEn[f][3],titlesJa[f][3],DebtSkillKind.Reload,.08f,f));
                 n.Add(new DebtSkillNode(prefix+"ammo1",tracks[f],titlesEn[f][4],titlesJa[f][4],DebtSkillKind.Ammo,2,f));
                 n.Add(new DebtSkillNode(prefix+"damage2",tracks[f],titlesEn[f][5],titlesJa[f][5],DebtSkillKind.Damage,.25f,f,prefix+"damage1",prefix+"fire1"));
+                n.Add(new DebtSkillNode(prefix+"critical1",tracks[f],"Weak Point I","弱点射撃 I",DebtSkillKind.CriticalChance,.03f,f,prefix+"accuracy1"));
+                n.Add(new DebtSkillNode(prefix+"critical2",tracks[f],"Lethal Precision I","致命精度 I",DebtSkillKind.CriticalDamage,.20f,f,prefix+"critical1",prefix+"damage2"));
+                n.Add(new DebtSkillNode(prefix+"reserve1",tracks[f],"Reserve Carrier I","予備弾携行 I",DebtSkillKind.AmmoCapacity,.50f,f,prefix+"ammo1"));
                 DebtSkillKind[] utilityKinds=f==0?new[]{DebtSkillKind.Health,DebtSkillKind.DamageReduction,DebtSkillKind.Recovery,DebtSkillKind.HealOnKill}:
                     f==1?new[]{DebtSkillKind.Health,DebtSkillKind.DamageReduction,DebtSkillKind.Recovery,DebtSkillKind.Ammo}:
                     f==2?new[]{DebtSkillKind.AmmoPickup,DebtSkillKind.ShopDiscount,DebtSkillKind.KillChain,DebtSkillKind.AmmoPickup}:

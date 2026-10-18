@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -42,7 +42,7 @@ namespace NeonVault
             if(gun==null)return;
             Panel(new Rect(20,20,590,125),Cyan);
             Text(38,28,Mathf.CeilToInt(hp)+" / "+maxHp+" HP",new GUIStyle(number){fontSize=36},hp<maxHp*.25f?Gold:Color.white,570);
-            Text(38,81,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+CurrentDungeon.Name,new GUIStyle(label){fontSize=25},Gold,570);
+            Text(38,81,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=25},Gold,570);
             Box(new Rect(36,132,556,6),new Color(.12f,.2f,.22f));Box(new Rect(36,132,556*Mathf.Clamp01(hp/maxHp),6),Cyan);
             Panel(new Rect(630,20,400,125),gun.color);
             Text(646,28,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+"  "+VaultLanguage.GunName(gun),new GUIStyle(label){fontSize=24},gun.color,370);
@@ -55,7 +55,7 @@ namespace NeonVault
             {
                 float tile=Mathf.Min(310f/Layout.Columns,176f/Layout.Rows);Vector2 origin=new Vector2(1085,184);
                 for(int x=0;x<Layout.Columns;x++)for(int z=0;z<Layout.Rows;z++)if(Layout.open[x,z]&&Layout.IsExplored(x,z))Box(new Rect(origin.x+x*tile,origin.y+(Layout.Rows-1-z)*tile,Mathf.Max(1,tile-.5f),Mathf.Max(1,tile-.5f)),Layout.IsVisible(x,z)?new Color(.28f,.44f,.46f):new Color(.13f,.2f,.22f));
-                MapPoint(PlayerPosition,origin,tile,Cyan,5);var exit=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exit.x,exit.y))MapPoint(ExitPosition,origin,tile,Gold,5);
+                DrawTacticalMapMarkers(origin,tile,7);MapPoint(PlayerPosition,origin,tile,Cyan,5);var exit=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exit.x,exit.y))MapPoint(ExitPosition,origin,tile,Gold,5);
             }
             if(Active&&!InventoryOpen)
             {

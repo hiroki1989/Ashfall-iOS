@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +12,9 @@ namespace NeonVault
         public int ScrapLevelMultiplier=>Mathf.Clamp(1+Mathf.Max(0,DebtLevel-1)/2,1,20);
         public int ScaleScrap(int baseHundredths)=>Mathf.Max(1,Mathf.RoundToInt(baseHundredths/100f*ScrapLevelMultiplier));
         static readonly int[] AmmoPackSizes={30,12,30,6};
+        static readonly int[] BaseAmmoCapacities={240,96,360,60};
+        public int AmmoCapacitySkillBonus(AmmoType type)=>ValidAmmo(type)?Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*(DebtAmmoCapacityBonus(AmmoModel(type)))):0;
+        public int AmmoCapacity(AmmoType type)=>ValidAmmo(type)?BaseAmmoCapacities[(int)type]+AmmoCapacitySkillBonus(type):0;
         // Match the salvage-credit economy used by the safehouse vendors.
         static readonly int[] AmmoPackCosts={1800,2400,2000,2200};
         readonly int[] ammoReserves=new int[AmmoTypeCount];
@@ -41,17 +44,19 @@ namespace NeonVault
         static string AmmoEnglish(AmmoType type)=>type==AmmoType.Handgun?"Handgun rounds":type==AmmoType.Shotgun?"Shotgun shells":type==AmmoType.SniperRifle?"Sniper rounds":"Rifle rounds";
         static string AmmoJapanese(AmmoType type)=>type==AmmoType.Handgun?"拳銃弾":type==AmmoType.Shotgun?"散弾":type==AmmoType.SniperRifle?"狙撃弾":"ライフル弾";
         int[] SaveAmmoReserves()=>(int[])ammoReserves.Clone();
-        void LoadAmmoReserves(int[] saved){Array.Clear(ammoReserves,0,ammoReserves.Length);if(saved!=null)for(int i=0;i<Math.Min(saved.Length,ammoReserves.Length);i++)ammoReserves[i]=Mathf.Max(0,saved[i]);}
+        void LoadAmmoReserves(int[] saved){Array.Clear(ammoReserves,0,ammoReserves.Length);if(saved!=null)for(int i=0;i<Math.Min(saved.Length,ammoReserves.Length);i++)ammoReserves[i]=Mathf.Clamp(saved[i],0,AmmoCapacity((AmmoType)i));}
         void SeedAmmoReserves(){ammoReserves[(int)AmmoType.Handgun]=60;ammoReserves[(int)AmmoType.Shotgun]=24;ammoReserves[(int)AmmoType.AssaultRifle]=90;ammoReserves[(int)AmmoType.SniperRifle]=12;}
         public bool BuyAmmo(AmmoType type,int packs)
         {
             if(!ValidAmmo(type)||packs<=0||packs>20)return false;
-            int amount=AmmoPackSizes[(int)type]*packs,cost=PriceAfterDiscount(AmmoPackCosts[(int)type]*packs);
+            int amount=Mathf.Min(AmmoPackSizes[(int)type]*packs,AmmoCapacity(type)-AmmoReserve(type));
+            if(amount<=0)return false;
+            int cost=PriceAfterDiscount(Mathf.CeilToInt(AmmoPackCosts[(int)type]*(amount/(float)AmmoPackSizes[(int)type])));
             if(!TrySpendCredits(cost))return false;
-            ammoReserves[(int)type]=Mathf.Min(9999,ammoReserves[(int)type]+amount);SaveInventory();return true;
+            ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();return true;
         }
         public void AddAmmo(AmmoType type,int amount)
-        {if(!ValidAmmo(type)||amount<=0)return;ammoReserves[(int)type]=Mathf.Min(9999,ammoReserves[(int)type]+amount);SaveInventory();}
+        {if(!ValidAmmo(type)||amount<=0)return;ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();}
         bool TryStartReload()
         {
             if(gun==null||reload>0||ammo>=EffectiveMagazine||AmmoReserve(AmmoForGun(gun))<=0)return false;
@@ -71,7 +76,7 @@ namespace NeonVault
             {
                 var d=supplyDrops[i];if(Vector3.Distance(PlayerPosition,d.position)>1.25f)continue;
                 float ammoScale=DebtAmmoPickupBonus+ArmorTotal(a=>a.ammoBonus)+EquippedWeaponAffixBonus("ammo")+ArtifactAffixBonus("ammo");
-                if(d.credits>0)AwardCredits(d.credits);int reserveBefore=AmmoReserve(d.ammoType);int requestedAmmo=d.ammoAmount>0?Mathf.Max(1,Mathf.RoundToInt(d.ammoAmount*(1+ammoScale))+Mathf.RoundToInt(DebtAmmoBonus(AmmoModel(d.ammoType)))):0;int pickedAmmo=Mathf.Min(requestedAmmo,9999-reserveBefore);if(d.ammoAmount>0&&pickedAmmo<=0)continue;if(pickedAmmo>0)AddAmmo(d.ammoType,pickedAmmo);
+                if(d.credits>0)AwardCredits(d.credits);int reserveBefore=AmmoReserve(d.ammoType);int requestedAmmo=d.ammoAmount>0?Mathf.Max(1,Mathf.RoundToInt(d.ammoAmount*(1+ammoScale))+Mathf.RoundToInt(DebtAmmoBonus(AmmoModel(d.ammoType)))):0;int pickedAmmo=Mathf.Min(requestedAmmo,AmmoCapacity(d.ammoType)-reserveBefore);if(d.ammoAmount>0&&pickedAmmo<=0)continue;if(pickedAmmo>0)AddAmmo(d.ammoType,pickedAmmo);
                 if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickupSound);
                 if(d.credits>0)Notify("SCRAP +"+d.credits,"スクラップ +"+d.credits);
                 else Notify(AmmoPickupEnglish(d.ammoType,pickedAmmo),AmmoPickupJapanese(d.ammoType,pickedAmmo));
@@ -100,15 +105,15 @@ namespace NeonVault
             if(nearest==null)return false;var roll=rng.Next(100);
             if(roll<22)
             {
-                var item=Arsenal.RollForDungeon(rng,DungeonIndex);if(StoreWeapon(item)){Notify("CACHE: "+VaultLanguage.GunName(item),"物資箱: "+VaultLanguage.GunName(item));Destroy(nearest.visual);}else{Notify("CACHE: weapon storage full","物資箱: 銃の所持枠が満杯");return true;}
+                var item=RollExpeditionGun(rng);if(StoreWeapon(item)){Notify("CACHE: "+VaultLanguage.GunName(item),"物資箱: "+VaultLanguage.GunName(item));Destroy(nearest.visual);}else{Notify("CACHE: weapon storage full","物資箱: 銃の所持枠が満杯");return true;}
             }
             else if(roll<42)
             {
-                var item=Armory.RollForDungeon(rng,DungeonIndex);if(StoreArmor(item)){Notify("CACHE: "+Armory.Name(item),"物資箱: "+Armory.Name(item));Destroy(nearest.visual);}else{Notify("CACHE: armor storage full","物資箱: 防具の所持枠が満杯");return true;}
+                var item=RollExpeditionArmor(rng);if(StoreArmor(item)){Notify("CACHE: "+Armory.Name(item),"物資箱: "+Armory.Name(item));Destroy(nearest.visual);}else{Notify("CACHE: armor storage full","物資箱: 防具の所持枠が満杯");return true;}
             }
             else if(roll<57)
             {
-                var item=ArtifactCatalog.RollForDungeon(rng,DungeonIndex);if(StoreArtifact(item)){Notify("CACHE: "+item.Name,"物資箱: "+item.Name);Destroy(nearest.visual);}else{Notify("CACHE: module storage full","物資箱: モジュールの所持枠が満杯");return true;}
+                var item=RollExpeditionArtifact(rng);if(StoreArtifact(item)){Notify("CACHE: "+item.Name,"物資箱: "+item.Name);Destroy(nearest.visual);}else{Notify("CACHE: module storage full","物資箱: モジュールの所持枠が満杯");return true;}
             }
             else if(roll<77){int amount=ScaleScrap(35000+DungeonIndex*15000+rng.Next(25001));AwardCredits(amount);Destroy(nearest.visual);Notify("CACHE: SCRAP +"+amount,"物資箱: スクラップ +"+amount);}
             else {var type=(AmmoType)rng.Next(AmmoTypeCount);int amount=AmmoPackSizes[(int)type]/2;AddAmmo(type,amount);Destroy(nearest.visual);Notify("CACHE: "+AmmoLabel(type)+" +"+amount,"物資箱: "+AmmoLabel(type)+" +"+amount);}

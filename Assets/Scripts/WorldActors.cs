@@ -20,8 +20,8 @@ namespace NeonVault
         bool alerted, charging;float charge,dash,damageScale=1,resistance,lockedRadialAngle;Vector3 lockedAim,lockedTarget;GameObject warning;
         public void Init(VaultGame g,int k,int depth)
         {
-            game=g;kind=k;maxHp=hp=k==3?650+depth*85:45+depth*16+k*9;speed=k==3?1.8f:k==4?3.8f:k==0?2.7f:k==8?2.35f:k==1||k==5?2.3f:3.1f;timer=.75f+k*.09f;
-            resistance=Mathf.Min(.3f,depth*.025f);damageScale=1+depth*.09f;
+            game=g;kind=k;maxHp=hp=k==3?650:45+k*9;speed=k==3?1.8f:k==4?3.8f:k==0?2.7f:k==8?2.35f:k==1||k==5?2.3f:3.1f;timer=.75f+k*.09f;
+            resistance=Mathf.Min(.3f,depth*.025f);damageScale=1;
         }
         public void ConfigureDifficulty(float health,float damage,float resist){maxHp*=health;hp=maxHp;damageScale*=damage;resistance=Mathf.Clamp(resist,0,.45f);}
         void ClearWarning(){if(warning!=null)Destroy(warning);warning=null;}
@@ -115,11 +115,12 @@ namespace NeonVault
         public Vector3 velocity;
         public float damage, life=3;
         public float hitAccuracy=100;
-        public bool friendly,corrosive;
+        public bool friendly,corrosive,critical,moduleAmplified;
         public GunEffect effect;
         public int bounces;
         public Foe last;
         public Color visualColor=Color.cyan;
+        public Color DamageNumberColor=>critical?new Color(1,.9f,.12f):moduleAmplified?new Color(1,.22f,.16f):Color.white;
         void Update()
         {
             if(game==null || !game.Active) return;
@@ -141,9 +142,10 @@ namespace NeonVault
                 {
                     Vector3 hitPoint=ContactPoint(target.transform.position,old,transform.position,target.kind==3?1.2f:.65f);
                     transform.position=hitPoint;CombatVisuals.Impact(hitPoint,velocity,visualColor,effect,transform.parent);
-                    if(!target.Hit(damage,hitPoint,visualColor,hitAccuracy)){Destroy(gameObject);return;}
+                    if(!target.Hit(damage,hitPoint,DamageNumberColor,hitAccuracy)){Destroy(gameObject);return;}
                     game.RunHit(target,damage,hitPoint);
-                    if(effect==GunEffect.Singularity) { game.GravityWell(transform.position,damage); Destroy(gameObject); return; }
+                    game.LegendaryBulletHit(target,hitPoint);
+                    if(effect==GunEffect.Singularity) { game.GravityWell(transform.position,damage,DamageNumberColor); Destroy(gameObject); return; }
                     if(effect==GunEffect.Ricochet && bounces<3)
                     {
                         last=target; bounces++;
@@ -152,7 +154,7 @@ namespace NeonVault
                         for(int i=-1;i<=1;i+=2)
                         {
                             var split=game.SpawnBullet(transform.position,Quaternion.Euler(0,i*40,0)*velocity.normalized,true,damage*.3f,18,Color.cyan,GunEffect.Normal,hitAccuracy);
-                            split.last=target; // Leave the struck enemy before looking for a new collision.
+                            split.critical=critical;split.moduleAmplified=moduleAmplified;split.last=target; // Leave the struck enemy before looking for a new collision.
                         }
                         if(next!=null) { velocity=(next.transform.position-transform.position).normalized*25; life=2; return; }
                     }
@@ -164,7 +166,7 @@ namespace NeonVault
             {
                 LeaveAcid();
                 if(blocked)CombatVisuals.Impact(transform.position,velocity,visualColor,effect,transform.parent);
-                if(effect==GunEffect.Singularity && friendly) game.GravityWell(transform.position,damage);
+                if(effect==GunEffect.Singularity && friendly) game.GravityWell(transform.position,damage,DamageNumberColor);
                 Destroy(gameObject);
             }
         }
@@ -195,7 +197,7 @@ namespace NeonVault
     public class Well : MonoBehaviour
     {
         public VaultGame game;
-        public float damage, timer=1.4f;
+        public float damage, timer=1.4f;public Color numberColor=Color.white;
         void Update()
         {
             if(!game.Active) return;
@@ -207,7 +209,7 @@ namespace NeonVault
             if(timer<=0)
             {
                 game.Burst(transform.position,new Color(.75f,.65f,.35f),24);
-                foreach(Foe f in game.Enemies.ToArray()) if(f!=null && Vector3.Distance(f.transform.position,transform.position)<4.6f) f.Hit(damage*2.2f);
+                foreach(Foe f in game.Enemies.ToArray()) if(f!=null && Vector3.Distance(f.transform.position,transform.position)<4.6f) f.Hit(damage*2.2f,null,numberColor);
                 Destroy(gameObject);
             }
         }

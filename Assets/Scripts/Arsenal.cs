@@ -11,7 +11,7 @@ namespace NeonVault
     public class Gun
     {
         public string name, subtitle, id, visualSet;
-        public string catalogId, manufacturerId;
+        public string catalogId, manufacturerId, legendaryKey;
         public int designVariant;
         public int level = 1, modelVariant;
         public Rarity rarity;
@@ -34,16 +34,17 @@ namespace NeonVault
         public static readonly string[] ModelNames={"DUST RUNNER","RIVET SMG","LONG WATCH","SCRAP HAMMER","TRENCH SWEEPER","SAWED THUNDER","IRON BELT","NEEDLE DRIVER","COIL LANCE","LEAD SPLITTER","ISOTOPE SWARM","VACUUM ENGINE","FIELD CARBINE","BREACH PUMP","RELIC SIX","SERVICE NINE","BREAKER .50","QUIET NINE"};
         public static readonly string[] ModelJapanese={"ダストランナー","リベットSMG","ロングウォッチ","スクラップハンマー","トレンチスイーパー","ソードサンダー","アイアンベルト","ニードルドライバー","コイルランス","レッドスプリッター","アイソトープスウォーム","真空エンジン","フィールドカービン","ブリーチポンプ","遺産の六輪","九式サービス","大口径ブレーカー","静音ナイン"};
         public static int ModelCount=>ModelNames.Length;
-        public const int DesignsPerModel=10;
+        public const int DesignsPerModel=100;
         public static int CatalogCount=>ModelCount*DesignsPerModel;
         public static int CatalogIndex(Gun gun)=>gun==null?0:Mathf.Clamp(gun.modelVariant,0,ModelCount-1)+Mathf.Clamp(gun.designVariant,0,DesignsPerModel-1)*ModelCount;
         static readonly string[] DesignEnglish={"Standard","Scout","Bastion","Cyclone","Sharpsight","Breach","Expedition","Surge","Vanguard","Prototype"};
         static readonly string[] DesignJapanese={"標準型","斥候型","要塞型","旋風型","照準型","突破型","遠征型","急襲型","先鋒型","試作型"};
-        public static string DesignName(int design,bool japanese)=>(japanese?DesignJapanese:DesignEnglish)[Mathf.Clamp(design,0,DesignsPerModel-1)];
+        public static string DesignName(int design,bool japanese)=>(japanese?DesignJapanese:DesignEnglish)[Mathf.Clamp(design,0,DesignsPerModel-1)%10]+ProductGeneration.Name(design,japanese);
         public static Gun Catalog(int index,Rarity rarity=Rarity.Common)
         {
             index=Mathf.Clamp(index,0,CatalogCount-1);int model=index%ModelCount,design=index/ModelCount;
             if(design==0)return Model(model,rarity);
+            int basic=design%10;
             // Recreate the baseline, then apply one design and one manufacturer's tuning.
             var gun=BaseModel(model,rarity);gun.designVariant=design;
             gun.catalogId="gun-"+model.ToString("00")+"-"+design.ToString("00");
@@ -53,13 +54,13 @@ namespace NeonVault
             float[] capacity={1,.75f,1.2f,1.45f,.7f,.8f,1.65f,.65f,1.1f,.9f};
             float[] reload={1,.74f,1.28f,1.22f,1.08f,.9f,1.35f,.7f,1.1f,1.18f};
             float[] aim={0,4,-7,-10,10,-13,2,-5,5,-3};
-            gun.damage*=damage[design];gun.interval*=cadence[design];gun.magazine=Mathf.Max(1,Mathf.RoundToInt(gun.magazine*capacity[design]));
-            gun.reloadSeconds*=reload[design];gun.accuracy=Mathf.Clamp(gun.accuracy+aim[design],1,100);
-            if(design==5){gun.pellets+=2;gun.damage*=.72f;gun.effect=gun.effect==GunEffect.Normal?GunEffect.Scatter:gun.effect;}
-            if(design==9){gun.pellets++;gun.damage*=.8f;gun.speed*=1.15f;}
-            gun.name=ModelNames[model]+" / "+DesignEnglish[design];
-            gun.subtitle=DesignEnglish[design]+" engineering · "+ModelDescription(model);
-            ManufacturerCatalog.Apply(gun);return gun;
+            gun.damage*=damage[basic];gun.interval*=cadence[basic];gun.magazine=Mathf.Max(1,Mathf.RoundToInt(gun.magazine*capacity[basic]));
+            gun.reloadSeconds*=reload[basic];gun.accuracy=Mathf.Clamp(gun.accuracy+aim[basic],1,100);
+            if(basic==5){gun.pellets+=2;gun.damage*=.72f;gun.effect=gun.effect==GunEffect.Normal?GunEffect.Scatter:gun.effect;}
+            if(basic==9){gun.pellets++;gun.damage*=.8f;gun.speed*=1.15f;}
+            gun.name=ModelNames[model]+" / "+DesignName(design,false);
+            gun.subtitle=DesignName(design,false)+" engineering · "+ModelDescription(model);
+            ManufacturerCatalog.Apply(gun);ProductGeneration.Apply(gun);return gun;
         }
         // SMGs keep a two-hand grip; short shotguns and sidearms remain one-handed.
         public static bool IsOneHanded(int model)=>model==5||(model>=14&&model<=17);
@@ -105,7 +106,8 @@ namespace NeonVault
         {
             return Model(9+(index%3+3)%3,Rarity.Legendary);
         }
-        public static Gun Legendary(int index, System.Random random, int level) => Randomize(Catalog(9+(index%3+3)%3+random.Next(DesignsPerModel)*ModelCount,Rarity.Legendary),random,level);
+        public static Gun Legendary(int index, System.Random random, int level) => random.NextDouble()<.5?LegendaryCatalog.CreateGun(random.Next(30),random,level):Randomize(Catalog(9+(index%3+3)%3+random.Next(DesignsPerModel)*ModelCount,Rarity.Legendary),random,level);
+        public static Gun RollCatalogStats(Gun gun,System.Random random,int level)=>Randomize(gun,random,level);
         public static Gun Roll(System.Random random, int depth)
         {
             if(random==null)throw new System.ArgumentNullException(nameof(random));
@@ -115,7 +117,7 @@ namespace NeonVault
         public static Gun CreateForDungeon(System.Random random,int dungeon,Rarity rarity,int level)
         {
             if(rarity==Rarity.Legendary)return Legendary(dungeon,random,level);
-            int roll=random.Next(ModelCount-3);var item=Catalog((roll<9?roll:roll+3)+random.Next(DesignsPerModel)*ModelCount,rarity);
+            var item=Catalog(random.Next(CatalogCount),rarity);
             return Randomize(item,random,level);
         }
         static Gun Randomize(Gun gun,System.Random random,int level)
@@ -134,13 +136,13 @@ namespace NeonVault
         }
         static void RollAffixes(Gun gun,System.Random random)
         {
-            int count=Mathf.Clamp((int)gun.rarity,0,4); string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo"};
+            int count=Mathf.Clamp((int)gun.rarity,0,4); string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage"};
             gun.affixes=new GearAffix[count]; var used=new System.Collections.Generic.HashSet<int>();
             for(int i=0;i<count;i++)
             {
                 int pick;do{pick=random.Next(types.Length);}while(!used.Add(pick));
                 float scale=1+.16f*((int)gun.rarity+gun.level-1);
-                float[] lo={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f},hi={.06f,10,.06f,.06f,.05f,.025f,.05f,.4f,.12f};
+                float[] lo={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.01f,.04f},hi={.06f,10,.06f,.06f,.05f,.025f,.05f,.4f,.12f,.025f,.10f};
                 var x=new GearAffix{type=types[pick],value=Range(random,lo[pick],hi[pick])*scale};gun.affixes[i]=x;
                 switch(x.type)
                 {

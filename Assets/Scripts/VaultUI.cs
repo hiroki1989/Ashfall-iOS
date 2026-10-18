@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -170,7 +170,7 @@ namespace NeonVault
             Panel(new Rect(24,22,338,88),Gold*.7f);
             Text(42,32,T("ZONE","探索区域"),tiny,Mist);Text(42,56,(room+1).ToString("00")+" / "+CurrentDungeon.AreaCount.ToString("00"),label,Gold);
             for(int i=0;i<CurrentDungeon.AreaCount;i++)Box(new Rect(159+i*25,68,18,4),i<=room?Gold:new Color(.2f,.27f,.28f));
-            Text(440,28,room==CurrentDungeon.AreaCount-1?T("WASTELAND COLOSSUS","荒野の巨骸"):CurrentDungeon.Name,label,Gold,650);
+            Text(440,28,room==CurrentDungeon.AreaCount-1?T("WASTELAND COLOSSUS","荒野の巨骸"):SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name,label,Gold,650);
             Text(440,61,cleared?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,Mist,720);
             if(SelectedExpeditionStage!=null){var stage=SelectedExpeditionStage;string mission=ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese);if(stage.mission==ExpeditionMission.HuntTarget||stage.mission==ExpeditionMission.DestroyNest)mission+=" / "+stage.Target;mission+="  ·  "+MissionProgress;Text(42,117,mission,new GUIStyle(tiny){wordWrap=true},MissionCompleted?Cyan:Gold,350);}else Text(42,121,T("SEED "+seed+"  /  "+Mathf.FloorToInt(runTime)+"s","シード "+seed+"  /  "+Mathf.FloorToInt(runTime)+"秒"),tiny,Mist,350);
             if(toastTimer>0){Panel(new Rect(405,111,720,44),Gold*.6f);Text(421,123,Toast,small,Gold,695);}
@@ -278,8 +278,7 @@ namespace NeonVault
             Panel(new Rect(1190,80,226,271),Cyan*.7f);Text(1206,90,T("HOT ZONE / TACTICAL","汚染区域 / 戦術マップ"),tiny,Gold,210);
             float tile=Mathf.Min(190f/Layout.Columns,195f/Layout.Rows);Vector2 origin=new Vector2(1214,117);
             for(int x=0;x<Layout.Columns;x++)for(int z=0;z<Layout.Rows;z++)if(Layout.open[x,z]&&Layout.IsExplored(x,z))Box(new Rect(origin.x+x*tile,origin.y+(Layout.Rows-1-z)*tile,tile-.7f,tile-.7f),Layout.IsVisible(x,z)?new Color(.28f,.44f,.46f):new Color(.13f,.20f,.22f));
-            foreach(var foe in Enemies)if(foe!=null&&!foe.dead&&Layout.IsVisible(foe.transform.position))MapPoint(foe.transform.position,origin,tile,new Color(1,.32f,.3f),2);
-            foreach(var drop in drops)if(Layout.IsVisible(drop.position))MapPoint(drop.position,origin,tile,drop.gun.color,1.5f);
+            DrawTacticalMapMarkers(origin,tile,4);
             var exitCell=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exitCell.x,exitCell.y))MapPoint(ExitPosition,origin,tile,cleared?Gold:new Color(.48f,.42f,.28f),4);MapPoint(PlayerPosition,origin,tile,Cyan,4);
             Text(1206,278,T("SECTORS","周回ルート"),tiny,Mist,190);
             for(int i=0;i<route.Count;i++){float x=1210+i*27;Box(new Rect(x,309,16,16),i==room?Cyan:i<room?Gold*.65f:new Color(.22f,.3f,.31f));if(i<6)Box(new Rect(x+16,316,11,1),Gold*.5f);}

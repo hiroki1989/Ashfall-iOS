@@ -15,11 +15,12 @@ namespace NeonVault
         string pendingSaleKey;
         Vector2 saleScroll;
 
-        public int SaleValue(Gun item)=>item==null?0:ScaleScrap(Mathf.Clamp(90000+item.level*35000+(int)item.rarity*180000+GearScoring.Score(item)*1800,100000,5000000));
-        public int SaleValue(ArmorItem item)=>item==null?0:ScaleScrap(Mathf.Clamp(85000+item.level*32000+(int)item.rarity*160000+GearScoring.Score(item)*1700,90000,4000000));
-        public int SaleValue(ArtifactItem item)=>item==null?0:ScaleScrap(Mathf.Clamp(70000+item.level*30000+(int)item.rarity*150000+GearScoring.Score(item)*1700,80000,3500000));
-        public int SaleValue(MeleeWeaponItem item)=>item==null?0:ScaleScrap(Mathf.Clamp(70000+item.level*25000+MeleeWeaponCatalog.Score(item)*1600,80000,2000000));
+        public int SaleValue(Gun item)=>item==null?0:LegendarySaleValue(item.rarity,ScaleScrap(Mathf.Clamp(90000+item.level*35000+(int)item.rarity*180000+GearScoring.Score(item)*1800,100000,5000000)));
+        public int SaleValue(ArmorItem item)=>item==null?0:LegendarySaleValue(item.rarity,ScaleScrap(Mathf.Clamp(85000+item.level*32000+(int)item.rarity*160000+GearScoring.Score(item)*1700,90000,4000000)));
+        public int SaleValue(ArtifactItem item)=>item==null?0:LegendarySaleValue(item.rarity,ScaleScrap(Mathf.Clamp(70000+item.level*30000+(int)item.rarity*150000+GearScoring.Score(item)*1700,80000,3500000)));
+        public int SaleValue(MeleeWeaponItem item)=>item==null?0:LegendarySaleValue(item.rarity,ScaleScrap(Mathf.Clamp(70000+item.level*25000+MeleeWeaponCatalog.Score(item)*1600,80000,2000000)));
 
+        static int LegendarySaleValue(Rarity rarity,int value)=>rarity==Rarity.Legendary?(int)System.Math.Min(int.MaxValue,(long)value*10):value;
         List<SaleEntry> SaleEntries(int category)
         {
             var result=new List<SaleEntry>();

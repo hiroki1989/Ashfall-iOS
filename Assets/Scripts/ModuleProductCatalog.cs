@@ -6,7 +6,7 @@ namespace NeonVault {
   public float powerScale,cooldownScale; public string preferredAffix;
  }
  public static class ModuleProductCatalog {
-  public const int Count=70;
+  public const int Count=720;
   static readonly string[] Makers={"kestrel","ironwake","voltarc","mireline","cinder","aegis"};
   static readonly string[] Affixes={"accuracy","health","fireRate","regen","damage","mitigation"};
   static readonly string[] Codes={"capacitor","coil","relay","converter","bulwark","discharger","isotope"};
@@ -30,11 +30,19 @@ namespace NeonVault {
   };
   static readonly ModuleProduct[] Products=Build();
   public static System.Collections.Generic.IReadOnlyList<ModuleProduct> All=>Products;
-  static ModuleProduct[] Build(){var result=new ModuleProduct[Count];for(int f=0;f<7;f++)for(int v=0;v<10;v++){
-   int maker=(v+f)%6;float[] power={.93f,1.22f,.87f,.91f,1.26f,1.04f};float[] cooldown={.92f,1.24f,.70f,1.06f,1.32f,.96f};
-   result[f*10+v]=new ModuleProduct{id="module."+Codes[f]+"."+v.ToString("00"),family=f,designVariant=v,name=Names[f][v],japanese=Japanese[f][v],manufacturerId=Makers[maker],effect=(ArtifactEffect)(f<4?f:f-4),legendary=f>=4,powerScale=(f==3&&(maker==1||maker==4)?1/power[maker]:power[maker])*(.94f+.014f*v),cooldownScale=cooldown[maker]*(1.06f-.012f*v),preferredAffix=Affixes[maker]};
-  }return result;}
-  public static ModuleProduct Get(int family,int variant)=>Products[Mathf.Clamp(family,0,6)*10+Mathf.Clamp(variant,0,9)];
+  static ModuleProduct[] Build(){
+   var result=new System.Collections.Generic.List<ModuleProduct>();var counts=new int[6];
+   for(int f=0;f<7;f++)for(int v=0;v<10;v++)Add(f,v);
+   for(int v=10;result.Count<Count;v++)for(int f=0;f<7;f++)if(counts[(v+f)%6]<120)Add(f,v);
+   return result.ToArray();
+   void Add(int f,int v){
+    int maker=(v+f)%6,basic=v%10;float[] power={.93f,1.22f,.87f,.91f,1.26f,1.04f};float[] cooldown={.92f,1.24f,.70f,1.06f,1.32f,.96f};
+    float output=ProductGeneration.Output(v),wait=ProductGeneration.Cycle(v);
+    result.Add(new ModuleProduct{id="module."+Codes[f]+"."+v.ToString("00"),family=f,designVariant=v,name=Names[f][basic]+ProductGeneration.Name(v,false),japanese=Japanese[f][basic]+ProductGeneration.Name(v,true),manufacturerId=Makers[maker],effect=(ArtifactEffect)(f<4?f:f-4),legendary=f>=4,powerScale=(f==3&&(maker==1||maker==4)?1/power[maker]:power[maker])*(.94f+.014f*basic)*output,cooldownScale=cooldown[maker]*(1.06f-.012f*basic)*wait,preferredAffix=Affixes[maker]});counts[maker]++;
+   }
+  }
+  public static ModuleProduct Get(int family,int variant){var p=Find("module."+Codes[Mathf.Clamp(family,0,6)]+"."+Mathf.Max(0,variant).ToString("00"));if(p==null)throw new System.ArgumentOutOfRangeException(nameof(variant));return p;}
+  public static ModuleProduct Roll(System.Random random,int family){ModuleProduct p;do{p=Products[random.Next(Products.Length)];}while(p.family!=family);return p;}
   public static ModuleProduct Find(string id){if(string.IsNullOrEmpty(id))return null;foreach(var p in Products)if(p.id==id)return p;return null;}
  }
 }

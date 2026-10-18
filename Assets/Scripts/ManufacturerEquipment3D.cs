@@ -77,7 +77,8 @@ namespace NeonVault
         }
         static void Build(Transform root,string manufacturer,int design)
         {
-            int maker=ManufacturerCatalog.Index(manufacturer);if(maker<0)maker=0;design=Mathf.Clamp(design,0,9);
+            int maker=ManufacturerCatalog.Index(manufacturer);if(maker<0)maker=0;int generation=Mathf.Max(0,design)/10;design=Mathf.Max(0,design)%10;
+            if(generation>0){root.localScale=Vector3.Scale(root.localScale,new Vector3(ProductGeneration.Output(generation*10),1+generation*.025f,ProductGeneration.Cycle(generation*10)));root.localRotation*=Quaternion.Euler(0,(generation%3-1)*7,0);Box(root,"Generation cooling bridge","Steel",V(0,.045f,0),V(.045f,.008f,.035f+generation*.006f));}
             root.gameObject.AddComponent<MeshLifetime>();
             // The colored inset stays small; structural parts keep their steel, brass,
             // leather and glass material response instead of one overall tint.

@@ -174,7 +174,7 @@ namespace NeonVault
             if(kind==5){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
             f.GetComponent<FaithfulEnemy3D>().Init(f);
             Enemies.Add(f);
-            f.ConfigureDifficulty(CurrentDungeon.healthScale,CurrentDungeon.damageScale,DungeonIndex*.10f);
+            f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier,CurrentDungeon.damageScale*FloorCombatMultiplier,DungeonIndex*.10f);
             f.timer=2.5f;
         }
         public bool Blocked(Vector3 p,float radius)
@@ -266,6 +266,7 @@ namespace NeonVault
                 var direction=aimedPoint-PlayerWeapon.MuzzlePosition;direction.y=0;if(direction.sqrMagnitude>.0001f)aim=direction.normalized;
                 player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
             }
+            LegendaryTrigger("fire",PlayerPosition);
             ammo--;fireTimer=1/EffectiveFireRate;audioSource.PlayOneShot(gun.effect==GunEffect.Scatter?scatterSound:VaultLanguage.DisplayModel(gun)>=7?coilSound:fireSound,.5f);shake=gun.effect==GunEffect.Scatter?.38f:.25f;
             CombatVisuals.Muzzle(PlayerWeapon.MuzzlePosition,aim,gun.color,gun.effect,world,VaultLanguage.DisplayModel(gun));
             for(int i=0;i<gun.pellets;i++)
@@ -280,7 +281,10 @@ namespace NeonVault
                     Vector3 target=player.position+aim*12;target.y=origin.y;direction=Quaternion.Euler(0,spread,0)*(target-origin).normalized;
                     Burst(origin,Gold,3);
                 }
-                SpawnBullet(origin,direction,true,EffectiveDamage,gun.speed,gun.effect==GunEffect.Ricochet?Cyan:gun.color,gun.effect,EffectiveAccuracy);
+                var shot=SpawnBullet(origin,direction,true,UnityEngine.Random.Range(EffectiveDamageMin,EffectiveDamageMax),gun.speed,gun.effect==GunEffect.Ricochet?Cyan:gun.color,gun.effect,EffectiveAccuracy);
+                shot.critical=UnityEngine.Random.value<EffectiveCriticalChance;shot.moduleAmplified=ArtifactDamageMultiplier>1.0001f||ArtifactAffixBonus("damage")>0;
+                if(shot.critical)shot.damage*=EffectiveCriticalMultiplier;
+                LegendaryModifyShot(shot);
             }
         }
         public bool AttackMelee()=>meleeAttack!=null&&meleeAttack.TryAttack(EquippedMeleeWeapon,aim,PlayerPosition,world);
@@ -300,10 +304,10 @@ namespace NeonVault
         }
         public Foe NearestEnemy(Vector3 p,Foe except=null)
         { Foe best=null; float distance=float.MaxValue; foreach(var f in Enemies) if(f!=null&&!f.dead&&f!=except) { float d=(f.transform.position-p).sqrMagnitude; if(d<distance){distance=d;best=f;} } return best; }
-        public void GravityWell(Vector3 p,float damage)
+        public void GravityWell(Vector3 p,float damage,Color? numberColor=null)
         {
             p.y=.3f;var obj=new GameObject("Gravity well");obj.transform.SetParent(world,false);obj.transform.position=p;
-            var w=obj.AddComponent<Well>(); w.game=this; w.damage=damage;CombatVisuals.ConfigureWell(w,new Color(.65f,.3f,1));
+            var w=obj.AddComponent<Well>(); w.game=this; w.damage=damage;w.numberColor=numberColor??Color.white;CombatVisuals.ConfigureWell(w,new Color(.65f,.3f,1));
         }
         public void Burst(Vector3 p,Color color,int count)
         {
@@ -311,29 +315,29 @@ namespace NeonVault
         }
         public void Hurt(float damage)
         {
-            if(!Active||invincible>0)return;hp-=AbsorbArtifactDamage(damage*(1-DamageReduction));lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
+            if(!Active||invincible>0)return;LegendaryTrigger("hurt",PlayerPosition);hp-=AbsorbArtifactDamage(damage*(1-DamageReduction));lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
             if(hp<=0) { hp=0; Finish(false); }
         }
         public void FoeKilled(Foe f)
         {
-            kills++;ArtifactOnKill(f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
+            kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
             ExpeditionEnemyKilled(f);
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
             if(!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
             var ammoType=(AmmoType)rng.Next(4);if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
-            if(rng.NextDouble()<(f.kind==3?1:.24))AddDrop(Arsenal.RollForDungeon(rng,DungeonIndex,f.kind==3),f.transform.position);
-            if(rng.NextDouble()<(f.kind==3?1:.26))AddArmorDrop(Armory.RollForDungeon(rng,DungeonIndex,f.kind==3),f.transform.position+Vector3.right*.8f);
-            if(rng.NextDouble()<(f.kind==3?.55:.12))AddArtifactDrop(ArtifactCatalog.RollForDungeon(rng,DungeonIndex,f.kind==3),f.transform.position+Vector3.left*.8f);
-            if(rng.NextDouble()<(f.kind==3?.75:.18))AddMeleeDrop(MeleeWeaponCatalog.RollForDungeon(rng,DungeonIndex,f.kind==3),f.transform.position+Vector3.forward*.8f);
+            if(rng.NextDouble()<(f.kind==3?1:.24))AddDrop(RollExpeditionGun(rng,f.kind==3),f.transform.position);
+            if(rng.NextDouble()<(f.kind==3?1:.26))AddArmorDrop(RollExpeditionArmor(rng,f.kind==3),f.transform.position+Vector3.right*.8f);
+            if(rng.NextDouble()<(f.kind==3?.55:.12))AddArtifactDrop(RollExpeditionArtifact(rng,f.kind==3),f.transform.position+Vector3.left*.8f);
+            if(rng.NextDouble()<(f.kind==3?.75:.18))AddMeleeDrop(RollExpeditionMelee(rng,f.kind==3),f.transform.position+Vector3.forward*.8f);
             bool alive=false; foreach(var e in Enemies) if(e!=null&&!e.dead)alive=true;
             if(!alive)
             {
                 cleared=true; hp=Mathf.Min(maxHp,hp+8);
                 if(room==CurrentDungeon.AreaCount-1) {Notify("ALPHA MUTANT DOWN / Loot [F] / Extraction [E]","変異体の主を撃破 / 戦利品 [F] / 脱出 [E]");return;}
-                AddDrop(Arsenal.RollForDungeon(rng,DungeonIndex),player.position+Vector3.forward*.5f);
-                AddArmorDrop(Armory.RollForDungeon(rng,DungeonIndex),player.position+Vector3.left*.8f);
+                AddDrop(RollExpeditionGun(rng),player.position+Vector3.forward*.5f);
+                AddArmorDrop(RollExpeditionArmor(rng),player.position+Vector3.left*.8f);
                 Notify("ZONE CLEAR / +8 HP / Loot [F] / Exit [E]","区域制圧 / HP +8 / 戦利品 [F] / 出口 [E]");
             }
         }

@@ -29,7 +29,7 @@ namespace NeonVault
         {
             if(!missionCompleted||SelectedExpeditionStage==null)return false;
             string key="stage:"+SelectedStageId;if(completedMissionClaims.Contains(key))return false;completedMissionClaims.Add(key);
-            int amount=ScaleScrap(200000+new System.Random(ExpeditionMap.RewardSeed(SelectedStageId)).Next(200001));AwardCredits(amount);
+            int amount=ScaleScrap(20000000+new System.Random(ExpeditionMap.RewardSeed(SelectedStageId)).Next(200001)*100);AwardCredits(amount);
             Notify("MISSION REWARD / SCRAP +"+amount,"任務報酬 / スクラップ +"+amount);return true;
         }
     }

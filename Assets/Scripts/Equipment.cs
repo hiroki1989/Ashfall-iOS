@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 namespace NeonVault
@@ -8,7 +8,7 @@ namespace NeonVault
     public class ArmorItem
     {
         public string id, name, subtitle;
-        public string catalogId, manufacturerId;
+        public string catalogId, manufacturerId, legendaryKey;
         public int designVariant;
         public ArmorSlot slot;
         public Rarity rarity;
@@ -36,6 +36,7 @@ namespace NeonVault
         public static ArmorItem RollForDungeon(System.Random random,int dungeon,bool boss=false)=>CreateForDungeon(random,dungeon,DungeonCatalog.RollRarity(random,boss),DungeonCatalog.ItemLevel(random,dungeon));
         public static ArmorItem CreateForDungeon(System.Random random,int dungeon,Rarity rarity,int level)
         {
+            if(rarity==Rarity.Legendary&&random.NextDouble()<.5)return LegendaryCatalog.CreateArmor(random.Next(30),random,level);
             var item=Create((ArmorSlot)random.Next(5),rarity,level,random);
             if(rarity==Rarity.Legendary){item.dungeon=dungeon;item.uniqueEffect=dungeon+1;item.name=Name(item,false);}
             return item;
@@ -43,7 +44,7 @@ namespace NeonVault
         static ArmorItem Create(ArmorSlot slot,Rarity rarity,int level,System.Random random,ArmorProduct product=null)
         {
             float power=1+.16f*((int)rarity+Mathf.Max(1,level)-1);
-            if(product==null)product=ArmorProductCatalog.Get(slot,random==null?0:random.Next(5),random==null?0:random.Next(10));
+            if(product==null)product=random==null?ArmorProductCatalog.Get(slot,0,0):ArmorProductCatalog.Roll(random,slot);
             var a=new ArmorItem{ id=System.Guid.NewGuid().ToString("N"),slot=slot,rarity=rarity,level=level,color=ArmorColor(slot,rarity,random),visualVariant=product.visualVariant,catalogId=product.id,manufacturerId=product.manufacturerId,designVariant=product.designVariant };
             a.damageReduction=RollValue(random,(slot==ArmorSlot.Chest?.045f:.018f)*power);
             switch(slot)
@@ -76,9 +77,9 @@ namespace NeonVault
         static void RollAffixes(ArmorItem item,System.Random random)
         {
             if(random==null){item.affixes=System.Array.Empty<GearAffix>();return;}
-            int count=Mathf.Clamp((int)item.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo"};
+            int count=Mathf.Clamp((int)item.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage"};
             float scale=1+.16f*((int)item.rarity+item.level-1);var used=new HashSet<int>();item.affixes=new GearAffix[count];
-            for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while(!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*scale*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
+            for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while(!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f,.015f,.06f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*scale*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
         }
         static void ApplyAffix(ArmorItem a,GearAffix x){switch(x.type){case "damage":a.damageBonus+=x.value;break;case "health":a.maxHealth+=x.value;break;case "fireRate":a.fireBonus+=x.value;break;case "reload":a.reloadBonus+=x.value;break;case "accuracy":a.accuracyBonus+=x.value;break;case "ammo":a.ammoBonus+=x.value;break;case "mitigation":a.damageReduction=Mathf.Min(.65f,a.damageReduction+x.value);break;case "moveSpeed":a.moveBonus+=x.value;break;case "regen":a.regenBonus+=x.value;break;}}
         static Color ArmorColor(ArmorSlot slot,Rarity rarity,System.Random random)
@@ -92,6 +93,7 @@ namespace NeonVault
         public static string Name(ArmorItem item,bool? japanese=null)
         {
             bool ja=japanese??VaultLanguage.Japanese;
+            if(!string.IsNullOrEmpty(item.legendaryKey))return LegendaryCatalog.ArmorName(item,ja);
             var product=ArmorProductCatalog.Find(item.catalogId);
             if(product!=null)return ArmorProductCatalog.Name(product,ja)+(item.uniqueEffect>0?(ja?" / 固有装備":" / UNIQUE"):"");
             if(item.visualVariant==4)return ja?"トレイルウォーデン・"+new[]{"防毒ヘルメット","野戦ジャケット","装甲グローブ","野戦パンツ","戦闘ブーツ"}[(int)item.slot]:"TRAIL WARDEN / "+new[]{"FILTER HELMET","FIELD JACKET","ARMORED GLOVES","FIELD TROUSERS","COMBAT BOOTS"}[(int)item.slot];
@@ -116,6 +118,7 @@ namespace NeonVault
         public static string Description(ArmorItem item,bool? japanese=null)
         {
             bool ja=japanese??VaultLanguage.Japanese;
+            if(!string.IsNullOrEmpty(item.legendaryKey))return LegendaryCatalog.Description(item,ja)+"\n"+ArmorProductCatalog.Description(item,ja);
             string productDescription=ArmorProductCatalog.Description(item,ja);
             return productDescription+BaseDescription(item,ja);
         }

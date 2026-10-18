@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -51,6 +51,7 @@ namespace NeonVault
             if (phase == TouchPhase.Ended || phase == TouchPhase.Canceled)
             {
                 if (pointer.dragged) swallowThrough = Time.frameCount + 1;
+                else if(phase==TouchPhase.Ended && Mode==2) game.TrySelectCityStage(Canvas(position));
                 pointers.Remove(id); return;
             }
             Vector2 previous = pointer.position;

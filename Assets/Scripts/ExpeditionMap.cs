@@ -98,6 +98,6 @@ namespace NeonVault
         public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=Mathf.Clamp(region,0,4)*20;id<Mathf.Clamp(region,0,4)*20+20;id++)if(Get(id).mission==mission)count++;return count;}
         public static int RewardSeed(int stageId)=>unchecked(0x51A7D00D ^ (stageId+1)*7919);
         public static string MissionLabel(ExpeditionMission mission,bool japanese)=>japanese?missionJa[(int)mission]:missionEn[(int)mission];
-        static string RewardLabel(int id,bool ja) { string[] en={"Credits cache","Unusual gear","Ammo bundle","Skill token"};string[] jp={"クレジット備蓄","異能装備","弾薬補給","スキルトークン"};int kind=new System.Random(RewardSeed(id)).Next(4);return (ja?jp:en)[kind]; }
+        static string RewardLabel(int id,bool ja) { string[] en={"Credits cache","Unusual gear","Armor cache","Skill token"};string[] jp={"クレジット備蓄","異能装備","防具箱","スキルトークン"};int kind=new System.Random(RewardSeed(id)).Next(4);return (ja?jp:en)[kind]; }
     }
 }

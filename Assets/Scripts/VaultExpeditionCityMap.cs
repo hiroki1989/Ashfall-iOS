@@ -128,6 +128,25 @@ namespace NeonVault
             else { for(int n=0;n<4;n++) CityBox(new Rect(x-38+n*21,y-11,16,23),edge); }
             CityText(x-85,y+20,name,edge,270);
         }
+        public bool TrySelectCityStage(Vector2 canvasPosition)
+        {
+            Rect view=MobileTouchControls.Enabled?MobileCityView:new Rect(42,150,952,663);
+            if(!view.Contains(canvasPosition))return false;
+            Vector2 local=canvasPosition-view.position+expeditionMapScroll;
+            // Match visible marker bounds. Resolve any overlap to the closest center.
+            float w=MobileTouchControls.Enabled?110:expeditionCityZoom>1?51:39;
+            float h=MobileTouchControls.Enabled?110:expeditionCityZoom>1?31:25;
+            int nearest=-1;float distance=float.MaxValue;
+            for(int id=0;id<ExpeditionMap.StageCount;id++)
+            {
+                Vector2 center=CityScale(ExpeditionMap.CityPoint(id));
+                if(!new Rect(center.x-w*.5f,center.y-h*.5f,w,h).Contains(local))continue;
+                float d=(center-local).sqrMagnitude;
+                if(d<distance){distance=d;nearest=id;}
+            }
+            if(nearest<0)return false;
+            expeditionMapSelection=nearest;return true;
+        }
         void DrawCitySite(int id)
         {
             ExpeditionStage stage = ExpeditionMap.Get(id);

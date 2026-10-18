@@ -68,6 +68,8 @@ namespace NeonVault
             if(ratio>image.width/image.height){float h=image.width/ratio;image.y+=(image.height-h)*.5f;image.height=h;}
             else{float w=image.height*ratio;image.x+=(image.width-w)*.5f;image.width=w;}
             GUI.color=Color.white;GUI.DrawTextureWithTexCoords(image,moduleIllustrations,uv,true);
+            int generation=ProductGeneration.Generation(item.designVariant);
+            for(int n=0;n<generation;n++){GUI.color=ManufacturerCatalog.Color(Maker(item));GUI.DrawTexture(new Rect(r.x+r.width*.76f,r.y+5+n*r.height*.065f,r.width*(n%2==0?.14f:.09f),Mathf.Max(1,r.height*.018f)),Texture2D.whiteTexture);}
             Badge(new Rect(r.x+3,r.yMax-Mathf.Min(25,r.height*.3f)-3,Mathf.Min(25,r.width*.3f),Mathf.Min(25,r.height*.3f)),Maker(item));
             GUI.color=Arsenal.Colors[(int)item.rarity];GUI.DrawTexture(new Rect(r.x,r.yMax-3,r.width,3),Texture2D.whiteTexture);GUI.color=old;
         }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -77,7 +77,7 @@ namespace NeonVault
             chestRoomForRun=save.chestRoomForRun;ammoCratePlanCount=save.ammoCratePlanCount;ammoCrateRoomPlan.Clear();if(save.ammoCrateRooms!=null)ammoCrateRoomPlan.AddRange(save.ammoCrateRooms);
             ResetArtifactCombat();ArtifactShield=save.artifactShield;artifactCombatClock=save.artifactClock;missionKills=save.missionKills;missionCompleted=save.missionCompleted;
             runUpgradeCounts.Clear();if(save.upgradeKeys!=null&&save.upgradeValues!=null)for(int i=0;i<Math.Min(save.upgradeKeys.Length,save.upgradeValues.Length);i++)runUpgradeCounts[save.upgradeKeys[i]]=save.upgradeValues[i];
-            screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);player.position=new Vector3(save.playerX,.65f,save.playerZ);aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
+            screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);float groundedPlayerY=player.position.y;player.position=new Vector3(save.playerX,groundedPlayerY,save.playerZ);aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
             foreach(var state in save.foes){SpawnFoe(new Vector3(state.x,.65f,state.z),state.kind);var foe=Enemies[Enemies.Count-1];foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
             foreach(var d in save.guns)if(d.item!=null)AddDrop(d.item,d.position);
             foreach(var d in save.armor)if(d.item!=null)AddArmorDrop(d.item,d.position);

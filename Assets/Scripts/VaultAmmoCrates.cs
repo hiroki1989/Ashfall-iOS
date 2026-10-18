@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -73,7 +73,7 @@ namespace NeonVault
 
             float scale=DebtAmmoPickupBonus+ArmorTotal(a=>a.ammoBonus)+EquippedWeaponAffixBonus("ammo")+ArtifactAffixBonus("ammo");
             int requested=Mathf.Max(1,Mathf.RoundToInt(nearest.amount*(1+scale))+Mathf.RoundToInt(DebtAmmoBonus(AmmoModel(nearest.type))));
-            int picked=Mathf.Min(requested,9999-AmmoReserve(nearest.type));
+            int picked=Mathf.Min(requested,AmmoCapacity(nearest.type)-AmmoReserve(nearest.type));
             if(picked<=0){Notify("AMMO FULL / "+AmmoLabel(nearest.type),"弾薬満杯 / "+AmmoLabel(nearest.type));return true;}
             AddAmmo(nearest.type,picked);
             ExpeditionSupplyRecovered();

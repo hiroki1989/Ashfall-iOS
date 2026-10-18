@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -26,7 +26,7 @@ namespace NeonVault
             game.PlayerAppearance?.GetComponent<LayeredPlayer2D>()?.MeleeSwing();
             game.PlayerAppearance?.GetComponent<DetailedHeroPlayer3D>()?.NotifyMelee();
 
-            float damage=game.MeleeDamage(weapon);
+
             foreach(var foe in game.Enemies)
             {
                 if(foe==null||foe.dead||!struckThisSwing.Add(foe))continue;
@@ -36,7 +36,11 @@ namespace NeonVault
                 if(Vector3.Angle(direction,delta)>Mathf.Clamp(weapon.arcDegrees,1,360)*.5f)continue;
                 if(!game.LineOfSight(origin+Vector3.up*.7f,foe.transform.position+Vector3.up*.7f))continue;
                 Vector3 point=foe.transform.position-direction*(targetRadius*.45f)+Vector3.up*.8f;
-                if(!foe.Hit(damage,point,color,100))continue;
+                float damage=Random.Range(game.EffectiveMeleeDamageMin(weapon),game.EffectiveMeleeDamageMax(weapon));
+                bool critical=Random.value<game.MeleeCriticalChance;
+                if(critical)damage*=game.MeleeCriticalMultiplier;
+                Color numberColor=critical?new Color(1,.9f,.12f):(game.ArtifactDamageMultiplier>1.0001f||game.ArtifactAffixBonus("damage")>0)?new Color(1,.22f,.16f):Color.white;
+                if(!foe.Hit(damage,point,numberColor,100))continue;
                 game.RunHit(foe,damage,point);
             }
             return true;
