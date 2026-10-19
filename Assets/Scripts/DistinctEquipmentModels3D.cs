@@ -41,38 +41,7 @@ namespace NeonVault
         }
         public static DetailedHeroEquipment3D.WeaponSockets BuildWeapon(Transform parent,Gun gun,EquipmentRecipe r)
         {
-            var g=Root("Distinct product / "+r.id,parent);bool pistol=Arsenal.IsOneHanded(VaultLanguage.DisplayModel(gun));
-            float size=pistol?.68f:1f;g.localScale=Vector3.one*size;
-            float front=.16f, width=r.maker==1?.105f:r.maker==5?.10f:.078f;
-            string skin=Skin(r.maker);var sm=M("Steel");
-            ReceiverSilhouette(g,r,width);
-            ManufacturerSideMechanism(g,r,width);
-            var gripAssembly=Root("Body specific grip location",g);gripAssembly.localPosition=V(0,0,r.body==5?.12f:0);ProductGrip(gripAssembly,r);Guard(gripAssembly);WeaponDetails(g,r,width,pistol);
-            float end=(pistol?.48f:.60f)+(r.family%3)*.055f;
-            switch(r.barrel){
-                case 0:Tube("Long exposed precision barrel",g,sm,V(0,0,front),.018f,end-front,.62f);break;
-                case 1:end-=.12f;Tube("Short broad bore",g,sm,V(0,0,front),.043f,end-front,.7f,-1,16);break;
-                case 2:for(int s=-1;s<=1;s+=2)Tube("Twin separate barrel",g,sm,V(0,s*.026f,front),.024f,end-front,.67f);break;
-                case 3:Tube("Finned barrel core",g,sm,V(0,0,front),.022f,end-front,.6f);for(int i=0;i<9;i++)Tube("Radial cooling fin",g,sm,V(0,0,front+.025f+i*(end-front-.05f)/8),.039f,.008f,.64f,-1,12);break;
-                case 4:Tube("Caged inner barrel",g,M("Dark"),V(0,0,front),.019f,end-front,.7f);for(int i=0;i<4;i++){float a=i*Mathf.PI*.5f;Rod("Open shroud longitudinal rail",g,sm,V(Mathf.Cos(a)*.041f,Mathf.Sin(a)*.041f,front),V(Mathf.Cos(a)*.041f,Mathf.Sin(a)*.041f,end),.007f);}for(int i=0;i<3;i++)Tube("Shroud hoop",g,sm,V(0,0,Mathf.Lerp(front,end-.015f,i/2f)),.047f,.015f,.86f);break;
-                case 5:for(int i=0;i<3;i++){float a=i*Mathf.PI*2/3;Tube("Triangular barrel cluster",g,sm,V(0,(i-1)*.037f,front),.019f,end-front,.6f);}break;
-            }
-            float rear=pistol?-.20f:-.36f;
-            switch(r.stock){
-                case 0:Profile("Sculpted tapering shoulder stock",g,M(r.maker==4?"Wood":skin),.065f,P(rear,-.12f),P(rear,.045f),P(rear+.06f,.038f),P(-.085f,-.005f),P(-.085f,-.038f),P(rear+.09f,-.085f));break;
-                case 1:for(int s=-1;s<=1;s+=2)Rod("Fork stock rail",g,sm,V(s*.025f,0,-.08f),V(s*.04f,-.025f,rear),.009f);Rod("Fork shoulder bridge",g,M("Dark"),V(-.04f,-.025f,rear),V(.04f,-.025f,rear),.018f);break;
-                case 2:Line("Folded side stock",g,sm,.012f,V(.045f,0,-.08f),V(.085f,.025f,-.18f),V(.085f,-.055f,.10f));break;
-                case 3:Line("Open loop shoulder stock",g,sm,.013f,V(0,.02f,-.09f),V(0,.035f,rear),V(0,-.09f,rear),V(0,-.035f,-.10f));break;
-                case 4:Tube("Stock reservoir",g,M(Trim(r.maker)),V(0,-.018f,rear),.045f,-rear-.09f,.05f);for(int i=0;i<2;i++)Tube("Reservoir end seal",g,sm,V(0,-.018f,i==0?rear:-.11f),.049f,.018f,.8f);break;
-                case 5:Plate(g,"Short angled brace",skin,.05f,-.15f,-.025f,.14f,.07f,1);Rod("Extended wrist brace",g,sm,V(0,-.035f,-.17f),V(0,-.12f,rear),.013f);break;
-            }
-            // Match the painted receiver's feed location and silhouette exactly by body family.
-            if(r.body==0||r.body==4){Profile("Full depth detachable magazine",g,M("Steel"),.055f,P(.04f,-.06f),P(.105f,-.06f),P(.125f,-.235f),P(.055f,-.25f));for(int i=0;i<3;i++)for(int sign=-1;sign<=1;sign+=2)Rod("Magazine longitudinal pressed channel",g,M("Dark"),V(sign*.029f,-.09f,.055f+i*.017f),V(sign*.029f,-.22f,.073f+i*.017f),.002f);}
-            else if(r.body==1)Plate(g,"Pistol grip magazine base","Dark",.052f,-.025f,-.17f,.055f,.025f,0);
-            else if(r.body==5)Plate(g,"Rear bullpup magazine","Dark",.045f,-.13f,-.12f,.065f,.15f,1);
-            var sockets=Finish(g,V(0,-.095f,r.body==5?.08f:-.045f),V(0,-.055f,pistol?.13f:.23f),V(0,-.015f,rear),V(0,0,end));
-            // Bake uniform product scale into sockets only through the root; rig reads world positions.
-            return sockets;
+            return GunSeriesModels3D.Build(parent,gun,r);
         }
         static void ReceiverSilhouette(Transform g,EquipmentRecipe r,float width)
         {

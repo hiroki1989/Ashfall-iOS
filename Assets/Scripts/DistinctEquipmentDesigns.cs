@@ -2,10 +2,11 @@ using UnityEngine;
 namespace NeonVault {
  public sealed class EquipmentRecipe {
   public int maker,index,family,body,barrel,stock,attachment,slot;
+  public int gunClass,series,seriesVariant;
   public bool legendary; public string id,name,japanese;
  }
  public static class DistinctEquipmentDesigns {
-  public static readonly EquipmentRecipe[] Guns=Build("gun",500), Armor=Build("armor",500), Modules=Build("module",200);
+  public static readonly EquipmentRecipe[] Guns=Build("gun",30+GunSeriesDesigns.RegularCount), Armor=Build("armor",500), Modules=Build("module",200);
   static readonly System.Collections.Generic.Dictionary<string,EquipmentRecipe> lookup=BuildLookup();
   static System.Collections.Generic.Dictionary<string,EquipmentRecipe> BuildLookup(){var map=new System.Collections.Generic.Dictionary<string,EquipmentRecipe>();foreach(var pool in new[]{Guns,Armor,Modules})foreach(var r in pool)map.Add(r.id,r);return map;}
   static EquipmentRecipe[] Build(string kind,int count){
@@ -19,6 +20,7 @@ namespace NeonVault {
     var r=new EquipmentRecipe{index=i,maker=maker,family=family,slot=kind=="armor"?family:0,body=body,barrel=barrel,stock=stock,attachment=attachment,legendary=legend||(kind=="module"&&family>=4),id="distinct."+kind+"."+i.ToString("000")};
     if(kind=="gun"&&legend){r.family=new[]{2,15,13,6,1}[i%5];r.barrel=(maker+i%5)%6;r.stock=5;}
     Name(r,kind);
+    if(kind=="gun")GunSeriesDesigns.Configure(r);
     a[i]=r;
    }return a;
   }

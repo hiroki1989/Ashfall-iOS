@@ -39,7 +39,7 @@ namespace NeonVault {
   static void Frame(Rect r,Rarity rarity,bool legendary){Fill(r,new Color(.018f,.024f,.032f));Fill(new Rect(r.x+3,r.y+3,r.width-6,r.height-6),legendary?new Color(.12f,.085f,.035f):new Color(.055f,.075f,.095f));Color c=Arsenal.Colors[(int)rarity];Fill(new Rect(r.x,r.y,r.width,2),c);Fill(new Rect(r.x,r.yMax-2,r.width,2),c);}
   static Rect Map(Rect part,Rect bounds,Rect target){float scale=Mathf.Min(target.width/bounds.width,target.height/bounds.height);return new Rect(target.center.x+(part.x-bounds.center.x)*scale,target.center.y+(part.y-bounds.center.y)*scale,part.width*scale,part.height*scale);}
   static Rect Union(Rect a,Rect b)=>Rect.MinMaxRect(Mathf.Min(a.xMin,b.xMin),Mathf.Min(a.yMin,b.yMin),Mathf.Max(a.xMax,b.xMax),Mathf.Max(a.yMax,b.yMax));
-  public static bool Draw(Rect card,Gun item){var r=DistinctEquipmentDesigns.For(item);return r!=null&&Draw(card,r,"gun",item.rarity);}
+  public static bool Draw(Rect card,Gun item){if(GunSeriesPortraits.Draw(card,item))return true;var r=DistinctEquipmentDesigns.For(item);return r!=null&&Draw(card,r,"gun",item.rarity);}
   public static bool Draw(Rect card,ArmorItem item){var r=DistinctEquipmentDesigns.For(item);return r!=null&&Draw(card,r,"armor",item.rarity);}
   public static bool Draw(Rect card,ArtifactItem item){var r=DistinctEquipmentDesigns.For(item);return r!=null&&Draw(card,r,"module",item.rarity);}
   static bool Draw(Rect card,EquipmentRecipe r,string kind,Rarity rarity){

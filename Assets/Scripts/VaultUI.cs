@@ -65,7 +65,7 @@ namespace NeonVault
             if(screen!=Screen.Shop)debtPage=false;
             if(MobileTouchControls.Enabled)
             {
-                if(DebtIntroVisible){DrawMobileDebtIntro();DrawMobileLanguageButton();return;}
+                if(DebtIntroVisible){DrawMobileDebtIntro();return;}
                 if(manufacturerRegistry)DrawMobileManufacturer();
                 else if(InventoryOpen)DrawMobileInventory();
                 else if(screen==Screen.Menu)DrawMobileMenu();
@@ -75,9 +75,9 @@ namespace NeonVault
                 else if(screen==Screen.Playing)DrawMobileHUD();
                 else if(screen==Screen.Pause){DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
-                if(screen==Screen.Menu||screen==Screen.Hub)DrawMobileLanguageButton();return;
+                if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
             }
-            if(DebtIntroVisible){DrawDebtIntro();LanguageSelector();return;}
+            if(DebtIntroVisible){DrawDebtIntro();return;}
             if(manufacturerRegistry)DrawManufacturerRegistry();
             else if(InventoryOpen)DrawInventory();
             else if(screen==Screen.Menu)DrawMenu();
@@ -88,7 +88,7 @@ namespace NeonVault
             {
                 DrawHUD();if(screen!=Screen.Playing)DrawOverlay();
             }
-            LanguageSelector();
+            if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
         void DrawMobileLanguageButton()
         { if(MobileButton(new Rect(1190,12,220,94),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke); }

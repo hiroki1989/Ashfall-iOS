@@ -22,9 +22,27 @@ namespace NeonVault
             if(!string.IsNullOrEmpty(gun.legendaryKey))return LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
             return ManufacturerBranding.GunDescription(gun,ja)+"\n"+GunMechanismDescription(gun,ja);
         }
+        public static string GunClassName(Gun gun,bool? japanese=null)
+        {
+            bool ja=japanese??Japanese;
+            if(gun==null)return ja?"不明":"Unknown";
+            var recipe=DistinctEquipmentDesigns.Find(gun.catalogId);
+            if(recipe!=null&&!recipe.legendary&&gun.catalogId.StartsWith("distinct.gun."))return GunSeriesDesigns.ClassName(recipe.gunClass,ja);
+            int model=DisplayModel(gun);
+            if(model==1)return ja?"短機関銃":"SMG";
+            if(model==6)return ja?"軽機関銃":"LMG";
+            switch(Arsenal.Category(model))
+            {
+                case WeaponClass.Handgun:return ja?"拳銃":"Handgun";
+                case WeaponClass.Shotgun:return ja?"ショットガン":"Shotgun";
+                case WeaponClass.SniperRifle:return ja?"狙撃銃":"Sniper Rifle";
+                default:return ja?"アサルトライフル":"Assault Rifle";
+            }
+        }
         static string GunMechanismDescription(Gun gun,bool ja)
         {
             if(gun.visualSet==Arsenal.TrailWardenVisualSet)return ja?(DisplayModel(gun)==15?"トレイルウォーデンの自動拳銃 / 素早い鉛弾連射":"トレイルウォーデンの木製銃床ライフル / 制御しやすい鉛弾連射"):(DisplayModel(gun)==15?"Trail Warden automatic sidearm / rapid lead fire":"Trail Warden wood-stock rifle / controlled automatic fire");
+            var recipe=DistinctEquipmentDesigns.For(gun);if(recipe!=null&&!recipe.legendary)return GunSeriesDesigns.Description(recipe,ja);
             if(!ja)return Arsenal.ModelDescription(DisplayModel(gun));
             if(DisplayModel(gun)==14)return "六発式リボルバー / 狙いを定めた単発の鉛弾";
             if(DisplayModel(gun)==15)return "ブローバック式オートピストル / 素早い連射";
@@ -38,6 +56,7 @@ namespace NeonVault
         public static int DisplayModel(Gun gun)
         {
             int bespoke=BespokeLegendaryDesigns.Index(gun);if(bespoke>=0)return BespokeLegendaryDesigns.Model(bespoke);
+            var recipe=DistinctEquipmentDesigns.Find(gun.catalogId);if(recipe!=null&&!recipe.legendary&&gun.catalogId.StartsWith("distinct.gun."))return recipe.family;
             // Legacy saves keep their IDs, statistics and stored names; presentation migrates only.
             if(gun.effect==GunEffect.Ricochet)return 9;
             if(gun.effect==GunEffect.Orbit)return 10;
@@ -66,6 +85,3 @@ namespace NeonVault
         void LateUpdate(){recoil=Mathf.MoveTowards(recoil,0,Time.deltaTime*1.3f);SynchronizeMount();transform.parent.GetComponent<LayeredPlayer2D>()?.RefreshPose();}
     }
 }
-
-
-

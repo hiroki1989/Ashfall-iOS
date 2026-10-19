@@ -46,7 +46,7 @@ namespace NeonVault
         void InventoryCopy(float x,float y,string value,GUIStyle style,Color color,float width)
         {GUI.color=color;GUI.Label(new Rect(x,y,width,style.CalcHeight(new GUIContent(value),width)+4),value,style);GUI.color=Color.white;}
         float ArmorRowHeight(ArmorItem item)=>Mathf.Max(132,74+inventoryDetails.CalcHeight(new GUIContent(Armory.Name(item)),370)+inventoryDetails.CalcHeight(new GUIContent(Armory.Description(item)),370)+inventoryDetails.CalcHeight(new GUIContent(Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item)),370));
-        float GunRowHeight(Gun item,bool equipped)=>Mathf.Max(146,76+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunName(item)),362)+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunDescription(item)),362)+inventoryDetails.CalcHeight(new GUIContent(GunNumbers(item,equipped)),362));
+        float GunRowHeight(Gun item,bool equipped)=>Mathf.Max(164,94+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunName(item)),362)+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunDescription(item)),362)+inventoryDetails.CalcHeight(new GUIContent(GunNumbers(item,equipped)),362));
         bool InventoryAction(Rect rect,string caption)
         {
             bool hover=rect.Contains(Event.current.mousePosition);
@@ -117,7 +117,8 @@ namespace NeonVault
                 float nameHeight=inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunName(item)),362);
                 Text(112,y+10,VaultLanguage.GunName(item),inventoryDetails,item.color,362);
                 Text(112,y+13+nameHeight,VaultLanguage.RarityName(item.rarity)+" · "+AffixCountLabel(item.affixes,item.rarity),tiny,item.color,362);
-                float descriptionY=y+34+nameHeight;
+                Text(112,y+32+nameHeight,T("TYPE  ","銃種  ")+VaultLanguage.GunClassName(item),tiny,Cyan,362);
+                float descriptionY=y+52+nameHeight;
                 float descriptionHeight=inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunDescription(item)),362);
                 InventoryCopy(112,descriptionY,VaultLanguage.GunDescription(item),inventoryDetails,Mist,362);
                 InventoryCopy(112,descriptionY+descriptionHeight+5,GunNumbers(item,chosen),inventoryDetails,chosen?Cyan:Mist,362);

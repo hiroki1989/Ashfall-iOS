@@ -223,7 +223,7 @@ namespace NeonVault
                 var melee=MeleeWeaponCatalog.Create(new System.Random(6147),3,rarity);
                 Check(melee.rarity==rarity&&melee.color==Arsenal.Colors[tier]&&melee.damage>0,"melee tier matches firearm rarity color and has valid stats / "+rarity);
                 Check(melee.uniqueEffect==(rarity==Rarity.Legendary),"only legendary melee weapons carry a unique-effect marker / "+rarity);
-                if(rarity==Rarity.Legendary)Check(gun.effect!=GunEffect.Normal&&armor.uniqueEffect>0&&module.uniqueEffect>0,"legendary weapon armor and module retain their unique effects");
+                if(rarity==Rarity.Legendary)Check(LegendaryCatalog.Index(gun.legendaryKey)>=0&&LegendaryCatalog.Index(armor.legendaryKey)>=0&&module.uniqueEffect>0,"legendary weapon armor and module retain their unique effects");
             }
             var namedArmor=Armory.CreateForDungeon(new System.Random(1844),1,Rarity.Epic,7);
             var restoredArmor=JsonUtility.FromJson<ArmorItem>(JsonUtility.ToJson(namedArmor));

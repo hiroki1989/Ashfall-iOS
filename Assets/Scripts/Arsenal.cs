@@ -48,26 +48,8 @@ namespace NeonVault
         {
             if(r.legendary)return BespokeLegendaryDesigns.CreateBase(r.index);
             var g=BaseModel(r.family,rarity);g.catalogId=r.id;g.manufacturerId=ManufacturerCatalog.Id(r.maker);g.designVariant=r.index;g.name=r.name;
-            // Barrel engineering changes how the weapon fires, with explicit costs.
-            switch(r.barrel){
-                case 0:g.accuracy+=8;g.speed*=1.18f;g.reloadSeconds*=1.12f;g.movementBonus-=.018f;break;
-                case 1:g.movementBonus+=.035f;g.reloadSeconds*=.80f;g.accuracy-=9;g.speed*=.88f;break;
-                case 2:g.pellets+=1;g.damage*=.63f;g.interval*=1.30f;g.magazine=Mathf.Max(1,g.magazine-2);break;
-                case 3:g.interval*=.77f;g.damage*=.90f;g.reloadSeconds*=1.13f;break;
-                case 4:g.accuracy+=5;g.interval*=1.06f;g.speed*=1.06f;break;
-                case 5:g.pellets+=2;g.damage*=.47f;g.accuracy-=16;g.interval*=1.19f;g.reloadSeconds*=1.14f;break;
-            }
-            switch(r.stock){
-                case 0:g.accuracy+=4;g.movementBonus-=.012f;break;
-                case 1:g.movementBonus+=.028f;g.accuracy-=3;break;
-                case 2:g.reloadSeconds*=.83f;g.accuracy-=2;break;
-                case 3:g.accuracy+=7;g.interval*=1.07f;break;
-                case 4:g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*1.35f));g.reloadSeconds*=1.18f;break;
-                case 5:g.reloadSeconds*=.91f;g.interval*=.95f;g.movementBonus+=.012f;g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*.88f));break;
-            }
-            if(r.barrel==2||r.barrel==5)g.effect=GunEffect.Scatter;
-            g.accuracy=Mathf.Clamp(g.accuracy,1,100);
-            ManufacturerCatalog.Apply(g);if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
+            GunSeriesDesigns.Apply(g,r);
+            ManufacturerCatalog.Apply(g);if(r.gunClass==1&&r.series==2)g.magazine=6;if(r.gunClass==2&&r.series==1)g.magazine=2;if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
         }
         public static Gun LegacyCatalog(int index,Rarity rarity=Rarity.Common)
         {

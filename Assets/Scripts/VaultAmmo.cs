@@ -45,7 +45,7 @@ namespace NeonVault
         static string AmmoJapanese(AmmoType type)=>type==AmmoType.Handgun?"拳銃弾":type==AmmoType.Shotgun?"散弾":type==AmmoType.SniperRifle?"狙撃弾":"ライフル弾";
         int[] SaveAmmoReserves()=>(int[])ammoReserves.Clone();
         void LoadAmmoReserves(int[] saved){Array.Clear(ammoReserves,0,ammoReserves.Length);if(saved!=null)for(int i=0;i<Math.Min(saved.Length,ammoReserves.Length);i++)ammoReserves[i]=Mathf.Clamp(saved[i],0,AmmoCapacity((AmmoType)i));}
-        void SeedAmmoReserves(){ammoReserves[(int)AmmoType.Handgun]=60;ammoReserves[(int)AmmoType.Shotgun]=24;ammoReserves[(int)AmmoType.AssaultRifle]=90;ammoReserves[(int)AmmoType.SniperRifle]=12;}
+        void SeedAmmoReserves(){for(int i=0;i<AmmoTypeCount;i++)ammoReserves[i]=AmmoCapacity((AmmoType)i);}
         public bool BuyAmmo(AmmoType type,int packs)
         {
             if(!ValidAmmo(type)||packs<=0||packs>20)return false;
