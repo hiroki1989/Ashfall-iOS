@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\CinderScrapHelmet\\Candidates\\cinder-scrap-helmet-two-view-atlas.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\CinderScrapHelmet\\front-blueprint-v1.png",
+      "source_bbox": [
+        60,
+        12,
+        864,
+        842
+      ],
+      "placed_bbox": [
+        45,
+        30,
+        978,
+        993
+      ],
+      "visible_fraction": 0.758627
+    },
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\CinderScrapHelmet\\back-blueprint-v1.png",
+      "source_bbox": [
+        23,
+        11,
+        825,
+        850
+      ],
+      "placed_bbox": [
+        51,
+        30,
+        972,
+        993
+      ],
+      "visible_fraction": 0.767482
+    }
+  ],
+  "alpha_min": 255
+}

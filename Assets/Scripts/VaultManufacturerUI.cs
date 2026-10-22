@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 namespace NeonVault
 {
@@ -11,7 +11,7 @@ namespace NeonVault
         {
             manufacturerProducts.Clear();string id=ManufacturerCatalog.Id(makerSelection);
             if(manufacturerKind==0){for(int i=0;i<Arsenal.CatalogCount;i++){var item=Arsenal.Catalog(i);if(ManufacturerBranding.Maker(item)==id)manufacturerProducts.Add(item);}}
-            else if(manufacturerKind==1){foreach(var product in ArmorProductCatalog.All)if(product.manufacturerId==id)manufacturerProducts.Add(Armory.CreateCatalog(product.id,Rarity.Common,1));}
+            else if(manufacturerKind==1){foreach(var product in ArmorProductCatalog.All)if(product.manufacturerId==id&&Armory.IsActiveSlot(product.slot))manufacturerProducts.Add(Armory.CreateCatalog(product.id,Rarity.Common,1));}
             else if(manufacturerKind==2){foreach(var product in ModuleProductCatalog.All)if(product.manufacturerId==id)manufacturerProducts.Add(ArtifactCatalog.CreateCatalog(product.id,product.legendary?Rarity.Legendary:Rarity.Common,1));}
             else if(manufacturerKind==3){for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){var item=MeleeWeaponCatalog.Catalog(i);if(ManufacturerBranding.Maker(item)==id)manufacturerProducts.Add(item);}}
 
@@ -20,7 +20,8 @@ namespace NeonVault
         {
             Box(new Rect(0,0,1440,900),PanelInk);
             Text(44,29,T("THE SIX / FIELD MANUFACTURERS","荒野の6社 / 装備メーカー"),heading,Gold,1160);
-            Text(46,88,T(Arsenal.CatalogCount+" FIREARMS · "+ArmorProductCatalog.Count+" ARMOR · "+ModuleProductCatalog.Count+" MODULES / INCLUDING 60 NAMED LEGENDARIES", "銃"+Arsenal.CatalogCount+"・防具"+ArmorProductCatalog.Count+"・モジュール"+ModuleProductCatalog.Count+" / 固有伝説60種を含む"),small,Mist,1250);
+            int armorCount=0,legendaryCount=LegendaryCatalog.GunCount;foreach(var product in ArmorProductCatalog.All)if(Armory.IsActiveSlot(product.slot)){armorCount++;if(DistinctEquipmentDesigns.Find(product.id).legendary)legendaryCount++;}
+            Text(46,88,T(Arsenal.CatalogCount+" FIREARMS · "+armorCount+" ARMOR · "+ModuleProductCatalog.Count+" MODULES / INCLUDING "+legendaryCount+" NAMED LEGENDARIES", "銃"+Arsenal.CatalogCount+"・防具"+armorCount+"・モジュール"+ModuleProductCatalog.Count+" / 固有伝説"+legendaryCount+"種を含む"),small,Mist,1250);
             if(Button(new Rect(1230,848,165,42),T("BACK","戻る")))manufacturerRegistry=false;
             for(int maker=0;maker<6;maker++)
             {
@@ -51,9 +52,9 @@ namespace NeonVault
                 float x=i%3*442,y=i/3*210;if(y+202<manufacturerScroll.y||y>manufacturerScroll.y+560)continue;
                 var item=manufacturerProducts[i];Panel(new Rect(x,y,430,199),ManufacturerCatalog.Color(selected));
                 string name,detail,code;int score;
-                if(item is Gun gun){name=VaultLanguage.GunName(gun);detail=GunNumbers(gun);code=gun.catalogId;score=GearScoring.Score(gun);ItemPortraits.Draw(new Rect(x+9,y+12,118,118),gun);}
-                else if(item is ArmorItem armor){name=Armory.Name(armor);detail=Armory.Stats(armor);code=armor.catalogId;score=GearScoring.Score(armor);ItemPortraits.Draw(new Rect(x+9,y+12,118,118),armor);}
-                else if(item is ArtifactItem module){name=module.Name;detail=module.Description;code=module.catalogId;score=GearScoring.Score(module);ManufacturerBranding.ModulePortrait(new Rect(x+9,y+12,118,118),module);}
+                if(item is Gun gun){name=VaultLanguage.GunName(gun);detail=string.IsNullOrEmpty(gun.legendaryKey)?GunNumbers(gun):LegendaryDescription(gun,VaultLanguage.GunDescription(gun));code=gun.catalogId;score=GearScoring.Score(gun);ItemPortraits.Draw(new Rect(x+9,y+12,118,118),gun);}
+                else if(item is ArmorItem armor){name=Armory.Name(armor);detail=string.IsNullOrEmpty(armor.legendaryKey)&&armor.uniqueEffect==0?Armory.Stats(armor):LegendaryDescription(armor,Armory.Description(armor));code=armor.catalogId;score=GearScoring.Score(armor);ItemPortraits.Draw(new Rect(x+9,y+12,118,118),armor);}
+                else if(item is ArtifactItem module){name=module.Name;detail=LegendaryDescription(module,module.Description);code=module.catalogId;score=GearScoring.Score(module);ManufacturerBranding.ModulePortrait(new Rect(x+9,y+12,118,118),module);}
                 else{var melee=(MeleeWeaponItem)item;name=MeleeWeaponCatalog.Name(melee);detail=T("DMG ","威力 ")+melee.damage+" / "+T("INTERVAL ","間隔 ")+melee.interval.ToString("0.00")+" / "+T("RANGE ","射程 ")+melee.range.ToString("0.00")+"m / "+melee.arcDegrees.ToString("0")+"°";code=melee.catalogId;score=MeleeWeaponCatalog.Score(melee);ManufacturerPortraits.Melee(new Rect(x+9,y+12,118,118),melee);ManufacturerBranding.Badge(new Rect(x+14,y+95,27,27),selected);}
                 Text(x+138,y+13,name,new GUIStyle(small){wordWrap=true},Gold,278);
                 Text(x+138,y+65,T("SCORE ","評価 ")+score+" / Lv 1",tiny,Cyan,275);

@@ -136,14 +136,24 @@ namespace NeonVault
             foreach(var shot in FindObjectsByType<Shot>(FindObjectsSortMode.None))Destroy(shot.gameObject);yield return new WaitForSeconds(.4f);
                         game.gun=Arsenal.TrailWarden();game.ammo=game.gun.magazine;
             var reviewDriver=game.PlayerAppearance.GetComponent<DetailedHeroPlayer3D>();
-            var reviewArmor=new ArmorItem[5];for(int slot=0;slot<5;slot++){reviewArmor[slot]=Armory.Starter((ArmorSlot)slot);reviewArmor[slot].visualVariant=4;}
-            reviewDriver.ApplyArmor(reviewArmor);
+            var reviewArmor=new ArmorItem[5];for(int slot=0;slot<5;slot++)reviewArmor[slot]=Armory.TrailWarden((ArmorSlot)slot);
+            game.EquippedArmor=reviewArmor;reviewDriver.ApplyArmor(reviewArmor);reviewDriver.Synchronize();
+            bool generatedActive=reviewDriver.IsGeneratedLookActive;
+            report.AppendLine("Generated loadout active="+generatedActive);if(!generatedActive)failures++;
+            foreach(ArmorSlot slot in new[]{ArmorSlot.Chest,ArmorSlot.Arms,ArmorSlot.Legs,ArmorSlot.Feet})
+            {int triangles=reviewDriver.GeneratedArmorSlotTriangleCount(slot);report.AppendLine("Slot "+slot+" triangles="+triangles);if(triangles<=0)failures++;}
+            reviewDriver.NotifyMelee();reviewDriver.Synchronize();
+            bool meleeKeepsGenerated=reviewDriver.IsGeneratedLookActive;
+            report.AppendLine("Melee keeps generated loadout="+meleeKeepsGenerated);if(!meleeKeepsGenerated)failures++;
+            Capture(game.GameCamera,Path.Combine(path,"actual-game-melee-keeps-loadout.png"));
+            yield return new WaitForSeconds(.30f);reviewDriver.Synchronize();
             game.AimAt(game.PlayerPosition+new Vector3(-1,0,-1)*20);reviewDriver.Synchronize();
             yield return null;
             Capture(game.GameCamera,Path.Combine(path,"actual-game-normal-camera.png"));
             game.GameCamera.orthographicSize=2.15f;game.GameCamera.transform.position=game.PlayerPosition+Vector3.up*.95f-game.GameCamera.transform.forward*7;
             yield return null;
             var rt=new RenderTexture(1440,1200,24);var old=RenderTexture.active;game.GameCamera.targetTexture=rt;game.GameCamera.Render();RenderTexture.active=rt;var tex=new Texture2D(1440,1200,TextureFormat.RGB24,false);tex.ReadPixels(new Rect(0,0,1440,1200),0,0);tex.Apply();File.WriteAllBytes(Path.Combine(path,"actual-game-player.png"),tex.EncodeToPNG());game.GameCamera.targetTexture=null;RenderTexture.active=old;Destroy(tex);rt.Release();Destroy(rt);
+            reviewDriver.Synchronize();
             foreach(int angle in new[]{0,45,90,135,180,225,270,315})
             {
                 Vector3 facing=Quaternion.Euler(0,angle,0)*Vector3.forward;

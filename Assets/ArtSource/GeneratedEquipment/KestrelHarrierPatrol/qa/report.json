@@ -1,0 +1,21 @@
+{
+  "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-shape-only.glb",
+  "mode": "weapon",
+  "armor_side": "front-majority",
+  "original_faces": 51372,
+  "projected_faces": 31998,
+  "max_faces": 32000,
+  "bounds": [
+    1.992732048034668,
+    0.15494148433208466,
+    0.575276255607605
+  ],
+  "mesh_count": 1,
+  "faces_by_view": [
+    16490,
+    15508,
+    0
+  ],
+  "uv_outside": 0,
+  "candidate": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-two-side-candidate.glb"
+}

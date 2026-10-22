@@ -44,9 +44,9 @@ namespace NeonVault
                 T("  RATE ","  連射 ")+rate.ToString("0.0")+T("/s  MAG ","/秒  弾数 ")+item.magazine+T("  RELOAD ","  装填 ")+reloadTime.ToString("0.00")+T("s  SPEED ","秒  弾速 ")+item.speed.ToString("0.0")+T("  ACCURACY ","  命中精度 ")+Arsenal.Accuracy(item).ToString("0.0")+"%"+T("  CRIT ","  会心 ")+(GunCriticalChance(item)*100).ToString("0.#")+"% ×"+GunCriticalMultiplier(item).ToString("0.00")+"\n"+GearScoring.AffixSummary(item);
         }
         void InventoryCopy(float x,float y,string value,GUIStyle style,Color color,float width)
-        {GUI.color=color;GUI.Label(new Rect(x,y,width,style.CalcHeight(new GUIContent(value),width)+4),value,style);GUI.color=Color.white;}
-        float ArmorRowHeight(ArmorItem item)=>Mathf.Max(132,74+inventoryDetails.CalcHeight(new GUIContent(Armory.Name(item)),370)+inventoryDetails.CalcHeight(new GUIContent(Armory.Description(item)),370)+inventoryDetails.CalcHeight(new GUIContent(Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item)),370));
-        float GunRowHeight(Gun item,bool equipped)=>Mathf.Max(164,94+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunName(item)),362)+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunDescription(item)),362)+inventoryDetails.CalcHeight(new GUIContent(GunNumbers(item,equipped)),362));
+        {GUI.color=color;GUIStyle copy=value!=null&&value.Contains(LegendaryRedOpen)?new GUIStyle(style){richText=true}:style;GUI.Label(new Rect(x,y,width,copy.CalcHeight(new GUIContent(value),width)+4),value,copy);GUI.color=Color.white;}
+        float ArmorRowHeight(ArmorItem item)=>Mathf.Max(132,74+inventoryDetails.CalcHeight(new GUIContent(Armory.Name(item)),370)+inventoryDetails.CalcHeight(new GUIContent(LegendaryDescription(item,Armory.Description(item))),370)+inventoryDetails.CalcHeight(new GUIContent(Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item)),370));
+        float GunRowHeight(Gun item,bool equipped)=>Mathf.Max(164,94+inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunName(item)),362)+inventoryDetails.CalcHeight(new GUIContent(LegendaryDescription(item,VaultLanguage.GunDescription(item))),362)+inventoryDetails.CalcHeight(new GUIContent(GunNumbers(item,equipped)),362));
         bool InventoryAction(Rect rect,string caption)
         {
             bool hover=rect.Contains(Event.current.mousePosition);
@@ -77,9 +77,10 @@ namespace NeonVault
                 var item=ordered[i];float y=i*188;Panel(new Rect(0,y,1290,178),Arsenal.Colors[(int)item.rarity]);
                 ManufacturerBranding.ModulePortrait(new Rect(12,y+10,84,84),item);Text(112,y+10,item.Name+" / Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+" · "+AffixCountLabel(item.affixes,item.rarity),new GUIStyle(small){wordWrap=true},Arsenal.Colors[(int)item.rarity],810);
                 GUI.BeginGroup(new Rect(112,y+59,810,62));var moduleDescriptionStyle=new GUIStyle(small){wordWrap=true};moduleDescriptionStyle.normal.textColor=Mist;
-                float moduleDescriptionHeight=Mathf.Max(62,moduleDescriptionStyle.CalcHeight(new GUIContent(item.Description),790));
+                moduleDescriptionStyle.richText=true;string moduleDescription=LegendaryDescription(item,item.Description);
+                float moduleDescriptionHeight=Mathf.Max(62,moduleDescriptionStyle.CalcHeight(new GUIContent(moduleDescription),790));
                 moduleDescriptionScroll=GUI.BeginScrollView(new Rect(0,0,810,62),moduleDescriptionScroll,new Rect(0,0,790,moduleDescriptionHeight));
-                GUI.Label(new Rect(0,0,790,moduleDescriptionHeight),item.Description,moduleDescriptionStyle);GUI.EndScrollView();GUI.EndGroup();
+                GUI.Label(new Rect(0,0,790,moduleDescriptionHeight),moduleDescription,moduleDescriptionStyle);GUI.EndScrollView();GUI.EndGroup();
                 Text(112,y+130,GearScoring.AffixSummary(item),tiny,Cyan,810);
                 Text(112,y+153,ManufacturerCatalog.Name(ManufacturerBranding.Maker(item),VaultLanguage.Japanese)+" / "+T("SCORE ","評価 ")+GearScoring.Score(item),tiny,Gold,910);
                 for(int slot=0;slot<2;slot++)if(Button(new Rect(955+slot*155,y+16,150,44),T("SLOT ","枠 ")+(slot+1)+(EquippedArtifacts[slot]==item?" ✓":"")))EquipArtifact(item,slot);
@@ -92,7 +93,7 @@ namespace NeonVault
         {
             if(artifactPage){DrawArtifactInventoryScored();return;}
             if(meleeInventoryPage){DrawMeleeInventory();return;}
-            if(inventoryDetails==null)inventoryDetails=new GUIStyle(tiny){wordWrap=true};
+            if(inventoryDetails==null)inventoryDetails=new GUIStyle(tiny){wordWrap=true,richText=true};
             Box(new Rect(0,0,1440,900),new Color(.027f,.028f,.023f,.97f));
             if(Button(new Rect(950,80,225,48),T("FIELD MODULES","拡張モジュール"))){artifactPage=true;meleeInventoryPage=false;}
             if(Button(new Rect(710,80,225,48),T("MELEE KIT","近接武器"))){artifactPage=false;meleeInventoryPage=true;}
@@ -119,8 +120,8 @@ namespace NeonVault
                 Text(112,y+13+nameHeight,VaultLanguage.RarityName(item.rarity)+" · "+AffixCountLabel(item.affixes,item.rarity),tiny,item.color,362);
                 Text(112,y+32+nameHeight,T("TYPE  ","銃種  ")+VaultLanguage.GunClassName(item),tiny,Cyan,362);
                 float descriptionY=y+52+nameHeight;
-                float descriptionHeight=inventoryDetails.CalcHeight(new GUIContent(VaultLanguage.GunDescription(item)),362);
-                InventoryCopy(112,descriptionY,VaultLanguage.GunDescription(item),inventoryDetails,Mist,362);
+                float descriptionHeight=inventoryDetails.CalcHeight(new GUIContent(LegendaryDescription(item,VaultLanguage.GunDescription(item))),362);
+                InventoryCopy(112,descriptionY,LegendaryDescription(item,VaultLanguage.GunDescription(item)),inventoryDetails,Mist,362);
                 InventoryCopy(112,descriptionY+descriptionHeight+5,GunNumbers(item,chosen),inventoryDetails,chosen?Cyan:Mist,362);
                 if(chosen){EquippedTab(new Rect(482,y+10,114,30));Text(486,y+43,T("SLOT ","枠 ")+(equippedSlot+1)+(item==gun?T(" · ACTIVE"," · 使用中"):""),tiny,Cyan,112);}
                 else InventoryCompare(new Rect(482,y+43,122,20),GearScoring.Score(item),LowestEquippedGunScore());
@@ -129,23 +130,23 @@ namespace NeonVault
                 if(Weapons.Count>1 && InventoryAction(new Rect(482,y+104,114,32),T("DISCARD","破棄"))){DiscardWeapon(i);break;}
             }
             GUI.EndScrollView();
-            Text(746,158,T("ARMOR / FIVE SLOTS","防具 / 5部位"),label,Cyan,620);
-            for(int i=0;i<5;i++)
+            Text(746,158,T("ARMOR / FOUR SLOTS","防具 / 4部位"),label,Cyan,620);
+            for(int i=1;i<5;i++)
             {
                 ArmorItem equipped=EquippedArmor!=null&&i<EquippedArmor.Length?EquippedArmor[i]:null;
-                float y=198+i*42;
+                float y=198+(i-1)*42;
                 if(equipped!=null)ItemPortraits.Draw(new Rect(746,y,34,34),equipped);
                 Text(792,y+6,Armory.SlotName((ArmorSlot)i),small,Mist,66);
                 Text(861,y+6,equipped==null?T("— EMPTY —","— 未装備 —"):Armory.Name(equipped),small,equipped==null?Mist:Cyan,420);
                 if(equipped!=null)Box(new Rect(1372,y+10,5,15),Cyan);
                 if(equipped!=null&&InventoryAction(new Rect(1310,y+2,78,34),T("REMOVE","外す")))UnequipArmor(i);
             }
-            Text(746,420,T("OWNED ARMOR  ","所持防具  ")+ArmorInventory.Count+" / 50",small,Gold,610);
+            Text(746,420,T("OWNED ARMOR  ","所持防具  ")+ActiveArmorCount+" / 50",small,Gold,610);
             float armorContentHeight=0;
-            foreach(var item in ArmorInventory)armorContentHeight+=ArmorRowHeight(item);
+            foreach(var item in ArmorInventory.FindAll(Armory.IsActiveArmor))armorContentHeight+=ArmorRowHeight(item);
             armorScroll=GUI.BeginScrollView(new Rect(738,451,650,313),armorScroll,new Rect(0,0,620,Mathf.Max(308,armorContentHeight)));
             float armorY=0;
-            var orderedArmor=EquippedFirst(ArmorInventory,a=>Array.IndexOf(EquippedArmor,a)>=0);
+            var orderedArmor=EquippedFirst(ArmorInventory.FindAll(Armory.IsActiveArmor),a=>Array.IndexOf(EquippedArmor,a)>=0);
             for(int i=0;i<orderedArmor.Count;i++)
             {
                 ArmorItem item=orderedArmor[i];bool chosen=false;
@@ -158,8 +159,8 @@ namespace NeonVault
                 Text(112,y+8,Armory.Name(item),inventoryDetails,rarityColor,370);
                 Text(112,y+11+nameHeight,Armory.SlotName(item.slot)+" / Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+" · "+AffixCountLabel(item.affixes,item.rarity),tiny,rarityColor,370);
                 float descriptionY=y+32+nameHeight;
-                float descriptionHeight=inventoryDetails.CalcHeight(new GUIContent(Armory.Description(item)),370);
-                InventoryCopy(112,descriptionY,Armory.Description(item),inventoryDetails,Mist,370);
+                float descriptionHeight=inventoryDetails.CalcHeight(new GUIContent(LegendaryDescription(item,Armory.Description(item))),370);
+                InventoryCopy(112,descriptionY,LegendaryDescription(item,Armory.Description(item)),inventoryDetails,Mist,370);
                 InventoryCopy(112,descriptionY+4+descriptionHeight,Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),inventoryDetails,Cyan,370);
                 if(!chosen)InventoryCompare(new Rect(492,y+97,114,20),GearScoring.Score(item),EquippedArmorScore(item.slot));
                 if(chosen)EquippedTab(new Rect(492,y+8,114,30));
@@ -230,7 +231,7 @@ namespace NeonVault
                 Color rarityColor=item.color;Panel(new Rect(0,y,1290,92),rarityColor);
                 DrawMeleeIcon(new Rect(18,y+20,48,48),item.family);
                 Text(88,y+7,MeleeWeaponCatalog.Name(item)+"  /  Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity),label,rarityColor,640);
-                Text(88,y+42,T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(item)+"  ·  "+T("DMG ","威力 ")+item.damage+"  ·  "+T("RATE ","間隔 ")+(1/Mathf.Max(.01f,item.interval)).ToString("0.0")+T("/s  ·  RANGE ","/秒  ·  射程 ")+item.range.ToString("0.0")+"m  ·  "+T("ARC ","攻撃角 ")+item.arcDegrees.ToString("0")+"°"+(item.uniqueEffect?T("  ·  UNIQUE EFFECT","  ·  固有効果"):""),small,Mist,710);
+                Text(88,y+42,T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(item)+"  ·  "+T("DMG ","威力 ")+item.damage+"  ·  "+T("RATE ","間隔 ")+(1/Mathf.Max(.01f,item.interval)).ToString("0.0")+T("/s  ·  RANGE ","/秒  ·  射程 ")+item.range.ToString("0.0")+"m  ·  "+T("ARC ","攻撃角 ")+item.arcDegrees.ToString("0")+"°"+(item.uniqueEffect?LegendaryRedOpen+T("  ·  UNIQUE EFFECT","  ·  固有効果")+LegendaryRedClose:""),small,Mist,710);
                 if(item==EquippedMeleeWeapon)EquippedTab(new Rect(890,y+8,150,28));
                 else if(InventoryAction(new Rect(1070,y+8,125,36),T("EQUIP","装備")))EquipMeleeWeapon(item);
                 if(item!=EquippedMeleeWeapon)InventoryCompare(new Rect(890,y+43,160,20),MeleeWeaponCatalog.Score(item),MeleeWeaponCatalog.Score(EquippedMeleeWeapon));

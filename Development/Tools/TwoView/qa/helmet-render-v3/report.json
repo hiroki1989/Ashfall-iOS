@@ -1,0 +1,18 @@
+{
+  "source": "D:\\Unity\\AshfallArtValidation\\equipment3d-batch\\kestrel-field-helmet\\model-output\\kestrel-field-helmet-v2-shape-only.glb",
+  "mode": "armor",
+  "armor_side": "front-majority",
+  "bounds": [
+    1.995614767074585,
+    1.8030734062194824,
+    1.9050202369689941
+  ],
+  "mesh_count": 1,
+  "faces_by_view": [
+    389650,
+    197936,
+    0
+  ],
+  "uv_outside": 0,
+  "candidate": "D:\\Unity\\Ashfall-iOS\\Development\\Tools\\TwoView\\qa\\helmet-candidate-v3.glb"
+}

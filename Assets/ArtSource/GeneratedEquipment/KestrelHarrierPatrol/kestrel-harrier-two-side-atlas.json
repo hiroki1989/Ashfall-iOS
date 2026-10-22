@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-two-side-atlas.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-left-source.png",
+      "source_bbox": [
+        40,
+        378,
+        984,
+        646
+      ],
+      "placed_bbox": [
+        30,
+        375,
+        993,
+        648
+      ],
+      "visible_fraction": 0.381466
+    },
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-left-source.png",
+      "source_bbox": [
+        40,
+        378,
+        984,
+        646
+      ],
+      "placed_bbox": [
+        30,
+        375,
+        993,
+        648
+      ],
+      "visible_fraction": 0.381466
+    }
+  ],
+  "alpha_min": 255
+}

@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\BodyTwoView\\body-head-two-view.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\BodyTwoView\\body-head-source-0.png",
+      "source_bbox": [
+        290,
+        37,
+        733,
+        987
+      ],
+      "placed_bbox": [
+        287,
+        30,
+        736,
+        993
+      ],
+      "visible_fraction": 0.508029
+    },
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\BodyTwoView\\body-head-source-1.png",
+      "source_bbox": [
+        291,
+        37,
+        733,
+        987
+      ],
+      "placed_bbox": [
+        288,
+        30,
+        736,
+        993
+      ],
+      "visible_fraction": 0.509179
+    }
+  ],
+  "alpha_min": 255
+}

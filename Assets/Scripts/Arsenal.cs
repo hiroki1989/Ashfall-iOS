@@ -13,6 +13,7 @@ namespace NeonVault
         public string name, subtitle, id, visualSet;
         public string catalogId, manufacturerId, legendaryKey;
         public int designVariant;
+        public int balanceVersion;
         public int level = 1, modelVariant;
         public Rarity rarity;
         public GunEffect effect;
@@ -49,7 +50,7 @@ namespace NeonVault
             if(r.legendary)return BespokeLegendaryDesigns.CreateBase(r.index);
             var g=BaseModel(r.family,rarity);g.catalogId=r.id;g.manufacturerId=ManufacturerCatalog.Id(r.maker);g.designVariant=r.index;g.name=r.name;
             GunSeriesDesigns.Apply(g,r);
-            ManufacturerCatalog.Apply(g);if(r.gunClass==1&&r.series==2)g.magazine=6;if(r.gunClass==2&&r.series==1)g.magazine=2;if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
+            ManufacturerCatalog.Apply(g);GearBalance.Migrate(g);if(r.gunClass==1&&r.series==2)g.magazine=6;if(r.gunClass==2&&r.series==1)g.magazine=2;if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
         }
         public static Gun LegacyCatalog(int index,Rarity rarity=Rarity.Common)
         {
@@ -71,7 +72,7 @@ namespace NeonVault
             if(basic==9){gun.pellets++;gun.damage*=.8f;gun.speed*=1.15f;}
             gun.name=ModelNames[model]+" / "+DesignName(design,false);
             gun.subtitle=DesignName(design,false)+" engineering · "+ModelDescription(model);
-            ManufacturerCatalog.Apply(gun);ProductGeneration.Apply(gun);return gun;
+            ManufacturerCatalog.Apply(gun);ProductGeneration.Apply(gun);GearBalance.Migrate(gun);return gun;
         }
         // Compatibility lookup is creation-only; loading retained items uses serialized stats.
         public static Gun FindCatalog(string id,Rarity rarity=Rarity.Common){
@@ -106,7 +107,7 @@ namespace NeonVault
         public static Gun Model(int variant,Rarity rarity)
         {
             var gun=BaseModel(variant,rarity);gun.catalogId="gun-"+gun.modelVariant.ToString("00")+"-00";
-            gun.manufacturerId=ManufacturerCatalog.ForDesign(gun.modelVariant,0);ManufacturerCatalog.Apply(gun);return gun;
+            gun.manufacturerId=ManufacturerCatalog.ForDesign(gun.modelVariant,0);ManufacturerCatalog.Apply(gun);GearBalance.Migrate(gun);return gun;
         }
         internal static Gun BaseModel(int variant,Rarity rarity)
         {
@@ -150,6 +151,7 @@ namespace NeonVault
             gun.reloadSeconds*=Range(random,.82f,1.22f);
             float accuracyVariation=gun.pellets>1?10:5;gun.accuracy=Mathf.Clamp(gun.accuracy+Range(random,-accuracyVariation,accuracyVariation),1,100);
             RollAffixes(gun,random);
+            GearBalance.Migrate(gun);
             return gun;
         }
         static void RollAffixes(Gun gun,System.Random random)
@@ -158,7 +160,7 @@ namespace NeonVault
             gun.affixes=new GearAffix[count]; var used=new System.Collections.Generic.HashSet<int>();
             for(int i=0;i<count;i++)
             {
-                int pick;do{pick=random.Next(types.Length);}while(!used.Add(pick));
+                int pick;do{pick=random.Next(types.Length);}while((gun.rarity!=Rarity.Legendary&&pick==7)||!used.Add(pick));
                 float scale=1+.16f*((int)gun.rarity+gun.level-1);
                 float[] lo={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.01f,.04f},hi={.06f,10,.06f,.06f,.05f,.025f,.05f,.4f,.12f,.025f,.10f};
                 var x=new GearAffix{type=types[pick],value=Range(random,lo[pick],hi[pick])*scale};gun.affixes[i]=x;

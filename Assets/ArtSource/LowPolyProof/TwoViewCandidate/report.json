@@ -1,0 +1,29 @@
+{
+  "body-head": {
+    "faces": 2159,
+    "faces_by_view": [
+      1619,
+      540
+    ],
+    "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\body-head-two-view.png",
+    "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\ApprovedSculpt\\lowpoly-proof.blend"
+  },
+  "warden-armor": {
+    "faces": 15999,
+    "faces_by_view": [
+      12740,
+      3259
+    ],
+    "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\warden-armor-two-view.png",
+    "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\ApprovedSculpt\\lowpoly-proof.blend"
+  },
+  "warden-rifle": {
+    "faces": 4500,
+    "faces_by_view": [
+      2323,
+      2177
+    ],
+    "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\warden-rifle-two-view.png",
+    "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\ApprovedSculpt\\lowpoly-proof.blend"
+  }
+}

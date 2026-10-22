@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace NeonVault
 {
@@ -54,6 +54,7 @@ namespace NeonVault
         public static int ArmorCell(ArmorItem item)=>12+Mathf.Min((int)item.slot,3);
         public static void Draw(Rect rect,Gun item)
         {
+            if(item!=null&&item.visualSet==Arsenal.TrailWardenVisualSet&&DrawApprovedPortrait(rect,"Weapon_"+GunCell(item),item.rarity))return;
             if(BespokeLegendaryPortraits.Draw(rect,item))return;
             if(DistinctEquipmentPortraits.Draw(rect,item))return;
             DrawLegacy(rect,item);
@@ -70,6 +71,10 @@ namespace NeonVault
         }
         public static void Draw(Rect rect,ArmorItem item)
         {
+            // The starter kit has authored art. Do not hash it into another manufacturer product.
+            if(item!=null&&item.visualVariant==4&&item.designVariant==0
+                &&(string.IsNullOrEmpty(item.catalogId)||item.catalogId==ArmorProductCatalog.Get(item.slot,4,0).id)
+                &&DrawApprovedPortrait(rect,"Armor_"+(int)item.slot,item.rarity))return;
             if(BespokeLegendaryPortraits.Draw(rect,item))return;
             if(DistinctEquipmentPortraits.Draw(rect,item))return;
             DrawLegacy(rect,item);

@@ -1,0 +1,82 @@
+{
+  "product": "distinct.gun.030",
+  "family": "Kestrel Harrier Patrol",
+  "shape_source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-shape-only.glb",
+  "textured_source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-two-side-candidate-v2.glb",
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-two-side-atlas-v2.png",
+  "triangles": 31998,
+  "source_bounds": [
+    [
+      -1.0006569623947144,
+      -0.07263699918985367,
+      -0.2916777729988098
+    ],
+    [
+      0.9920750856399536,
+      0.08230448514223099,
+      0.28359848260879517
+    ]
+  ],
+  "scale_to_meters": 0.5018236149643149,
+  "dimensions_blender_m": [
+    1.0,
+    0.07775329053401947,
+    0.28868719935417175
+  ],
+  "axis": "Final FBX source Blender -X barrel/Z up, Unity import +X barrel/Y up; source rotated180deg before export.",
+  "uv": "Unchanged from two-side-v2 GLB",
+  "opposite_side": "Mirrored existing illustration, no independently approved reverse illustration",
+  "landmarks_blender_m": {
+    "trigger": [
+      0.11,
+      0,
+      -0.018
+    ],
+    "support": [
+      -0.17,
+      0,
+      0.015
+    ],
+    "muzzle": [
+      -0.5,
+      0,
+      0.078
+    ],
+    "stock": [
+      0.48,
+      0,
+      -0.015
+    ]
+  },
+  "landmarks_unity_m_assuming_axis_conversion": {
+    "trigger": [
+      -0.11,
+      -0.018,
+      0
+    ],
+    "support": [
+      0.17,
+      0.015,
+      0
+    ],
+    "muzzle": [
+      0.5,
+      0.078,
+      0
+    ],
+    "stock": [
+      -0.48,
+      -0.015,
+      0
+    ]
+  },
+  "status": "Exported candidate; Unity grip QA and visual acceptance required",
+  "support_fit_note": {
+    "surface_underside_measured_z": 0.0458,
+    "palm_center_offset_below_surface": 0.0308,
+    "support_source_z": 0.015,
+    "trigger_muzzle_axis_z_at_support": 0.02607,
+    "signed_vertical_offset_to_axis": -0.01107,
+    "reason": "Place palm centre beneath handguard, below trigger-muzzle axis to preserve frame roll; previous .045 was above axis."
+  }
+}

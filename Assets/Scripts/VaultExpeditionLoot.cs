@@ -45,7 +45,7 @@ namespace NeonVault
             for(int i=0;i<10;i++)
             {
                 item=Armory.CreateForDungeon(random,DungeonIndex,rarity,level);
-                if(!focus||(int)item.slot==ExpeditionLootFocus(5))break;
+                if(!focus||(int)item.slot==1+ExpeditionLootFocus(4))break;
             }
             return item;
         }

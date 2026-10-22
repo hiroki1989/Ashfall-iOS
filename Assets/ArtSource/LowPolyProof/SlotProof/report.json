@@ -1,0 +1,10 @@
+{
+  "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\two-view-proof.blend",
+  "faces": {
+    "chest": 8849,
+    "arms": 1964,
+    "legs": 2882,
+    "feet": 2304
+  },
+  "note": "Static part separation only; animation remains in GeneratedWardenRig."
+}

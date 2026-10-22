@@ -138,7 +138,7 @@ namespace NeonVault
             if(r.body==4)for(int i=0;i<5;i++)Rod("Breathing grille bar",g,M("Dark"),V((i-2)*.022f,-.018f,.132f),V((i-2)*.022f,.045f,.132f),.003f);
             if(r.body==5)for(int sign=-1;sign<=1;sign+=2){Tube("Twin enhanced vision optic",g,M("Steel"),V(sign*.047f,.10f,.12f),.026f,.045f,.72f);Tube("Optic glass",g,M("TealGlass"),V(sign*.047f,.10f,.166f),.018f,.004f,.05f);}
             for(int i=0;i<2;i++){var stripe=Root("Helmet contrast crown stripe",g);stripe.localPosition=V((i-.5f)*.027f,.252f,.015f);stripe.localRotation=Quaternion.Euler(15,0,0);Plate(stripe,"Crown inlay",Trim(r.maker),.014f,0,0,.095f,.004f,0);}
-            var accessory=Root("Helmet rear accessory mount",g);accessory.localPosition=V(0,.09f,-.10f);accessory.localRotation=Quaternion.Euler(0,180,0);accessory.localScale=Vector3.one*.38f;ArmorAccessory(accessory,r,.18f,.12f);
+            var accessory=Root("Helmet rear accessory mount",g);accessory.localPosition=V(0,.09f,-.10f);accessory.localRotation=Quaternion.Euler(0,180,0);accessory.localScale=Vector3.one*.38f;EquipmentProjection3D.StampAccessoryGeometry(g,ArmorAccessory(accessory,r,.18f,.12f),r);
         }
         static void IndustrialHelmet(Transform g,EquipmentRecipe r)
         {
@@ -156,7 +156,7 @@ namespace NeonVault
                 if(r.body==3||r.body==5){int plates=r.body==3?3:4;for(int i=0;i<plates;i++){float y=.21f-i*.062f;Shell("Overlapping helmet lamella",g,M(Skin(r.maker)),V(0,y,.07f),new Vector2(.235f-i*.012f,.085f),.055f);}for(int sign=-1;sign<=1;sign+=2){var cheek=Root("Layered helmet side protection",g);cheek.localPosition=V(sign*.092f,.045f,0);cheek.localRotation=Quaternion.Euler(0,sign*75,0);Shell("Overlapping cheek skirt",cheek,M(Skin(r.maker)),Vector3.zero,new Vector2(.115f,.14f),.028f);}}
             }
             for(int sign=-1;sign<=1;sign+=2){var ear=Root("Helmet hinge and ear disc",g);ear.localPosition=V(sign*.117f,.082f,-.008f);ear.localRotation=Quaternion.Euler(0,sign*90,0);Tube("Locking ear rim",ear,M(Trim(r.maker)),Vector3.zero,.040f,.014f,.72f);Tube("Ear armour",ear,M(Skin(r.maker)),V(0,0,.012f),.029f,.012f,.03f);}
-            var accessory=Root("Helmet accessory support",g);accessory.localPosition=V(0,.09f,-.10f);accessory.localRotation=Quaternion.Euler(0,180,0);accessory.localScale=Vector3.one*.38f;ArmorAccessory(accessory,r,.18f,.12f);
+            var accessory=Root("Helmet accessory support",g);accessory.localPosition=V(0,.09f,-.10f);accessory.localRotation=Quaternion.Euler(0,180,0);accessory.localScale=Vector3.one*.38f;EquipmentProjection3D.StampAccessoryGeometry(g,ArmorAccessory(accessory,r,.18f,.12f),r);
         }
         // Each added part belongs to exactly one animated bone; none bridges knee/hip/elbow joints.
         public static System.Collections.Generic.List<Transform> ApplyArmorSupplement(DetailedHero3D body,ArmorItem item,EquipmentRecipe r)
@@ -224,7 +224,7 @@ namespace NeonVault
                 if(r.slot==2){Profile("Closed protective glove palm",g,M("LeatherDark"),.105f,P(-.045f,-.245f),P(.045f,-.245f),P(.065f,-.34f),P(.035f,-.375f),P(-.045f,-.355f));Shell("Armored glove knuckle cover",g,M(Skin(r.maker)),V(0,-.29f,.04f),new Vector2(.11f,.095f),.03f);for(int i=0;i<4;i++)Shell("Individual knuckle plate",g,M("Steel"),V((i-1.5f)*.024f,-.31f,.05f),new Vector2(.02f,.025f),.014f);}
             }
         }
-        static void ArmorAccessory(Transform cover,EquipmentRecipe r,float w,float h)
+        static Transform ArmorAccessory(Transform cover,EquipmentRecipe r,float w,float h)
         {
             var a=Root("Slot-specific accessory / "+r.slot+" / "+r.attachment,cover);
             // Helmet callers already supply a small rear mount; orient to its local support.
@@ -237,7 +237,7 @@ namespace NeonVault
                     case 3:for(int sign=-1;sign<=1;sign+=2){var cheek=Root("Cheek accessory",a);cheek.localPosition=V(sign*.09f,-.045f,-.12f);cheek.localRotation=Quaternion.Euler(0,sign*60,0);Shell("Cheek guard panel",cheek,M(Skin(r.maker)),Vector3.zero,new Vector2(.07f,.09f),.02f);}break;
                     case 4:for(int sign=-1;sign<=1;sign+=2)Rod("Crown accessory rail",a,M("Steel"),V(sign*.035f,.17f,-.03f),V(sign*.035f,.17f,-.17f),.008f);break;
                     case 5:Plate(a,"Rear helmet counterweight",Skin(r.maker),.10f,.035f,0,.045f,.065f,1);Plate(a,"Counterweight backing","Dark",.11f,.015f,0,.012f,.07f,0);break;
-                }return;
+                }return a;
             }
             a.localPosition=V(0,-h*.20f,.035f);
             if(r.slot==1){switch(r.attachment){
@@ -247,7 +247,7 @@ namespace NeonVault
                 case 3:for(int sign=-1;sign<=1;sign+=2)Line("Crossed chest load strap",a,M("LeatherDark"),.013f,V(sign*.14f,-.11f,0),V(0,.04f,.01f),V(-sign*.14f,.21f,0));break;
                 case 4:Shell("Chest load belt",a,M("LeatherDark"),V(0,-.07f,0),new Vector2(.32f,.045f),.018f);Shell("Belt buckle",a,M("Steel"),V(0,-.07f,.018f),new Vector2(.05f,.04f),.02f);break;
                 case 5:Shell("Supplementary chest shield",a,M(Skin(r.maker)),V(0,.03f,.012f),new Vector2(.22f,.20f),.04f);break;
-            }return;}
+            }return a;}
             if(r.slot==2){switch(r.attachment){
                 case 0:Pouch(a,r,V(.045f,-.07f,.005f),.045f);break;
                 case 1:var fin=Root("Forearm side fin",a);fin.localPosition=V(.07f,.02f,0);fin.localRotation=Quaternion.Euler(0,40,0);Shell("Forearm return fin",fin,M(Skin(r.maker)),Vector3.zero,new Vector2(.055f,.14f),.018f);break;
@@ -255,7 +255,7 @@ namespace NeonVault
                 case 3:Shell("Wrist retaining strap",a,M("LeatherDark"),V(0,-.07f,.005f),new Vector2(.13f,.025f),.012f);Shell("Strap buckle",a,M("Steel"),V(.025f,-.07f,.02f),new Vector2(.025f,.025f),.012f);break;
                 case 4:Shell("Wrist protective brace",a,M(Skin(r.maker)),V(0,-.075f,.012f),new Vector2(.12f,.07f),.025f);break;
                 case 5:Shell("Additional glove knuckle plate",a,M(Skin(r.maker)),V(0,-.13f,.015f),new Vector2(.10f,.045f),.022f);break;
-            }return;}
+            }return a;}
             if(r.slot==3){switch(r.attachment){
                 case 0:Pouch(a,r,V(.065f,.10f,0),.055f);break;
                 case 1:Shell("Leg side hip plate",a,M(Skin(r.maker)),V(.065f,.12f,0),new Vector2(.10f,.12f),.025f);break;
@@ -263,7 +263,7 @@ namespace NeonVault
                 case 3:for(int i=0;i<2;i++)Shell("Leg retaining strap",a,M("LeatherDark"),V(0,-.07f+i*.17f,0),new Vector2(.18f,.028f),.015f);break;
                 case 4:Shell("Additional knee plate",a,M(Skin(r.maker)),V(0,.13f,.015f),new Vector2(.14f,.10f),.03f);break;
                 case 5:Shell("Additional shin protection",a,M(Skin(r.maker)),V(0,-.015f,.015f),new Vector2(.13f,.22f),.025f);break;
-            }return;}
+            }return a;}
             switch(r.attachment){
                 case 0:for(int i=0;i<3;i++)Rod("Boot lace fastening",a,M("Leather"),V(-.05f,-.015f+i*.025f,0),V(.05f,-.015f+i*.025f,.005f),.004f);break;
                 case 1:Shell("Boot ankle side plate",a,M(Skin(r.maker)),V(.06f,.05f,-.025f),new Vector2(.065f,.08f),.02f);break;
@@ -272,6 +272,7 @@ namespace NeonVault
                 case 4:Shell("Boot upper cuff plate",a,M(Skin(r.maker)),V(0,.08f,-.015f),new Vector2(.13f,.055f),.022f);break;
                 case 5:Shell("Boot additional toe cap",a,M(Skin(r.maker)),V(0,-.03f,.035f),new Vector2(.14f,.08f),.025f);break;
             }
+            return a;
         }
         static void Pouch(Transform a,EquipmentRecipe r,Vector3 position,float width){var p=Root("Equipment pouch",a);p.localPosition=position;Shell("Leather pouch body",p,M("LeatherDark"),Vector3.zero,new Vector2(width,width*1.25f),.035f);Shell("Manufacturer pouch flap",p,M(Skin(r.maker)),V(0,width*.4f,.02f),new Vector2(width*1.05f,width*.35f),.015f);}
         static void Canister(Transform a,EquipmentRecipe r,Vector3 position,float radius,float height){var p=Root("Vertical accessory canister",a);p.localPosition=position-V(0,height*.5f,0);p.localRotation=Quaternion.Euler(-90,0,0);Tube("Sealed accessory vessel",p,M(Skin(r.maker)),Vector3.zero,radius,height,.06f);for(int end=0;end<2;end++)Tube("Canister steel seal",p,M("Steel"),V(0,0,end*(height-.008f)),radius*1.12f,.009f,.78f);}
@@ -311,7 +312,7 @@ namespace NeonVault
         public static Transform BuildArmor(Transform parent,ArmorItem item,EquipmentRecipe r)
         {
             var g=Root("Distinct armor / "+r.id,parent);string skin=Skin(r.maker);
-            if(r.slot==0){Helmet(g,r);Compact(g);return g;}
+            if(r.slot==0){Helmet(g,r);Compact(g);EquipmentProjection3D.Apply(g,r,false);return g;}
             if(r.slot==2||r.slot==3||r.slot==4)WrapArmor(g,r);
             float w=r.slot==1?.38f:r.slot==0?.24f:r.slot==3?.16f:.15f;
             float h=r.slot==1?.43f:r.slot==0?.25f:r.slot==3?.29f:r.slot==4?.13f:.23f;
@@ -320,8 +321,8 @@ namespace NeonVault
             if(r.slot==1){var cloth=Root("Padded chest harness under shell",g);cloth.localPosition=V(0,.02f,.175f);// Base jacket already supplies continuous cloth; a flat second backing intersected the curved shell.
                 for(int sign=-1;sign<=1;sign+=2)Line("Shoulder load harness",cloth,M("Leather"),.016f,V(sign*.13f,-.18f,.01f),V(sign*.18f,.18f,.01f),V(sign*.10f,.23f,-.08f));}
             if(r.slot==1)TorsoShell(cover,r,w,h);else ArmorPanel(cover,r,w,h);
-            ArmorAccessory(cover,r,w,h);
-            Compact(g);return g;
+            EquipmentProjection3D.StampAccessoryGeometry(g,ArmorAccessory(cover,r,w,h),r);
+            Compact(g);EquipmentProjection3D.Apply(g,r,false);return g;
         }
         public static Transform BuildModule(Transform parent,ArtifactItem item)
         {

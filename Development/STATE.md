@@ -1,4 +1,67 @@
+## 2026-10-21 / Hunyuan3D-2mini装備展開の再開
+初期Warden一式はTencent Hunyuan3D-2mini形状→Blenderで4方向設計図投影・4K atlas・iOS軽量化。`initial-loadout-v6/asset-manifest.json`と`ios-ready-warden-v1/prepare_ios_obj.py`で確認。前回の胸比較では別手法のHunyuan3D-2.1 hosted結果も混在した。2mini結果(29.3万頂点/58.6万面)は穴は閉じたものの胸板が球状に突出し、背面暗潰れと側面投影ずれが残る。候補はいずれも品質不合格のためUnityへ登録せず、現行装備も変更していない。texture AI生成は行わない。
+設計図と各viewは `Assets/ArtSource/GeneratedEquipment/TrailWardenChest/` に保存。候補GLB/Blender作業/4方向QA renderは`D:/Unity/AshfallArtValidation/equipment3d-batch/trail-warden-chest/`。候補は約79.9k faces(remote)または約58.6k faces(local 2mini)。4方向renderでテクスチャ位置ずれを確認し不採用。
+今回の継続: Kestrel Field Helmet (`distinct.armor.030`) の4view sheetと専用真横sourceを`Assets/ArtSource/GeneratedEquipment/KestrelFieldHelmet/`へ保存。ローカル2mini front-only shape: 309,592 vertices/619,180 faces。Blenderで0.245×0.260×0.285mへ正規化、32,196 faces、4K atlas、FBX出力。初回renderで透過余白由来の小型貼り付きを検出。source画像を各 view 90%占有へ調整後も、front/sideディテールの位置が形状と合わず二重縁/破片状の投影が残る。可視カメラ優先の面割り当ても実施したが不合格。`D:/Unity/AshfallArtValidation/equipment3d-batch/kestrel-field-helmet/`に全source/shape/bake/render/script。Resourcesへ未登録、Unityゲーム未統合。
+GeneratedEquipmentAssetCatalog/Factoryの共通パス・ソケット設計は用意済みだが、商品別の採用モデルがなくまだランタイム未接続。全装備（銃・防具・近接、module除く）の生成・テクスチャ・フィット・統合は未完了。初期Warden一式と同じローカル2mini→Blender投影・焼き付け・軽量化を基準とし、失敗候補は登録しない。Fitは`CharacterRigStandard`の共通寸法/ソケットに正規化する。
 # 現在の状態
+## 2026-10-21 / 胴・脚の二重模様の継続修正
+対象D:/Unity/Ashfall-iOS。前回局所銀除去だけでは布/袖口/手袋/ポーチ/縫目の重複残存。単色/骨色90/270×待機/射撃8枚で偽手袋はtexture無しで消失と確定、Rig追加変更なし。
+全体円筒chart・材質帯・nearest輪郭伸長の試作は縞/細部劣化で不採用。元FBXから無遮蔽胴±Xと脚内側clayを切出し、builtin imagegenで専用sourceを作成。脚v1はブーツ境界誤りで不採用、v2は上57%布/下43%高い革bootへ修正。反対脚innerは鏡映して各templateへ個別登録。原画/カメラ/promptsはAssets/Resources/Art/GeneratedWarden/HiddenSurfaceSourceへ保存。
+BVHで側面から隠れる胴/脚面を抽出し、専用sourceを正投影camera行列からUVへ対応、既存atlasへbake。境界4px feather。初回採用candidate facecount:元41044/胴2996+3998/脚980+974、全49992面/24981頂点維持。モデル/UV/骨/ポーズは変更なし。armor-rebuilt-atlas.pngへ反映済み。元atlasはD:/Unity/AshfallArtValidation/hidden-surface-art/armor-before-hidden-source.pngに保持。
+検証qa-warden-hidden-feathered:10方向×待機/射撃/走行を撮影、PMOが側面/斜め/背面/走行を目視。腰偽袖口手袋消失、内腿の他部位模様改善、細部維持。旧新切替generated側legacy0/例外なし。resultFailures1は既存銃口alignmentで、外観全PASSの根拠にしない。細い色/継目・膝際の元模様・支持手指は残存。追加inner分類候補15面差はqa-warden-inner-completeで試したが大差なく、組込版は初回feathered採用。
+最終組込ビルドwarden-hidden-integrated-build.log HERO_BUILD_OK。qa-warden-hidden-integratedでoverride無しの側面/走行画像を確認、runtimeassetとcloneasset SHA一致(B6685BB6...)。最終resultFailures5（既存model5銃口alignment）、generatedlegacy0/旧新切替4回/例外なし。自動検証全通過とはしない。別QA/Art agentが利用上限停止したため、PMOが後半source生成/投影/検証を引継ぎ。実機iOS/IPAなし。
+再生成scriptはDevelopment/Tools/WardenHiddenSurfaceへ保存、D:/Unity/AshfallArtValidation/hidden-surface-artに工程/候補/ログ。imagegen新規出力は元を保持。首/rig改善維持。
+## 2026-10-20 / 首・側面二重模様の根本修正
+対象D:/Unity/Ashfall-iOS。首は旧実行時補完板を新head-rebuilt.fbx/2048atlasへ置換。元頭の顔/髪を保持し、214境界頂点から15段曲面首を接続、9000面。m単位完成座標、旧90倍変換/crop/neck patchを適用せず胸→頭blend。首背面/側面の穴・台形板はsource/Unity画像で解消を確認。
+防具の二重模様は元high GLBにも存在。法線ごとに4方向画像を投影したため、側面の肩/膝/肘が別位置にも焼かれていた。armor-rebuiltの位置基準atlasへ変更。mobileと頂点順序/位置/面/UV一致、49992面。胴の偽銀模様も局所cloth転写で除去（銀sample29→0）、実腕の装甲は保持。原本/mobile保持。
+変形も別原因: 同位置seam頂点のfit/weightを統一、脚の内寄せで中心線を跨がせずsourceで左右を選択。元手袋の8.8mm隣接点がarm .914/.029に分断→射撃で63cm伸長していた。元表面の袖/胴からの接続距離を主値にして解消。面を削除する旧対症処理は撤去。腰sourceY=1mのthigh/pelvis断崖も0.88〜1.08m連続blendへ修正済み、最終統合画像で確認済み。
+直近warden-surface-primary-build.log HERO_BUILD_OK、qa-warden-surface-primary Failures0/例外なし、新側legacy0、旧新4回切替、actor92988面。QAは12姿勢で巨大帯解消・首改善維持を確認。最終warden-root-final-build.log HERO_BUILD_OK、qa-warden-root-finalで首/待機射撃走行/旧新切替を画像確認。旧新重複なし、例外なし。最終resultは既存model5の銃口align5角度不合格が残りFailures5（grip0、首/armorと別）。長辺診断115照準は上位60面→5面、25走行45→5面へ改善。脇の布伸び/支持指/元髪顔の小三角パッチは残存し、全外観完成としない。最終独立QA: 12姿勢/旧新4回/拳銃代表3枚で今回3課題（首板・胴偽銀・巨大帯）は解消、新大破綻なし。ただし脇袖paint/布硬い折れ/元髪顔三角/支持指は残存。実機iOS/IPAなし。
+変更: GeneratedWardenRig.cs、GeneratedWardenPreviewAssets.cs、GeneratedWardenAssetImporter.cs、新head/armor-rebuilt FBX+atlas/meta、CharacterEquipmentContract.md。診断ReviewとBakeMesh/source頂点の詳細出力は検証clone側。
+
+
+## 2026-10-20 / 腰での拳銃低構え・頭装備下降・立体うなじ
+D:/Unity/Ashfall-iOSへ反映。DetailedHeroPlayer3D.Poseで拳銃非射撃時のみhold(.075,-.245,.32)へ変更（従前.08,-.10,.14）、pitch32度・小さい走行揺れ。両手IK/射撃時のaimは維持。プレビュー/戦闘/旧外観も共通Pose。
+MaskCenter y.075→.048へ2.7cm下降、サイズ.153維持。裸顔のface-without-maskと装着正面/横で目口を照合。
+首は元nape/sideの1082面を除去して解剖学的閉首へ置換。根元広がり/くびれ/後頭flare/左右筋/中央溝、頭胸skin接続。法線の微小crossがVector3.normalized閾値未満でzeroになっていた原因を修正（接線を先にnormalize）。襟source1.62〜1.84のfit高さを1.427〜1.515へ戻し厚み復元。painted atlas肌色＋首限定UV2陰影。元body服の色は維持。首は独立submeshだがpainted材質で最終統一（Standard/旧Skin材質試験は採用せず）。
+検証: warden-carry-polished-build.log HERO_BUILD_OK、qa-warden-carry-polished result Failures=0、例外なし、新側legacy0、切替4回、active actor89760面。背面/側面首と拳銃4方向×待機射撃走行、裸顔比較画像を取得。git diff --check通過。実機iOS未検証/IPA未作成。
+最終QA: 拳銃低携行とmask下降は改善を確認。ただし首は115/205度で台形の均一面に見え、自然な立体感は未達。支持指の垂れも残る。首の課題は未完了として継続。
+過程のqa-warden-neck-lit/normalは首色試験版なので最終成果と混同しない。最終画像はqa-warden-carry-polished。脇/肩変形片・腰細片/支持指など既存課題を全解消と断定しない。
+変更: GeneratedWardenRig.cs、GeneratedWardenTexture.shader、CharacterRigStandard.cs、DetailedHeroPlayer3D.cs。診断用face/pistol撮影はcloneのみ。
+
+
+## 2026-10-20 / 首背面・頭装備フィット・拳銃・初期装備画像
+対象 D:/Unity/Ashfall-iOS。首cropで後ろ半分が欠けていたため、元肌atlasを使用する閉じた補完首(170頂点/336面)をhead meshへ追加。頭内/襟内に重ね、chest/head連続skin。UV島を跨ぐ縞を避け頬側の単一肌UVを参照。背面/回転画像で透明抜け解消。
+CharacterRigStandard.MaskHeight .171→.153、MaskCenter (0,.09,.04)→(0,.075,.025)。鼻口に収め、少し下/顔側へフィット。メニュー風のゴーグル+防毒マスクの装着位置を参照。
+ItemPortraitsはTRAIL WARDEN初期5製品(variant4/design0/該当catalog)と専用銃visualSetのApprovedFieldkit専用PortraitをDistinctより先に選択。原因は別製品recipeが先に割当たっていたこと（頭cinder布帽/胴aegis青鎧/足voltarc青鎧等）。イラスト原本の描き直しはしていない。
+GeneratedWardenPreviewAssetsの拳銃は水平yaw+bounds中心合わせを廃止、旧モデルと同じweapon.root全回転と掌ランドマークで装着。新銃倍率.95→1.5、握り位置微調整。glove末端curl強化。旧/新4方向×待機/射撃/走行24枚比較で腕の上がり方/銃方向/低構えが概ね対応、掌埋没改善。旧preview側もReviewFiring/Phase/Velocityを反映して公平比較可能にした（通常デフォルト不変）。
+ビルド: warden-neck-skin-build.log HERO_BUILD_OK。qa-warden-neck-skin result Failures=0、新側legacy0/切替4回、active actor90842面、例外なし。git diff --check通過。首背面/正面とピストル新旧を画像QA。軽量mobileモデルと既存外観切替維持、実機iOS未確認/IPA未作成。
+残る品質課題: 首補完部は均一色、支持手指先に開きが少し残る。脇/肩の板状変形・腰横細片は既存残存。新Warden外観は固定一式表示のため他製品/部位解除の新メッシュ切替は未対応（本件の画像割当修正は初期専用製品のみ）。全装備の一致を完了したとは扱わない。
+変更: GeneratedWardenRig.cs、CharacterRigStandard.cs、GeneratedWardenPreviewAssets.cs、DetailedHeroPlayer3D.cs、EquipmentHeroPreview.cs、ItemPortraits.cs。診断撮影変更はcloneのみ。
+
+
+## 2026-10-20 / 首・頭装備・腰・黒ずみ・軽量化
+対象 D:/Unity/Ashfall-iOS。元首mesh断面を最大1.3倍へ拡幅、マスク高さ.19→.171。腰帯の圧縮を直し、source .65/1.0/1.25/1.62をtarget .517/.89/1.04/1.427へ連続変換。頭と腕は維持。
+VaultPostの法線差による細面ごとの黒塗りを廃止、depth境界輪郭を維持。対戦・拠点の黒斑点が軽減したことをactual-game-player/actual-hub-player画像とQAで確認。
+新5点 *-mobile.fbx と *-mobile-atlas.png を追加して優先ロード。原本GLB/rig-ready/4K atlas保持。元GLB weld→decimate→新UV→highからEmission bake（2048、12px bleed）。総958027→109984面（88.52%減）。body9996/armor49994/mask21998/rifle11998/sidearm15998。bounds最大差1.49e-7、前後比較PNG10枚確認、旧UV縞崩れ再発なし。D:/Unity/AshfallArtValidation/warden-mobile-mesh/report.json。
+毎フレームHasArticulatedArms/Legsによる巨大boneWeights配列読取を廃止し生成時のみ判定。
+検証: warden-mobile-final-build.log および warden-mobile-verified-build.log HERO_BUILD_OK、git diff --check通過。QAで首太さ・mask縮小・明度・主要外形/模様保持を確認、腰もpolish版より低下。旧/新切替で新側legacy0。
+残存: ポーチやや高め、脇の手袋状形状・肘板状変形、肩背面/腰横の細片・支持手握り。全体視覚品質はまだ未受入。既存武器alignment数件の不合格は本件で修正したと扱わない。実機iOS FPS未測定/IPA未作成。診断スクリプトの拠点遷移後driver参照をclone側で修正し、qa-warden-mobile-verified最終結果Failures=0、visible actor90506面、例外なし。これは自動検証通過であり残存視覚課題の合格を意味しない。
+変更: GeneratedWardenRig.cs、CharacterRigStandard.cs、GeneratedWardenPreviewAssets.cs、DetailedHeroPlayer3D.cs、EquipmentHeroPreview.cs、GeneratedWardenAssetImporter.cs、VaultPost.shader、新mobileモデル/atlas/meta、CharacterEquipmentContract.md。
+
+
+## 2026-10-20 / 共通リグの続行・最新検証
+頭元メッシュに含まれていたshirt/襟をcropし、頭高を再正規化、元neckを胸/headにブレンド。腕と胴の領域をXZ断面で分け、肩幅を共通骨格へ合わせた。元glove指先にcurl。過伸長603/232108面(.260%)を除外。ライフルは原モデル掌/support landmarkで取付し、Unity FBX X鏡映を補正。
+warden-standard-final-build.log HERO_BUILD_OK。qa-warden-standard-finalで旧/新切替4回、新側legacy0を確認。QA視覚判定は未受入: 首/襟隙間、脇/腰細片、支持手の握りが残る。自動result Failures10。全装備展開可能な完成基準とは断定しない。
+actual-game-without-post.png比較で実ゲーム黒斑点はVaultPost由来と確認。GeneratedWardenTexture shaderの深度法線fallbackを追加し、warden-depth-build.logでHERO_BUILD_OK、qa-warden-depth画像確認済み。ただしfallback追加のみでは黒斑点は解消せず、描画後処理の修正が残る。Importerはrig-readyに法線60°再計算設定を追加。実機iOS未検証。
+
+
+## 2026-10-20 / Warden共通リグ・初期装備移行（作業中）
+対象は D:/Unity/Ashfall-iOS。CharacterRigStandard.cs と CharacterEquipmentContract.md にm単位の基準骨格・装着工程を集約。インベントリと戦闘は同じ元モデル変換・headソケットを使用し、bindposeは基準姿勢で作成して元のポーズへ復元する。
+初期装備の腕・脚・靴は生成元armorの新メッシュをスキニング。元インポートGOは非表示だけでなくinactiveにし、旧外観切替で再表示しない。旧/新の切替を維持。
+元のdecimateがUVに縞を生じさせていたため、元GLBのUV/詳細を保持した body/armor/mask/rifle/sidearm-rig-ready.fbx を追加（原本保持）。
+統合ビルド: warden-standard-fit-build.log に HERO_BUILD_OK。qa-warden-standard-fit は4方向x待機/射撃/走行と旧新4回切替を撮影。Generated legacy renderers=0、切替後も0、NPC高2.348m/新player2.294m。
+未完了: 同画像で襟浮き・脇の伸び面・握りに不具合を確認し、再修正中。result Failures=8、視覚QAは不合格。完成/実機iOS検証済みとは扱わない。IPA作成/アップロードは本作業に含めていない。
+
 
 更新: 2026-10-15 / Unity 6000.6.0f1 / ASHFALL 0.7
 
@@ -430,3 +493,134 @@ Final gun-series integration completed for requested class/series identification
 検証: D:/Unity/build-inventory-ammo-language-final.log の HERO_BUILD_OK、git diff --check 通過。検証コピー D:/Unity/NeonVaultTwoHandValidation でUnity 6000.6.0f1 Windowsビルド成功。
 未解決: Windows実行ファイルの --mobile-review はタッチUI未起動のため Checks=1 Failures=1。通常の --smoke は既存のLegendary固有効果を GunEffect != Normal で判定する箇所で停止（D:/Unity/QA-inventory-ammo-language-smoke/smoke-result.txt）。今回の変更箇所の画面/実機iOS動作は未検証。iOS IPAは未作成。
 QA追記: SmokeRun.cs の旧「GunEffect != Normal / armor.uniqueEffect > 0」判定を現行レジェンダリーキー判定へ更新。D:/Unity/build-inventory-ammo-language-qa.log HERO_BUILD_OK。再実行では当該判定が通過した後、旧固定名「レッドスプリッター」を期待する既存アサーションで停止（D:/Unity/QA-inventory-ammo-language-smoke2/smoke-result.txt）。名前のカタログ更新との不整合であり、本変更3点の実行判定には未到達。実機iOS/画面目視は未実施。
+
+## 2026-10-19 / 装備性能ルールと3D装備画面
+変更ファイル: Arsenal.cs/Equipment.cs/ArmorProductCatalog.cs/GearBalance.cs、VaultInventory.cs/VaultGame.cs、VaultUI.cs/VaultEquipmentScreen.cs/EquipmentHeroPreview.cs/MobileMenuGestures.cs、EquipmentScreenReview.csと新規meta。
+結果: 非Legend銃のregen base/affixを禁止し旧affixはID安定seedで未使用効果へ置換（個数維持）。防具regen抽選重み0.15。他追加特性値を保持。防具全rarity基礎=頭HP+accuracy、胴HPのみ大、手HP/damage/reload/fireから2、脚HP+move、足HP+move大。旧saveもbalanceVersionで1回変換。Legendの無条件slot passiveは除去し固有key/uniqueEffect維持。
+UI: iOS/PC共通3列=所持品カード/中央装備反映3D/選択詳細と操作。3Dは独立rig/camera/RT、24fps上限、ドラッグ/slider回転。購入売却も同配置、全4category/比較/破棄/装備解除/価格/確認売却/弾薬/周回強化を維持。左右個別touch swipeをMobileMenuGesturesへ接続。
+検証: build-equipment-layout-release.log HERO_BUILD_OK。QA-equipment-layout-release/result.txt Checks12503 Failures0、regen93/6000。新旧生成・slot base/affix・冪等・実touch注入list/detail scroll/3D rotate・商人gesture確認。日英4category/merchant買売/前後3Dを撮影、独立QA代表7枚+最終4枚で重大不具合なし。tab改行/カードscore切れ/下端buff切れを修正。最後の中央summary余白14px調整のみpublish build中（結果後追記）。
+未確認: 実機iOS/Metal/IL2CPPでの描画・物理タッチ・性能。新IPA未作成・未upload。PC本体projectは未変更。QAではsmoke用初期化とprefs保存抑止、ユーザーsave削除なし。
+最終追記: build-equipment-layout-publish.log HERO_BUILD_OK / 終了済。最終summary余白14pxのみ描画再撮影なし、その他はrelease画像/12503checksの確定版。
+
+## 2026-10-20 / Hunyuanウォーデン装備プレビュー再調整（継続）
+変更ファイル: `Assets/Scripts/EquipmentHeroPreview.cs`、`Assets/Scripts/GeneratedWardenPreviewAssets.cs`。
+結果: Wardenプレビューを見出し下へ下げ、カメラを引いて頭髪の見切れを解消。腰だめ銃は描画スケールを0.75倍にし、低い斜め構えに変更。QA画像は `D:/Unity/AshfallArtValidation/qa-warden-final-output/generated-warden-loadout.png`。
+検証: Unity 6000.6.0f1 Windows QAビルド成功（`warden-pose-review-final8-build.log`, `GENERATED_WARDEN_POSE_REVIEW_BUILD_OK`）。QA 12,511 checksで残3件はequipment list/detail/rotationの合成touch注入失敗（以前の同じQAでも同じ3件）。新画角で実画面撮影済み。
+未解決: ライフルは胴前へ斜め・腰位置に来るが、Hunyuanの`armor.fbx`は静的メッシュで骨格なし。袖と手の形を既存リグへ合わせて曲げられないため、握りの腕ポーズはまだ不自然。髪/頭部の見切れは解消。次はメッシュを腕部位で分割して簡易リグ化するか、初期装備用の骨格付き再生成が必要。今回のWindows QAビルドのみでiOS実機/Metal未検証。プレビューはユーザー設定で旧表示へ戻せる。
+
+## 2026-10-20 / Hunyuanウォーデン可動化・装備位置（継続）
+変更ファイル: `Assets/Scripts/GeneratedWardenRig.cs`、`GeneratedWardenPreviewAssets.cs`、`DetailedHeroPlayer3D.cs`、`EquipmentHeroPreview.cs`、`EquipmentScreenReview.cs`、`Assets/Editor/GeneratedWardenAssetImporter.cs`、生成モデルのbody/armorインポート設定。
+結果: 静的FBXから胴・頭を既存プレイヤー骨格へ接続し、既存の腕脚関節で待機・走行・射撃を駆動。頭部マスクを頭骨に追従させ、顔を出し、ライフルの向き・サイズと低い構えを修正。旧表示への切替を維持。FBX armorは468,033頂点だが171,001連結成分に分かれ、袖脚を直接変形すると裂けるため、袖脚は既存関節形状を使用。大型の重複装備パーツは除外。
+検証: Windowsビルド `D:/Unity/AshfallArtValidation/warden-rig-build9.log` でHERO_BUILD_OK。実画面QA `D:/Unity/AshfallArtValidation/qa-warden-rig-flip/` に正面・側面・背面・走行接地/空中・射撃を保存。QA 12,516 checks / 3 failuresは従前からある合成タッチ注入（リスト・説明スクロール・回転）。
+未解決: 袖脚は生成FBXそのものを可動化できず、布の質感・輪郭が胴と完全一致しない。両手の実際の把持点は見た目から概ね接近したが、各角度で完全な握りを達成したとは言えない。iOS実機/Metal/IL2CPPは未検証。最終マスク位置は `D:/Unity/AshfallArtValidation/qa-warden-rig-final/side-zoom.png` で確認済み。肩と腰の継ぎ目には側面から見える隙間が残る。最終ビルド `D:/Unity/AshfallArtValidation/warden-rig-publish-build.log` は HERO_BUILD_OK、最終QA画像は `D:/Unity/AshfallArtValidation/qa-warden-rig-publish/`。肩継ぎ目に小さな裏地を加え、腰継ぎ目の過大な埋め材は撤回。QAは12,516 checks / 従前と同じ合成タッチ3 failures。
+
+## 2026-10-20 / Warden二重表示・破綻修正（最新）
+変更ファイル: `Assets/Scripts/GeneratedWardenRig.cs`、`DetailedHero3D.cs`、`DetailedHeroPlayer3D.cs`、`GeneratedWardenPreviewAssets.cs`、`EquipmentHeroPreview.cs`、`EquipmentScreenReview.cs`。
+結果: 胴体メッシュの膝下破片を除外。旧パーツの判別を親階層から素体生成時に記録したRenderer集合へ変更し、見た目切替後に旧防具が遅れて追加されても非表示にする。装備プレビューで現在の防具セットも反映。QAに旧モデル重複数0の確認を追加。
+検証: 独立コピー `D:/Unity/AshfallArtValidation/WardenOverlapProject` でWindows build `warden-overlap-qa-build.log` がHERO_BUILD_OK。`qa-warden-overlap-final/result.txt` Checks=12,518 Failures=3（従前からの合成タッチ3件）。重複数チェック2件を通過。インベントリ、走行、射撃を撮影。出撃QA `--hero3d-playcheck` で実戦中のプレイヤーを撮影し、`qa-warden-actual-run2/actual-game-normal-camera.png` と `actual-game-aim-225.png` で一体だけ表示されることを目視。重複数0を記録。
+未解決: QAのワールド外観撮影で実際の戦闘プレイヤーが写らず、戦闘中の二重表示が消えたかをまだ画面で確定できない。iOS実機未検証。肩継ぎ目と袖・胴テクスチャの不一致が残る。
+
+## 2026-10-21 / ウォーデン初期装備の部位分割と近接時外見維持
+変更ファイル: `Assets/Scripts/GeneratedWardenRig.cs`、`DetailedHeroPlayer3D.cs`、`EquipmentHeroPreview.cs`、`DetailedHero3DReview.cs`。
+結果: 初期ウォーデン装備の一体スキャンを胴・腕・脚・足の個別スキンメッシュへ分割し、既存骨格へ結合。頭部のマスクは独立パーツのまま。ウォーデン装備時は旧素体衣服の重複を隠し、近接攻撃では銃モデルのみ隠して外見・装甲は維持。従来の素体は装備一式と別に残し、非装備時のシンプル衣服として使う。
+検証: QAコピーで `D:/Unity/warden-slot-build4.log` が `HERO_BUILD_OK`。実行レポート `D:/Unity/QA-warden-slot-separated-final/result.txt`: 生成外見ON、胴23909/腕21984/脚15964/足4050三角形、近接時も生成外見ON。3件の武器グリップ失敗（モデル8、方向225/270/315）は今回の装備修正と無関係。装備画面QA `D:/Unity/QA-warden-slot-preview/result.txt` は12518 checks/3 failuresで、従来からの合成タッチ注入3件のみ。生成モデルのゲーム内・プレビュー前横後スクリーンショットを確認。
+未確認: iOS実機/Metal/IL2CPPと実機タッチ。QAコピーは別名で分離し、ProjectSettingsは検証後に復元。実プロジェクトのEditorは開いたまま。IPA未作成。
+
+## 2026-10-21 / Warden表示設定の移行・外観状態明示
+変更ファイル: `GeneratedWardenPreviewAssets.cs`、`EquipmentHeroPreview.cs`、`VaultEquipmentScreen.cs`、`EquipmentScreenReview.cs`。
+結果: 旧版で保存された「現行モデル」設定を引き継がないversioned preferenceへ更新し、完全な初期Warden一式では承認済み外観を標準表示。装備が揃っていない場合は通常モデル表示と明示し、切替ボタンを出さない。ON/OFFラベルの二重描画も修正。
+検証: QA clone `D:/Unity/AshfallArtValidation/WardenOverlapProject` のWindows player build `D:/Unity/warden-pref-migration-build3.log` は `HERO_BUILD_OK`。旧設定=現行モデルの試験から新しい既定値がONになることを追加QAで確認。`D:/Unity/QA-warden-pref-migration-final/result.txt`: Checks=12,519 / Failures=3。3件は従前の合成タッチ注入（一覧スクロール・説明スクロール・回転）。生成Warden表示画像 `generated-warden-loadout.png` を目視し、ラベル重複なしを確認。
+未解決: `armor-rebuilt`は依然として全身スキャン1体を切り分けた表示で、各装備イラストから独立生成した頭/胴/腕/脚/足モデルではない。装備portraitも別制作のため、商品単位3Dとの一致は未達。混成装備は通常の汎用表示へフォールバックする。素体を含む全パーツを合格済み品質へ再制作した状態ではない。iOS実機・Metal/IL2CPP未検証。
+
+## 2026-10-21 / Warden部位単独表示の実画面QA
+変更ファイル: `Assets/Scripts/GeneratedEquipmentAssetCatalog.cs`、`GeneratedWardenRig.cs`、`DetailedHeroPlayer3D.cs`、`EquipmentHeroPreview.cs`、`VaultEquipmentScreen.cs`、`ManufacturerEquipment3D.cs`。
+結果: 初期Wardenの頭・胴・腕・脚・足を個別装備でも表示し、他部位は素体または通常装備を維持。腕だけで腰装甲が垂れる誤分類を骨格ウェイトに基づき修正。脚だけではスキャンのブーツまで連続表示し、異種の足装備がある場合はその商品を優先してWarden脚を通常表示へ戻す。商品固有モデルとatlasが存在すれば、その商品は汎用造形より優先する接続を追加。
+検証: 独立QAコピーでWindowsビルド `D:/Unity/warden-slot-partial-qa-fix2-build.log` は `HERO_BUILD_OK`。`D:/Unity/QA-warden-slot-partial-fix2/comparison.png` に未装備・各1部位・混成・一式・異種足の9状態、前後18画像を保存し、腰破片・脚靴空隙・旧モデルとの重複を目視確認。
+未解決: スキャンの切分けは各商品ごとの新規造形ではない。防具イラストと商品3Dの形状・色・模様の整合は未達。素体の顔/服品質も未達。Kestrel Field Helmetの独立モデル候補は4方向で不合格として商品登録保留。iOS実機未検証。
+
+## 2026-10-21 / 装備造形の採用判定
+変更ファイル: `Development/Tools/SpecificHead/build_kestrel_hunyuan_v6.py`、`Assets/ArtSource/GeneratedEquipment/KestrelFieldHelmet/Candidates/`（採用前候補のみ）、`Assets/Scripts/DetailedHeroArsenal3D.cs`、`Assets/Scripts/ManufacturerEquipment3D.cs`。
+結果: Kestrel Field HelmetのHunyuan3D-2mini独立メッシュに原画4面投影を試した。前・横・後・斜めの画像を比較し、側頭部の円盤、額の二重模様、後頭部の欠けが原画と合わないためv6も不採用。`Resources`の商品固有パスには置かず、ゲーム内で誤った完成品として表示しない。商品固有メッシュを採用した場合は同じ部位の従来造形を外し、二重表示を防ぐ処理を追加。
+検証: `qa-v6-front/right/back/three-quarter.png`を原画atlasと目視比較。上記の9状態QA画像も見直し、表示重複の解消と造形品質の合格は別であることを確認。変更スクリプトを同期した独立QAコピーでUnity 6000.6.0f1のWindows開発ビルド成功（`D:/Unity/authored-armor-build.log`、`NEON_VAULT_BUILD_OK`）。
+未解決: Wardenの腕だけ装備時には袖造形が十分見えない。頭だけ装備時はゴーグル・マスクのみで、該当頭防具イラスト全体と一致しない。Warden各部位の個別モデル、素体、新規装備全件の原画一致は未達。実機iOS未検証。次は1商品につき原画の前後左右と立体形状を同時に照合できるモデルを制作し、部位単独で装着した実画面で合否を判定する。
+## 2026-10-21 / 共通素体と2方向装備制作の継続
+対象は D:/Unity/Ashfall-iOS。ユーザー承認済み初期Warden一式は維持。添付の無装備男性（黒髪、無精ひげ、オリーブ色シャツ、茶ズボン、革ブーツ）からHunyuan3D-2mini shape-only原型を使い、前後2原画をBlender投影した独立素体 `Assets/Resources/Art/GeneratedBase/body.fbx` と `body-atlas.png` を追加。30,000面、高さ1.82m、足元原点。前/後は鮮明原画、側面は同原画の縦平滑版を同一atlasで割り当てて空白と帯を抑制。`GeneratedCommonBodyRig.cs` で装備とは独立に既存15骨へ結合し、戦闘/装備プレビュー双方で旧素体を非表示にする。汎用RestPositionsでbindposeを作ると腕が胸へ折れたため、実際の生成直後骨姿勢でbindposeを作るよう修正。
+独立QA Unity cloneに取り込んだ `common-body-import.log` は `ASHFALL_PLAYER_PROJECT_READY`、`common-body-build.log` は `HERO_BUILD_OK`。オフスクリーンUnityレンダリング `D:/Unity/QA-common-body/offscreen/body-{0,90,180}.png` で正面・側面・背面を確認。腕の極端な折れは解消したが、側面の袖・ズボン・靴は原画よりディテールが軟らかい。ゲーム内の全動作/装備混成/iOS実機は未検証。非表示ウィンドウの既存UI撮影スモークはframebuffer取得不可のため失敗し、見た目の合格根拠にしない。
+追加QA `pose--0.1.png`/`pose-0.12.png`/`pose-0.39.png` では、骨の肩・肘・手首は動くが生成素体の腕が銃の握り位置へ追随せず不合格。生成元の腕が自然下垂、既存リグは銃保持を基準にしており、単純な空間範囲による頂点重み付けでは対応できない。既存の合格済み初期装備・ゲーム動作への回帰を防ぐため `Vault.GeneratedCommonBody.Experimental` が1の時だけ新素体を適用する。通常起動は既存素体のまま。基準姿勢を揃えた部位別スキニングと戦闘/装備画面QAが残る。
+Rig担当の追加確認: 腕下げ基準のbindposeで腕はモーションに反応するが、肩から袖の三角伸長・前腕の板状変形・手首のグリップずれが残る。元スキャンの手首中心x約0.37mと共通骨格x0.18mが約19cmずれる。単純な自動ウェイトでは解けず、Blenderで袖/上腕/前腕/手を分割して骨位置へリトポ・ウェイト塗り・肩回転の視覚検査が必要。実験OFF継続。
+`Development/Tools/TwoView/` に防具前後・銃左右の2方向投影とUV/面数検査を追加。Kestrel頭部候補は側面黒白帯と原画との形状差により不採用、Resourcesへ未登録。`Equipment3DProduction.md` の商品ごと採用基準と `Development/Tools/EquipmentAudit/audit_equipment_3d.py` の検査結果は銃0/606・防具0/500商品固有モデル完成。初期Warden共通セットは別枠。残り全商品の独立造形・投影・装着QAは未完了であり、旧形状への絵貼りを完成扱いにしない。モジュール3D化は対象外。
+## 2026-10-21 / 低ポリゴン実証（CPUのみ）
+`Development/Tools/LowPolyProof/build_approved_mesh_proof.py` で既存Hunyuan素体の頭部、承認済みWarden装備スキャン、ライフルをBlender Eeveeで描画。新規の重いHunyuan/テクスチャ生成は実行せず、4スレッド・1回約6秒の処理に限定。`Assets/ArtSource/LowPolyProof/ApprovedSculpt/` に前斜め・側面・背面・クオータービューの静止画と `.blend` を保存。頭部約2,159面、装備約16,000面、銃4,500面。部位位置を補正し、旧素体との二重表示を避けるため素体は頭部のみ残した。仮の箱形防具案は視覚品質が低く不採用。
+検証: 4方向レンダーを目視。装備のディテールと質感は低面数でも保持されるが、コンセプト画像と同等ではない。銃は装着しておらず、アニメーション用スキニングとゲーム内表示・iOS性能は未検証。したがってゲームへは統合していない。次は銃保持ポーズと部位別リグの設計・実画面QAが必要。
+
+## 2026-10-22 / ２方向素体・可動QA
+変更ファイル: `Development/Tools/LowPolyProof/two_view_base_full.py`、`two_view_base_refined.py`、`Assets/ArtSource/LowPolyProof/BodyTwoView/`、`BodyTwoViewRefined/`、`ExportCandidates/`、`Assets/Scripts/GeneratedCommonBodyRig.cs`、`DetailedHeroPlayer3D.cs`、`EquipmentHeroPreview.cs`、`Assets/Resources/GeneratedCommonBodyTexture.shader`。
+結果: 添付の簡素服素体、Warden装備、銃について防具・素体は前後、銃は左右の２方向投影を試作。Unity用候補FBXは旧UVを除去し２方向UVのみを残した。共通素体を５部位のSkinnedMeshRendererへ分け、Warden装備中の部位だけ素体側を隠す接続を用意。素体専用シェーダーで旧Warden専用のUV1首陰影処理を外し、QAでは顔の黒ずみが軽減。
+検証: 独立QA clone `D:/Unity/QA-lowpoly-rig-20261021` で `qa-face-capture.log` が `QA_LOWPOLY_RIG_CAPTURE_OK`。`screens/idle.png`、`screens/firing.png`、`screens/running.png` を目視。顔は改善したが、腕・手のスキニングは大きく破綻。前後投影の静止画は `BodyTwoView/front-quarter.png` 等で確認したが、側面ぼけが残る。UV範囲変更試作 `BodyTwoViewRefined/side.png` は手に誤色が出たため不採用。`git diff --check`通過。
+未解決: 新素体の腕は肩袖が三角形に伸び、手が銃の把持点へ届かない。座標しきい値による自動ウェイト改修もQA不合格だったため撤回。側面ぼけは元のスキャン表面にあり、２方向投影範囲の調整だけでは解決しない。局所的なUV展開と側面画素の描き足し、腕の形状/トポロジー修正・骨ウェイト調整が必要。`Vault.GeneratedCommonBody.Experimental` は既定OFFを維持し、壊れた素体を製品表示へ出さない。低ポリゴン候補の装備可動・iOS実機も未確認。
+
+## 2026-10-22 / 腕・膝・側面UVの追加検証
+変更ファイル: `Assets/Scripts/DetailedHero3D.cs`、`Assets/Scripts/GeneratedCommonBodyRig.cs`、`Assets/ArtSource/LowPolyProof/ArmRigSide/`、`Development/Tools/LowPolyProof/side_uv_pack.py`、`side_uv_candidate.py`。
+結果: 膝IKの曲がる向きを移動方向でなくキャラクター前方に固定し、極端な姿勢でのゼロ長ベクトルにも代替軸を用意。生成素体の腕を候補メッシュ単位で変形させる試作を実施。新しい左右側面画像をもとに前後左右で重複しないUVタイル候補を作成。
+検証: 独立QA clone `D:/Unity/QA-lowpoly-rig-20261021/leg-side/` の横向き連続フレームでは膝の裏返りは再現しなかった。`git diff --check`通過。腕の試作は袖が三角状に伸び手が銃と合わず不合格。側面UV候補はBlender前後左右画像で袖やブーツに誤投影が見え不合格。Unityの再キャプチャは空色のみの画像になり、腕の最終差分の可否を判定できなかった。
+未解決: 腕メッシュの肩・肘・手のトポロジーとウェイト、腰・脚の継ぎ目、側面テクスチャの部位別可視面マスクとUV補正。新素体のExperimental既定OFF、側面UV候補はArtSourceに留め製品のResourcesへ未統合。実ゲーム画面・iOS端末QAが必要。
+
+## 2026-10-22 / 低ポリ素体の側面・腕分離QA継続
+本体への変更なし。QAコピー `D:/Unity/QA-lowpoly-rig-20261021` の実撮影を再取得し、前回の灰色だけのRenderTexture画像が無効だったため `rt.Create()` 済みの画像を確認。現状の側面は旧腕と候補の腕面が重なり、肩/胴にも三角スパイクが出る。旧腕を隠しても候補素体の残存腕面が垂れて残る。腕領域のX境界を広げる試験は胴を欠損させ、関節片が棘状に伸びて不採用。側面画像の透過部を前面投影で埋める試験も二重の脚・輪郭を出し不採用。QA改変は破棄し、製品コード・シェーダー・素体は変更していない。次は位置閾値ではなく、Blenderソースのsource_vertex対応を使って残存腕面を正確にメッシュ分離し、肩/肘/手首パーツとの接続をQAする。現段階で素体導入・側面テクスチャ・歩行足の外観は完了扱いにしない。
+
+## 2026-10-22 / カメラ回転時の素体テクスチャ切替・装備プレビュー倍率
+変更: Assets/Resources/GeneratedCommonBodyTexture.shader、Assets/Scripts/EquipmentHeroPreview.cs。
+結果: ObjSpaceViewDirによる全身profile写真への切替と、そのalpha clipを撤去。素体の表面は常に既存のUV0 atlasを参照し、カメラ角度で異なる人物写真へ切り替わらない。装備分岐のカメラ1.42/注視高1.12を、通常分岐と共通の1.10/0.94へ統一。Experimentalの既定OFFは維持。
+検証: QA-lowpoly-rig-20261021でfixed-uv.log、fixed-framing.log PREVIEW_SCALE_OK。base/equipped ×25/90/180の6枚とside-profile/fire.pngを確認。fixed-framing.txtは全6状態cameraSize1.1/rotation(11.43,180,0)。QAと本体2ファイルSHA一致、git diff --check通過。新IPA/実機確認なし。
+未解決: 固定UVの側面は布・顔・髪の引き伸ばしが残り、肩の穴/スパイクも残存。装備時の追加銃が足元に残る既存不具合もQAで見える。これらを解決したとは扱わない。旧側面写真の垂れ腕は今回の固定UV表示では出ない。独立側面sourceの部位別UV bakeとメッシュ/ウェイト修正は継続対象。
+
+## 2026-10-22 / 素体側面・装備サイズ修正完了（統合済）
+対象D:/Unity/Ashfall-iOS。GeneratedCommonBodyRig.cs/EquipmentHeroPreview.cs/GeneratedCommonBodyTexture.shader、surface-fixed-candidate.fbx/atlas/meta、SideSurfaceRepair原本、SurfaceRepair工具、ART_GUIDE/CharacterEquipmentContract更新。
+旧camera依存の全身写真切替を撤去。既存Hunyuan素体の残存腕524面を著者段階で除き、109境界edgeを閉鎖、残境界0。腕分離後の胴へ腕weightを再付与・再分類していた処理を撤去。imagegenによるarmless sideと実メッシュ投影寸法の補修sourceを固定UVへ反映。未装備/装備の頭は承認済head-rebuilt共用、試作head bakeは非採用。襟を頭と一緒に削除しないようauthored頭分割高1.57。胸だけ装備の脇は共通素体の側面linerで補完。単体FBX root名に依存しない読込、sourceは非活性化してからplay/Editor適切に破棄。余剰銃の破棄前非活性化も追加。プレビューのcameraSize1.10/注視高.94共通、修復素体の既定ON（Experimental明示0で旧素体fallback）。モデル原本・旧装備は保持。
+検証: QA-lowpoly-rig-20261021/body-surface-final-collar-build.logにBODY_SURFACE_FINAL_QA_OK/HERO_BUILD_OK。Windows実行ファイルで--smoke --body-surface-final、body-surface-runtime.logにも同OK、例外/読込失敗なし。未装備/胸のみ/全身/全解除×6方向＋射撃/走行計26枚を取得。全状態scale(1,1,1)/camera1.1/head1.534304/pelvis.968整合。親と独立QAが側面/正面/背面/再着脱/走行を目視し、垂れ腕絵・肩黒穴・白duplicate・顔二重・首抜けなしと確認。runtimeは袖/手/銃のライトがEditorより明るい。最終5ファイル本体/QA SHA一致、git diff --check通過。肩の細い布境界/袖との色差は造形・画風上の差として残るが今回不具合の再現なし。iOS実機/Metalと新IPAは未検証/未作成。ローカル重GPU生成なし。
+
+## 2026-10-22 / 下半身の部分装備接続・袖の所属
+変更ファイル: Assets/Scripts/CharacterLowerBodyFit.cs（新規）、GeneratedCommonBodyRig.cs、GeneratedWardenRig.cs、GeneratedEquipmentAssetCatalog.cs、DetailedHeroArsenal3D.cs、EquipmentHeroPreview.cs、DetailedHeroPlayer3D.cs。
+結果: 素体の膝・足首断面をWardenと共通化し、脚と靴の分割高0.2882m、関節ウェイトを統一。脚装備から暗黙にWarden靴を出す処理を撤去。腰のポーチ帯を脚側へまとめ、部分装備時は共通腰裏地で補完。袖/上腕/前腕布は胴所属、手スロットは手袋・末端カフ。通常装備の袖も同じ所属に変更。
+検証: QAコピーpart-slot-runtime-build4.log HERO_BUILD_OK。Windows実行part-slot-runtime4.log PART_SLOT_RUNTIME_QA_OK、例外なし。31枚（8構成×正面/側面/背面＋7構成走行）を撮影、独立QA13枚で重大な欠損/足首ずれ/二重靴なし。Editor同フレーム連続撮影はskin更新前の姿勢を含むため走行判定から除外、runtimeは2フレーム待機。製品とQAの7ファイルhash一致。
+未確認/残存: iOS実機/Metal未検証、IPA未作成。肩の布色差・裏地との質感境界・薄い裾片は残る。今回GPU生成/高負荷アート処理なし。既存Editorとユーザーsaveは保持。
+## 2026-10-22 / 素体・腕装備の関節整合
+変更: Assets/Scripts/CharacterArmFit.cs（新規＋meta）、GeneratedWardenRig.cs、GeneratedCommonBodyRig.cs。
+結果: 肩/肘/手首をCharacterRigStandard.RestPositionsから共有。装備の肘weight中心1.155→1.142m、手首.910→.877m。scan fit/skin/cuff境界をhelperへ統合し、袖と手袋の分割でも連続weightを保持。袖口境界は最大25mmの滑らかな補正、実関節位置の補正は0。Hands時に旧Exposed forearm tendonsを隠し、手袋を肌の半球が貫通する重複を除去。袖のChest所属、下半身/UVは維持。
+検証: QA arm-joint-final-build.log HERO_BUILD_OK。Windows arm-joint-final-runtime.log ARM_JOINT_RUNTIME_QA_OK、例外なし。素体/胴のみ/手のみ/併用×ライフル/拳銃×待機/射撃/走行40枚を2frame待機で撮影。独立QA20枚で重大な関節ずれ/断裂/Hands肌貫通なし。製品とQA3ファイルhash一致、git diff --check通過。
+残存: 胴のみの露出前腕/カフ境界の鋸歯状輪郭、肩布色差と裏地境界は残る。iOS実機未確認・IPA未作成。Editor保持、save未変更、重GPU処理なし。
+## 2026-10-22 / 新素体腕・ベルト分割・装備下素体非表示
+変更: GeneratedCommonBodyRig/GeneratedWardenRig/GeneratedEquipmentAssetCatalog/EquipmentHeroPreview/DetailedHeroPlayer3D、GeneratedBase continuous-arm.fbx/atlas/meta、ArtSource/LowPolyProof/ContinuousArm、Tools/LowPolyProof/continuous_arm_build.py。
+結果: 旧primitive腕を新source腕へ置換。元12000面を保存、胴から除去済だった524面をbridgeとして復元、人工cap101面撤去。source ID全コピー同fit/weight、肘bridge33面に混在していた胸追従を腕へ統一。共通骨を装備袖と共用。固定排他sideUV、元胴修復atlas保持、4096x2048atlas。頭常時表示、他部位は全装備で装備中素体非表示（Warden限定を撤去）、旧素体liner再表示撤去。胴脚はsource1.25/target1.04mベルト位置へ、crossing三角を補間切断。腰ポーチは胴に残し、脚装備自身の内張りで腰欠損を補完。
+検証: continuous-arm-verified-build.log HERO_BUILD_OK。continuous-arm-verified-runtime.log ARM_JOINT_RUNTIME_QA_OK coverage20（初期/通常各5slotで頭維持/該当素体hide/new腕有効）、40枚撮影。continuous-waist-verified-runtime.log PART_SLOT_RUNTIME_QA_OK、31枚。独立QA腕18枚で大穴/浮遊/極端伸長なし、腰5枚で断裂/大穴なし。製品/QA9ファイルhash一致、diff --check通過。GPU生成なし、CPU Blender4threadのみ。ユーザーEditor/save保持。
+残存: 素体肩～脇の斜めstripe・手指塊状/鋸歯・カフ肌輪郭粗さが明確に残り、装備腕より質感品質は低い。腰に細い段差/裾。元scan粗長辺と肘LBS最大辺伸長1.68倍（数値検査）があり、完全な美術品質とはしない。iOS実機/Metal未確認、IPA未作成。
+## 2026-10-22 / 合格時の生成条件を再確認
+ユーザー指摘によりRAM9GB必須条件を撤回。これはPMOが今回追加した未実測の安全目安で、過去合格条件ではなかった。
+実証: D:/Unity/TripoSRLab/hunyuan-output/hunyuan3d2mini-local/run_hunyuan3d2mini.py とrun-stats.json/run.log。tencent/Hunyuan3D-2mini, fp16, CPU offload(conditioner/model/vae), steps30/octree256/chunks6000, texture_generation=False。2026-10-19 seed20261019、GTX1080、開始空きVRAM7187MiB、load165.41秒/generation121.46秒、157706面。空きRAM/ピークRAMは記録なし。
+直近合格低ポリ版は既存Hunyuan scan→CPU Blender減面/2view固定UV/部位分割/shared rig工程。既存形状の調整と新規AI形状生成のメモリ条件を混同しない。safe_shape.pyの9GBハードガードは根拠なしのため撤去し、旧暫定launcherの実行は保留（新監視設計前に勝手に低閾値へ変更してGPU開始しない）。過去にPCが落ちたAI texture生成は引き続き禁止。
+
+## 2026-10-22 / 他装備の独立3D化（継続・未完了）
+結果: Kestrel Harrier Patrol distinct.gun.030を独立2mini shape+左右2方向atlasからQAへ実装。31,998tri、trigger/support/muzzle/stock marker。最初の画像で上下逆を検出しsupport markerを実グリップ下へ修正、build2で再検証後本番へ反映。GeneratedProductWeapon/GeneratedEquipmentAssetCatalog/EquipmentHeroPreview/DetailedHeroPlayer3Dと当該Resourcesを本番へコピー。
+検証: product-gun-build2.log HERO_BUILD_OK。product-gun-runtime2.log、result24marker checks、12captures。PMOがbase/armor側面待機とarmor側面射撃を画像確認、上下正常/旧銃重複なし。support距離は形状比依存、指の精密な把持は残る。Windows QAのみ、実機iOS未検証。
+頭防具: KestrelFieldHelmet/Candidates/TwoViewOnlyに原2mini shapeから31,990tri前後排他UV候補を制作（CPU4threads、AI textureなし）。正面/背面は良いが側面に横縞引伸ばしが残り不採用、Resources未登録。
+準備: EquipmentAudit/queue.jsonは1106商品/564制作単位(銃174、防具390)、全原画/bounds存在確認、legendary60source解決。モジュール対象外。EquipmentGeneratedMeshContract.mdに胸袖一体/ベルト1.04/足境界.2882/15骨rest規格。QA cloneだけGeneratedSkinnedEquipment.cs+Factoryに明示contract付きskin再bind入口追加、build2コンパイル済、対応実素材なしで本番未反映。
+未完了: 他の全装備の新規shape/UV/骨/着脱QA/統合は未完了。現旧形状への塗替えで完了扱いしない。Art agentがusage limit停止したのでPMO継続。ユーザーUnity終了済。9GB RAM必須は根拠なしとして撤回し、当時の原成功条件は別項に記録。新GPU生成は本ターン未起動、今後監視付きshape-onlyで再開する。
+
+## 2026-10-22 / 方針変更: 頭以外の防具を承認形状へ統一
+ユーザー最新指示を優先: 新規個別shape生成を中止し、胴/手/脚/足のみ承認Warden形状を共用、texture差替え。頭/銃/近接/moduleは本変更対象外。
+変更: GeneratedEquipmentAssetCatalog/EquipmentHeroPreview/DetailedHeroPlayer3D、新SharedArmorTextures.cs、Resources/SharedArmorTexture.shader、Art/SharedArmorLUT 398点＋meta。承認モデル/骨/UV/belt1.04/feet.2882の形状変更なし。全nonHead装備を共通部位メッシュへ、頭は従前経路。元初期装備の材質はそのまま維持。新材質のcacheは装備中だけ保持・終了時解放。
+テクスチャ: 原画/boundsから抽出した素材色を、承認base atlasの布目・縫目・傷を保持して変換。直接再投影候補は横縞が出たため不採用。元表面のディテールは共通であり、各原画の固有模様/ポケット絵を精密に再現したものではない。398個の大きなatlasをResourcesに置いた初回ビルドはRAM残0.49GBでPMO停止（PC crashなし）。大atlas候補はQA ArtSourceへ移動し原本保持。本番は共有atlas＋1024x32の32^3色変換LUTで同じ見え方を再現。398PNG合計7.57MB、非圧縮runtime約50MB全点/装備4点なら約0.5MB追加。元高精細atlasは1枚共有。代表4部位のLUT対大atlas RGB平均差0.42〜0.71/255。
+検証: shared-armor-lut-build2.log HERO_BUILD_OK、全398枚読込/slot材質検証、shared-armor-final/result.txt Atlas coverage398/captures36。6メーカー×通常/Legend×前側後。初回LUT緑色異常は上下座標反転で修正、最終画像正常。PMOはnormal0側/normal2正面/normal1側/legend2側/legend3背面を目視。shared-armor-motion-runtime.log ARM_JOINT_RUNTIME_QA_OK coverage20、40姿勢画像、既存新素体/部分装備/走行/射撃確認。最終build memory minfree4.31GB/peak4.36GB、監視abortなし。製品と検証コード/shader hash一致、diff --check通過。
+未検証/限界: 実機iOS/Metal/IPAは未実施。全398外観の手動目視はしていない（全点読み込みは済み）。材質色/色調の差別化であり、原画の個別構造や模様をそのまま貼ったものではない。旧見た目切替は保持。新規AI shape/texture生成は今回なし。
+
+## 2026-10-22 / 頭防具の一時廃止・固定cosmetic
+変更: Equipment/ArmorProductCatalog/LegendaryCatalog/VaultInventory/CombatStats/LegendaryEffects/Progression/ExpeditionLoot/ShopSelling、EquipmentScreen/InventoryUI/MobileInventoryUI/ManufacturerUI/MobileAuxUI、GeneratedEquipmentAssetCatalog/CharacterRigStandard/EquipmentHeroPreview/DetailedHeroPlayer3D。
+結果: 頭装備enum/catalog/model/artと所持saveデータは保持。IsActiveArmor/IsActiveSlot policyで頭を除外。初期配布・通常/Legend抽選・Biomefocus・Store/Drop・購入売却・装備を停止。保存済み頭はinventory内部に保持し、装備index0をnull、容量・stats・crit・Legend固有/旧uniqueから除外。装備UIは4部位、所持/比較/売買/図鑑/count/scrollを頭除外。日英維持。
+外観: WardenSlots[0]を装備と独立した固定cosmeticへ。素体のみでも初期Wardenマスク表示。legacy lookでも固定マスクを表示し、頭商品表示は除去。MaskCenter head-localY .048→.036（12mm下）、大きさ維持。共通素体頭/髪を保持。モデルassetは変更/削除なし。
+検証: head-retirement-build2.log HERO_BUILD_OK。head-retirement-runtime.log例外なし。result Checks20030: 通常1万/Legend1万非Head抽選、9stat差0、equip/store/purchase拒否、inventory/sale/shopカード非表示、capacity除外、temp-key save/load頭item保持と装備null、素体/一式の固定mask。前/横/後6capture、PMOはbare正横/outfit正面でフィットを確認。QAファイルのみの初回EffectiveRegeneration名誤記をHealthRegenへ訂正して再build済。製品18fileとQA hash一致、diff --check通過。iOS実機/IPA未実施。legacy lookの固定maskは実装済みだが今回は通常generated look画像のみ確認。
+
+## 2026-10-23 / 弾薬初期値・レジェンダリー防具/モジュール・障壁
+新規セーブ時のLoadInventoryは予備弾4種類を各AmmoCapacityまでSeedAmmoReservesし、マガジンも初期満タン。既存セーブは残弾を維持する仕様を確認し、SmokeRunへ初期値4件の確認を追加。
+頭を除く24件のレジェンダリー防具は武器の攻撃追撃を使わず、各メーカー/部位の回復・予備弾補給・回避待機短縮を発動。モジュール80件にレシピ別支援回路を追加し、受動ShieldConversionは障壁中5秒間隔、旧セーブのレジェンダリーモジュールにも後方互換効果を追加。発動条件と日英説明を一致。レジェンダリー効果説明をPC/iOSの所持品・装備詳細・ドロップ・図鑑・売却画面で赤色rich textへ。被弾時効果はHP減算後に発動する順序へ変更。
+障壁は完全吸収を廃止。基礎25%＋障壁残量1点ごと0.5%（最大20%）＋装備モジュールmitigation（最大15%）＋借金スキル軽減の半分（最大10%）、障壁軽減上限75%。命中時に残量を消費し、毎秒2減衰。防具等の既存軽減は別途乗算。旧SmokeRunの完全吸収期待を軽減期待へ修正。
+検証: QA clone Windows build legendary-rework-build4.log HERO_BUILD_OK。監視minFree2.59GB/abortなし。QA専用--legendary-reviewは新規弾4種、24防具実発動、80モジュール実発動、旧モジュール、障壁残被害/補正、日英赤タグを含む224件Failures0。QA用VaultGameにはレビュー専用smoke flagのみ追加、本番には含めない。11共有sourceの本番/QA hash一致。full --smokeは従来の古い日本語武器名期待で冒頭失敗し、今回の検証根拠に使わない。ScreenCaptureは非表示Windows実行で画像を書けず、赤文字の実画面目視は未確認。iOS実機/IPA未確認。ユーザーEditorとsaveは保持、QAのみビルド。

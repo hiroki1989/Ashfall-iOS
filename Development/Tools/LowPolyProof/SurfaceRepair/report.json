@@ -1,0 +1,18 @@
+{
+  "deleted_residual_faces": 524,
+  "initial_cut_boundary_edges": 109,
+  "filled_faces": 4,
+  "remaining_boundary_edges": 0,
+  "fixed_projection_face_counts": {
+    "left": 3440,
+    "original": 2586,
+    "right": 3498
+  },
+  "status": "Fixed UV candidate; Unity pose and garment seam QA required.",
+  "atlas_size": [
+    2048,
+    2048
+  ],
+  "head_mode": "Runtime approved shared GeneratedWarden/head-rebuilt via existing Bind, source head renderer removed; no head chart bake in current export.",
+  "texture_mode": "Fixed UV0 four-view body atlas. Camera-independent."
+}

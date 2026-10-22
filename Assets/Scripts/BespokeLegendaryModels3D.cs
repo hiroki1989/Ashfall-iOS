@@ -183,7 +183,9 @@ namespace NeonVault
                 }
             }
             else g.localScale=Vector3.one*.68f;
-            return Finish(g,V(0,-.095f,-.045f),V(0,-.055f,kind==1?.13f:.23f),V(0,-.015f,rear),V(0,0,end));
+            var sockets=Finish(g,V(0,-.095f,-.045f),V(0,-.055f,kind==1?.13f:.23f),V(0,-.015f,rear),V(0,0,end));
+            EquipmentProjection3D.Apply(g,DistinctEquipmentDesigns.For(gun),true);
+            return sockets;
         }
 
         // Continuous fitted surfaces are offset outside the existing garment. No
@@ -278,7 +280,7 @@ namespace NeonVault
             if(slot==3){if(maker==0)Dial(g,0,-.025f,.11f,.045f);if(maker==2){for(int i=0;i<4;i++)Wrap(g,"Knee copper induction winding","ProductCopper",.088f,.095f,-.015f-i*.012f,-.021f-i*.012f);}}
             if(slot==4){if(maker==0||maker==5)Dial(g,.075f,-.01f,.045f);if(maker==1||maker==2||maker==4)Tank(g,"AmberGlass",.075f,.015f,.015f,.014f,.10f);if(maker==3)Tank(g,"BloodGlass",.075f,.015f,.015f,.014f,.10f);}
             if(slot==2)g.localScale=V(1,.85f,1);
-            Compact(g);return g;
+            Compact(g);EquipmentProjection3D.Apply(g,DistinctEquipmentDesigns.For(item),false);return g;
         }
         public static List<Transform> ApplyArmorSupplement(DetailedHero3D body,ArmorItem item,int index)
         {

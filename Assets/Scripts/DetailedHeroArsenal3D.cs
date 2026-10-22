@@ -196,17 +196,24 @@ namespace NeonVault
             public void SetItems(ArmorItem[] items)
             {
                 var selected=new ArmorItem[5];if(items!=null)foreach(var a in items)if(a!=null&&(int)a.slot>=0&&(int)a.slot<5)selected[(int)a.slot]=a;
-                SetHairVisible(selected[0]==null||BespokeLegendaryDesigns.Index(selected[0])==20||(DistinctEquipmentDesigns.For(selected[0])==null&&selected[0].visualVariant==4));
-                bool replacementChest=selected[1]!=null&&DistinctEquipmentDesigns.For(selected[1])==null&&selected[1].visualVariant!=4;
-                bool replacementArms=selected[2]!=null&&DistinctEquipmentDesigns.For(selected[2])==null&&selected[2].visualVariant!=4;
-                body.SetBaseJacketVisible(!replacementChest,!replacementChest,!replacementArms);
-                body.SetBaseTrouserVisible(selected[3]==null||DistinctEquipmentDesigns.For(selected[3])!=null||selected[3].visualVariant==4);
-                if(selected[3]==null||DistinctEquipmentDesigns.For(selected[3])!=null||selected[3].visualVariant==4)body.SetSeatFabric(null);
+                bool authoredHead=GeneratedEquipmentAssetCatalog.TryArmor(selected[0],out _);
+                bool authoredChest=GeneratedEquipmentAssetCatalog.TryArmor(selected[1],out _);
+                bool authoredArms=GeneratedEquipmentAssetCatalog.TryArmor(selected[2],out _);
+                bool authoredLegs=GeneratedEquipmentAssetCatalog.TryArmor(selected[3],out _);
+                SetHairVisible(!authoredHead&&(selected[0]==null||BespokeLegendaryDesigns.Index(selected[0])==20||(DistinctEquipmentDesigns.For(selected[0])==null&&selected[0].visualVariant==4)));
+                bool replacementChest=authoredChest||selected[1]!=null&&DistinctEquipmentDesigns.For(selected[1])==null&&selected[1].visualVariant!=4;
+                bool replacementArms=authoredArms||selected[2]!=null&&DistinctEquipmentDesigns.For(selected[2])==null&&selected[2].visualVariant!=4;
+                body.SetBaseJacketVisible(!replacementChest,!replacementChest,!replacementChest);
+                body.SetBaseTrouserVisible(!authoredLegs&&(selected[3]==null||DistinctEquipmentDesigns.For(selected[3])!=null||selected[3].visualVariant==4));
+                if(!authoredLegs&&(selected[3]==null||DistinctEquipmentDesigns.For(selected[3])!=null||selected[3].visualVariant==4))body.SetSeatFabric(null);
                 AppliedCount=0;for(int slot=0;slot<5;slot++){
                     var item=selected[slot];if(item!=null)AppliedCount++;
-                    string key=item==null?"empty":item.catalogId+"/"+item.visualVariant;
+                    string key=item==null?"empty":item.catalogId+"/"+item.visualVariant+"/"+GeneratedEquipmentAssetCatalog.TryArmor(item,out _);
                     if(keys[slot]==key)continue;keys[slot]=key;foreach(var t in roots[slot])Release(t);roots[slot].Clear();foreach(var m in owned[slot])if(m)UnityEngine.Object.Destroy(m);owned[slot].Clear();baseline.SetSlot((ArmorSlot)slot,false);
                     if(item==null)continue;
+                    // A separately authored mesh replaces the old slot geometry. Keeping
+                    // both visible would recreate the double-model defect seen in QA.
+                    if(GeneratedEquipmentAssetCatalog.TryArmor(item,out _))continue;
                     // The menu-reference set uses its individually authored cloth, harness and respirator rig.
                     if(BespokeLegendaryDesigns.Index(item)>=20&&BespokeLegendaryDesigns.Index(item)<=24){baseline.SetSlot((ArmorSlot)slot,true);continue;}
                     if(DistinctEquipmentDesigns.For(item)!=null)continue;
@@ -343,13 +350,15 @@ namespace NeonVault
                     else {Panel("Tactical rectangular ballistic chest panel",g,mat("Pad"),V(0,.018f,.151f),new Vector2(.235f,.24f),.012f);for(int row=0;row<4;row++)for(int col=0;col<4;col++)Panel("Sewn PALS webbing rectangle",g,mat("Leather"),V((col-1.5f)*.049f,.094f-row*.044f,.169f),new Vector2(.045f,.022f),.002f);for(int col=0;col<4;col++)PatchPouch(g,mat,V((col-1.5f)*.077f,-.207f,.164f),.073f,.14f);Panel("Chest radio",g,mat("Steel"),V(.105f,.065f,.177f),new Vector2(.062f,.09f),.010f);Rod("Radio aerial",g,M("Dark"),V(.111f,.10f,.18f),V(.111f,.205f,.18f),.002f);}
                     for(int side=0;side<2;side++){
                         var arm=Root("Portrait matching jacket upper sleeve",side==0?b.leftUpperArm:b.rightUpperArm);ClothLoft("Matching upper sleeve cloth",arm,mat("Cloth"),new[]{-.294f,-.25f,-.17f,-.09f,-.015f,.025f},new[]{.067f,.075f,.084f,.085f,.090f,.054f},new[]{.066f,.078f,.082f,.083f,.086f,.050f},Vector3.zero);
+                        var foreSleeve=Root("Portrait matching jacket forearm sleeve",side==0?b.leftForearm:b.rightForearm);
+                        ClothLoft("Portrait sleeve forearm cloth",foreSleeve,mat("Cloth"),new[]{-.17f,-.12f,-.06f,0,.032f},new[]{.059f,.070f,.073f,.068f,.060f},new[]{.057f,.069f,.072f,.067f,.058f},Vector3.zero);
                         var cap=G("Conforming portrait shoulder pauldron",arm,Vector3.zero);Band("Curved shoulder shell",cap,mat(old?"Steel":"Pad"),-.050f,.097f,.098f,.115f,side==0?-.45f:Mathf.PI-.45f,Mathf.PI*.85f);AngularPlate("Front shoulder faceted panel",cap,mat(old?"Steel":"Pad"),V(side==0?-.034f:.034f,-.055f,.077f),new Vector2(.12f,.13f),.016f,true);
                         ShoulderCrown(cap,mat(old?"Steel":"Pad"),side==0?-.45f:Mathf.PI-.45f);
                     }
                     break;}
                 case ArmorSlot.Arms:{for(int side=0;side<2;side++){
                     var fore=Root("Portrait sleeve and bracer / "+style,side==0?b.leftForearm:b.rightForearm);var hand=Root("Portrait armored full glove / "+style,side==0?b.leftHand:b.rightHand);
-                    ClothLoft("Portrait sleeve forearm cloth",fore,mat("Cloth"),new[]{-.17f,-.12f,-.06f,0,.032f},new[]{.059f,.070f,.073f,.068f,.060f},new[]{.057f,.069f,.072f,.067f,.058f},Vector3.zero);
+
                     Band("Portrait upper bracer strap",fore,mat(style==1||style==3?"Accent":"Leather"),-.17f,.058f,.055f,.021f);Band("Portrait wrist strap",fore,mat("Leather"),-.245f,.044f,.040f,.023f);Buckle(fore,V(.031f,-.245f,.031f),.023f,.025f);
                     if(old){AngularPlate("Upper bracer polygon",fore,mat("Steel"),V(0,-.153f,.056f),new Vector2(.089f,.080f),.008f,true);Panel("Recessed colored bracer viewing window",fore,M(style==1?"AmberGlass":"TealGlass"),V(0,-.185f,.052f),new Vector2(.041f,.057f),.003f);AngularPlate("Wrist beveled plate",fore,mat("Steel"),V(0,-.247f,.039f),new Vector2(.072f,.058f),.009f,true);}
                     else if(style==2){for(int j=0;j<5;j++)Band("Offwhite field bandage wrap",fore,mat("Accent"),-.155f-j*.014f,.060f-j*.0034f,.056f-j*.0032f,.012f);AngularPlate("Dark tactical wrist cuff",fore,mat("Pad"),V(0,-.24f,.040f),new Vector2(.067f,.05f),.006f);}

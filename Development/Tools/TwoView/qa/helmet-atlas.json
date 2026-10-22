@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Development\\Tools\\TwoView\\qa\\helmet-atlas.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\AshfallArtValidation\\equipment3d-batch\\kestrel-field-helmet\\projection-inputs-2dir-fit-105\\helmet-front-fit-105.png",
+      "source_bbox": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "placed_bbox": [
+        51,
+        51,
+        973,
+        973
+      ],
+      "visible_fraction": 0.785847
+    },
+    {
+      "source": "D:\\Unity\\AshfallArtValidation\\equipment3d-batch\\kestrel-field-helmet\\projection-inputs-2dir-fit-105\\helmet-back-fit-105.png",
+      "source_bbox": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "placed_bbox": [
+        51,
+        51,
+        973,
+        973
+      ],
+      "visible_fraction": 0.785596
+    }
+  ],
+  "alpha_min": 255
+}

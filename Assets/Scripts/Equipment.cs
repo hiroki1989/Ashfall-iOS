@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 namespace NeonVault
@@ -10,6 +10,7 @@ namespace NeonVault
         public string id, name, subtitle;
         public string catalogId, manufacturerId, legendaryKey;
         public int designVariant;
+        public int balanceVersion;
         public ArmorSlot slot;
         public Rarity rarity;
         public int level=1, visualVariant, dungeon, uniqueEffect;
@@ -19,6 +20,8 @@ namespace NeonVault
     }
     public static class Armory
     {
+        public static bool IsActiveSlot(ArmorSlot slot)=>(int)slot>=1&&(int)slot<=4;
+        public static bool IsActiveArmor(ArmorItem item)=>item!=null&&IsActiveSlot(item.slot);
         public static ArmorItem Starter(ArmorSlot slot)=>Create(slot,Rarity.Common,1,null);
         public static ArmorItem TrailWarden(ArmorSlot slot)
         {return CreateCatalog(ArmorProductCatalog.Get(slot,4,0).id,Rarity.Common,1);}
@@ -36,8 +39,8 @@ namespace NeonVault
         public static ArmorItem RollForDungeon(System.Random random,int dungeon,bool boss=false)=>CreateForDungeon(random,dungeon,DungeonCatalog.RollRarity(random,boss),DungeonCatalog.ItemLevel(random,dungeon));
         public static ArmorItem CreateForDungeon(System.Random random,int dungeon,Rarity rarity,int level)
         {
-            if(rarity==Rarity.Legendary)return LegendaryCatalog.CreateArmor(random.Next(30),random,level);
-            var item=Create((ArmorSlot)random.Next(5),rarity,level,random);
+            if(rarity==Rarity.Legendary)return LegendaryCatalog.RollArmor(random,level);
+            var item=Create((ArmorSlot)random.Next(1,5),rarity,level,random);
             if(rarity==Rarity.Legendary){item.dungeon=dungeon;item.uniqueEffect=dungeon+1;item.name=Name(item,false);}
             return item;
         }
@@ -57,18 +60,8 @@ namespace NeonVault
                 case ArmorSlot.Legs:a.maxHealth=RollValue(random,9*power);a.moveBonus=RollValue(random,.035f*power);a.dodgeBonus=RollValue(random,.016f*power);break;
                 case ArmorSlot.Feet:a.moveBonus=RollValue(random,.055f*power);a.dodgeBonus=RollValue(random,.025f*power);break;
             }
-            if(rarity==Rarity.Legendary)
-            {
-                switch(slot)
-                {
-                    case ArmorSlot.Head:a.regenBonus+=RollValue(random,.5f);a.reloadBonus+=RollValue(random,.08f);break;
-                    case ArmorSlot.Chest:a.regenBonus+=RollValue(random,1.1f);break;
-                    case ArmorSlot.Arms:a.damageBonus+=RollValue(random,.1f);a.reloadBonus+=RollValue(random,.12f);break;
-                    case ArmorSlot.Legs:a.dodgeBonus+=RollValue(random,.07f);break;
-                    case ArmorSlot.Feet:a.dodgeBonus+=RollValue(random,.09f);a.regenBonus+=RollValue(random,.3f);break;
-                }
-            }
             ArmorProductCatalog.Apply(a,power);
+            GearBalance.RebalanceArmorBase(a,random);
             a.damageReduction=Mathf.Clamp(a.damageReduction,0,.3f);
             RollAffixes(a,random);
             a.dodgeBonus=Mathf.Clamp(a.dodgeBonus,0,.25f);
@@ -81,7 +74,7 @@ namespace NeonVault
             if(random==null){item.affixes=System.Array.Empty<GearAffix>();return;}
             int count=Mathf.Clamp((int)item.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage"};
             float scale=1+.16f*((int)item.rarity+item.level-1);var used=new HashSet<int>();item.affixes=new GearAffix[count];
-            for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while(!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f,.015f,.06f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*scale*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
+            for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while((p==7&&random.NextDouble()>=.15)||!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f,.015f,.06f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*scale*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
         }
         static void ApplyAffix(ArmorItem a,GearAffix x){switch(x.type){case "damage":a.damageBonus+=x.value;break;case "health":a.maxHealth+=x.value;break;case "fireRate":a.fireBonus+=x.value;break;case "reload":a.reloadBonus+=x.value;break;case "accuracy":a.accuracyBonus+=x.value;break;case "ammo":a.ammoBonus+=x.value;break;case "mitigation":a.damageReduction=Mathf.Min(.65f,a.damageReduction+x.value);break;case "moveSpeed":a.moveBonus+=x.value;break;case "regen":a.regenBonus+=x.value;break;}}
         static Color ArmorColor(ArmorSlot slot,Rarity rarity,System.Random random)
@@ -128,8 +121,8 @@ namespace NeonVault
         static string BaseDescription(ArmorItem item,bool ja)
         {
             if(item.uniqueEffect>0)return ja?new[]{"撃破障壁：撃破時に障壁+4、待機4秒","疾走回復：ダッシュ時にHP+4、待機5秒","変換：モジュール障壁の持続中に威力+15%"}[Mathf.Clamp(item.dungeon,0,2)]:new[]{"Kill shield: +4 shield on kill, 4s cooldown","Dash recovery: regain 4 HP on dash, 5s cooldown","Conversion: +15% damage while module shield is active"}[Mathf.Clamp(item.dungeon,0,2)];
-            if(item.rarity==Rarity.Legendary)return ja?new[]{"偵察支援：自動回復と高速リロード","救命装置：毎秒ライフを回復","動力補助：火力とリロードを強化","緩衝回避：ダッシュの待ち時間を短縮","走破支援：回避・移動・自動回復"}[(int)item.slot]:new[]{"Scout support: regeneration and faster reloads","Trauma rig: regenerates health each second","Servo assist: increased damage and reload speed","Shock damping: reduced dash cooldown","Wasteland stride: dodge, movement and regeneration"}[(int)item.slot];
-            return ja?new[]{"照準と生命力を支える頭部装甲","防御と生命力、緩やかな自動回復","火力・連射・リロードを支える籠手","生命力・移動・回避を支える脚甲","移動と回避を支える軽量ブーツ"}[(int)item.slot]:new[]{"Head armor supports damage and vitality","Protection, health and gradual regeneration","Gauntlets improve damage, fire rate and reloads","Greaves improve health, movement and dodge","Light boots improve movement and dodge"}[(int)item.slot];
+
+            return ja?new[]{"照準と生命力を支える頭部装甲","大きく生命力を高める胴部装甲","生命力・火力・装填・連射から2効果の籠手","生命力と移動を支える脚甲","生命力と高い移動速度を支えるブーツ"}[(int)item.slot]:new[]{"Head armor supports accuracy and vitality","Chest armor provides greater health","Gauntlets roll two of health, damage, reload and fire rate","Greaves improve health and movement","Boots improve health and greater movement"}[(int)item.slot];
         }
         public static string Stats(ArmorItem item,bool? japanese=null)
         {

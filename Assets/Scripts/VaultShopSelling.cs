@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -24,9 +24,9 @@ namespace NeonVault
         List<SaleEntry> SaleEntries(int category)
         {
             var result=new List<SaleEntry>();
-            if(category==0)foreach(var item in Weapons)result.Add(new SaleEntry{kind=SaleKind.Gun,id=item.id,title=VaultLanguage.GunName(item),detail=GunNumbers(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=EquippedWeaponSlot(item)>=0,lastRequired=Weapons.Count<=1});
-            if(category==1)foreach(var item in ArmorInventory)result.Add(new SaleEntry{kind=SaleKind.Armor,id=item.id,title=Armory.Name(item),detail=Armory.SlotName(item.slot)+" / Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+" · "+Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=IsArmorEquipped(item)});
-            if(category==2)foreach(var item in ArtifactInventory)result.Add(new SaleEntry{kind=SaleKind.Module,id=item.id,title=item.Name,detail="Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+"\n"+item.Description+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=System.Array.IndexOf(EquippedArtifacts,item)>=0});
+            if(category==0)foreach(var item in Weapons)result.Add(new SaleEntry{kind=SaleKind.Gun,id=item.id,title=VaultLanguage.GunName(item),detail=string.IsNullOrEmpty(item.legendaryKey)?GunNumbers(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item):LegendaryDescription(item,VaultLanguage.GunDescription(item)),price=SaleValue(item),equipped=EquippedWeaponSlot(item)>=0,lastRequired=Weapons.Count<=1});
+            if(category==1)foreach(var item in ArmorInventory)if(Armory.IsActiveArmor(item))result.Add(new SaleEntry{kind=SaleKind.Armor,id=item.id,title=Armory.Name(item),detail=string.IsNullOrEmpty(item.legendaryKey)&&item.uniqueEffect==0?Armory.SlotName(item.slot)+" / Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+" · "+Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item):LegendaryDescription(item,Armory.Description(item)),price=SaleValue(item),equipped=IsArmorEquipped(item)});
+            if(category==2)foreach(var item in ArtifactInventory)result.Add(new SaleEntry{kind=SaleKind.Module,id=item.id,title=item.Name,detail="Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity)+"\n"+LegendaryDescription(item,item.Description)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),price=SaleValue(item),equipped=System.Array.IndexOf(EquippedArtifacts,item)>=0});
             if(category==3)foreach(var item in MeleeWeaponInventory)result.Add(new SaleEntry{kind=SaleKind.Melee,id=item.id,title=MeleeWeaponCatalog.Name(item)+" / Lv "+item.level,detail=T("DMG ","威力 ")+item.damage+" · "+T("RATE ","速度 ")+(1/Mathf.Max(.01f,item.interval)).ToString("0.0")+T("/s · RANGE ","/秒 · 射程 ")+item.range.ToString("0.0")+"m · "+T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(item),price=SaleValue(item),equipped=EquippedMeleeWeapon==item,lastRequired=MeleeWeaponInventory.Count<=1});
             return result;
         }
@@ -82,7 +82,7 @@ namespace NeonVault
         {
             if(entry==null||entry.equipped||entry.lastRequired)return false;bool removed=false;
             if(entry.kind==SaleKind.Gun){int index=Weapons.FindIndex(w=>w.id==entry.id);if(index>=0&&EquippedWeaponSlot(Weapons[index])<0&&Weapons.Count>1){DiscardWeapon(index);removed=true;}}
-            else if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(a=>a.id==entry.id);if(item!=null&&!IsArmorEquipped(item)){DiscardArmor(item);removed=true;}}
+            else if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(a=>a.id==entry.id);if(Armory.IsActiveArmor(item)&&!IsArmorEquipped(item)){DiscardArmor(item);removed=true;}}
             else if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(a=>a.id==entry.id);if(item!=null&&System.Array.IndexOf(EquippedArtifacts,item)<0){DiscardArtifact(item);removed=true;}}
             else if(entry.kind==SaleKind.Melee){var item=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(item!=null&&item!=EquippedMeleeWeapon&&MeleeWeaponInventory.Count>1){MeleeWeaponInventory.Remove(item);SaveInventory();removed=true;}}
             if(removed){AwardCredits(entry.price);Notify("Sold "+entry.title+" for "+entry.price.ToString("N0")+" scrap.",entry.title+"を"+entry.price.ToString("N0")+"スクラップで売却。");}

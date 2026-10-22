@@ -37,6 +37,7 @@ namespace NeonVault
         }
         public static ArmorProduct Roll(System.Random random,ArmorSlot slot)
         {
+            if(!Armory.IsActiveSlot(slot))throw new System.ArgumentOutOfRangeException(nameof(slot));
             // Rejection samples the complete pool uniformly within this body slot.
             ArmorProduct p;do{p=products[random.Next(products.Length)];}while(p.slot!=slot||DistinctEquipmentDesigns.Find(p.id).legendary);return p;
         }
@@ -55,17 +56,7 @@ namespace NeonVault
         public static string Description(ArmorItem item,bool ja)
         {
             if(Find(item.catalogId)==null)return "";
-            string en,jp;
-            switch(item.manufacturerId)
-            {
-                case "kestrel":en="KESTREL: precision / mobility";jp="KESTREL：精度・機動";break;
-                case "ironwake":en="IRONWAKE: health / protection; slower movement";jp="IRONWAKE：生命・防護、移動低下";break;
-                case "voltarc":en="VOLTARC: fire rate / reload";jp="VOLTARC：連射・装填";break;
-                case "mireline":en="MIRELINE: health / regeneration";jp="MIRELINE：生命・再生";break;
-                case "cinder":en="CINDER: damage at the cost of protection";jp="CINDER：威力強化、防護低下";break;
-                default:en="AEGIS: reliable protection / vitality";jp="AEGIS：安定防護・生命";break;
-            }
-            return (ja?jp:en)+" · ";
+            return ManufacturerCatalog.Name(item.manufacturerId,ja)+" · ";
         }
         // Called once during creation only. Saved effective stats are never modified on load.
         internal static void Apply(ArmorItem a,float power)

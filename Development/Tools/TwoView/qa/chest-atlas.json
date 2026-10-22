@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Development\\Tools\\TwoView\\qa\\chest-atlas.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\TrailWardenChest\\front.png",
+      "source_bbox": [
+        75,
+        55,
+        430,
+        454
+      ],
+      "placed_bbox": [
+        102,
+        51,
+        922,
+        973
+      ],
+      "visible_fraction": 0.788112
+    },
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\TrailWardenChest\\back.png",
+      "source_bbox": [
+        97,
+        55,
+        412,
+        454
+      ],
+      "placed_bbox": [
+        148,
+        51,
+        876,
+        973
+      ],
+      "visible_fraction": 0.832552
+    }
+  ],
+  "alpha_min": 255
+}

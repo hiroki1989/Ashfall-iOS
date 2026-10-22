@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\warden-rifle-two-view.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\warden-rifle-source-0.png",
+      "source_bbox": [
+        350,
+        37,
+        674,
+        987
+      ],
+      "placed_bbox": [
+        348,
+        30,
+        676,
+        993
+      ],
+      "visible_fraction": 0.574367
+    },
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewCandidate\\warden-rifle-source-1.png",
+      "source_bbox": [
+        350,
+        37,
+        674,
+        987
+      ],
+      "placed_bbox": [
+        348,
+        30,
+        676,
+        993
+      ],
+      "visible_fraction": 0.574374
+    }
+  ],
+  "alpha_min": 255
+}

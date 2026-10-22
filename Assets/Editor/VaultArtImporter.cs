@@ -20,6 +20,16 @@ namespace NeonVault.Editor
         {
             if(!assetPath.StartsWith("Assets/Resources/Art/"))return;
             var importer=(TextureImporter)assetImporter;
+            if(assetPath.StartsWith("Assets/Resources/Art/GeneratedWarden/"))
+            {
+                importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;
+                importer.npotScale=TextureImporterNPOTScale.None;importer.maxTextureSize=4096;
+                importer.textureCompression=TextureImporterCompression.Uncompressed;
+                importer.alphaIsTransparency=false;importer.mipmapEnabled=true;
+                importer.filterMode=UnityEngine.FilterMode.Trilinear;importer.anisoLevel=8;importer.wrapMode=UnityEngine.TextureWrapMode.Clamp;
+                var ios=importer.GetPlatformTextureSettings("iPhone");ios.name="iPhone";ios.overridden=true;ios.maxTextureSize=4096;ios.format=TextureImporterFormat.ASTC_6x6;ios.compressionQuality=100;importer.SetPlatformTextureSettings(ios);
+                return;
+            }
             importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;importer.maxTextureSize=2048;
             importer.textureCompression=TextureImporterCompression.Uncompressed;
             if(assetPath.Contains("/ApprovedFieldkit/")){importer.npotScale=TextureImporterNPOTScale.None;importer.maxTextureSize=4096;importer.filterMode=UnityEngine.FilterMode.Bilinear;}

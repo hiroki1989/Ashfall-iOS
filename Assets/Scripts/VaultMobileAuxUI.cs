@@ -5,7 +5,7 @@ namespace NeonVault
     {
         public Rect MobileCityView=>new Rect(40,140,1360,490);
         bool mobileMapEntered;int mobileShopPage,mobileSalePage,mobileCatalogPage,mobileSkillPage;
-        GUIStyle MobileCopy=>new GUIStyle(label){fontSize=34,wordWrap=true,clipping=TextClipping.Clip};
+        GUIStyle MobileCopy=>new GUIStyle(label){fontSize=34,wordWrap=true,clipping=TextClipping.Clip,richText=true};
         void MobileCopyAt(float x,float y,string text,Color color,float width=1000)
         {GUIStyle style=MobileCopy;float height=Mathf.Clamp(style.CalcHeight(new GUIContent(text??""),width)+8,42,145);GUI.color=color;GUI.Label(new Rect(x,y,width,height),text??"",style);GUI.color=Color.white;}
         void DrawMobileCityMap()
@@ -39,9 +39,9 @@ namespace NeonVault
             {
                 int index=mobileCatalogPage*2+row;if(index>=manufacturerProducts.Count)break;object item=manufacturerProducts[index];float y=275+row*240;Panel(new Rect(30,y,1370,225),ManufacturerCatalog.Color(maker));
                 Rect icon=new Rect(45,y+20,170,170);string name,detail;
-                if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);detail=GunNumbers(gun);}
-                else if(item is ArmorItem armor){ItemPortraits.Draw(icon,armor);name=Armory.Name(armor);detail=Armory.Stats(armor);}
-                else if(item is ArtifactItem module){ManufacturerBranding.ModulePortrait(icon,module);name=module.Name;detail=module.Description;}
+                if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);detail=string.IsNullOrEmpty(gun.legendaryKey)?GunNumbers(gun):LegendaryDescription(gun,VaultLanguage.GunDescription(gun));}
+                else if(item is ArmorItem armor){ItemPortraits.Draw(icon,armor);name=Armory.Name(armor);detail=string.IsNullOrEmpty(armor.legendaryKey)&&armor.uniqueEffect==0?Armory.Stats(armor):LegendaryDescription(armor,Armory.Description(armor));}
+                else if(item is ArtifactItem module){ManufacturerBranding.ModulePortrait(icon,module);name=module.Name;detail=LegendaryDescription(module,module.Description);}
                 else{var melee=(MeleeWeaponItem)item;DrawMeleeIcon(icon,melee.family);name=MeleeWeaponCatalog.Name(melee);detail=T("DMG ","威力 ")+melee.damage+" / "+melee.range.ToString("0.0")+"m";}
                 MobileCopyAt(240,y+15,name,Gold,1125);MobileCopyAt(240,y+83,detail,Mist,1125);
             }
@@ -63,7 +63,7 @@ namespace NeonVault
                 for(int i=0;i<4;i++)if(MobileButton(new Rect(40+i*340,260,325,105),tabs[i])){saleCategory=i;mobileSalePage=0;pendingSaleKey=null;}
                 var entries=SaleEntries(saleCategory);int pages=Mathf.Max(1,Mathf.CeilToInt(entries.Count/2f));mobileSalePage=Mathf.Clamp(mobileSalePage,0,pages-1);
                 for(int row=0;row<2;row++)
-                {int index=mobileSalePage*2+row;if(index>=entries.Count)break;var entry=entries[index];float y=380+row*177;Color rarity=MobileSaleRarity(entry);Panel(new Rect(40,y,1360,165),rarity);DrawMobileSalePortrait(entry,new Rect(56,y+13,138,138));MobileCopyAt(215,y+10,entry.title,rarity,770);MobileCopyAt(215,y+51,T("SCORE ","評価 ")+MobileSaleScore(entry)+" / "+MobileSaleRarityName(entry),Mist,770);MobileCopyAt(215,y+85,entry.detail,Mist,770);
+                {int index=mobileSalePage*2+row;if(index>=entries.Count)break;var entry=entries[index];float y=380+row*177;Color rarity=MobileSaleRarity(entry);Panel(new Rect(40,y,1360,165),rarity);DrawMobileSalePortrait(entry,new Rect(56,y+13,138,138));MobileCopyAt(215,y+10,entry.title,rarity,770);MobileCopyAt(215,y+51,T("SCORE ","評価 ")+MobileSaleScore(entry)+" / "+MobileSaleRarityName(entry),Mist,770);MobileCopyAt(215,y+85,MobileSaleLegendaryDetail(entry),Mist,770);
                     if(!entry.equipped&&!entry.lastRequired&&MobileButton(new Rect(1010,y+22,360,115),T("SELL ","売却 ")+entry.price))pendingSaleKey=SaleKey(entry);
                     else if(entry.equipped||entry.lastRequired)MobileCopyAt(1025,y+50,T("PROTECTED","売却不可"),Cyan,300);
                 }
@@ -77,17 +77,26 @@ namespace NeonVault
                 }
                 return;
             }
+            var visibleOffers=new System.Collections.Generic.List<int>();for(int i=0;i<shopStock.Count;i++)if(shopStock[i].armor==null||Armory.IsActiveArmor(shopStock[i].armor))visibleOffers.Add(i);
+            mobileShopPage=Mathf.Clamp(mobileShopPage,0,Mathf.Max(0,(visibleOffers.Count-1)/2));
             for(int row=0;row<2;row++)
             {
-                int index=mobileShopPage*2+row;if(index>=shopStock.Count)break;var o=shopStock[index];float y=270+row*190;Panel(new Rect(40,y,1360,175),Cyan);Rect icon=new Rect(52,y+12,150,150);
+                int visibleIndex=mobileShopPage*2+row;if(visibleIndex>=visibleOffers.Count)break;int index=visibleOffers[visibleIndex];var o=shopStock[index];float y=270+row*190;Panel(new Rect(40,y,1360,175),Cyan);Rect icon=new Rect(52,y+12,150,150);
                 string name=o.gun!=null?VaultLanguage.GunName(o.gun):o.armor!=null?Armory.Name(o.armor):o.artifact!=null?o.artifact.Name:MeleeWeaponCatalog.Name(o.melee);
                 if(o.gun!=null)ItemPortraits.Draw(icon,o.gun);else if(o.armor!=null)ItemPortraits.Draw(icon,o.armor);else if(o.artifact!=null)ManufacturerBranding.ModulePortrait(icon,o.artifact);else DrawMeleeIcon(icon,o.melee.family);
                 MobileCopyAt(225,y+18,name,Gold,760);MobileCopyAt(225,y+91,T("PRICE ","価格 ")+ShopOfferPrice(o),Cyan,760);
                 if(MobileButton(new Rect(1040,y+34,320,110),o.purchased?T("SOLD","購入済"):T("BUY","購入"))&&!o.purchased)PurchaseShop(index);
             }
             if(MobileButton(new Rect(40,650,240,110),T("PREV","前へ")))mobileShopPage=Mathf.Max(0,mobileShopPage-1);
-            if(MobileButton(new Rect(300,650,240,110),T("NEXT","次へ")))mobileShopPage=Mathf.Min((shopStock.Count-1)/2,mobileShopPage+1);
+            if(MobileButton(new Rect(300,650,240,110),T("NEXT","次へ")))mobileShopPage=Mathf.Min(Mathf.Max(0,(visibleOffers.Count-1)/2),mobileShopPage+1);
             for(int i=0;i<4;i++){var ammoType=(AmmoType)i;if(MobileButton(new Rect(40+i*340,780,325,110),AmmoLabel(ammoType)+"\n"+AmmoPackCost(ammoType)))BuyAmmo(ammoType,1);}
+        }
+        string MobileSaleLegendaryDetail(SaleEntry entry)
+        {
+            if(entry.kind==SaleKind.Gun){var item=Weapons.Find(x=>x.id==entry.id);if(item!=null&&!string.IsNullOrEmpty(item.legendaryKey))return LegendaryDescription(item,VaultLanguage.GunDescription(item));}
+            if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(x=>x.id==entry.id);if(item!=null&&(!string.IsNullOrEmpty(item.legendaryKey)||item.uniqueEffect>0))return LegendaryDescription(item,Armory.Description(item));}
+            if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(x=>x.id==entry.id);if(item!=null&&(item.rarity==Rarity.Legendary||item.uniqueEffect>0))return LegendaryDescription(item,item.Description);}
+            return entry.detail;
         }
         Color MobileSaleRarity(SaleEntry entry)
         {

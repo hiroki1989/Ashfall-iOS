@@ -1,0 +1,59 @@
+{
+  "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelFieldHelmet\\kestrel-field-helmet-blueprint-sheet.png",
+  "atlas_size": [
+    2048,
+    1024
+  ],
+  "baseline_occupancy": 0.9,
+  "occupancy_scale": 1.05,
+  "occupancy": 0.945,
+  "views": [
+    {
+      "view": "front",
+      "source_crop_sheet_pixels": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "source_bbox_local": [
+        50,
+        25,
+        591,
+        602
+      ],
+      "placed_bbox": [
+        58,
+        28,
+        965,
+        996
+      ],
+      "occupied_long_edge": 0.9453125,
+      "mirrored": false
+    },
+    {
+      "view": "back",
+      "source_crop_sheet_pixels": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "source_bbox_local": [
+        42,
+        4,
+        592,
+        549
+      ],
+      "placed_bbox": [
+        28,
+        32,
+        996,
+        991
+      ],
+      "occupied_long_edge": 0.9453125,
+      "mirrored": false
+    }
+  ],
+  "projection": "Pending Blender. Front/back only; no side image, no camera-dependent switch."
+}

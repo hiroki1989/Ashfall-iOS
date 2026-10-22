@@ -22,7 +22,7 @@ namespace NeonVault
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Backup(){if(!Requested())return;existed.Clear();oldInts.Clear();oldStrings.Clear();foreach(var k in ints){if(PlayerPrefs.HasKey(k))existed.Add(k);oldInts[k]=PlayerPrefs.GetInt(k);}foreach(var k in strings){if(PlayerPrefs.HasKey(k))existed.Add(k);oldStrings[k]=PlayerPrefs.GetString(k);}}
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void Boot(){if(Requested())new GameObject("Distinct equipment finite revision review").AddComponent<DistinctEquipmentReview>();}
+        static void Boot(){Debug.Log("DISTINCT_REVIEW_BOOT_ARGS "+string.Join(" ",Environment.GetCommandLineArgs()));if(Requested())new GameObject("Distinct equipment finite revision review").AddComponent<DistinctEquipmentReview>();}
         IEnumerator Start()
         {
             var args=Environment.GetCommandLineArgs();int at=Array.IndexOf(args,"--qa-output");if(at>=0&&at+1<args.Length)output=args[at+1];Directory.CreateDirectory(output);font=Resources.Load<Font>("Fonts/NotoSansJP");
@@ -48,12 +48,39 @@ namespace NeonVault
                     if(kind==0){var gun=Arsenal.FromRecipe(r,Rarity.Rare);string saved=JsonUtility.ToJson(gun);var w=ManufacturerEquipment3D.BuildWeapon(studio,gun);Check(saved==JsonUtility.ToJson(gun),"presentation preserves gun stats and identity "+r.id);Check(gun.damage>0&&gun.interval>0&&gun.magazine>0&&gun.pellets>0,"usable gun stats "+r.id);if(!r.legendary){Check(Arsenal.IsOneHanded(VaultLanguage.DisplayModel(gun))==(r.gunClass==1),"class handling "+r.id);var expectedAmmo=r.gunClass==1?AmmoType.Handgun:r.gunClass==2?AmmoType.Shotgun:r.gunClass==5?AmmoType.SniperRifle:AmmoType.AssaultRifle;Check(VaultGame.AmmoForGun(gun)==expectedAmmo,"class ammunition "+r.id);if(r.gunClass==2)Check(gun.pellets>1,"shotgun retains shot payload "+r.id);}root=w.root;if(r.legendary)Check(root.name.StartsWith("Bespoke legendary"),"dedicated legendary construction "+r.id);Check(w.trigger&&w.support&&w.stock&&w.muzzle&&Finite(w.trigger.position)&&Finite(w.support.position)&&Finite(w.stock.position)&&Finite(w.muzzle.position),"finite sockets "+r.id);Check(DistinctEquipmentDesigns.For(gun)==r,"gun recipe roundtrip "+r.id);}
                     else if(kind==1){var armor=Armory.CreateCatalog(r.id,Rarity.Rare,3);string saved=JsonUtility.ToJson(armor);root=BespokeLegendaryDesigns.Index(armor)>=0?BespokeLegendaryModels3D.BuildArmor(studio,armor,BespokeLegendaryDesigns.Index(armor)):DistinctEquipmentModels3D.BuildArmor(studio,armor,r);Check(saved==JsonUtility.ToJson(armor),"presentation preserves armor stats and identity "+r.id);if(r.legendary)Check(root.name.StartsWith("Bespoke legendary"),"dedicated legendary construction "+r.id);Check(DistinctEquipmentDesigns.For(armor)==r,"armor recipe roundtrip "+r.id);}
                     else{var module=ArtifactCatalog.CreateCatalog(r.id,Rarity.Rare,3);string saved=JsonUtility.ToJson(module);root=DistinctEquipmentModels3D.BuildModule(studio,module);Check(saved==JsonUtility.ToJson(module),"presentation preserves module stats and identity "+r.id);Check(module.power>0&&module.cooldown>=0,"usable module stats "+r.id);Check(DistinctEquipmentDesigns.For(module)==r,"module recipe roundtrip "+r.id);}
+                    if(kind<2){bool resolved=EquipmentProjection3D.TryResolve(r,kind==0,out var resourcePath,out var crop);string lookup=EquipmentProjection3D.DescribeLookup(r,kind==0);Check(resolved,"unique projection source resolves "+r.id+(resolved?"":" / "+lookup));Check(resolved&&Resources.Load<Texture2D>(resourcePath)!=null&&crop.width>0&&crop.height>0,"projection sheet and crop available "+r.id+(resolved?"":" / "+lookup));Check(EquipmentProjection3D.HasProjection(root),"existing renderer projection active "+r.id+(resolved?"":" / "+lookup));int overlays=0;foreach(var renderer in root.GetComponentsInChildren<Renderer>(true))if(renderer.name.Contains("Projection Overlay"))overlays++;Check(overlays==0,"no duplicate overlay renderer "+r.id);if(kind==1&&!r.legendary){bool accessory=EquipmentProjection3D.TryResolveAccessory(r,out var accessoryPath,out var accessoryCrop);Check(accessory,"unique armor accessory source resolves "+r.id);Check(accessory&&Resources.Load<Texture2D>(accessoryPath)!=null&&accessoryCrop.width>0&&accessoryCrop.height>0,"armor accessory sheet and crop available "+r.id);Check(EquipmentProjection3D.HasAccessoryProjection(root),"accessory geometry projection active "+r.id);}}
                     Check(HasFiniteGeometry(root),"finite nonempty 3D "+r.id);root.gameObject.SetActive(false);Destroy(root.gameObject);if(r.index%8==0)yield return null;
                 }
                 int low=int.MaxValue,high=0;for(int m=0;m<6;m++){low=Math.Min(low,counts[m]);high=Math.Max(high,counts[m]);log.Add("CATEGORY "+kind+" maker="+m+" count="+counts[m]);}Check(high-low<=1,"balanced six manufacturers category "+kind);log.Add("CATEGORY "+kind+" unique visible assemblies="+shapes.Count);kind++;
             }
             for(int maker=0;maker<6;maker++)for(int cls=0;cls<6;cls++)for(int series=0;series<4;series++){int count=0;foreach(var r in DistinctEquipmentDesigns.Guns)if(!r.legendary&&r.maker==maker&&r.gunClass==cls&&r.series==series)count++;Check(count==4,"four editions per series "+maker+"/"+cls+"/"+series);}
+            for(int maker=0;maker<6;maker++)for(int family=0;family<MeleeWeaponCatalog.FamilyCount;family++)
+            {
+                var melee=MeleeWeaponCatalog.Catalog(family,Rarity.Rare,3);melee.manufacturerId=ManufacturerCatalog.Id(maker);
+                string path;Rect crop;bool resolved=EquipmentProjection3D.TryResolveMelee(melee.family,out path,out crop);
+                Check(resolved&&Resources.Load<Texture2D>(path)!=null&&crop.width>0&&crop.height>0,"melee family projection source "+maker+"/"+family);
+                var root=ManufacturerEquipment3D.BuildMelee(studio,melee);
+                Check(EquipmentProjection3D.HasProjection(root),"existing melee renderer projection active "+maker+"/"+family);
+                int overlays=0;foreach(var renderer in root.GetComponentsInChildren<Renderer>(true))if(renderer.name.Contains("Projection Overlay"))overlays++;
+                Check(overlays==0,"no duplicate melee overlay renderer "+maker+"/"+family);
+                Check(HasFiniteGeometry(root),"finite melee geometry "+maker+"/"+family);
+                root.gameObject.SetActive(false);Destroy(root.gameObject);if((maker*MeleeWeaponCatalog.FamilyCount+family)%8==0)yield return null;
+            }
             drawing=true;
+            int[] expectedMeleeCells={0,0,1,2,3};
+            for(int family=0;family<MeleeWeaponCatalog.FamilyCount;family++)
+            {
+                ClearCards();title="MELEE FAMILY "+family+" / INVENTORY ATLAS CELL "+expectedMeleeCells[family]+" / PROJECTED MODEL ANGLES";
+                var item=MeleeWeaponCatalog.Catalog(family,Rarity.Rare,3);var root=ManufacturerEquipment3D.BuildMelee(studio,item);
+                string path;Rect crop;bool resolved=EquipmentProjection3D.TryResolveMelee(item.family,out path,out crop);
+                Check(EquipmentProjection3D.MeleeAtlasCell(family)==expectedMeleeCells[family]&&resolved&&Mathf.Abs(crop.x+(crop.width*.5f)-((expectedMeleeCells[family]+.5f)/MeleeWeaponCatalog.FamilyCount))<.0001f,"melee enum maps to atlas cell "+family+"/"+expectedMeleeCells[family]);
+                for(int angle=0;angle<3;angle++)
+                {
+                    root.localRotation=Quaternion.Euler(0,angle*90f,0);
+                    cards.Add(new Card{recipe=new EquipmentRecipe{id="family "+family+" / angle "+angle*90,name=MeleeWeaponCatalog.English(item.family),japanese=MeleeWeaponCatalog.Japanese(item.family)},mesh=Render(root)});
+                }
+                root.gameObject.SetActive(false);Destroy(root.gameObject);yield return Capture("melee-family-"+family+"-projection-angles");
+            }
             for(int maker=0;maker<6;maker++)
             {
                 Check(GunSeriesPortraits.Available(maker),"24 whole painted series portraits "+maker);
@@ -61,7 +88,9 @@ namespace NeonVault
                 var guns=new List<EquipmentRecipe>();for(int body=0;body<6;body++)guns.Add(Find(DistinctEquipmentDesigns.Guns,maker,body,-1,false));foreach(var r in DistinctEquipmentDesigns.Guns)if(r.maker==maker&&r.legendary)guns.Add(r);
                 for(int page=0;page<2;page++){ClearCards();title="MAKER "+maker+" / GUNS / "+(page+1)+" : painted illustration | actual Unity mesh";for(int i=page*6;i<Math.Min(page*6+6,guns.Count);i++)Add(guns[i],0);yield return Capture("maker-"+maker+"-guns-"+page);}
                 ClearCards();title="MAKER "+maker+" / BESPOKE LEGENDARY GUNS";foreach(var relic in DistinctEquipmentDesigns.Guns)if(relic.maker==maker&&relic.legendary)Add(relic,0);yield return Capture("maker-"+maker+"-bespoke-guns");
+                ClearCards();title="MAKER "+maker+" / GUN PROJECTION / LEFT AND RIGHT SIDES";var sideRecipe=Find(DistinctEquipmentDesigns.Guns,maker,0,-1,false);for(int side=0;side<2;side++){var sampleGun=Arsenal.FromRecipe(sideRecipe,Rarity.Rare);var sideRoot=ManufacturerEquipment3D.BuildWeapon(studio,sampleGun).root;sideRoot.localRotation=Quaternion.Euler(0,side*180,0);cards.Add(new Card{recipe=sideRecipe,gun=sampleGun,mesh=Render(sideRoot)});sideRoot.gameObject.SetActive(false);Destroy(sideRoot.gameObject);}yield return Capture("maker-"+maker+"-gun-projection-sides");
                 ClearCards();title="MAKER "+maker+" / ARMOR : painted illustration | actual Unity mesh";for(int slot=0;slot<5;slot++)Add(Find(DistinctEquipmentDesigns.Armor,maker,-1,slot,true),1);yield return Capture("maker-"+maker+"-armor");
+                ClearCards();title="MAKER "+maker+" / BESPOKE LEGENDARY ARMOR";foreach(var relic in DistinctEquipmentDesigns.Armor)if(relic.maker==maker&&relic.legendary)Add(relic,1);yield return Capture("maker-"+maker+"-bespoke-armor");
                 ClearCards();title="MAKER "+maker+" / MODULES : painted illustration | actual Unity mesh";for(int body=0;body<3;body++)Add(Find(DistinctEquipmentDesigns.Modules,maker,body,-1,false),2);yield return Capture("maker-"+maker+"-modules");
                 ClearCards();title="MAKER "+maker+" / FIVE EQUIPPED ARMOR SLOTS / neutral front, side and rear";var hero=DetailedHero3D.Create(studio,DetailedHeroMaterials3D.Get);var equipped=new ArmorItem[5];for(int slot=0;slot<5;slot++)equipped[slot]=Armory.CreateCatalog(Find(DistinctEquipmentDesigns.Armor,maker,-1,slot,true).id,Rarity.Rare,3);DetailedHeroArsenal3D.ApplyArmor(hero,equipped);ManufacturerEquipment3D.ApplyArmor(hero,equipped);var menuGun=Arsenal.FromRecipe(DistinctEquipmentDesigns.Guns[maker*5],Rarity.Legendary);var held=ManufacturerEquipment3D.BuildWeapon(hero.transform,menuGun);for(int angle=0;angle<3;angle++){DetailedHeroPlayer3D.Pose(hero,held,false,angle==1,Quaternion.Euler(0,angle*120,0)*Vector3.forward,-1);Check(Vector3.Distance(hero.rightHand.position,held.trigger.position+held.root.up*(.065f*hero.transform.lossyScale.y)-held.root.forward*(.01f*hero.transform.lossyScale.y))<.02f,"equipped legendary right hand contact "+maker+"/"+angle);cards.Add(new Card{mesh=Render(hero.transform),recipe=new EquipmentRecipe{id="equipped / angle "+angle*120,name="Five equipped armor slots",japanese="5部位装備"}});}hero.gameObject.SetActive(false);Destroy(hero.gameObject);yield return Capture("maker-"+maker+"-equipped-hero");
             }

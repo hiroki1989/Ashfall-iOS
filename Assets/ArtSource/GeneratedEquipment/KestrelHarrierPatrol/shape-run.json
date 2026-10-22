@@ -1,0 +1,16 @@
+{
+  "model": "Hunyuan3D-2mini",
+  "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-left-source.png",
+  "texture_generation": false,
+  "steps": 30,
+  "octree_resolution": 256,
+  "num_chunks": 6000,
+  "seed": 20261021,
+  "gpu": "NVIDIA GeForce GTX 1080",
+  "load_seconds": 286.85,
+  "generation_seconds": 162.61,
+  "vertices": 25684,
+  "faces": 51376,
+  "output": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\GeneratedEquipment\\KestrelHarrierPatrol\\kestrel-harrier-shape-only.glb",
+  "status": "success"
+}

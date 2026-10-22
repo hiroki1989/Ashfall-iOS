@@ -1,0 +1,20 @@
+[
+  {
+    "mesh": "plain-body",
+    "faces": 12000,
+    "uv": "Two view only",
+    "fbx": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\ExportCandidates\\plain-body.fbx"
+  },
+  {
+    "mesh": "warden-armor",
+    "faces": 15999,
+    "uv": "Two view only",
+    "fbx": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\ExportCandidates\\warden-armor.fbx"
+  },
+  {
+    "mesh": "warden-rifle",
+    "faces": 4500,
+    "uv": "Two view only",
+    "fbx": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\ExportCandidates\\warden-rifle.fbx"
+  }
+]

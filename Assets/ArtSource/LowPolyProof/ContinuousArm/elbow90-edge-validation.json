@@ -1,0 +1,48 @@
+{
+  "measurement": "Bare source arm edges with both attachment labels1; exact measured fit and shared elbow blend; wrist neutral, finger curl excluded",
+  "edges": 2216,
+  "max_source_edge": {
+    "part": "plain_right_forearm",
+    "source_ids": [
+      5578,
+      5724
+    ],
+    "source_edge": 0.08994994676944494,
+    "rest_fit_edge": 0.09391102063940777,
+    "elbow90_edge": 0.09391101862500202,
+    "pose_rest_ratio": 0.9999999785498471
+  },
+  "max_rest_edge": {
+    "part": "plain_right_forearm",
+    "source_ids": [
+      5850,
+      5931
+    ],
+    "source_edge": 0.07369933197203654,
+    "rest_fit_edge": 0.09886756713714395,
+    "elbow90_edge": 0.11580620390601579,
+    "pose_rest_ratio": 1.1713265255670289
+  },
+  "max_pose_edge": {
+    "part": "plain_left_forearm",
+    "source_ids": [
+      248,
+      344
+    ],
+    "source_edge": 0.0728494595522631,
+    "rest_fit_edge": 0.0924579484323153,
+    "elbow90_edge": 0.11946083609931712,
+    "pose_rest_ratio": 1.2920558818885055
+  },
+  "max_pose_rest_ratio": {
+    "part": "continuous_arm_bridge",
+    "source_ids": [
+      5397,
+      5488
+    ],
+    "source_edge": 0.03550516830901331,
+    "rest_fit_edge": 0.04139197566071032,
+    "elbow90_edge": 0.06938822458591241,
+    "pose_rest_ratio": 1.6763689937075514
+  }
+}

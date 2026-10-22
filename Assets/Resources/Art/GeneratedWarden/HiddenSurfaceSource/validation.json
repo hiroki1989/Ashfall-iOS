@@ -1,0 +1,50 @@
+[
+  {
+    "file": "leg-negative-x-inner-painted-v1.png",
+    "size": [
+      887,
+      1774
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "maskIoU": 0.9630939695319284
+  },
+  {
+    "file": "leg-positive-x-inner-painted-v1.png",
+    "size": [
+      887,
+      1774
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "maskIoU": 0.9525299766589691
+  },
+  {
+    "file": "torso-negative-x-painted-v1.png",
+    "size": [
+      887,
+      1774
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "maskIoU": 0.9721450990675833
+  },
+  {
+    "file": "torso-positive-x-painted-v1.png",
+    "size": [
+      887,
+      1774
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "maskIoU": 0.975571821050526
+  }
+]

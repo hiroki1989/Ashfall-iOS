@@ -1,0 +1,36 @@
+{
+  "face_counts": {
+    "front": 2955,
+    "back": 2441,
+    "left": 3290,
+    "right": 3314
+  },
+  "faces_total": 12000,
+  "tiles": {
+    "front": [
+      0,
+      0,
+      1024,
+      1024
+    ],
+    "back": [
+      1024,
+      0,
+      2048,
+      1024
+    ],
+    "left": [
+      0,
+      1024,
+      1024,
+      2048
+    ],
+    "right": [
+      1024,
+      1024,
+      2048,
+      2048
+    ]
+  },
+  "status": "visual candidate; rig pose and seam QA outstanding"
+}

@@ -1,0 +1,16 @@
+{
+  "model": "tencent/Hunyuan3D-2mini",
+  "texture": "Blender front/back projection; sharp front/back and vertically smoothed side variants of same two images",
+  "original_faces": 157706,
+  "candidate_faces": 30000,
+  "candidate_vertices": 15000,
+  "dimensions_m": [
+    0.8475502729415894,
+    0.37898099422454834,
+    1.8202450275421143
+  ],
+  "coordinate": "feet at origin; Y up in FBX; Z forward",
+  "atlas": "body-atlas-candidate.png",
+  "runtime_status": "approved for Unity QA; copied to Resources/Art/GeneratedBase",
+  "qa": "Front/back retain central illustration detail; side has no empty seam or horizontal striping. Side sleeve, trouser and boot detail are softened; Unity and animation QA pending."
+}

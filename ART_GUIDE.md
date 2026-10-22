@@ -157,3 +157,9 @@ InkedArt/ReadyでBody5方向・Armor0/1の2kit5方向・現代銃12/13を新nati
 
 ## 2026-10-17 inventory illustration
 銃/防具cardsを3D撮影から既存イラストへ戻す。modulecardsは組込みimagegen新24点(6社×4系統)painted atlasを使用、maker/effectで切り出し。社章は別UI。製品ごとの固有絵を全550枚生成したものではない。装着3Dは保持。原本/promptはDevelopment/Manufacturers22末尾。
+
+## 2026-10-21 Warden hidden surface source repair
+Built-in imagegen skill used for arm-free torso ±X and isolated inner leg texture projection sources, saved Assets/Resources/Art/GeneratedWarden/HiddenSurfaceSource. Existing equipment design is authority. The clay templates are orthographic extracts of armor-rebuilt.fbx. Torso sources omit the occluding arms/hands; leg v2 has trouser upper57%, tall leather boot lower43%, no inner kneeplate/pouch or duplicate laces. Positive inner leg uses mirrored v2 registered to its own template. Rejected v1/source attempts retained. Prompt/registration/camera details in source README/prompts.json and D:/Unity/AshfallArtValidation/hidden-surface-art. Atlas bake repairs hidden side surfaces, retains exposed original art; geometry/rig unchanged. This replaces false cuffs/hands and foreign-leg details baked into occluded surfaces. Fine seam/color matching is not guaranteed perfect.
+
+## 2026-10-22 素体の固定UV修復
+素体はカメラ方向で全身写真を切り替えない。側面sourceは腕で隠れた胴・腰をimagegenで補完し、最終メッシュを正投影した図の寸法へ合わせて固定UVへ投影する。新source/生成記録はAssets/ArtSource/LowPolyProof/SideSurfaceRepair。側面を下垂腕付き写真で上書きすると腕の絵が胴に残るため禁止。手順は承認済みHunyuan元形状をCPUのBlenderで修復して再利用し、Hunyuan/AIテクスチャモデルのローカルGPU生成は行わない。頭は承認済みhead-rebuiltを素体/装備で共用し、マスクは別装備として扱う。頭部専用bake候補画像は原本として保存するが採用モデルの頭を置換しない。

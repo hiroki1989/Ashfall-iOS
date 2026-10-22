@@ -1,0 +1,40 @@
+{
+  "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-armor-two-view.png",
+  "width": 2048,
+  "height": 1024,
+  "views": [
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-armor-source-0.png",
+      "source_bbox": [
+        270,
+        37,
+        754,
+        987
+      ],
+      "placed_bbox": [
+        266,
+        30,
+        757,
+        993
+      ],
+      "visible_fraction": 0.613276
+    },
+    {
+      "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-armor-source-1.png",
+      "source_bbox": [
+        270,
+        37,
+        754,
+        987
+      ],
+      "placed_bbox": [
+        266,
+        30,
+        757,
+        993
+      ],
+      "visible_fraction": 0.613248
+    }
+  ],
+  "alpha_min": 255
+}

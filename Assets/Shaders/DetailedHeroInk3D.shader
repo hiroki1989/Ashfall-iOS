@@ -16,6 +16,10 @@ Shader "NeonVault/DetailedHeroInk3D"
         _CreatureAtlas ("Creature skin / hide / bone / membrane", 2D) = "white" {}
         _CreatureSurface ("Creature material quadrant", Float) = -1
         _MicroRelief ("Material surface relief", Range(0,2)) = .7
+        [HideInInspector] _ProjectionSheet ("Equipment projection", 2D) = "white" {}
+        [HideInInspector] _ProjectionUv ("Equipment projection crop", Vector) = (0,0,1,1)
+        [HideInInspector] _AccessoryProjectionSheet ("Accessory projection", 2D) = "white" {}
+        [HideInInspector] _AccessoryProjectionUv ("Accessory projection crop", Vector) = (0,0,1,1)
     }
     SubShader
     {
@@ -47,14 +51,19 @@ Shader "NeonVault/DetailedHeroInk3D"
         float _AtlasStrength;
         sampler2D _CreatureAtlas;
         float _CreatureSurface,_MicroRelief;
+        sampler2D _ProjectionSheet,_AccessoryProjectionSheet;
+        float4 _ProjectionUv,_AccessoryProjectionUv,_ProjectionMin,_ProjectionSize;
+        float4x4 _ProjectionWorldToRoot,_ProjectionWorldNormalToRoot;
+        float _ProjectionMode,_ProjectionEnabled,_AccessoryProjectionEnabled;
         // Full precision avoids Metal cross-compiler min-precision bytecode failures.
         struct SurfaceOutputSurvivor { float3 Albedo; float3 Normal; float3 Emission; float Specular; float Gloss; float Alpha; };
-        struct Input { float3 worldPos; float3 geometricNormal; float4 detailTangent; };
+        struct Input { float3 worldPos; float3 geometricNormal; float4 detailTangent; float2 accessoryUV; float accessoryMask; };
         void SurfaceVertex(inout appdata_full v,out Input o)
         {
             UNITY_INITIALIZE_OUTPUT(Input,o);
             o.geometricNormal=UnityObjectToWorldNormal(v.normal);
             o.detailTangent=float4(UnityObjectToWorldDir(v.tangent.xyz),v.tangent.w*unity_WorldTransformParams.w);
+            o.accessoryUV=v.texcoord2.xy;o.accessoryMask=v.texcoord3.x;
         }
         float hash3(float3 p) { p=frac(p*.1031); p+=dot(p,p.yzx+33.33); return frac((p.x+p.y)*p.z); }
         float noise3(float3 p)
@@ -146,6 +155,25 @@ Shader "NeonVault/DetailedHeroInk3D"
             else if(_SurfaceKind<5.5 && _SurfaceKind>4.5) { pigment+=(fine-.5)*.075+(broad-.5)*.12; float pore=smoothstep(.78,.92,noise3(p*390)); pigment-=pore*.065; float crease=length(ddx(normalize(IN.geometricNormal)))+length(ddy(normalize(IN.geometricNormal))); mark+=saturate((crease-.06)*1.8)*.12; }
             else if(_SurfaceKind<6.5 && _SurfaceKind>5.5) { pigment+=sin(p.y*120+noise3(p*14)*9)*.055; }
             else if(_SurfaceKind>6.5) { pigment=1; o.Emission=color*.075; }
+            if(_ProjectionEnabled>.5)
+            {
+                // Reconstruct projection coordinates from the existing interpolated world
+                // position and geometric normal; this avoids extra ForwardBase varyings.
+                float3 projectionPos=mul(_ProjectionWorldToRoot,float4(IN.worldPos,1)).xyz;
+                float3 projectionNormal=normalize(mul((float3x3)_ProjectionWorldNormalToRoot,IN.geometricNormal));
+                float3 q=(projectionPos-_ProjectionMin)/_ProjectionSize;
+                float facing=(_ProjectionMode<.5||_ProjectionMode>1.5)?projectionNormal.x:projectionNormal.z;
+                float2 uv=_ProjectionMode<.5?float2(q.z,q.y):_ProjectionMode<1.5?float2(q.x,q.y):float2(q.y,q.z);
+                if(facing<0)uv.x=1-uv.x;
+                uv=_ProjectionUv.xy+uv*_ProjectionUv.zw;
+                float4 illustration=tex2D(_ProjectionSheet,uv);
+                color=lerp(color,illustration.rgb,illustration.a);
+            }
+            if(_AccessoryProjectionEnabled>.5 && IN.accessoryMask>.5)
+            {
+                float4 detail=tex2D(_AccessoryProjectionSheet,_AccessoryProjectionUv.xy+IN.accessoryUV*_AccessoryProjectionUv.zw);
+                color=lerp(color,detail.rgb,detail.a);
+            }
             if(_AtlasStrength>0 && _SurfaceKind>.5 && _SurfaceKind<4.5)
             {
                 float3 objectNormal=normalize(mul((float3x3)unity_WorldToObject,IN.geometricNormal));

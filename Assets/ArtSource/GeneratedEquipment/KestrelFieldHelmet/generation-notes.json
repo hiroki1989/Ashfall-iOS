@@ -1,0 +1,49 @@
+{
+  "productId": "distinct.armor.030",
+  "family": "Kestrel Field Helmet",
+  "status": "rejected_visual_qa_not_integrated",
+  "shapeModel": "tencent/Hunyuan3D-2mini",
+  "shapeInput": "kestrel-field-helmet-blueprint-sheet.png (front view)",
+  "textureWorkflow": "Blender four-view blueprint projection and 4K atlas; no AI texture generation",
+  "views": {
+    "front": "kestrel-field-helmet-blueprint-sheet.png, upper-left",
+    "back": "kestrel-field-helmet-blueprint-sheet.png, lower-left",
+    "sideOrthographic": "kestrel-field-helmet-side-orthographic.png"
+  },
+  "fitContract": {
+    "socket": "CharacterRigStandard.Head",
+    "localPositionMeters": [
+      0,
+      0,
+      0
+    ],
+    "dimensionsMeters": [
+      0.245,
+      0.26,
+      0.285
+    ]
+  },
+  "qaFinding": "The generated shape silhouette is usable, but projected front and side details do not line up with the mesh, leaving doubled edges and fragmented patches. Do not register or ship this candidate until the view-to-surface projection is corrected.",
+  "latestValidation": {
+    "shapeVersion": "v2",
+    "seed": 20261022,
+    "steps": 30,
+    "octreeResolution": 256,
+    "numChunks": 6000,
+    "vertices": 293801,
+    "faces": 587596,
+    "projection": "Retried with initial-loadout-v6/apply_initial_gear_projection.py exactly, plus a mesh-silhouette-matched side view; variants v4-v8 all visually rejected",
+    "qa": "Four-view Blender renders still show doubled/fragmented edge patterns; no Unity integration; retain old equipment path",
+    "evidence": "D:/Unity/AshfallArtValidation/equipment3d-batch/kestrel-field-helmet/mesh-qa-v4 through mesh-qa-v8",
+    "mobileFBX": {
+      "faces": 30554,
+      "vertices": 15285,
+      "dimensionsMeters": [
+        0.245,
+        0.26,
+        0.285
+      ],
+      "atlas": "4K Blender projection"
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "coordinate_system": "Blender Z-up metres; Unity=(x,z,y) after the established FBX import transform",
+  "source_blend": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\BodyTwoView\\two-view-proof.blend",
+  "texture": "BodyTwoView/body-head-two-view.png",
+  "uv_layer": "Two view only",
+  "joint_centres_blender": {
+    "left_shoulder": [
+      -0.245,
+      0.055,
+      1.427
+    ],
+    "left_elbow": [
+      -0.345,
+      0.055,
+      1.142
+    ],
+    "left_wrist": [
+      -0.37,
+      0.035,
+      0.877
+    ],
+    "right_shoulder": [
+      0.245,
+      0.055,
+      1.427
+    ],
+    "right_elbow": [
+      0.345,
+      0.055,
+      1.142
+    ],
+    "right_wrist": [
+      0.37,
+      0.035,
+      0.877
+    ]
+  },
+  "target_rig_unity": {
+    "left_shoulder": [
+      -0.18,
+      1.427,
+      0
+    ],
+    "left_elbow": [
+      -0.18,
+      1.142,
+      0
+    ],
+    "left_wrist": [
+      -0.18,
+      0.877,
+      0
+    ],
+    "right_shoulder": [
+      0.18,
+      1.427,
+      0
+    ],
+    "right_elbow": [
+      0.18,
+      1.142,
+      0
+    ],
+    "right_wrist": [
+      0.18,
+      0.877,
+      0
+    ]
+  },
+  "source_vertex_attribute": "source_vertex",
+  "parts": {
+    "body": {
+      "vertices": 5036,
+      "faces": 9947
+    },
+    "left_upper": {
+      "vertices": 228,
+      "faces": 388
+    },
+    "left_forearm": {
+      "vertices": 182,
+      "faces": 303
+    },
+    "left_hand": {
+      "vertices": 181,
+      "faces": 332
+    },
+    "right_upper": {
+      "vertices": 224,
+      "faces": 381
+    },
+    "right_forearm": {
+      "vertices": 182,
+      "faces": 305
+    },
+    "right_hand": {
+      "vertices": 188,
+      "faces": 344
+    }
+  },
+  "status": "authoring candidate, not approved for runtime; pose and seam QA required"
+}

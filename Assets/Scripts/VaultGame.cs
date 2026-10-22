@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -78,7 +78,7 @@ namespace NeonVault
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
             audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=GunReport(true,true);pickupSound=Tone(620,.16f);
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
-            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
+            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
             ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);BuildRoom(false);
             if(Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0) gameObject.AddComponent<SmokeRun>();
@@ -340,7 +340,7 @@ namespace NeonVault
         }
         public void Hurt(float damage)
         {
-            if(!Active||invincible>0)return;LegendaryTrigger("hurt",PlayerPosition);hp-=AbsorbArtifactDamage(damage*(1-DamageReduction));lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
+            if(!Active||invincible>0)return;hp-=AbsorbArtifactDamage(damage*(1-DamageReduction));LegendaryTrigger("hurt",PlayerPosition);lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
             if(hp<=0) { hp=0; Finish(false); }
         }
         public void FoeKilled(Foe f)
@@ -368,6 +368,7 @@ namespace NeonVault
         }
         void AddDrop(Gun weapon,Vector3 p)
         {
+            GearBalance.Migrate(weapon);
             p.y=.3f;
             var obj=CreateLootPresentation(weapon.name,p,new Vector3(.65f,.28f,1.05f),weapon.color,LootPresentationKind.Weapon);
             ApplyProductDropModel(obj,weapon);drops.Add(new Drop {gun=weapon,position=p,visual=obj});

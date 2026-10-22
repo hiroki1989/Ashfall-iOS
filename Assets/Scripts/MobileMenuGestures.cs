@@ -6,7 +6,7 @@ namespace NeonVault
     [DefaultExecutionOrder(-180)]
     public sealed class MobileMenuGestures : MonoBehaviour
     {
-        sealed class Pointer { public Vector2 start, position; public bool dragged; }
+        sealed class Pointer { public Vector2 start, position; public bool dragged; public int region; }
         readonly Dictionary<int, Pointer> pointers = new Dictionary<int, Pointer>();
         VaultGame game;
         int mode = -1, swallowThrough = -1;
@@ -18,7 +18,7 @@ namespace NeonVault
                 new GameObject("Mobile menu gestures").AddComponent<MobileMenuGestures>();
         }
         void Awake() { DontDestroyOnLoad(gameObject); }
-        int Mode => game == null ? 0 : game.InventoryOpen ? 1 : game.screen == VaultGame.Screen.DungeonSelect ? 2 : 0;
+        int Mode => game == null ? 0 : game.EquipmentMenuVisible ? 1 : game.screen == VaultGame.Screen.DungeonSelect ? 2 : 0;
         void Update()
         {
             if (!MobileTouchControls.Enabled) return;
@@ -41,10 +41,11 @@ namespace NeonVault
             if (game == null) game = FindAnyObjectByType<VaultGame>();
             if (Mode == 0) { ResetGestures(); return; }
             if (mode != Mode) { ResetGestures(); mode = Mode; }
-            Rect view = Mode == 1 ? game.MobileInventoryScrollRect : game.MobileCityView;
+            Rect view = game.MobileCityView;
             if (phase == TouchPhase.Began)
             {
-                if (view.Contains(Canvas(position))) pointers[id] = new Pointer { start = position, position = position };
+                int region=Mode==1?game.EquipmentGestureRegion(Canvas(position)):0;
+                if (Mode==1?region!=0:view.Contains(Canvas(position))) pointers[id] = new Pointer { start = position, position = position,region=region };
                 return;
             }
             if (!pointers.TryGetValue(id, out Pointer pointer)) return;
@@ -81,9 +82,7 @@ namespace NeonVault
             swallowThrough = Time.frameCount + 1;
             if (Mode == 1)
             {
-                Vector2 scroll = game.MobileInventoryScroll;
-                scroll.y = Mathf.Clamp(scroll.y - delta.y, 0, Mathf.Max(0, game.MobileInventoryContentHeight - view.height));
-                game.MobileInventoryScroll = scroll;
+                game.DragEquipmentMenu(pointer.region,delta);
             }
             else game.MobileAdjustCityMap(delta, 1, Vector2.zero);
         }

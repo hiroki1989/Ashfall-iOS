@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 namespace NeonVault
 {
@@ -16,9 +16,9 @@ namespace NeonVault
         public static string LegendaryRuntimeDescription(string key,bool japanese)
         {
             if(!DecodeLegendaryKey(key,out int maker,out int variant))return "";
-            bool armor=key.StartsWith("armor-");
-            string[] triggerEn=armor?new[]{"On damage taken (4s cooldown)","On kill (4s cooldown)","On reload (4s cooldown)","On dash (4s cooldown)","Every 5s in combat"}:new[]{"Every third shot (1s cooldown)","On bullet hit (2s cooldown)","On kill (2s cooldown)","On reload (3s cooldown)","On dash (3s cooldown)"};
-            string[] triggerJa=armor?new[]{"被弾時（待機4秒）","撃破時（待機4秒）","装填時（待機4秒）","ダッシュ時（待機4秒）","戦闘中5秒ごと"}:new[]{"3射ごと（待機1秒）","銃弾命中時（待機2秒）","撃破時（待機2秒）","装填時（待機3秒）","ダッシュ時（待機3秒）"};
+            if(key.StartsWith("armor-"))return ArmorLegendaryDescription(maker,variant,japanese);
+            string[] triggerEn={"Every third shot (1s cooldown)","On bullet hit (2s cooldown)","On kill (2s cooldown)","On reload (3s cooldown)","On dash (3s cooldown)"};
+            string[] triggerJa={"3射ごと（待機1秒）","銃弾命中時（待機2秒）","撃破時（待機2秒）","装填時（待機3秒）","ダッシュ時（待機3秒）"};
             string[] coreEn={"nearest-target precision strike + 3s of +25% shot damage and perfect spread score","2.8m heavy shockwave + barrier","up to 3 chain-lightning targets + first-target echo","single-target siphon + healing","4m blast + reserve ammunition","barrier charge + 2.5m retaliation"};
             string[] coreJa={"最寄への精密追撃＋3秒間の銃弾威力25%増幅・精度100","半径2.8m重衝撃＋障壁","最大3体への連鎖雷撃＋先頭への再撃","単体吸命＋HP回復","半径4m爆発＋予備弾還元","障壁充填＋半径2.5m反撃"};
             string[] variantEn={"extra focused strike","3m radial strike","three lingering 2.2m pulses","delayed strikes at up to three targets","three forward trail zones pulsing twice"};
@@ -50,7 +50,7 @@ namespace NeonVault
             if(legendaryResolving||!Active)return;
             if(trigger=="fire")legendaryShots++;
             if(gun!=null)TryLegendaryEffect(gun.legendaryKey,false,trigger,origin,struck);
-            foreach(var armor in EquippedArmor)if(armor!=null)TryLegendaryEffect(armor.legendaryKey,true,trigger,origin,struck);
+            foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))TryLegendaryEffect(armor.legendaryKey,true,trigger,origin,struck);
         }
         void TryLegendaryEffect(string key,bool armor,string trigger,Vector3 origin,Foe struck)
         {
@@ -65,6 +65,7 @@ namespace NeonVault
         }
         void ResolveLegendaryEffect(int maker,int variant,bool armor,Vector3 origin,Foe struck)
         {
+            if(armor){ResolveArmorLegendary(maker,variant,PlayerPosition);return;}
             float scale=1+variant*.25f;
             float damage=(armor?12:Mathf.Max(8,gun==null?8:gun.damage*.65f))*scale;
             var color=LegendaryEffectColor(maker);Burst(origin,color,10);
@@ -108,6 +109,47 @@ namespace NeonVault
                 foreach(var foe in candidates)if((foe.transform.position-origin).sqrMagnitude<=6.25f)LegendaryStrike(foe,damage*.75f,color);
                 UpdateBarrierVisual();
             }
+        }
+        // The retired head slot (variant 0) is deliberately inert. Every active
+        // armor piece has its own support pattern; gun signatures remain separate.
+        static string ArmorLegendaryDescription(int maker,int variant,bool ja)
+        {
+            if(variant==0)return ja?"頭装備は一時停止中":"Head equipment is retired";
+            string[] triggerEn={"","On kill (4s cooldown): ","On reload (4s cooldown): ","On dash (4s cooldown): ","Every 5s in combat: "};
+            string[] triggerJa={"","撃破時（待機4秒）：","装填時（待機4秒）：","ダッシュ時（待機4秒）：","戦闘中5秒ごと："};
+            string[,] en={
+                {"","restore 2 reserve rounds","ready dodge 0.5s sooner","restore 1 reserve round","restore 1 reserve round"},
+                {"","heal 4 HP","heal 3 HP","heal 2 HP and shorten dodge cooldown by 0.5s","heal 2 HP"},
+                {"","shorten dodge cooldown by 1s","shorten dodge cooldown by 1.5s","ready dodge 1.5s sooner","shorten dodge cooldown by 0.5s"},
+                {"","heal 5 HP","heal 4 HP","heal 3 HP","heal 3 HP"},
+                {"","restore 3 reserve rounds","restore 2 reserve rounds","restore 2 reserve rounds","restore 2 reserve rounds"},
+                {"","heal 3 HP and restore 1 reserve round","heal 2 HP and restore 1 reserve round","heal 2 HP and shorten dodge cooldown by 1s","heal 2 HP and restore 1 reserve round"}};
+            string[,] jp={
+                {"","予備弾2発回復","回避待機を0.5秒短縮","予備弾1発回復","予備弾1発回復"},
+                {"","HP4回復","HP3回復","HP2回復・回避待機0.5秒短縮","HP2回復"},
+                {"","回避待機1秒短縮","回避待機1.5秒短縮","回避待機1.5秒短縮","回避待機0.5秒短縮"},
+                {"","HP5回復","HP4回復","HP3回復","HP3回復"},
+                {"","予備弾3発回復","予備弾2発回復","予備弾2発回復","予備弾2発回復"},
+                {"","HP3・予備弾1発回復","HP2・予備弾1発回復","HP2回復・回避待機1秒短縮","HP2・予備弾1発回復"}};
+            return (ja?triggerJa:triggerEn)[variant]+(ja?jp:en)[maker,variant];
+        }
+        void ResolveArmorLegendary(int maker,int variant,Vector3 origin)
+        {
+            if(variant==0)return;
+            float heal=0,advance=0;int rounds=0;
+            switch(maker)
+            {
+                case 0:rounds=variant==1?2:1;if(variant==2)advance=.5f;break;
+                case 1:heal=variant==1?4:variant==2?3:2;if(variant==3)advance=.5f;break;
+                case 2:advance=variant==1?1:variant==2||variant==3?1.5f:.5f;break;
+                case 3:heal=variant==1?5:variant==2?4:3;break;
+                case 4:rounds=variant==1?3:2;break;
+                case 5:heal=variant==1?3:2;if(variant==3)advance=1;else rounds=1;break;
+            }
+            hp=Mathf.Min(maxHp,hp+heal);
+            dodgeCooldown=Mathf.Max(0,dodgeCooldown-advance);
+            if(rounds>0&&gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+rounds);}
+            Burst(origin,LegendaryEffectColor(maker),5);
         }
         void LegendarySignature(Vector3 origin,int maker,Color color,List<Foe> targets)
         {

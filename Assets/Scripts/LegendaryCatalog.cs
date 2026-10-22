@@ -55,6 +55,11 @@ namespace NeonVault
             item.name=GunName(item,false);item.subtitle=Description(item,false);
             item.color=Arsenal.Colors[(int)Rarity.Legendary];return item;
         }
+        public static ArmorItem RollArmor(System.Random random,int level)
+        {
+            if(random==null)throw new ArgumentNullException(nameof(random));
+            int pick=random.Next(24);return CreateArmor((pick/4)*5+1+pick%4,random,level);
+        }
         public static ArmorItem CreateArmor(int index,System.Random random,int level)
         {
             if(random==null)throw new ArgumentNullException(nameof(random));index=Mathf.Clamp(index,0,29);

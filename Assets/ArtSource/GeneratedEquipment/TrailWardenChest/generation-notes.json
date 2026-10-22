@@ -1,0 +1,32 @@
+{
+  "asset": "Trail Warden chest field jacket / plate carrier",
+  "process": "Integrated initial Warden method: Tencent Hunyuan3D-2.1 hosted shape generation, then Blender four-view design projection and atlas bake",
+  "views": [
+    "front.png",
+    "right.png",
+    "back.png",
+    "left.png"
+  ],
+  "shape_generation": {
+    "endpoint": "tencent-hunyuan3d-2-1.hf.space /shape_generation",
+    "model": "tencent/Hunyuan3D-2.1/hunyuan3d-dit-v2-1",
+    "initial_set_method_match": true,
+    "local_2mini_note": "A separate local Hunyuan3D-2mini shape-only trial was also run because the request named 2mini; it was not how the integrated initial Warden set was produced.",
+    "remote_candidate_count": 3,
+    "local_2mini": {
+      "steps": 30,
+      "octree_resolution": 256,
+      "vertices": 293185,
+      "faces": 586458,
+      "texture_generation": false,
+      "status": "generated"
+    },
+    "text_prompt": "Hosted endpoint has no caption/text parameter; four-view design images are the conditioning input."
+  },
+  "qa": {
+    "remote_all": "All three remote 2.1 chest candidates retain a large unintended front opening.",
+    "projection": "Blender projection/bake was evaluated on the first remote candidate and the local 2mini shape. The remote candidate has an open chest; local 2mini closes the center but creates an oversized spherical breastplate, with dark rear and misaligned side projection.",
+    "runtime_import": false
+  },
+  "status": "REJECTED_FOR_RUNTIME: no Unity product asset registered until geometry and texture pass four-view visual QA."
+}

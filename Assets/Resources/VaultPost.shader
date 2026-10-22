@@ -1,4 +1,4 @@
-Shader "Hidden/NeonVault/Post"
+﻿Shader "Hidden/NeonVault/Post"
 {
     Properties { _MainTex ("Source",2D)="white"{} _Bloom("Bloom",2D)="black"{} }
     SubShader
@@ -24,9 +24,10 @@ Shader "Hidden/NeonVault/Post"
                 {
                     float2 offset=sample==0?float2(1.15,0):sample==1?float2(-1.15,0):sample==2?float2(0,1.15):float2(0,-1.15);
                     float depth;float3 normal;DecodeDepthNormal(tex2D(_CameraDepthNormalsTexture,i.uv+offset*_MainTex_TexelSize.xy),depth,normal);
-                    float crease=smoothstep(.28,.75,length(normal-centerNormal));
+                    // Painted scans already contain ink. Facet-normal edges turn their
+                    // fine surface into dark speckles; use geometric depth boundaries only.
                     float separation=smoothstep(.008,.05,abs(depth-centerDepth)/max(.004,centerDepth));
-                    ink=max(ink,max(crease,separation));
+                    ink=max(ink,separation);
                 }
             }
             c=lerp(c,half3(.009,.014,.02),ink*.52);

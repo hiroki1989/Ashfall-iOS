@@ -1,0 +1,19 @@
+{
+  "source": "D:\\Unity\\AshfallArtValidation\\equipment3d-batch\\kestrel-field-helmet\\model-output\\kestrel-field-helmet-v2-shape-only.glb",
+  "source_triangles": 587586,
+  "triangles": 31990,
+  "dimensions_blender_m": [
+    0.24500000476837158,
+    0.25999999046325684,
+    0.2849999964237213
+  ],
+  "fixed_view_faces": [
+    26352,
+    5638
+  ],
+  "uv_outside": 0,
+  "side_images_used": false,
+  "occupancy": 0.945,
+  "shape_operations": "Decimation and size fit only; no silhouette edits",
+  "status": "Candidate; visual QA required, not Resources"
+}

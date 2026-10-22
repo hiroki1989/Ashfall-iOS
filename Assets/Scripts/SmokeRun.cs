@@ -1300,7 +1300,9 @@ namespace NeonVault
             var ward=equipped[0];game.EquipArtifact(ward,0);game.ResetArtifactCombat();game.ArtifactOnKill(game.PlayerPosition);float shield=game.ArtifactShield;Check(shield>0,"kill shield artifact triggers its actual barrier");
             game.EquipArtifact(ward,0);game.ArtifactOnKill(game.PlayerPosition);Check(game.ArtifactShield==shield,"same-slot re-equip cannot bypass artifact cooldown");
             game.EquipArtifact(ward,1);game.ArtifactOnKill(game.PlayerPosition);Check(game.ArtifactShield==shield,"moving artifact between slots preserves its cooldown");
-            float residue=game.AbsorbArtifactDamage(3);Check(residue==0&&game.ArtifactShield==shield-3,"artifact barrier actually absorbs incoming damage");
+            float residue=game.AbsorbArtifactDamage(3);
+            Check(residue>0&&residue<3&&game.ArtifactShield<shield,
+                "artifact barrier reduces incoming damage without granting immunity and expends charge");
             var surge=ArtifactCatalog.Create(new System.Random(8),0,Rarity.Common,1);surge.effect=ArtifactEffect.ReloadSurge;game.StoreArtifact(surge);game.EquipArtifact(surge,0);float baseline=game.EffectiveDamage,raw=game.gun.damage;game.ArtifactOnReload();Check(game.EffectiveDamage>baseline&&game.gun.damage==raw,"reload artifact modifies effective damage without rewriting weapon base stats");
             game.OpenArtifactInventory();VaultLanguage.Set(true,false);yield return Capture("artifacts-ja.png");VaultLanguage.Set(false,false);yield return Capture("artifacts-en.png");game.ToggleInventory();
             game.TickArtifacts(8);Check(Mathf.Abs(game.ArtifactDamageMultiplier-1)<.001f,"reload damage condition expires");
@@ -1365,6 +1367,9 @@ namespace NeonVault
                 File.WriteAllText(Path.Combine(output,ResultFile),"PASS / "+checks+" contact/render checks / "+DateTime.UtcNow.ToString("O"));Application.Quit(0);yield break;
             }
             VerifyGearQuality();
+            for(int ammoType=0;ammoType<4;ammoType++)
+                Check(game.AmmoReserve((AmmoType)ammoType)==game.AmmoCapacity((AmmoType)ammoType),
+                    "fresh game starts with a full reserve for ammunition family "+ammoType);
             if(reticleReview){game.StartRun(130363);game.invincible=999;foreach(var enemy in game.Enemies)if(enemy!=null)enemy.enabled=false;VaultLanguage.Set(false,false);yield return CaptureReticleAccuracy(game);File.WriteAllText(Path.Combine(output,ResultFile),"PASS / "+checks+" checks / "+Application.unityVersion+" / "+DateTime.UtcNow.ToString("O"));Application.Quit(0);yield break;}
             if(layeredReview){game.StartRun(104729);game.invincible=999;game.enabled=false;foreach(var enemy in game.Enemies)if(enemy!=null)enemy.enabled=false;yield return VerifyLayeredVisuals(game,true);File.WriteAllText(Path.Combine(output,ResultFile),"PASS / "+checks+" checks / "+Application.unityVersion+" / "+DateTime.UtcNow.ToString("O"));Application.Quit(0);yield break;}
             if(playerReview){yield return VerifyPlayerReview(game);yield break;}

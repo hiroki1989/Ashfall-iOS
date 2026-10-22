@@ -17,6 +17,8 @@ namespace NeonVault
         public Vector3 RightToeContact=>rightToe.TransformPoint(V(0,0,.075f));
         public const float UpperArmLength=.285f, ForearmLength=.265f;
         Func<string,Material> palette; Transform rig; readonly List<Mesh> meshes=new List<Mesh>(); readonly List<Material> materials=new List<Material>(); readonly List<Texture2D> textures=new List<Texture2D>();
+        readonly HashSet<Renderer> anatomyRenderers=new HashSet<Renderer>();
+        public bool IsAnatomyRenderer(Renderer renderer)=>renderer&&anatomyRenderers.Contains(renderer);
         Material cloth,pants,skin,hair,hairHighlight,leather,seam,sole,metal;
         MeshRenderer seatRenderer;
         public void SetSeatFabric(Material value)
@@ -68,6 +70,7 @@ namespace NeonVault
             BuildFineDetails();
             SetPose("lowrifle",Vector3.forward,-1);
             CombineRigidMeshes(rig);
+            foreach(var renderer in GetComponentsInChildren<Renderer>(true))anatomyRenderers.Add(renderer);
         }
         void BuildFineDetails()
         {
@@ -216,10 +219,10 @@ namespace NeonVault
         }
         void BuildLimb(int s)
         {
-            var upper=Joint((s<0?"Left":"Right")+" upper arm",chest,V(s*.229f,.177f,0));
+            var upper=Joint((s<0?"Left":"Right")+" upper arm",chest,V(s*.18f,.177f,0));
             var fore=Joint("Forearm",upper,V(0,-UpperArmLength,0));var hand=Joint("Hand",fore,V(0,-ForearmLength,0));
             if(s<0){leftUpperArm=upper;leftForearm=fore;leftHand=hand;}else{rightUpperArm=upper;rightForearm=fore;rightHand=hand;}
-            Loft("Jacket sleeve deltoid bicep",upper,V(0,-.295f,0),new[]{0f,.025f,.08f,.15f,.22f,.28f,.32f,.35f},new[]{.060f,.069f,.075f,.077f,.084f,.082f,.060f,.002f},new[]{.061f,.069f,.073f,.075f,.081f,.078f,.058f,.002f},cloth,.008f,36,34);
+            Loft("Jacket sleeve deltoid bicep",upper,V(0,-.295f,0),new[]{0f,.025f,.08f,.15f,.22f,.28f,.32f,.35f},new[]{.057f,.064f,.070f,.072f,.078f,.075f,.056f,.002f},new[]{.058f,.064f,.068f,.070f,.075f,.072f,.054f,.002f},cloth,.008f,36,34);
             Loft("Rolled forearm sleeve",fore,V(0,-.16f,0),new[]{0f,.025f,.06f,.11f,.16f,.19f},new[]{.058f,.069f,.072f,.071f,.067f,.06f},new[]{.056f,.068f,.07f,.069f,.066f,.057f},cloth,.009f);
             Loft("Exposed forearm tendons",fore,V(0,-.27f,0),new[]{0f,.035f,.09f,.14f},new[]{.038f,.045f,.056f,.058f},new[]{.033f,.035f,.046f,.049f},skin,.001f);
             Loft("Fingerless glove palm",hand,V(0,-.10f,0),new[]{0f,.025f,.065f,.10f,.12f},new[]{.028f,.042f,.042f,.033f,.027f},new[]{.022f,.026f,.027f,.025f,.023f},leather,.001f);
@@ -353,15 +356,18 @@ namespace NeonVault
             // Stagger fore/aft during strafe instead of clamping the planted foot in world travel.
             float roll=Mathf.Max(0,toe)*blend;
             if(roll>0){Vector3 ball=V(0,-.089f,.12f);target+=Quaternion.Euler(0,side*5,0)*(ball-Quaternion.Euler(roll,0,0)*ball); }
-            SolveLeg(thigh,shin,foot,rig.TransformPoint(target),rig.TransformDirection(new Vector3(travel.x*.45f+side*.075f,0,Mathf.Max(.65f,travel.z))),toe*blend,side);
+            // The knee always hinges toward the character's front, even while retreating or strafing.
+            SolveLeg(thigh,shin,foot,rig.TransformPoint(target),rig.TransformDirection(V(side*.08f,0,1)),toe*blend,side);
             var toeJoint=side<0?leftToe:rightToe;if(toeJoint!=null)toeJoint.localRotation=Quaternion.Euler(-roll,0,0);
         }
         void SolveLeg(Transform thigh,Transform shin,Transform foot,Vector3 target,Vector3 kneePole,float toePitch,int side)
         {
             float scale=Mathf.Max(.001f,Mathf.Abs(transform.lossyScale.y));float upper=.438f*scale,lower=.416f*scale;Vector3 hip=thigh.position,delta=target-hip;
-            float distance=Mathf.Clamp(delta.magnitude,.08f*scale,upper+lower-.003f*scale);Vector3 axis=delta.normalized;
+            float distance=Mathf.Clamp(delta.magnitude,.08f*scale,upper+lower-.009f*scale);Vector3 axis=delta.normalized;
             float along=(upper*upper-lower*lower+distance*distance)/(2*distance);
-            Vector3 bend=Vector3.ProjectOnPlane(kneePole,axis).normalized;
+            Vector3 bend=Vector3.ProjectOnPlane(kneePole,axis);
+            if(bend.sqrMagnitude<.0001f)bend=Vector3.ProjectOnPlane(rig.up,axis);
+            bend.Normalize();
             Vector3 knee=hip+axis*along+bend*Mathf.Sqrt(Mathf.Max(0,upper*upper-along*along));
             // Solve the bend in the character's heading frame. A world-space FromToRotation
             // leaves the front of kneepads facing world +Z when the torso turns.

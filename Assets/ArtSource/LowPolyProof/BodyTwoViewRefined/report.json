@@ -1,0 +1,11 @@
+{
+  "body-head": {
+    "faces": 12000,
+    "faces_by_view": [
+      6069,
+      5931
+    ],
+    "atlas": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\BodyTwoViewRefined\\body-head-two-view.png",
+    "source": "D:\\Unity\\Ashfall-iOS\\Assets\\ArtSource\\LowPolyProof\\CleanBase\\lowpoly-proof.blend"
+  }
+}
