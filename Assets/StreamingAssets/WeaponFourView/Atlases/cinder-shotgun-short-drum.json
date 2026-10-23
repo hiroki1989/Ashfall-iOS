@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-shotgun-short-drum.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-series-v1.png cell 10",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        168,
+        488,
+        176
+      ]
+    },
+    "right": {
+      "source": "cinder-series-v1.png cell 10 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        168,
+        488,
+        176
+      ]
+    },
+    "front": {
+      "source": "cinder-series-v1.png cell 10 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-series-v1.png cell 10 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/cinder-series-v1.png",
+  "sourceCell": 10,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

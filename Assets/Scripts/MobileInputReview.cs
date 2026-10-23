@@ -99,6 +99,9 @@ namespace NeonVault
                 Check(r.width>=minimum-.1f && r.height>=minimum-.1f,label+" minimum target "+i);
                 for(int j=0;j<i;j++) Check(!r.Overlaps(rects[j]),label+" no overlap "+j+"/"+i);
             }
+            Rect fire=MobileTouchControls.GetControlRect(MobileAction.Fire),reloadButton=MobileTouchControls.GetControlRect(MobileAction.Reload);
+            Check(fire.width*fire.height>=reloadButton.width*reloadButton.height*2,label+" primary fire target has at least double area");
+            Check(fire.center.y>safe.y+safe.height*.72f,label+" fire target in lower thumb zone");
         }
         void VerifyInput()
         {

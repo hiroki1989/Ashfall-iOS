@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-sniper-anti-materiel.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-series-v1.png cell 23",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        174,
+        488,
+        163
+      ]
+    },
+    "right": {
+      "source": "voltarc-series-v1.png cell 23 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        174,
+        488,
+        163
+      ]
+    },
+    "front": {
+      "source": "voltarc-series-v1.png cell 23 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-series-v1.png cell 23 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/voltarc-series-v1.png",
+  "sourceCell": 23,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

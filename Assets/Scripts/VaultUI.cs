@@ -4,7 +4,9 @@ namespace NeonVault
     public partial class VaultGame
     {
         static string T(string english,string japanese)=>VaultLanguage.T(english,japanese);
-        readonly Color Mist=new Color(.76f,.82f,.87f), PanelInk=new Color(.025f,.04f,.057f,.96f);
+        readonly Color Mist=new Color(175/255f,193/255f,203/255f), PanelInk=new Color(21/255f,36/255f,50/255f,.97f);
+        static readonly Color UiPaper=new Color(246/255f,240/255f,221/255f);
+        static readonly Color UiDanger=new Color(1f,113/255f,139/255f);
         const string LegendaryRedOpen="<color=#FF4545>";
         const string LegendaryRedClose="</color>";
         string LegendaryDescription(object item,string description)
@@ -31,15 +33,21 @@ namespace NeonVault
         internal Vector2? AimUiReviewPoint;
         void Styles()
         {
-            if(label!=null)return;
+            if(label!=null)
+            {
+                Font displayFont=VaultLanguage.Japanese||englishHeadingFont==null?font:englishHeadingFont;
+                title.font=displayFont;heading.font=displayFont;return;
+            }
             label=new GUIStyle(GUI.skin.label){font=font,fontSize=20,wordWrap=false};label.normal.textColor=Color.white;
             small=new GUIStyle(label){fontSize=14};tiny=new GUIStyle(label){fontSize=12};
-            title=new GUIStyle(label){fontSize=68,fontStyle=FontStyle.Bold};
-            heading=new GUIStyle(label){fontSize=38,fontStyle=FontStyle.Bold};
+            Font headingFont=VaultLanguage.Japanese||englishHeadingFont==null?font:englishHeadingFont;
+            title=new GUIStyle(label){font=headingFont,fontSize=68,fontStyle=FontStyle.Bold};
+            heading=new GUIStyle(label){font=headingFont,fontSize=38,fontStyle=FontStyle.Bold};
             number=new GUIStyle(label){fontSize=42,fontStyle=FontStyle.Bold};
             centered=new GUIStyle(small){alignment=TextAnchor.MiddleCenter};
             button=new GUIStyle(label){fontSize=20,alignment=TextAnchor.MiddleLeft,padding=new RectOffset(26,12,8,8)};
             button.normal.background=null;button.hover.background=null;button.active.background=null;
+            button.normal.textColor=Ink;button.hover.textColor=Ink;button.active.textColor=Ink;
         }
         void Box(Rect rect,Color color){GUI.color=color;GUI.DrawTexture(rect,pixel);GUI.color=Color.white;}
         void Text(float x,float y,string value,GUIStyle style=null,Color? color=null,float width=900)
@@ -53,20 +61,26 @@ namespace NeonVault
         {Line(new Vector2(x,y-size),new Vector2(x+size,y),color);Line(new Vector2(x+size,y),new Vector2(x,y+size),color);Line(new Vector2(x,y+size),new Vector2(x-size,y),color);Line(new Vector2(x-size,y),new Vector2(x,y-size),color);}
         void Panel(Rect r,Color accent)
         {
-            Box(new Rect(r.x+4,r.y+5,r.width,r.height),new Color(0,0,0,.44f));
-            Box(r,PanelInk);Box(new Rect(r.x+2,r.y+2,r.width-4,24),new Color(.10f,.15f,.20f,.44f));
-            Box(new Rect(r.x,r.y,r.width,2),new Color(accent.r,accent.g,accent.b,.65f));
-            Box(new Rect(r.x,r.yMax-1,r.width,1),new Color(accent.r,accent.g,accent.b,.2f));
-            foreach(float x in new[]{r.x,r.xMax-16}){Box(new Rect(x,r.y,16,2),accent);Box(new Rect(x,r.yMax-2,16,2),accent);}
-            Box(new Rect(r.x,r.y,2,14),accent);Box(new Rect(r.xMax-2,r.yMax-14,2,14),accent);
+            Box(new Rect(r.x+3,r.y+5,r.width,r.height),new Color(0,0,0,.24f));
+            Box(r,PanelInk);
+            Color border=new Color(.51f,.67f,.70f,.28f);
+            Box(new Rect(r.x,r.y,r.width,1),border);Box(new Rect(r.x,r.yMax-1,r.width,1),border);
+            Box(new Rect(r.x,r.y,1,r.height),border);Box(new Rect(r.xMax-1,r.y,1,r.height),border);
+            Box(new Rect(r.x+16,r.y,Mathf.Min(48,r.width-32),3),accent);
+            Box(new Rect(r.x+1,r.yMax-2,Mathf.Min(30,r.width-2),1),new Color(accent.r,accent.g,accent.b,.45f));
         }
         bool Button(Rect r,string value,bool primary=false)
         {
             bool hover=r.Contains(Event.current.mousePosition);
-            Panel(r,primary||hover?Gold:Cyan*.65f);
-            if(hover||primary)Box(new Rect(r.x+2,r.y+2,r.width-4,r.height-4),new Color(.12f,.32f,.42f,hover?.45f:.25f));
-            Diamond(r.x+12,r.center.y,3,primary?Gold:Cyan);
-            bool clicked=GUI.Button(r,value,button);Text(r.xMax-35,r.center.y-14,"›",label,hover?Gold:Cyan,28);return clicked;
+            Color accent=primary?Gold:Cyan;
+            Panel(r,accent);
+            Box(new Rect(r.x+2,r.y+3,r.width-4,r.height-5),primary?(hover?new Color(.98f,.85f,.54f):Gold):(hover?new Color(.19f,.31f,.36f):new Color(.14f,.23f,.29f)));
+            Box(new Rect(r.x+2,r.y+3,4,r.height-6),accent);
+            var style=new GUIStyle(button){fontStyle=FontStyle.Bold};
+            style.normal.textColor=primary?Ink:UiPaper;style.hover.textColor=primary?Ink:UiPaper;style.active.textColor=primary?Ink:UiPaper;
+            bool clicked=GUI.Button(r,value,style);
+            Text(r.xMax-31,r.center.y-15,"›",new GUIStyle(label){fontSize=25},primary?Ink:accent,26);
+            return clicked;
         }
         void LanguageSelector()
         {

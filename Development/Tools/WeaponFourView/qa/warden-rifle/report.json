@@ -1,0 +1,26 @@
+{
+  "sourceMesh": "Assets\\Resources\\Art\\GeneratedWarden\\rifle-mobile.fbx",
+  "projectedMesh": "Assets\\StreamingAssets\\WeaponFourView\\warden-rifle-four-view.glb",
+  "faceCount": 11998,
+  "facesByIsland": {
+    "left": 5096,
+    "right": 5481,
+    "front": 725,
+    "back": 696
+  },
+  "bounds": [
+    1.9936002492904663,
+    0.20220056176185608,
+    0.5925397574901581
+  ],
+  "axes": {
+    "bore": 0,
+    "lateral": 1,
+    "vertical": 2
+  },
+  "uvRange": [
+    0.01,
+    0.99
+  ],
+  "islandOverlap": 0
+}

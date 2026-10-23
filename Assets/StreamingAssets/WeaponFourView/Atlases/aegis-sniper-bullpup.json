@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-sniper-bullpup.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-series-v1.png cell 22",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        170,
+        488,
+        172
+      ]
+    },
+    "right": {
+      "source": "aegis-series-v1.png cell 22 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        170,
+        488,
+        172
+      ]
+    },
+    "front": {
+      "source": "aegis-series-v1.png cell 22 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-series-v1.png cell 22 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/aegis-series-v1.png",
+  "sourceCell": 22,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-smg-helical.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-series-v1.png cell 18",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        139,
+        488,
+        233
+      ]
+    },
+    "right": {
+      "source": "cinder-series-v1.png cell 18 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        139,
+        488,
+        233
+      ]
+    },
+    "front": {
+      "source": "cinder-series-v1.png cell 18 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-series-v1.png cell 18 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/cinder-series-v1.png",
+  "sourceCell": 18,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

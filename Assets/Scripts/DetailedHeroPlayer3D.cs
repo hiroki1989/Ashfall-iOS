@@ -22,7 +22,9 @@ namespace NeonVault
         bool? filteredWardenArmor;
         string generatedLookWeaponKey;
         GeneratedProductWeapon productWeapon;
+        TacticalBackpackVisual backpack;
         readonly SharedArmorTextures sharedArmorTextures=new SharedArmorTextures();
+        readonly SharedArmorSleeves sharedArmorSleeves=new SharedArmorSleeves();
         public Transform EquippedWeaponRoot=>current?.root;
         public bool IsGeneratedLookActive=>generatedLookRoot&&generatedLookRoot.activeSelf;
         public int GeneratedArmorSlotTriangleCount(ArmorSlot slot)
@@ -52,6 +54,7 @@ namespace NeonVault
             driver.commonBaseSkin=GeneratedCommonBodyRig.Create(driver.body);
             driver.SuppressOldBase();
             driver.equipment=DetailedHeroArsenal3D.ApplyArmor(driver.body,null);
+            driver.backpack=TacticalBackpackVisual.Create(driver.body);
             driver.previous=actor.position;
             return driver;
         }
@@ -97,6 +100,7 @@ namespace NeonVault
             ApplyGeneratedLook(handgun,Time.time<meleeUntil);
             GeneratedProductWeapon.Synchronize(ref productWeapon,game?game.gun:null,current,transform,
                 GeneratedWardenPreviewAssets.Enabled&&Time.time>=meleeUntil);
+            if(backpack)backpack.Synchronize(game);
             SuppressOldBase();
         }
         void SuppressOldBase()
@@ -107,6 +111,7 @@ namespace NeonVault
             GeneratedCommonBodyRig.SetVisible(commonBaseSkin,true);
             var slots=GeneratedEquipmentAssetCatalog.CoveredBodySlots(game?game.EquippedArmor:null);
             GeneratedCommonBodyRig.SetCoveredSlots(commonBaseSkin,slots);
+            sharedArmorSleeves.Apply(generatedArmorParts?[1],commonBaseSkin,body,game?game.EquippedArmor:null);
         }
         void ApplyGeneratedLook(bool handgun,bool meleeSwinging)
         {
@@ -160,7 +165,7 @@ namespace NeonVault
             generatedLookRoot.transform.rotation=Quaternion.LookRotation(facing.normalized,Vector3.up);
             if(generatedLookWeapon){GeneratedWardenPreviewAssets.PlaceWeaponOnSockets(generatedLookWeapon,current);generatedLookWeapon.SetActive(!meleeSwinging);}
         }
-        void OnDestroy(){sharedArmorTextures.Dispose();}
+        void OnDestroy(){sharedArmorSleeves.Dispose();sharedArmorTextures.Dispose();}
         void BuildGeneratedLook()
         {
             generatedLookRoot=new GameObject("Generated Warden fieldkit / active appearance");generatedLookRoot.transform.SetParent(transform,false);

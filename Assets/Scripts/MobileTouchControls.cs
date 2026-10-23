@@ -83,20 +83,20 @@ namespace NeonVault
             stick = Mathf.Min(stick, s.height * .34f);
             float pad = 16 * unit, y = SafeRect.yMax - pad - stick;
             MoveRect = new Rect(SafeRect.x + pad, y, stick, stick);
-            AimRect = new Rect(SafeRect.xMax - pad - stick, y, stick, stick);
+            float fireSize = b * 1.5f;
+            AimRect = new Rect(SafeRect.xMax - pad - fireSize - gap - stick, y, stick, stick);
             float bx = SafeRect.xMax - pad - b;
-            float side = AimRect.x - gap - b;
-            buttons[(int)MobileAction.Reload] = new Rect(bx, y - gap - b, b, b);
-            buttons[(int)MobileAction.Pickup] = new Rect(side, y - gap - b, b, b);
-            buttons[(int)MobileAction.Dodge] = new Rect(side, SafeRect.yMax - pad - b, b, b);
-            buttons[(int)MobileAction.Melee] = new Rect(side, SafeRect.yMax - pad - b * 2 - gap, b, b);
+            float fireY = SafeRect.yMax - pad - fireSize;
+            buttons[(int)MobileAction.Reload] = new Rect(bx, fireY - gap - b, b, b);
+            buttons[(int)MobileAction.Pickup] = new Rect(AimRect.x+b+gap, y-gap-b, b, b);
+            buttons[(int)MobileAction.Dodge] = new Rect(bx, fireY - 2*(gap+b), b, b);
+            buttons[(int)MobileAction.Melee] = new Rect(AimRect.x, y-gap-b, b, b);
             buttons[(int)MobileAction.SwitchWeapon] = new Rect(SafeRect.x + pad, y - gap - b, b, b);
             buttons[(int)MobileAction.Interact] = new Rect(SafeRect.center.x - b / 2, SafeRect.yMax - pad - b, b, b);
             buttons[(int)MobileAction.Inventory] = new Rect(SafeRect.xMax - pad - 2 * b - gap, SafeRect.y + pad, b, b);
             buttons[(int)MobileAction.Pause] = new Rect(SafeRect.xMax - pad - b, SafeRect.y + pad, b, b);
-            // Keep fire as a distinct hold button immediately beside the aim stick.
-            // Use the open center of the action row above the aim stick, clear of reload/pickup.
-            buttons[(int)MobileAction.Fire] = new Rect((side + b + bx) * .5f - b * .5f, y - gap - b, b, b);
+            // Large, separate hold target at the natural outer-right thumb position.
+            buttons[(int)MobileAction.Fire] = new Rect(SafeRect.xMax-pad-fireSize, fireY, fireSize, fireSize);
             if (LeftHanded)
             {
                 MoveRect = Mirror(MoveRect); AimRect = Mirror(AimRect);
@@ -175,7 +175,11 @@ namespace NeonVault
                     { float a = Mathf.Clamp01((31.5f - Vector2.Distance(new Vector2(x,y),new Vector2(31.5f,31.5f))) * 2); disc.SetPixel(x,y,new Color(1,1,1,a)); }
                     disc.Apply();
                 }
-                if (textStyle == null) textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true };
+                if (textStyle == null)
+                {
+                    textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true, fontStyle = FontStyle.Bold };
+                    textStyle.normal.textColor = new Color(1f,.97f,.83f);
+                }
                 Font bundledFont = Resources.Load<Font>("Fonts/NotoSansJP");
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
@@ -184,8 +188,13 @@ namespace NeonVault
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {
                     Rect r = buttons[i]; bool down = fingers.ContainsValue(i) || Time.unscaledTime < feedback[i];
-                    Circle(r, down); textStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(r.width * .21f, 12, 32));
-                    GUI.color = new Color(.93f,.96f,1, .95f); GUI.Label(r, labels[i], textStyle);
+                    bool primary=i==(int)MobileAction.Fire;
+                    Circle(r, down, primary);
+                    Color ink=primary?new Color(.08f,.11f,.14f):new Color(.96f,.96f,.91f);
+                    ActionIcon(new Rect(r.x+r.width*.24f,r.y+r.height*.17f,r.width*.52f,r.height*.47f),(MobileAction)i,ink);
+                    textStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(r.width * .15f, 12, 28));
+                    textStyle.normal.textColor=ink;GUI.color=Color.white;
+                    GUI.Label(new Rect(r.x,r.y+r.height*.65f,r.width,r.height*.24f),labels[i],textStyle);
                 }
             }
             finally { GUI.matrix = matrix; GUI.color = color; GUI.depth = depth; }
@@ -196,15 +205,47 @@ namespace NeonVault
             Rect cap = new Rect(r.center.x - size / 2 + v.x * r.width * .22f, r.center.y - size / 2 - v.y * r.height * .22f, size, size);
             Circle(cap, down);
         }
-        void Circle(Rect r, bool down)
+        void Circle(Rect r, bool down, bool primary=false)
         {
             float alpha = Mathf.Clamp(Opacity, .2f, 1);
             Rect shadow = r; shadow.y += r.height * .065f;
-            GUI.color = new Color(0,0,0,alpha*.8f); GUI.DrawTexture(shadow, disc);
-            GUI.color = new Color(.28f,.45f,.51f,alpha); GUI.DrawTexture(r,disc);
+            GUI.color = new Color(0,0,0,alpha*.7f); GUI.DrawTexture(shadow, disc);
+            GUI.color = primary?new Color(1f,.84f,.43f,.96f):new Color(.77f,.83f,.83f,alpha*.85f); GUI.DrawTexture(r,disc);
             Rect inner = new Rect(r.x + 2,r.y + (down ? 4 : 1),r.width - 4,r.height - 5);
-            GUI.color = down ? new Color(.23f,.7f,.8f,alpha) : new Color(.08f,.14f,.18f,alpha);
+            GUI.color = primary?(down?new Color(1f,.94f,.69f,.98f):new Color(1f,.76f,.28f,.93f)):(down?new Color(.26f,.43f,.46f,.85f):new Color(.07f,.10f,.14f,Mathf.Min(.7f,alpha*1.3f)));
             GUI.DrawTexture(inner,disc);
+        }
+        // Vector icons stay crisp at phone/tablet resolutions and need no bitmap atlas.
+        void IconLine(Rect r,float ax,float ay,float bx,float by,Color color,float weight=.075f)
+        {
+            Vector2 a=new Vector2(r.x+ax*r.width,r.y+ay*r.height), b=new Vector2(r.x+bx*r.width,r.y+by*r.height);
+            Matrix4x4 old=GUI.matrix;GUI.color=color;GUIUtility.RotateAroundPivot(Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg,a);
+            GUI.DrawTexture(new Rect(a.x,a.y-r.width*weight*.5f,Vector2.Distance(a,b),r.width*weight),Texture2D.whiteTexture);GUI.matrix=old;
+        }
+        void ActionIcon(Rect r,MobileAction action,Color c)
+        {
+            switch(action)
+            {
+                case MobileAction.Fire:
+                    IconLine(r,.05f,.32f,.95f,.32f,c,.19f);IconLine(r,.12f,.45f,.72f,.45f,c,.15f);IconLine(r,.29f,.43f,.2f,.91f,c,.19f);IconLine(r,.48f,.45f,.48f,.66f,c);IconLine(r,.27f,.67f,.49f,.67f,c);break;
+                case MobileAction.Reload:
+                    for(int j=0;j<15;j++){float a=(j*19+40)*Mathf.Deg2Rad,b=(j*19+59)*Mathf.Deg2Rad;IconLine(r,.5f+Mathf.Cos(a)*.36f,.5f+Mathf.Sin(a)*.36f,.5f+Mathf.Cos(b)*.36f,.5f+Mathf.Sin(b)*.36f,c);}
+                    IconLine(r,.83f,.25f,.55f,.22f,c);IconLine(r,.83f,.25f,.8f,.52f,c);break;
+                case MobileAction.Pickup:
+                    IconLine(r,.5f,.08f,.5f,.65f,c);IconLine(r,.24f,.43f,.5f,.68f,c);IconLine(r,.76f,.43f,.5f,.68f,c);IconLine(r,.12f,.68f,.12f,.88f,c);IconLine(r,.12f,.88f,.88f,.88f,c);IconLine(r,.88f,.88f,.88f,.68f,c);break;
+                case MobileAction.Dodge:
+                    for(int j=0;j<2;j++){float x=.13f+j*.43f;IconLine(r,x,.12f,x+.29f,.5f,c,.1f);IconLine(r,x+.29f,.5f,x,.88f,c,.1f);}break;
+                case MobileAction.Melee:
+                    IconLine(r,.18f,.87f,.51f,.54f,c,.15f);IconLine(r,.33f,.46f,.64f,.77f,c);IconLine(r,.48f,.58f,.86f,.08f,c,.12f);IconLine(r,.86f,.08f,.71f,.55f,c);IconLine(r,.71f,.55f,.58f,.68f,c);break;
+                case MobileAction.SwitchWeapon:
+                    IconLine(r,.08f,.3f,.88f,.3f,c);IconLine(r,.68f,.1f,.9f,.3f,c);IconLine(r,.9f,.3f,.68f,.5f,c);IconLine(r,.9f,.73f,.1f,.73f,c);IconLine(r,.3f,.53f,.08f,.73f,c);IconLine(r,.08f,.73f,.3f,.93f,c);break;
+                case MobileAction.Interact:
+                    IconLine(r,.3f,.84f,.18f,.48f,c);IconLine(r,.18f,.48f,.35f,.56f,c);IconLine(r,.35f,.56f,.35f,.1f,c);IconLine(r,.35f,.1f,.48f,.1f,c);IconLine(r,.48f,.1f,.48f,.43f,c);IconLine(r,.48f,.43f,.8f,.48f,c);IconLine(r,.8f,.48f,.72f,.86f,c);IconLine(r,.3f,.86f,.72f,.86f,c);break;
+                case MobileAction.Inventory:
+                    for(int x=0;x<2;x++)for(int y=0;y<2;y++){GUI.color=c;GUI.DrawTexture(new Rect(r.x+r.width*(.1f+x*.48f),r.y+r.height*(.08f+y*.48f),r.width*.31f,r.height*.31f),Texture2D.whiteTexture);}break;
+                case MobileAction.Pause:
+                    IconLine(r,.29f,.1f,.29f,.9f,c,.19f);IconLine(r,.71f,.1f,.71f,.9f,c,.19f);break;
+            }
         }
     }
 }

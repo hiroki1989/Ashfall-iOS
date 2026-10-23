@@ -24,6 +24,12 @@ namespace NeonVault
             resistance=Mathf.Min(.3f,depth*.025f);damageScale=1;
         }
         public void ConfigureDifficulty(float health,float damage,float resist){maxHp*=health;hp=maxHp;damageScale*=damage;resistance=Mathf.Clamp(resist,0,.45f);}
+        public void DelayNextAttack(float seconds)
+        {
+            if(dead)return;
+            if(charging){charging=false;charge=0;ClearWarning();}
+            timer=Mathf.Max(timer,seconds);
+        }
         void ClearWarning(){if(warning!=null)Destroy(warning);warning=null;}
         void Update()
         {

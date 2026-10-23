@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/ironwake-sniper-anti-materiel.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "ironwake-series-v1.png cell 23",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        165,
+        488,
+        181
+      ]
+    },
+    "right": {
+      "source": "ironwake-series-v1.png cell 23 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        165,
+        488,
+        181
+      ]
+    },
+    "front": {
+      "source": "ironwake-series-v1.png cell 23 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "ironwake-series-v1.png cell 23 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/ironwake-series-v1.png",
+  "sourceCell": 23,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

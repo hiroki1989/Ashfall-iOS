@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-smg-drum.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-series-v1.png cell 19",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        187,
+        488,
+        137
+      ]
+    },
+    "right": {
+      "source": "cinder-series-v1.png cell 19 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        187,
+        488,
+        137
+      ]
+    },
+    "front": {
+      "source": "cinder-series-v1.png cell 19 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-series-v1.png cell 19 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/cinder-series-v1.png",
+  "sourceCell": 19,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

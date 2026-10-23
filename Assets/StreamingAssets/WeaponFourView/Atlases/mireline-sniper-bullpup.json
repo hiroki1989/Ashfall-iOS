@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-sniper-bullpup.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-series-v1.png cell 22",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        182,
+        488,
+        147
+      ]
+    },
+    "right": {
+      "source": "mireline-series-v1.png cell 22 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        182,
+        488,
+        147
+      ]
+    },
+    "front": {
+      "source": "mireline-series-v1.png cell 22 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-series-v1.png cell 22 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/mireline-series-v1.png",
+  "sourceCell": 22,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

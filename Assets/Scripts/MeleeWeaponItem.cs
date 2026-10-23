@@ -71,6 +71,26 @@ namespace NeonVault
             return VaultLanguage.T(en,ja);
         }
         public static string Name(MeleeWeaponFamily family)=>VaultLanguage.T(English(family),Japanese(family));
+        public static int LegendaryMode(MeleeWeaponItem item)=>item==null?-1:(Mathf.Clamp(item.designVariant,0,9)+2*(int)item.family)%4;
+        public static string LegendaryDescription(MeleeWeaponItem item)
+        {
+            if(item==null||!item.uniqueEffect)return "";
+            InferIdentity(item);
+            int maker=ManufacturerCatalog.Index(item.manufacturerId);
+            int mode=LegendaryMode(item);
+            string effect;
+            switch(maker)
+            {
+                case 0:effect=mode==0?VaultLanguage.T("strike 1 other visible enemy within 2.8m for 45% hit damage","2.8m以内の見える別の敵1体に命中威力45%の追撃"):mode==1?VaultLanguage.T("shorten melee recovery by 0.25s","次撃までを0.25秒短縮"):mode==2?VaultLanguage.T("pierce up to 2 other visible enemies in a 3.6m by 0.65m line for 30% hit damage","3.6mの直線上0.65m幅の見える別の敵最大2体へ命中威力30%の貫通攻撃"):VaultLanguage.T("delay the target's next attack to at least 0.7s and shorten melee recovery by 0.15s","対象の次の攻撃を最低0.7秒遅らせ、次撃までを0.15秒短縮");break;
+                case 1:effect=mode==0?VaultLanguage.T("push the target back 1.4m","対象を1.4m押し返す"):mode==1?VaultLanguage.T("delay the target's next attack to at least 0.8s","対象の次の攻撃を最低0.8秒遅らせる"):mode==2?VaultLanguage.T("strike up to 2 other visible enemies within 1.8m for 40% hit damage","1.8m以内の見える別の敵最大2体へ命中威力40%の追撃"):VaultLanguage.T("push the target 0.8m and delay its next attack to at least 0.55s","対象を0.8m押し返し、次の攻撃を最低0.55秒遅らせる");break;
+                case 2:effect=mode==0?VaultLanguage.T("arc to 2 other visible enemies within 3.2m for 32% hit damage each","3.2m以内の見える別の敵2体に各命中威力32%の連鎖攻撃"):mode==1?VaultLanguage.T("shorten dodge cooldown by 0.6s","回避待機を0.6秒短縮"):mode==2?VaultLanguage.T("pierce up to 3 other visible enemies in a 4m by 0.8m line for 28% hit damage","4mの直線上0.8m幅の見える別の敵最大3体へ命中威力28%の貫通攻撃"):VaultLanguage.T("push other visible enemies within 2.5m by 0.9m and shorten dodge cooldown by 0.25s","2.5m以内の見える別の敵を0.9m押し返し、回避待機を0.25秒短縮");break;
+                case 3:effect=mode==0?VaultLanguage.T("heal 3 HP","HPを3回復"):mode==1?VaultLanguage.T("delay the target's next attack to at least 1.1s","対象の次の攻撃を最低1.1秒遅らせる"):mode==2?VaultLanguage.T("pull other visible enemies within 2.8m toward the target by 0.8m","2.8m以内の見える別の敵を対象へ0.8m引き寄せる"):VaultLanguage.T("strike up to 2 other visible enemies within 2m for 22% hit damage and heal 1 HP","2m以内の見える別の敵最大2体へ命中威力22%の追撃を行い、HPを1回復");break;
+                case 4:effect=mode==0?VaultLanguage.T("strike up to 3 other visible enemies within 2.3m for 38% hit damage","2.3m以内の見える別の敵最大3体に命中威力38%の範囲攻撃"):mode==1?VaultLanguage.T("push other visible enemies within 2.3m back 1m","2.3m以内の見える別の敵を1m押し返す"):mode==2?VaultLanguage.T("pierce up to 3 other visible enemies in a 3.8m by 1m line for 42% hit damage","3.8mの直線上1m幅の見える別の敵最大3体へ命中威力42%の貫通攻撃"):VaultLanguage.T("push the target 1m and strike up to 2 other visible enemies within 1.7m for 25% hit damage","対象を1m押し返し、1.7m以内の見える別の敵最大2体へ命中威力25%の追撃");break;
+                case 5:effect=mode==0?VaultLanguage.T("gain 4 barrier (cap 30)","障壁を4得る（上限30）"):mode==1?VaultLanguage.T("grant at least 0.25s of invulnerability","最低0.25秒の無敵を得る"):mode==2?VaultLanguage.T("gain 2 barrier and push other visible enemies within 2m by 0.8m","障壁を2得て、2m以内の見える別の敵を0.8m押し返す"):VaultLanguage.T("gain 2 barrier, grant at least 0.15s of invulnerability, and delay the target's next attack to at least 0.75s","障壁を2得て最低0.15秒の無敵を得て、対象の次の攻撃を最低0.75秒遅らせる");break;
+                default:return "";
+            }
+            return VaultLanguage.T("First landed melee hit when ready: ","待機終了後、最初の近接命中時：")+effect+VaultLanguage.T("; 3s cooldown.","。待機3秒。");
+        }
         public static string English(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"Shiv":family==MeleeWeaponFamily.Cleaver?"Cleaver":family==MeleeWeaponFamily.Machete?"Machete":family==MeleeWeaponFamily.Hatchet?"Hatchet":"Field Knife";
         public static string Japanese(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"シヴ":family==MeleeWeaponFamily.Cleaver?"ブッチャーナイフ":family==MeleeWeaponFamily.Machete?"マチェット":family==MeleeWeaponFamily.Hatchet?"ハチェット":"フィールドナイフ";
         public static int Score(MeleeWeaponItem item)=>item==null?0:Mathf.Max(1,Mathf.RoundToInt((Mathf.Log(1+item.damage/Mathf.Max(.05f,item.interval))*12+Mathf.Log(1+item.range)*4+item.arcDegrees*.06f+item.level*2)*10));

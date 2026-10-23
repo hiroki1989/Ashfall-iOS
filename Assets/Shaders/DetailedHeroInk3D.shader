@@ -18,6 +18,7 @@ Shader "NeonVault/DetailedHeroInk3D"
         _MicroRelief ("Material surface relief", Range(0,2)) = .7
         [HideInInspector] _ProjectionSheet ("Equipment projection", 2D) = "white" {}
         [HideInInspector] _ProjectionUv ("Equipment projection crop", Vector) = (0,0,1,1)
+        [HideInInspector] _ProjectionSideUv ("Weapon side illustration bounds", Vector) = (.02,.35,.96,.3)
         [HideInInspector] _AccessoryProjectionSheet ("Accessory projection", 2D) = "white" {}
         [HideInInspector] _AccessoryProjectionUv ("Accessory projection crop", Vector) = (0,0,1,1)
     }
@@ -52,7 +53,7 @@ Shader "NeonVault/DetailedHeroInk3D"
         sampler2D _CreatureAtlas;
         float _CreatureSurface,_MicroRelief;
         sampler2D _ProjectionSheet,_AccessoryProjectionSheet;
-        float4 _ProjectionUv,_AccessoryProjectionUv,_ProjectionMin,_ProjectionSize;
+        float4 _ProjectionUv,_ProjectionSideUv,_AccessoryProjectionUv,_ProjectionMin,_ProjectionSize;
         float4x4 _ProjectionWorldToRoot,_ProjectionWorldNormalToRoot;
         float _ProjectionMode,_ProjectionEnabled,_AccessoryProjectionEnabled;
         // Full precision avoids Metal cross-compiler min-precision bytecode failures.
@@ -106,7 +107,10 @@ Shader "NeonVault/DetailedHeroInk3D"
             float3 specTint=lerp(s.Albedo,float3(.65,.65,.60),step(2.5,_SurfaceKind)*step(_SurfaceKind,3.5));
             if(_SurfaceKind>5.5 && _SurfaceKind<6.5)specTint=float3(.38,.28,.20);
             if(_SurfaceKind>6.5) specTint=float3(.7,.8,.8);
-            c+=gi.light.color*specTint*spec*.65;
+            // Painted firearms carry their own metal glints in the illustration.
+            // A second procedural white highlight washes out their authored colors.
+            if(!(_ProjectionEnabled>.5 && (_ProjectionMode<.5 || _ProjectionMode>2.5)))
+                c+=gi.light.color*specTint*spec*.65;
             if(_SurfaceKind>6.5)
             {
                 float fresnel=pow(1-saturate(dot(s.Normal,viewDir)),3);
@@ -165,7 +169,21 @@ Shader "NeonVault/DetailedHeroInk3D"
                 float facing=(_ProjectionMode<.5||_ProjectionMode>1.5)?projectionNormal.x:projectionNormal.z;
                 float2 uv=_ProjectionMode<.5?float2(q.z,q.y):_ProjectionMode<1.5?float2(q.x,q.y):float2(q.y,q.z);
                 if(facing<0)uv.x=1-uv.x;
-                uv=_ProjectionUv.xy+uv*_ProjectionUv.zw;
+                if(_ProjectionMode>2.5)
+                {
+                    // Four-view atlas: upper row has independent left/right side
+                    // paintings; lower row carries muzzle/stock end materials.
+                    // Side art uses its measured occupied bounds in the source tile.
+                    bool endFace=abs(projectionNormal.z)>abs(projectionNormal.x)*1.35;
+                    float tileX=endFace?(projectionNormal.z>0?0:.5):(projectionNormal.x>0?0:.5);
+                    float tileY=endFace?0:.5;
+                    uv=endFace?float2(q.x,q.y):float2(q.z,q.y);
+                    if((endFace&&projectionNormal.z<0)||(!endFace&&projectionNormal.x<0))uv.x=1-uv.x;
+                    uv=endFace?float2(tileX+.01+uv.x*.48,tileY+.01+uv.y*.48)
+                        :float2(tileX+.5*(_ProjectionSideUv.x+uv.x*_ProjectionSideUv.z),
+                                tileY+.5*(_ProjectionSideUv.y+uv.y*_ProjectionSideUv.w));
+                }
+                else uv=_ProjectionUv.xy+uv*_ProjectionUv.zw;
                 float4 illustration=tex2D(_ProjectionSheet,uv);
                 color=lerp(color,illustration.rgb,illustration.a);
             }
@@ -174,7 +192,10 @@ Shader "NeonVault/DetailedHeroInk3D"
                 float4 detail=tex2D(_AccessoryProjectionSheet,_AccessoryProjectionUv.xy+IN.accessoryUV*_AccessoryProjectionUv.zw);
                 color=lerp(color,detail.rgb,detail.a);
             }
-            if(_AtlasStrength>0 && _SurfaceKind>.5 && _SurfaceKind<4.5)
+            // Gun illustrations already contain their own wood, metal and wear colors.
+            // The generic surface atlas is a color multiplier, so applying it after
+            // projection shifts the authored palette (especially on painted rifles).
+            if(_AtlasStrength>0 && !(_ProjectionEnabled>.5 && (_ProjectionMode<.5 || _ProjectionMode>2.5)) && _SurfaceKind>.5 && _SurfaceKind<4.5)
             {
                 float3 objectNormal=normalize(mul((float3x3)unity_WorldToObject,IN.geometricNormal));
                 float3 paint=PaintedMaterial(p,objectNormal);
@@ -184,6 +205,12 @@ Shader "NeonVault/DetailedHeroInk3D"
                 float grainHeight=dot(paint,float3(.2126,.7152,.0722));
                 relief=grainHeight*(_SurfaceKind<1.5?.00035:_SurfaceKind<2.5?.00065:.0004)*_AtlasStrength;
                 polish=_SurfaceKind<1.5?.55:_SurfaceKind<2.5?lerp(.55,1.1,grainHeight):lerp(.40,1.20,grainHeight);
+            }
+            if(_ProjectionEnabled>.5 && (_ProjectionMode<.5 || _ProjectionMode>2.5))
+            {
+                // Do not stamp procedural grain or wear over an authored gun image.
+                pigment=1;
+                mark=0;
             }
             if(_CreatureSurface>=0)
             {

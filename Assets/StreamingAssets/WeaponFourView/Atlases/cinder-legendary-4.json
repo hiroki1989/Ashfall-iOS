@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-legendary-4.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-legendaries-v1.png cell 4",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        96,
+        488,
+        320
+      ]
+    },
+    "right": {
+      "source": "cinder-legendaries-v1.png cell 4 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        96,
+        488,
+        320
+      ]
+    },
+    "front": {
+      "source": "cinder-legendaries-v1.png cell 4 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-legendaries-v1.png cell 4 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "BespokeLegendaries",
+  "sourceFile": "Assets/Resources/Art/BespokeLegendaries/cinder-legendaries-v1.png",
+  "sourceCell": 4,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

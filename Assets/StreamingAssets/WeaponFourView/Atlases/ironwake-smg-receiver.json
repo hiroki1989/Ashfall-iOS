@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/ironwake-smg-receiver.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "ironwake-series-v1.png cell 16",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        146,
+        488,
+        219
+      ]
+    },
+    "right": {
+      "source": "ironwake-series-v1.png cell 16 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        146,
+        488,
+        219
+      ]
+    },
+    "front": {
+      "source": "ironwake-series-v1.png cell 16 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "ironwake-series-v1.png cell 16 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/ironwake-series-v1.png",
+  "sourceCell": 16,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

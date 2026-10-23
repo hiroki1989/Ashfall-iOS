@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-lmg-drum.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-series-v1.png cell 14",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        162,
+        488,
+        188
+      ]
+    },
+    "right": {
+      "source": "aegis-series-v1.png cell 14 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        162,
+        488,
+        188
+      ]
+    },
+    "front": {
+      "source": "aegis-series-v1.png cell 14 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-series-v1.png cell 14 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/aegis-series-v1.png",
+  "sourceCell": 14,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-assault-marksman.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-series-v1.png cell 3",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        183,
+        488,
+        146
+      ]
+    },
+    "right": {
+      "source": "aegis-series-v1.png cell 3 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        183,
+        488,
+        146
+      ]
+    },
+    "front": {
+      "source": "aegis-series-v1.png cell 3 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-series-v1.png cell 3 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/aegis-series-v1.png",
+  "sourceCell": 3,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

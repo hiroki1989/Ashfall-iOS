@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-handgun-compact.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-series-v1.png cell 4",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        77,
+        488,
+        357
+      ]
+    },
+    "right": {
+      "source": "voltarc-series-v1.png cell 4 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        77,
+        488,
+        357
+      ]
+    },
+    "front": {
+      "source": "voltarc-series-v1.png cell 4 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-series-v1.png cell 4 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/voltarc-series-v1.png",
+  "sourceCell": 4,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

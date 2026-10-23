@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "products": [
+    {
+      "id": "trail-warden-rifle-projection-proof",
+      "status": "candidate-only",
+      "meshFbx": "warden-rifle-four-view.fbx",
+      "meshGlb": "warden-rifle-four-view.glb",
+      "atlas": "warden-rifle-atlas.png",
+      "atlasMetadata": "warden-rifle-atlas.json",
+      "sourceMesh": "Assets/Resources/Art/GeneratedWarden/rifle-mobile.fbx",
+      "sourceViews": [
+        "Assets/ArtSource/LowPolyProof/TwoViewComponent/warden-rifle-source-0.png",
+        "Assets/ArtSource/LowPolyProof/TwoViewComponent/warden-rifle-source-1.png"
+      ],
+      "endViewsPainted": false,
+      "exactProductRegistered": false,
+      "qa": "Development/Tools/WeaponFourView/qa/warden-rifle/report.json"
+    }
+  ]
+}

@@ -49,12 +49,13 @@ namespace NeonVault
         int[] choices=new int[3];
         public System.Collections.Generic.IReadOnlyList<int> RewardChoices=>choices;
         Font font;
+        Font englishHeadingFont;
         AudioSource audioSource;
         VaultMelee meleeAttack;
         AudioClip fireSound, scatterSound, coilSound, hitSound, pickupSound;
         Texture2D pixel;
         GUIStyle label, title, small, button;
-        static readonly Color Cyan=new Color(.25f,.78f,.82f), Gold=new Color(.98f,.66f,.30f), Ink=new Color(.025f,.038f,.052f);
+        static readonly Color Cyan=new Color(93/255f,226/255f,210/255f), Gold=new Color(1f,209/255f,102/255f), Ink=new Color(21/255f,36/255f,50/255f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
@@ -66,6 +67,7 @@ namespace NeonVault
             cores=PlayerPrefs.GetInt("Vault.Cores",0); rank=PlayerPrefs.GetInt("Vault.Rank",0);
             font=Resources.Load<Font>("Fonts/NotoSansJP");
             if(font==null)font=Font.CreateDynamicFontFromOSFont(Application.platform==RuntimePlatform.IPhonePlayer?new[]{"HiraginoSans-W3","Hiragino Sans","Arial"}:new[]{"Yu Gothic UI","Meiryo","Segoe UI","Arial"},20);
+            englishHeadingFont=Resources.Load<Font>("Fonts/BarlowCondensed-Bold");
             pixel=new Texture2D(1,1); pixel.SetPixel(0,0,Color.white); pixel.Apply();
             cam=new GameObject("Isometric camera").AddComponent<Camera>(); cam.orthographic=true; cam.orthographicSize=13.5f; cam.backgroundColor=Ink; cam.clearFlags=CameraClearFlags.SolidColor;
             cam.tag="MainCamera";

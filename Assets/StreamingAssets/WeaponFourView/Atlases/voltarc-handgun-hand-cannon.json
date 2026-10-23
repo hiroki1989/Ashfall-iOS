@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-handgun-hand-cannon.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-series-v1.png cell 7",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        138,
+        488,
+        235
+      ]
+    },
+    "right": {
+      "source": "voltarc-series-v1.png cell 7 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        138,
+        488,
+        235
+      ]
+    },
+    "front": {
+      "source": "voltarc-series-v1.png cell 7 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-series-v1.png cell 7 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/voltarc-series-v1.png",
+  "sourceCell": 7,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

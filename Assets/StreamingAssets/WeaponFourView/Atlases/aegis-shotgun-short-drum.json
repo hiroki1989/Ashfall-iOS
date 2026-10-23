@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-shotgun-short-drum.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-series-v1.png cell 10",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        166,
+        488,
+        180
+      ]
+    },
+    "right": {
+      "source": "aegis-series-v1.png cell 10 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        166,
+        488,
+        180
+      ]
+    },
+    "front": {
+      "source": "aegis-series-v1.png cell 10 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-series-v1.png cell 10 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/aegis-series-v1.png",
+  "sourceCell": 10,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

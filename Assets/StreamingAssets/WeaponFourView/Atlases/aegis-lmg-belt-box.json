@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-lmg-belt-box.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-series-v1.png cell 12",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        174,
+        488,
+        164
+      ]
+    },
+    "right": {
+      "source": "aegis-series-v1.png cell 12 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        174,
+        488,
+        164
+      ]
+    },
+    "front": {
+      "source": "aegis-series-v1.png cell 12 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-series-v1.png cell 12 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/aegis-series-v1.png",
+  "sourceCell": 12,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

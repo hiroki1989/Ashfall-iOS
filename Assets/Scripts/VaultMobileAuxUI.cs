@@ -42,7 +42,7 @@ namespace NeonVault
                 if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);detail=string.IsNullOrEmpty(gun.legendaryKey)?GunNumbers(gun):LegendaryDescription(gun,VaultLanguage.GunDescription(gun));}
                 else if(item is ArmorItem armor){ItemPortraits.Draw(icon,armor);name=Armory.Name(armor);detail=string.IsNullOrEmpty(armor.legendaryKey)&&armor.uniqueEffect==0?Armory.Stats(armor):LegendaryDescription(armor,Armory.Description(armor));}
                 else if(item is ArtifactItem module){ManufacturerBranding.ModulePortrait(icon,module);name=module.Name;detail=LegendaryDescription(module,module.Description);}
-                else{var melee=(MeleeWeaponItem)item;DrawMeleeIcon(icon,melee.family);name=MeleeWeaponCatalog.Name(melee);detail=T("DMG ","威力 ")+melee.damage+" / "+melee.range.ToString("0.0")+"m";}
+                else{var melee=(MeleeWeaponItem)item;DrawMeleeIcon(icon,melee.family);name=MeleeWeaponCatalog.Name(melee);detail=T("DMG ","威力 ")+melee.damage+" / "+melee.range.ToString("0.0")+"m"+MeleeLegendaryDetail(melee);}
                 MobileCopyAt(240,y+15,name,Gold,1125);MobileCopyAt(240,y+83,detail,Mist,1125);
             }
             if(MobileButton(new Rect(30,780,350,110),T("PREVIOUS","前のページ")))mobileCatalogPage=Mathf.Max(0,mobileCatalogPage-1);

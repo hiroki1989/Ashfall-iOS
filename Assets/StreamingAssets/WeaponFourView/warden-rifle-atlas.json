@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "atlas": "warden-rifle-atlas.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-rifle-source-0.png",
+      "method": "silhouette-crop-edge-fill",
+      "sha256": "a43790452bef6a2fdf6a20fe3811e05d438e44e85b06a9a9372c107c8f701149",
+      "visibleRect": [
+        173,
+        12,
+        166,
+        488
+      ]
+    },
+    "right": {
+      "source": "Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-rifle-source-1.png",
+      "method": "silhouette-crop-edge-fill",
+      "sha256": "f8bd91f93a90d312f23fa65f2b12d7c6f0d86ee4c502f35fe902cbc616038dd8",
+      "visibleRect": [
+        173,
+        12,
+        166,
+        488
+      ]
+    },
+    "front": {
+      "source": "Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-rifle-source-0.png",
+      "method": "neutral-median",
+      "sha256": "a43790452bef6a2fdf6a20fe3811e05d438e44e85b06a9a9372c107c8f701149"
+    },
+    "back": {
+      "source": "Assets\\ArtSource\\LowPolyProof\\TwoViewComponent\\warden-rifle-source-1.png",
+      "method": "neutral-median",
+      "sha256": "f8bd91f93a90d312f23fa65f2b12d7c6f0d86ee4c502f35fe902cbc616038dd8"
+    }
+  },
+  "quality": "candidate",
+  "alphaMin": 255
+}

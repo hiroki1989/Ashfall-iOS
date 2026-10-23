@@ -1,3 +1,28 @@
+## 2026-10-24 / UI構成刷新・射撃アイコン
+変更: VaultEquipmentScreen.cs、EquipmentHeroPreview.cs、VaultMobileUI.cs、MobileTouchControls.cs、MobileInputReview.cs。装備/商人を明るいスレート色と下線ナビ、明暗の文字階層、カード/詳細/プレビューへ刷新。プレビュー背景を統一。モバイルメニューとHUDを整理し、操作9種をベクターアイコン化。射撃を右下へ移し、幅1.5倍/面積2.25倍に拡大。照準スティックは内側に配置、半透明と独立入力を維持。
+検証: ui-rebuild-final-build.log HERO_BUILD_OK。ui-rebuild-mobile のiPhone/iPad日英撮影と269件チェック失敗0（重なり・safe area・同時移動照準射撃・射撃面積/下部配置）。装備QA ui-rebuild-equipment は12525件中既存の合成ドラッグ3件失敗。日英画面を目視、HPゲージ間隔を微調整して再ビルド。差分チェック通過。
+未解決: iOS実機での物理タッチ・Metal・IL2CPP未確認。既存3Dの形状/材質問題は今回のUI対象外。
+## 2026-10-23 / UIの再設計（実画面QA待ち）
+変更ファイル: `VaultUI.cs`、`VaultEquipmentScreen.cs`、`VaultMobileUI.cs`。共通パネルを細いアクセント線・軽い影に変更し、通常ボタンは濃い面と明るい文字、選択は黄のラインで区別。装備カードの名称・要約・弾薬表示を整理した。
+結果: 前回の大面積シアンの単色ボタンを減らし、メニュー/商人/装備/モバイルで同じ視覚ルールを使用する実装を追加。
+検証: `git diff --check`通過。Unity Editorが同じ `D:/Unity/Ashfall-iOS` を開いたまま、空きRAM約2.6GBであり、PCクラッシュ回避のため統合ビルドと実画面QAは保留。Editorの作業をユーザーが保存して閉じた後に実施する。
+未解決: ビルド・日英の画面撮影・iPhone/iPad表示確認が必要。iOS実機は未検証。
+
+## 2026-10-23 / 明るいUI配色と見出し書体
+変更ファイル: `VaultGame.cs`、`VaultUI.cs`、`VaultEquipmentScreen.cs`、`VaultMobileUI.cs`、`MobileTouchControls.cs`、`Assets/Resources/Fonts/BarlowCondensed-Bold.ttf`とOFLライセンス。既存の日本語フォントを保ち、英語見出しにBarlow Condensed Boldを使用。
+結果: インベントリ/売却/モバイルメニューとHUDを、濃紺の土台、明るいクリーム色の詳細欄、黄の選択、ターコイズの操作に変更。半透明タッチボタンの輪郭・文字を明るくし、長い銃名を戦闘HUDで折り返す。ゲーム内の既存アート・操作は維持。
+検証: Unity 6000.6.0f1 Windows統合ビルド `D:/Unity/AshfallArtValidation/pop-ui-final2-build.log` は `HERO_BUILD_OK`。`pop-ui-final2-mobile/`でiPhone/iPad・日英・拠点/戦闘/装備など265件失敗0、画像でボタンと銃名を確認。`pop-ui-final-equipment/`で日英の装備画面を確認、12,525件中3件は従来からの合成タッチドラッグ（リスト/説明スクロール、プレビュー回転）。`git diff --check`通過。
+未解決: iOS実機/Metal/IL2CPPの画面と物理タッチは未検証。戦闘マップの色調や装備3Dモデルの品質は今回のUI改修の範囲外。
+
+## 2026-10-23 / レジェンダリー効果・袖なし胸・防具イラスト
+対象 `D:/Unity/Ashfall-iOS`。銃レジェンダリー30系統は発射・命中・撃破・装填・ダッシュごとに弾道、連鎖、押し出し、遅延爆発、障壁などの挙動を分岐。防具は停止中の頭を除く24系統を固有化。近接はメーカー×4モード、モジュールは10モードで固有作用と日英説明を実装。効果の数値だけの水増しを減らした。
+通常の袖なし/短袖胸（Voltarc、Mireline、Cinder、Aegis）は承認済みWardenの骨・UVを保持して共通ベスト形状へ切替。新しい透明6列×2行イラストを各メーカーの通常胴・足に追加し、全6社で切替。胴・足カードへ不要な輪状アクセサリを重ねない。初期Wardenと専用レジェンダリー絵は維持。`Development/ArmorPortraitRevision.md`にアート仕様。
+最終Windows統合ビルド `D:/Unity/AshfallArtValidation/legendary-armor-qa-build.log` は `HERO_BUILD_OK`。装備画面QAは12,525件中3件（合成タッチドラッグのリスト/説明スクロールと回転）が不合格で、描画・防具適用のチェックではない。`D:/Unity/AshfallArtValidation/legendary-armor-final-review/`にCinder前後ほか画像。Cinderの袖なし判定は通過。見た目はゲーム画像で確認したが、装備3Dの共通形状と全個別イラストの完全一致は未認定。旧 `ManufacturerExpansionReview` は現行アイテム数・即時HP変化を仮定し92件失敗するため今回の新挙動の合格判定には使えない。iOS実機/IPA未検証。
+
+## 2026-10-23 / 銃イラストと3D投影色の照合
+`D:/Unity/Ashfall-iOS`。606銃ID→174銃系統アトラスと対応JSONの存在・矩形を全件確認（欠落0）。原画とアトラスの代表例は木/金属色が一致するが、ゲーム用shaderが投影後に汎用材質atlasを0.62程度掛けて色を変えていた。また全銃の投影高さを固定154/512pxとしていたが、絵の実際の高さは112〜373pxで、拳銃等では背景色を拾う。銃の投影面に限り汎用材質の再着色と追加の白い鏡面反射・grainを抑止し、各アトラスJSONの`visibleRect`で側面の貼付範囲を設定。`WeaponFourViewAtlas.cs`、`ManufacturerEquipment3D.cs`、`DetailedHeroInk3D.shader`、検証用`WeaponColorProjectionReview.cs`を変更。`git diff --check`通過。
+Unity Editor終了後、Windows統合ビルド`weapon-color-final-build.log`はHERO_BUILD_OK。代表ライフル/拳銃/狙撃銃を`D:/Unity/AshfallArtValidation/weapon-color-final/`に単独描画。3/3で4-view投影有効。QA全体`weapon-color-review`の89 failuresは全てhidden-window GUI描画フレーム検知で、個別モデル/投影チェックの失敗ではない。画像目視では材質再着色は減ったが、絵の模様をプロシージャルな部品へ一括平面投影しているため伸び・位置ずれ・端の三角模様が残る。色とデザインはまだ原画どおりと認定できない。根本解決は各銃系統のメッシュ形状に合わせたUV/テクスチャ焼付またはpart別投影で、現状の共有平面投影のみでは不足。iOS表示未検証。アトラスの左右は1枚の原画の鏡映、前後端は代表色であり、全方向の専用原画ではない。
+
 ## 2026-10-21 / Hunyuan3D-2mini装備展開の再開
 初期Warden一式はTencent Hunyuan3D-2mini形状→Blenderで4方向設計図投影・4K atlas・iOS軽量化。`initial-loadout-v6/asset-manifest.json`と`ios-ready-warden-v1/prepare_ios_obj.py`で確認。前回の胸比較では別手法のHunyuan3D-2.1 hosted結果も混在した。2mini結果(29.3万頂点/58.6万面)は穴は閉じたものの胸板が球状に突出し、背面暗潰れと側面投影ずれが残る。候補はいずれも品質不合格のためUnityへ登録せず、現行装備も変更していない。texture AI生成は行わない。
 設計図と各viewは `Assets/ArtSource/GeneratedEquipment/TrailWardenChest/` に保存。候補GLB/Blender作業/4方向QA renderは`D:/Unity/AshfallArtValidation/equipment3d-batch/trail-warden-chest/`。候補は約79.9k faces(remote)または約58.6k faces(local 2mini)。4方向renderでテクスチャ位置ずれを確認し不採用。
@@ -624,3 +649,22 @@ Rig担当の追加確認: 腕下げ基準のbindposeで腕はモーションに�
 頭を除く24件のレジェンダリー防具は武器の攻撃追撃を使わず、各メーカー/部位の回復・予備弾補給・回避待機短縮を発動。モジュール80件にレシピ別支援回路を追加し、受動ShieldConversionは障壁中5秒間隔、旧セーブのレジェンダリーモジュールにも後方互換効果を追加。発動条件と日英説明を一致。レジェンダリー効果説明をPC/iOSの所持品・装備詳細・ドロップ・図鑑・売却画面で赤色rich textへ。被弾時効果はHP減算後に発動する順序へ変更。
 障壁は完全吸収を廃止。基礎25%＋障壁残量1点ごと0.5%（最大20%）＋装備モジュールmitigation（最大15%）＋借金スキル軽減の半分（最大10%）、障壁軽減上限75%。命中時に残量を消費し、毎秒2減衰。防具等の既存軽減は別途乗算。旧SmokeRunの完全吸収期待を軽減期待へ修正。
 検証: QA clone Windows build legendary-rework-build4.log HERO_BUILD_OK。監視minFree2.59GB/abortなし。QA専用--legendary-reviewは新規弾4種、24防具実発動、80モジュール実発動、旧モジュール、障壁残被害/補正、日英赤タグを含む224件Failures0。QA用VaultGameにはレビュー専用smoke flagのみ追加、本番には含めない。11共有sourceの本番/QA hash一致。full --smokeは従来の古い日本語武器名期待で冒頭失敗し、今回の検証根拠に使わない。ScreenCaptureは非表示Windows実行で画像を書けず、赤文字の実画面目視は未確認。iOS実機/IPA未確認。ユーザーEditorとsaveは保持、QAのみビルド。
+
+## 2026-10-23 / 防具の原画別テクスチャ
+変更: SharedArmorTextures.cs、Assets/StreamingAssets/SharedArmorIllustration/168 PNG、Resources/Art/SharedArmorIllustration/catalog.json、Editor/SharedArmorIllustrationCheck.cs、Tools/SharedArmorの生成/QAスクリプト、SharedArmorImplementation.md。頭/武器/モジュール/共通形状/骨/UVは変更なし。
+結果: 旧SharedArmorLUT色変換を実行経路から外し、各原画から前後投影した1024 atlasを装備時に読み込んで元shaderの_MainTexに設定。側面は前後から連続投影、胸背面は原画の布/革素材から推定。398製品は原画crop168種を共有しているためcatalogで168 atlasへ対応付ける。未使用画像/材質は参照がなくなると破棄。StreamingAssetsから必要分だけ読むことでResources buildのRAM急増を回避。
+検証: 398 ID全件のPNG/hash照合、168 GUID一意、5代表部位の承認メッシュ前横後ソフトレンダー目視、Unity batch import/runtime material差替え検査 `unity-runtime-check.log` SHARED_ARMOR_ILLUSTRATION_IMPORT_OK products=398 atlases=168、Windows検証build `unity-build-streaming.log` HERO_BUILD_OK、ビルド内StreamingAssets PNG168件。`git diff --check`通過。
+限界: 原画自体は168意匠なので同じ原画を使うvariantは同柄。背面専用原画なし、横から一部投影歪みあり。iOS実機/Metal/IPAと、全398品のゲーム画面目視は未実施。検証中の二度のResources版buildはメモリ低下を検知してPMOが中断し、StreamingAssets版で完了。ユーザーsaveは変更せず。
+## 2026-10-23 / 袖なし防具・銃4面投影・バックパック
+
+対象 `D:/Unity/Ashfall-iOS`。48種の袖なし通常胴防具は共有Warden胸メッシュの袖面を除き、素体の可動腕を表示する。初期Warden/レジェンダリーの袖は維持。銃は606商品を174種の既存イラスト系列に対応させ、左右側面・銃口・銃床の4面atlasを実行時に必要分だけ読み込み、現行の銃種/メーカー/シリーズ別形状へ投影する。これは商品別の新造形ではなく既存造形へのテクスチャ更新。モジュールは変更なし。
+
+新規の戦術バックパックは胸骨追従で、装備中だが手に持っていない長銃を右背面へ銃口上向き、拳銃を腰へ収める。装備画面と戦闘表示へ接続。原画4方向と2x2 atlasは `Assets/Resources/Art/TacticalBackpack/`、実行時用コピーは `Assets/Resources/Art/TacticalBackpackAtlas.png`。Resourcesの新設サブフォルダーからの読み込みが失敗したため、実行用は既存Art直下へ配置した。
+
+変更ファイル: `SharedArmorSleeves.cs`、`TacticalBackpackVisual.cs`、`WeaponFourViewAtlas.cs`、`DetailedHeroPlayer3D.cs`、`EquipmentHeroPreview.cs`、`ManufacturerEquipment3D.cs`、`GeneratedWardenRig.cs`、`DetailedHeroInk3D.shader`、`EquipmentScreenReview.cs`、関連画像/atlas/catalog/meta/生成script。検証: メモリ監視付きUnity 6000.6.0f1 Windowsビルド `D:/Unity/AshfallArtValidation/backpack-validated-build.log` は HERO_BUILD_OK。実画面 `D:/Unity/AshfallArtValidation/backpack-validated-qa/` でバックパック、収納長銃、袖なし胴の正背面を確認。QAは12521 checks中3 failures: touch drag 3件。旧モデル重なり判定はpreview/worldとも0。iOS実機ビルド・動作確認は未実施。
+
+## 2026-10-23 / バックパック形状密度の増強
+
+`TacticalBackpackVisual.cs` の旧8周×5段の主袋と平板ポーチを、64周×48段の布シェル、曲面ロールトップ/ベッドロール、独立した背面/側面ポーチ、肩ハーネスと固定ベルトへ置換。戦闘ソケット/銃収納方向は維持。実装面数は14,728三角形（収納銃を除く）。面数だけの細分化にしないため各部の厚み、布の襞、テーパーを形状へ付与。素材のBaseMap/BaseColorを明示。
+
+Unity 6000.6.0f1 Windowsビルド `D:/Unity/AshfallArtValidation/backpack-material-build.log` HERO_BUILD_OK。`D:/Unity/AshfallArtValidation/backpack-material-qa/` の後ろ/横画面で収納銃と追加形状を確認。QAは12,522件中3件失敗（前段と同じタッチドラッグ3件）、旧モデル重なりはpreview/worldとも0。iOS実機未検証。

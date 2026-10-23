@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/kestrel-legendary-0.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "kestrel-legendaries-v1.png cell 0",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        164,
+        488,
+        183
+      ]
+    },
+    "right": {
+      "source": "kestrel-legendaries-v1.png cell 0 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        164,
+        488,
+        183
+      ]
+    },
+    "front": {
+      "source": "kestrel-legendaries-v1.png cell 0 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "kestrel-legendaries-v1.png cell 0 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "BespokeLegendaries",
+  "sourceFile": "Assets/Resources/Art/BespokeLegendaries/kestrel-legendaries-v1.png",
+  "sourceCell": 0,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

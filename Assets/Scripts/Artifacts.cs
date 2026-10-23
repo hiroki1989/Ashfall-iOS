@@ -45,6 +45,8 @@ namespace NeonVault {
     if(dodge>0)parts.Add(VaultLanguage.T("shorten dodge cooldown by ","回避待機を ")+dodge.ToString("0.00")+VaultLanguage.T("s","秒短縮"));
     string condition=a.effect==ArtifactEffect.ShieldConversion?VaultLanguage.T("while barrier is active (then every 5s): ","障壁有効中に発動（以後5秒ごと）："):VaultLanguage.T("when the module activates: ","モジュール発動時：");
     detail+=" / "+VaultLanguage.T("Legendary circuit ","レジェンダリー回路")+condition+string.Join(VaultLanguage.T(", ","、"),parts);
+    string signature=LegendaryModuleSignature(a);
+    if(!string.IsNullOrEmpty(signature))detail+=" / "+VaultLanguage.T("On the same activation: ","同じ発動時：")+signature;
    }
    if(string.IsNullOrEmpty(a.manufacturerId))return detail;
    return ManufacturerCatalog.Name(a.manufacturerId,VaultLanguage.Japanese)+" / "+ModuleTendency(a)+"\n"+detail;
@@ -68,6 +70,28 @@ namespace NeonVault {
    if(recipe.maker==0||recipe.maker==4||recipe.maker==5)rounds=charge+recipe.attachment/2;
    dodge=.01f*(recipe.index+1);
    return true;
+  }
+  public static int LegendaryModuleMode(ArtifactItem a)
+  {
+   var recipe=a==null?null:DistinctEquipmentDesigns.Find(a.catalogId);
+   return recipe!=null&&recipe.legendary&&recipe.family>=4&&recipe.family<=6?(recipe.attachment+recipe.body*2)%10:-1;
+  }
+  public static string LegendaryModuleSignature(ArtifactItem a)
+  {
+   switch(LegendaryModuleMode(a))
+   {
+    case 0:return VaultLanguage.T("gain 3 barrier (cap 30)","障壁を3得る（上限30）");
+    case 1:return VaultLanguage.T("strike up to 3 visible enemies within 2.6m for ","2.6m以内の見える敵最大3体に")+(6*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
+    case 2:return VaultLanguage.T("shorten dodge cooldown by another 0.45s","回避待機をさらに0.45秒短縮");
+    case 3:return VaultLanguage.T("delay visible enemies within 3m for at least 0.6s","3m以内の見える敵の次の攻撃を最低0.6秒遅らせる");
+    case 4:return VaultLanguage.T("grant at least 0.2s of invulnerability","最低0.2秒の無敵を得る");
+    case 5:return VaultLanguage.T("push visible enemies within 3m back 1.2m","3m以内の見える敵を1.2m押し返す");
+    case 6:return VaultLanguage.T("pull visible enemies within 3m toward you by 0.9m","3m以内の見える敵を自分へ0.9m引き寄せる");
+    case 7:return VaultLanguage.T("pierce up to 3 visible enemies ahead in a 4m by 0.8m line for ","前方4mの直線上0.8m幅の見える敵最大3体へ")+(5*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
+    case 8:return VaultLanguage.T("ready the next melee attack immediately","次の近接攻撃を即座に使用可能にする");
+    case 9:return VaultLanguage.T("strike up to 2 visible enemies within 2.5m for ","2.5m以内の見える敵最大2体へ")+(4*a.power).ToString("0.0")+VaultLanguage.T(" damage and delay their next attack to at least 0.7s","ダメージを与え、次の攻撃を最低0.7秒遅らせる");
+    default:return "";
+   }
   }
   static string ModuleTendency(ArtifactItem a){
    string[] en={"Precision affixes; modest output, shorter cooldown.","Heavy reserve affixes; stronger bursts, longer cooldown.","Fire-rate affixes; rapid cooldown, weaker bursts.","Regeneration affixes; lower direct output.","Damage affixes; risky long cooldown or weaker conversion.","Protection affixes; consistent output and cooldown."};

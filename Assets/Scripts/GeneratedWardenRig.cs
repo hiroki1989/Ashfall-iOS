@@ -847,11 +847,14 @@ namespace NeonVault
         {
             if(!hero)return 0;
             int count=0;
+            var pack=hero.GetComponent<TacticalBackpackVisual>();
             foreach(var renderer in hero.GetComponentsInChildren<Renderer>(true))
             {
                 if(!renderer||!renderer.enabled||!renderer.gameObject.activeInHierarchy)continue;
                 if(renderer==head||renderer==armor)continue;
                 if(mask&&renderer.transform.IsChildOf(mask.transform))continue;
+                if(pack&&pack.Owns(renderer))continue;
+                if(renderer.name=="Common body / approved shared head")continue;
                 if(renderer.gameObject.name.StartsWith("Warden ")&&renderer.gameObject.name.Contains("shoulder lining"))continue;
                 count++;
             }

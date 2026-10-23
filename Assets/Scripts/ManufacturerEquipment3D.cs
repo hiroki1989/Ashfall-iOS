@@ -314,6 +314,9 @@ namespace NeonVault
             if(entry==null||entry.shaderSampleUv==null)return;
             var sheet=Resources.Load<Texture2D>(entry.sourceSheetResourcePath);
             if(!sheet)return;
+            string fourViewKey=null;
+            Vector4 fourViewSideUv=new Vector4(.02f,.35f,.96f,.30f);
+            Texture2D fourView=gun?WeaponFourViewAtlas.Retain(recipe.id,out fourViewKey,out fourViewSideUv):null;
             var accessoryEntry=!gun&&!recipe.legendary?Find(recipe,false,true):null;
             var accessorySheet=accessoryEntry==null?null:Resources.Load<Texture2D>(accessoryEntry.sourceSheetResourcePath);
             var renderers=root.GetComponentsInChildren<MeshRenderer>(true);bool hasProjectionRenderer=false;
@@ -332,13 +335,15 @@ namespace NeonVault
                 bool supports=false;foreach(var material in renderer.sharedMaterials)if(material&&material.shader&&material.shader.name==DetailedHeroMaterials3D.ShaderName){supports=true;break;}
                 if(!supports)continue;
                 renderer.GetPropertyBlock(block);
-                block.SetTexture("_ProjectionSheet",sheet);block.SetVector("_ProjectionUv",RectVector(Overscan(RectOf(entry.shaderSampleUv),1.05f)));
+                block.SetTexture("_ProjectionSheet",fourView?fourView:sheet);
+                block.SetVector("_ProjectionUv",fourView?new Vector4(0,0,1,1):RectVector(Overscan(RectOf(entry.shaderSampleUv),1.05f)));
+                if(fourView)block.SetVector("_ProjectionSideUv",fourViewSideUv);
                 block.SetFloat("_AccessoryProjectionEnabled",accessorySheet&&accessoryEntry.shaderSampleUv!=null?1:0);
                 if(accessorySheet&&accessoryEntry.shaderSampleUv!=null){block.SetTexture("_AccessoryProjectionSheet",accessorySheet);block.SetVector("_AccessoryProjectionUv",RectVector(RectOf(accessoryEntry.shaderSampleUv)));}
                 block.SetVector("_ProjectionMin",rootBounds.min);
                 block.SetVector("_ProjectionSize",new Vector4(Mathf.Max(rootBounds.size.x,.0001f),Mathf.Max(rootBounds.size.y,.0001f),Mathf.Max(rootBounds.size.z,.0001f),0));
                 block.SetMatrix("_ProjectionWorldToRoot",root.worldToLocalMatrix);block.SetMatrix("_ProjectionWorldNormalToRoot",root.localToWorldMatrix.transpose);
-                block.SetFloat("_ProjectionMode",gun?0:1);block.SetFloat("_ProjectionEnabled",1);
+                block.SetFloat("_ProjectionMode",fourView?3:gun?0:1);block.SetFloat("_ProjectionEnabled",1);
                 renderer.SetPropertyBlock(block);
                 hasProjectionRenderer=true;
             }
@@ -347,7 +352,9 @@ namespace NeonVault
                 var follower=root.GetComponent<EquipmentProjectionFollower>();
                 if(!follower)follower=root.gameObject.AddComponent<EquipmentProjectionFollower>();
                 follower.Initialize(root,renderers);
+                if(fourView)follower.OwnAtlas(fourViewKey);
             }
+            else if(fourView)WeaponFourViewAtlas.Release(fourViewKey);
         }
 
         public static void StampAccessoryGeometry(Transform armorRoot,Transform accessory,EquipmentRecipe recipe)
@@ -434,7 +441,10 @@ namespace NeonVault
     sealed class EquipmentProjectionFollower:MonoBehaviour
     {
         Transform root;Renderer[] renderers;
+        string atlasKey;
         public void Initialize(Transform projectionRoot,Renderer[] projectionRenderers){root=projectionRoot;renderers=projectionRenderers;}
+        public void OwnAtlas(string key){if(atlasKey==key){WeaponFourViewAtlas.Release(key);return;}WeaponFourViewAtlas.Release(atlasKey);atlasKey=key;}
+        void OnDestroy(){WeaponFourViewAtlas.Release(atlasKey);}
         void LateUpdate()
         {
             if(!root||renderers==null)return;

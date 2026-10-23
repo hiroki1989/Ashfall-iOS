@@ -20,7 +20,9 @@ namespace NeonVault
         Material[][] baseLookMaterials;bool? generatedLimbPalette;
         string generatedWeaponKey;
         GeneratedProductWeapon productWeapon;
+        TacticalBackpackVisual backpack;
         readonly SharedArmorTextures sharedArmorTextures=new SharedArmorTextures();
+        readonly SharedArmorSleeves sharedArmorSleeves=new SharedArmorSleeves();
         string key; float lastRender=-100; public float Angle=25;
         public float ReviewPhase=-1;public Vector3 ReviewVelocity;public bool ReviewFiring;
         public bool UsesGeneratedWarden=>GeneratedWardenPreviewAssets.Enabled;
@@ -95,10 +97,12 @@ namespace NeonVault
                 // (weapon and equipment replacement can add children after initialization).
                 foreach(var t in stage.GetComponentsInChildren<Transform>(true))t.gameObject.layer=Layer;
                 GeneratedProductWeapon.Synchronize(ref productWeapon,game.gun,weapon,stage.transform,UsesGeneratedWarden);
+                if(backpack)backpack.Synchronize(game);
                 foreach(var t in stage.GetComponentsInChildren<Transform>(true))t.gameObject.layer=Layer;
                 ShowCommonBase();
                 var covered=GeneratedEquipmentAssetCatalog.CoveredBodySlots(game.EquippedArmor);
                 GeneratedCommonBodyRig.SetCoveredSlots(commonBaseSkin,covered);
+                sharedArmorSleeves.Apply(generatedArmorParts?[1],commonBaseSkin,hero,game.EquippedArmor);
                 view.Render();return image;
             }
             view.orthographicSize=1.10f;
@@ -123,9 +127,11 @@ namespace NeonVault
             DetailedHeroPlayer3D.Pose(hero,weapon,game.gun!=null&&Arsenal.IsOneHanded(VaultLanguage.DisplayModel(game.gun)),ReviewFiring,Quaternion.Euler(0,Angle,0)*Vector3.forward,ReviewPhase,ReviewVelocity,ReviewPhase>=0?1:0);
             foreach(var t in stage.GetComponentsInChildren<Transform>(true))t.gameObject.layer=Layer;
             GeneratedProductWeapon.Synchronize(ref productWeapon,game.gun,weapon,stage.transform,UsesGeneratedWarden);
+            if(backpack)backpack.Synchronize(game);
             foreach(var t in stage.GetComponentsInChildren<Transform>(true))t.gameObject.layer=Layer;
             ShowCommonBase();
             GeneratedCommonBodyRig.SetCoveredSlots(commonBaseSkin,GeneratedEquipmentAssetCatalog.CoveredBodySlots(game.EquippedArmor));
+            sharedArmorSleeves.Apply(generatedArmorParts?[1],commonBaseSkin,hero,game.EquippedArmor);
             view.Render();return image;
         }
         void Initialize(VaultGame game)
@@ -135,10 +141,11 @@ namespace NeonVault
             oldBaseRenderers=hero.GetComponentsInChildren<Renderer>(true);
             commonBaseSkin=GeneratedCommonBodyRig.Create(hero);
             ShowCommonBase();
+            backpack=TacticalBackpackVisual.Create(hero);
             armor=DetailedHeroArsenal3D.ApplyArmor(hero,GeneratedEquipmentAssetCatalog.WithoutHeadArmor(game.EquippedArmor));
             var cameraObject=new GameObject("Equipment portrait camera");cameraObject.transform.SetParent(stage.transform,false);
             view=cameraObject.AddComponent<Camera>();view.enabled=false;view.orthographic=true;view.orthographicSize=1.10f;view.nearClipPlane=.05f;view.farClipPlane=20;
-            view.clearFlags=CameraClearFlags.SolidColor;view.backgroundColor=new Color(.025f,.04f,.052f);view.cullingMask=1<<Layer;
+            view.clearFlags=CameraClearFlags.SolidColor;view.backgroundColor=new Color(.91f,.925f,.93f);view.cullingMask=1<<Layer;
             view.transform.localPosition=new Vector3(0,1.85f,4.5f);view.transform.LookAt(stage.transform.position+Vector3.up*.94f);
             image=new RenderTexture(768,1024,24){name="Equipment live portrait",antiAliasing=4};image.Create();view.targetTexture=image;
             foreach(var camera in Camera.allCameras)if(camera!=view)camera.cullingMask&=~(1<<Layer);
@@ -208,7 +215,7 @@ namespace NeonVault
         }
         void AddLight(string name,Vector3 rotation,Color color,float intensity)
         {var obj=new GameObject(name);obj.transform.SetParent(stage.transform,false);obj.transform.rotation=Quaternion.Euler(rotation);var light=obj.AddComponent<Light>();light.type=LightType.Directional;light.color=color;light.intensity=intensity;light.cullingMask=1<<Layer;light.shadows=LightShadows.None;}
-        void OnDestroy(){sharedArmorTextures.Dispose();if(image){image.Release();Destroy(image);}if(stage)Destroy(stage);}
+        void OnDestroy(){sharedArmorSleeves.Dispose();sharedArmorTextures.Dispose();if(image){image.Release();Destroy(image);}if(stage)Destroy(stage);}
     }
     public partial class VaultGame
     {

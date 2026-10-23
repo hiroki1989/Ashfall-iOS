@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/kestrel-shotgun-pump.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "kestrel-series-v1.png cell 8",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        193,
+        488,
+        126
+      ]
+    },
+    "right": {
+      "source": "kestrel-series-v1.png cell 8 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        193,
+        488,
+        126
+      ]
+    },
+    "front": {
+      "source": "kestrel-series-v1.png cell 8 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "kestrel-series-v1.png cell 8 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/kestrel-series-v1.png",
+  "sourceCell": 8,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

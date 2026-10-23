@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/kestrel-assault-patrol.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "kestrel-series-v1.png cell 0",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        186,
+        488,
+        139
+      ]
+    },
+    "right": {
+      "source": "kestrel-series-v1.png cell 0 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        186,
+        488,
+        139
+      ]
+    },
+    "front": {
+      "source": "kestrel-series-v1.png cell 0 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "kestrel-series-v1.png cell 0 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/kestrel-series-v1.png",
+  "sourceCell": 0,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

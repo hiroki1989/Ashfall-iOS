@@ -15,13 +15,16 @@ namespace NeonVault
             }
         }
         Vector2 MobileCanvasPoint(Vector2 bottomScreen)=>MobileCanvasMatrix.inverse.MultiplyPoint3x4(new Vector3(bottomScreen.x,UnityEngine.Screen.height-bottomScreen.y,0));
-        bool MobileButton(Rect r,string caption){Panel(r,Cyan);return GUI.Button(r,caption,new GUIStyle(centered){fontSize=38,wordWrap=true,clipping=TextClipping.Clip});}
+        bool MobileButton(Rect r,string caption){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=38,fontStyle=FontStyle.Bold,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
         void DrawMobileMenu()
         {
             if(menuArt)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
-            Box(new Rect(0,0,770,900),new Color(.018f,.026f,.03f,.9f));
-            Text(55,118,"ASHFALL",title,Gold,660);Text(60,222,T("MOBILE / LAST LIGHT","モバイル / 最後の灯"),heading,Cyan,670);
-            Text(60,310,T("Left stick: move\nRight stick: aim\nHold FIRE to shoot","左スティック：移動\n右スティック：照準\n射撃ボタンを押して射撃"),new GUIStyle(label){fontSize=28,wordWrap=true},Mist,650);
+            for(int i=0;i<40;i++)Box(new Rect(i*25,0,26,900),new Color(.035f,.055f,.065f,.97f*Mathf.Pow(1-i/40f,.4f)));
+            Text(60,90,T("LAST LIGHT  /  SURVIVOR OPERATIONS","最後の灯  /  生存者の記録"),new GUIStyle(label){fontSize=22,fontStyle=FontStyle.Bold},Gold,680);
+            Text(54,146,"ASHFALL",new GUIStyle(title){fontSize=104},UiPaper,850);
+            Box(new Rect(60,300,72,4),Gold);
+            Text(60,330,T("SCAVENGE. SURVIVE. RETURN.","拾え。生き延びろ。帰ってこい。"),new GUIStyle(label){fontSize=28,fontStyle=FontStyle.Bold},UiPaper,720);
+            Text(60,390,T("Move left. Aim right. Hold the gold trigger.","左で移動。右で照準。金色の射撃ボタンを長押し。"),new GUIStyle(label){fontSize=22,wordWrap=true},Mist,700);
             if(MobileButton(new Rect(58,470,650,112),T("ENTER SAFEHOUSE","拠点へ")))EnterHub();
             if(MobileButton(new Rect(58,605,650,112),T("EQUIPMENT","装備を確認")))ToggleInventory();
             if(HasSavedRun&&MobileButton(new Rect(58,740,650,100),T("CONTINUE SAVED EXPEDITION","保存した探索を再開")))ResumeSavedRun();
@@ -40,20 +43,21 @@ namespace NeonVault
         void DrawMobileHUD()
         {
             if(gun==null)return;
-            Panel(new Rect(20,20,590,125),Cyan);
-            Text(38,28,Mathf.CeilToInt(hp)+" / "+maxHp+" HP",new GUIStyle(number){fontSize=36},hp<maxHp*.25f?Gold:Color.white,570);
-            Text(38,81,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=25},Gold,570);
-            Box(new Rect(36,132,556,6),new Color(.12f,.2f,.22f));Box(new Rect(36,132,556*Mathf.Clamp01(hp/maxHp),6),Cyan);
-            Panel(new Rect(630,20,400,125),gun.color);
-            Text(646,28,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+"  "+VaultLanguage.GunName(gun),new GUIStyle(label){fontSize=24},gun.color,370);
-            Text(646,83,reload>0?T("RELOADING ","装填中 ")+Mathf.CeilToInt(reload*10)/10f:ammo+" / "+EffectiveMagazine+T("  RESERVE ","  予備 ")+AmmoReserve(AmmoForGun(gun)),new GUIStyle(label){fontSize=27},Color.white,370);
+            Box(new Rect(20,20,420,125),new Color(.035f,.055f,.075f,.86f));
+            Text(38,26,Mathf.CeilToInt(hp)+" / "+maxHp+" HP",new GUIStyle(number){fontSize=34},hp<maxHp*.25f?UiDanger:UiPaper,390);
+            Text(38,79,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=20,wordWrap=true},Mist,380);
+            Box(new Rect(38,74,382,4),new Color(.22f,.27f,.28f));Box(new Rect(38,74,382*Mathf.Clamp01(hp/maxHp),4),Cyan);
+            Box(new Rect(456,20,574,125),new Color(.035f,.055f,.075f,.86f));
+            Box(new Rect(456,20,3,125),gun.color);
+            Text(476,29,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+"  "+VaultLanguage.GunName(gun),new GUIStyle(label){fontSize=20,wordWrap=true},Mist,530);
+            Text(476,83,reload>0?T("RELOADING ","装填中 ")+Mathf.CeilToInt(reload*10)/10f:ammo+" / "+EffectiveMagazine+T("   RESERVE ","   予備 ")+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=30},UiPaper,530);
             int alive=0;foreach(var enemy in Enemies)if(enemy&&!enemy.dead)alive++;
             Text(38,154,cleared?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},cleared?Gold:Mist,740);
             if(toastTimer>0)Text(360,210,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,670);
-            Rect mapRect=new Rect(1070,170,345,205);Panel(mapRect,Cyan);
+            Rect mapRect=new Rect(1165,165,250,150);Box(mapRect,new Color(.035f,.055f,.075f,.74f));
             if(Layout!=null)
             {
-                float tile=Mathf.Min(310f/Layout.Columns,176f/Layout.Rows);Vector2 origin=new Vector2(1085,184);
+                float tile=Mathf.Min(220f/Layout.Columns,122f/Layout.Rows);Vector2 origin=new Vector2(1180,179);
                 for(int x=0;x<Layout.Columns;x++)for(int z=0;z<Layout.Rows;z++)if(Layout.open[x,z]&&Layout.IsExplored(x,z))Box(new Rect(origin.x+x*tile,origin.y+(Layout.Rows-1-z)*tile,Mathf.Max(1,tile-.5f),Mathf.Max(1,tile-.5f)),Layout.IsVisible(x,z)?new Color(.28f,.44f,.46f):new Color(.13f,.2f,.22f));
                 DrawTacticalMapMarkers(origin,tile,7);MapPoint(PlayerPosition,origin,tile,Cyan,5);var exit=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exit.x,exit.y))MapPoint(ExitPosition,origin,tile,Gold,5);
             }

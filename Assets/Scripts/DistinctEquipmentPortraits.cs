@@ -33,6 +33,17 @@ namespace NeonVault {
    }
    var sheet=new Sheet{texture=texture,cells=cells};sheets[path]=sheet;sheets["Art/DistinctEquipment/"+ManufacturerCatalog.Id(r.maker)+"-"+kind+(kind=="armor-accessories"?"-v1":"-parts-v1")]=sheet;return sheet;
   }
+  static Sheet LoadChestBootRevision(EquipmentRecipe r){
+   string path="Art/DistinctEquipment/"+ManufacturerCatalog.Id(r.maker)+"-armor-chest-boots-v2";
+   if(sheets.TryGetValue(path,out var cached)&&cached.texture)return cached;
+   var texture=Resources.Load<Texture2D>(path);
+   var json=Resources.Load<TextAsset>(path+"-bounds");
+   if(!texture||!json){if(warnings.Add(path))Debug.LogWarning("Chest/boot illustration missing: "+path);return null;}
+   Rect[] cells=null;
+   try{cells=ParseBounds(json.text,12);}catch(System.Exception){}
+   if(cells==null){if(warnings.Add(path+" bounds"))Debug.LogWarning("Chest/boot illustration bounds invalid: "+path);return null;}
+   var sheet=new Sheet{texture=texture,cells=cells};sheets[path]=sheet;return sheet;
+  }
   static float Ratio(Sheet s,int cell){var uv=s.cells[cell];return uv.width*s.texture.width/Mathf.Max(1,uv.height*s.texture.height);}
   static void Part(Sheet sheet,int cell,Rect target){GUI.color=Color.white;GUI.DrawTextureWithTexCoords(target,sheet.texture,sheet.cells[cell],true);}
   static void Fill(Rect r,Color color){GUI.color=color;GUI.DrawTexture(r,Texture2D.whiteTexture);}
@@ -43,7 +54,8 @@ namespace NeonVault {
   public static bool Draw(Rect card,ArmorItem item){var r=DistinctEquipmentDesigns.For(item);return r!=null&&Draw(card,r,"armor",item.rarity);}
   public static bool Draw(Rect card,ArtifactItem item){var r=DistinctEquipmentDesigns.For(item);return r!=null&&Draw(card,r,"module",item.rarity);}
   static bool Draw(Rect card,EquipmentRecipe r,string kind,Rarity rarity){
-   var s=Load(r,kind,kind=="gun"?3:kind=="armor"?6:2);if(s==null)return false;
+   bool revisedArmor=kind=="armor"&&!r.legendary&&(r.slot==4||r.slot==1);
+   var s=revisedArmor?LoadChestBootRevision(r):Load(r,kind,kind=="gun"?3:kind=="armor"?6:2);if(s==null)return false;
    Color old=GUI.color;Frame(card,rarity,r.legendary);var area=new Rect(card.x+7,card.y+7,Mathf.Max(1,card.width-14),Mathf.Max(1,card.height-14));
    if(kind=="gun"){
     int body=r.body,barrel=6+r.barrel,stock=12+r.stock;
@@ -52,9 +64,10 @@ namespace NeonVault {
     var b=new Rect(84,-bh*.25f,160,bh);var f=new Rect(b.xMax-16,-barrelH*.5f,115,barrelH);var rear=new Rect(b.x-84,-stockH*.42f,100,stockH);
     Rect bounds=Union(Union(b,f),rear);Part(s,stock,Map(rear,bounds,area));Part(s,barrel,Map(f,bounds,area));Part(s,body,Map(b,bounds,area));
    }else{
-    int main=kind=="armor"?r.slot*6+r.body:r.body,extra=(kind=="armor"?30:6)+r.attachment;
+    int main=kind=="armor"?(revisedArmor?(r.slot==1?0:6)+r.body:r.slot*6+r.body):r.body,extra=(kind=="armor"?30:6)+r.attachment;
     float ratio=Ratio(s,main);var image=area;if(ratio>area.width/area.height){image.height=area.width/ratio;image.y=area.center.y-image.height*.5f;}else{image.width=area.height*ratio;image.x=area.center.x-image.width*.5f;}
     if(kind=="armor")Part(s,main,image);
+    if(revisedArmor){GUI.color=old;ManufacturerBranding.Badge(new Rect(card.x+3,card.yMax-Mathf.Min(25,card.height*.3f)-3,Mathf.Min(25,card.width*.3f),Mathf.Min(25,card.height*.3f)),ManufacturerCatalog.Id(r.maker));return true;}
     var accessory=kind=="armor"?Load(r,"armor-accessories",5):s; if(accessory==null)accessory=s; else if(kind=="armor")extra=r.slot*6+r.attachment;
     float w=image.width*(kind=="armor"?(r.slot==0?.24f:r.slot==1?.48f:.33f):.48f),h=w/Ratio(accessory,extra);h=Mathf.Min(h,image.height*.55f);
     Vector2 mount=image.center;

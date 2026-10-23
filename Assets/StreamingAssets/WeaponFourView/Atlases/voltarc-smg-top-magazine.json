@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-smg-top-magazine.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-series-v1.png cell 17",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        130,
+        488,
+        251
+      ]
+    },
+    "right": {
+      "source": "voltarc-series-v1.png cell 17 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        130,
+        488,
+        251
+      ]
+    },
+    "front": {
+      "source": "voltarc-series-v1.png cell 17 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-series-v1.png cell 17 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/voltarc-series-v1.png",
+  "sourceCell": 17,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

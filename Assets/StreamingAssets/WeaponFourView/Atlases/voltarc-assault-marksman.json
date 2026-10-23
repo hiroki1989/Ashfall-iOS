@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-assault-marksman.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-series-v1.png cell 3",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        190,
+        488,
+        131
+      ]
+    },
+    "right": {
+      "source": "voltarc-series-v1.png cell 3 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        190,
+        488,
+        131
+      ]
+    },
+    "front": {
+      "source": "voltarc-series-v1.png cell 3 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-series-v1.png cell 3 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/voltarc-series-v1.png",
+  "sourceCell": 3,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

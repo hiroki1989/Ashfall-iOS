@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-legendary-2.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-legendaries-v1.png cell 2",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        162,
+        488,
+        188
+      ]
+    },
+    "right": {
+      "source": "aegis-legendaries-v1.png cell 2 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        162,
+        488,
+        188
+      ]
+    },
+    "front": {
+      "source": "aegis-legendaries-v1.png cell 2 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-legendaries-v1.png cell 2 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "BespokeLegendaries",
+  "sourceFile": "Assets/Resources/Art/BespokeLegendaries/aegis-legendaries-v1.png",
+  "sourceCell": 2,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/kestrel-assault-battle.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "kestrel-series-v1.png cell 2",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        198,
+        488,
+        116
+      ]
+    },
+    "right": {
+      "source": "kestrel-series-v1.png cell 2 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        198,
+        488,
+        116
+      ]
+    },
+    "front": {
+      "source": "kestrel-series-v1.png cell 2 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "kestrel-series-v1.png cell 2 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/kestrel-series-v1.png",
+  "sourceCell": 2,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

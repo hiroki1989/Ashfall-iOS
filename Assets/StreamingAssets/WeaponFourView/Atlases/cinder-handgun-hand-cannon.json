@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-handgun-hand-cannon.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-series-v1.png cell 7",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        156,
+        488,
+        199
+      ]
+    },
+    "right": {
+      "source": "cinder-series-v1.png cell 7 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        156,
+        488,
+        199
+      ]
+    },
+    "front": {
+      "source": "cinder-series-v1.png cell 7 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-series-v1.png cell 7 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/cinder-series-v1.png",
+  "sourceCell": 7,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

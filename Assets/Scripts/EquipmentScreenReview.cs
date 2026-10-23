@@ -39,6 +39,9 @@ namespace NeonVault
             Set(game,"shopSellingPage",false);Set(game,"eqCategory",0);yield return Capture("merchant-buy");
             Set(game,"shopSellingPage",true);yield return Capture("merchant-sell");
             var preview=FindAnyObjectByType<EquipmentHeroPreview>();Check(preview!=null,"live preview exists");
+            var pack=preview?preview.GetComponentInChildren<TacticalBackpackVisual>(true):null;
+            report.Add("Tactical backpack triangles="+(pack?pack.TriangleCount:0));
+            Check(pack&&pack.TriangleCount>=14000,"tactical backpack has sculpted armor-scale geometry");
             var worldPlayer=game.PlayerAppearance?game.PlayerAppearance.GetComponent<DetailedHeroPlayer3D>():null;Check(worldPlayer!=null,"gameplay player presentation exists");
             if(preview)
             {
@@ -54,12 +57,25 @@ namespace NeonVault
                 preview.ReviewFiring=false;preview.ReviewPhase=-1;
                 Check(preview.UsesGeneratedWarden&&preview.GeneratedVisibleRendererCount>=4,"generated base, armor, respirator and weapon render in the equipment preview");
                 Check(worldPlayer&&worldPlayer.IsGeneratedLookActive,"appearance switch updates the gameplay player");
-                Check(preview.GeneratedLegacyOverlapCount==0,"generated preview hides all legacy armor geometry");
-                Check(worldPlayer&&worldPlayer.GeneratedLegacyOverlapCount==0,"generated gameplay player hides all legacy armor geometry");
+                int previewOverlap=preview.GeneratedLegacyOverlapCount;
+                int worldOverlap=worldPlayer?worldPlayer.GeneratedLegacyOverlapCount:-1;
+                report.Add("Generated legacy overlap preview="+previewOverlap+" world="+worldOverlap);
+                Check(previewOverlap==0,"generated preview hides all legacy armor geometry");
+                Check(worldOverlap==0,"generated gameplay player hides all legacy armor geometry");
                 if(game.GameCamera)CaptureWorld(game.GameCamera,Path.Combine(output,"generated-warden-world-camera.png"));
                 preview.ToggleGeneratedWarden();yield return null;yield return Capture("current-loadout-restored");
                 Check(!preview.UsesGeneratedWarden&&preview.GeneratedVisibleRendererCount==0,"switching back restores the existing animated preview");
                 Check(worldPlayer&&!worldPlayer.IsGeneratedLookActive,"switching back restores the existing gameplay player");
+                var sleeveless=Armory.CreateCatalog("distinct.armor.038",Rarity.Common,1,new System.Random(38));
+                game.StoreArmor(sleeveless);game.EquipArmor(sleeveless);
+                preview.Angle=25;yield return Capture("sleeveless-chest-front");
+                preview.Angle=145;yield return Capture("sleeveless-chest-rear");
+                var cinder=Armory.CreateCatalog("distinct.armor.040",Rarity.Common,1,new System.Random(40));
+                Check(SharedArmorSleeves.IsSleeveless(cinder),"Cinder short-sleeve chest uses the fitted vest");
+                game.StoreArmor(cinder);game.EquipArmor(cinder);
+                preview.Angle=25;yield return Capture("cinder-short-sleeve-front");
+                preview.Angle=145;yield return Capture("cinder-short-sleeve-rear");
+                game.EquipArmor(Armory.TrailWarden(ArmorSlot.Chest));
             }
             VaultLanguage.Set(language,false);Time.timeScale=1;report.Add("Checks="+checks+" Failures="+failures);File.WriteAllLines(Path.Combine(output,"result.txt"),report);Application.Quit(failures==0?0:1);
         }

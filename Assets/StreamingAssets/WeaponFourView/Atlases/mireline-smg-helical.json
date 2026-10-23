@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-smg-helical.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-series-v1.png cell 18",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        140,
+        488,
+        231
+      ]
+    },
+    "right": {
+      "source": "mireline-series-v1.png cell 18 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        140,
+        488,
+        231
+      ]
+    },
+    "front": {
+      "source": "mireline-series-v1.png cell 18 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-series-v1.png cell 18 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/mireline-series-v1.png",
+  "sourceCell": 18,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-smg-receiver.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-series-v1.png cell 16",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        141,
+        488,
+        229
+      ]
+    },
+    "right": {
+      "source": "mireline-series-v1.png cell 16 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        141,
+        488,
+        229
+      ]
+    },
+    "front": {
+      "source": "mireline-series-v1.png cell 16 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-series-v1.png cell 16 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/mireline-series-v1.png",
+  "sourceCell": 16,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

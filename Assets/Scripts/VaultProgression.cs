@@ -41,6 +41,7 @@ namespace NeonVault {
    if(!ArtifactCatalog.LegendaryModuleBonus(a,out int healing,out int rounds,out float dodge))return;
    hp=Mathf.Min(maxHp,hp+healing);dodgeCooldown=Mathf.Max(0,dodgeCooldown-dodge);
    if(rounds>0&&gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+rounds);}
+   ApplyLegendaryModuleSignature(a);
   }
   public void ArtifactOnKill(Vector3 position){if(armorKillTimer<=0){foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor)&&armor.uniqueEffect==1){ArtifactShield=Mathf.Max(ArtifactShield,Mathf.Min(30,ArtifactShield+4));armorKillTimer=4;break;}}for(int i=0;i<2;i++){var a=EquippedArtifacts[i];if(a==null||ArtifactTimer(a)>0||a.effect!=ArtifactEffect.KillShield)continue;ArtifactShield=Mathf.Max(ArtifactShield,Mathf.Min(30,ArtifactShield+8*a.power));artifactTimers[a.id]=a.cooldown;ActivateLegendaryModule(a);}}
   public void ArtifactOnReload(){LegendaryTrigger("reload",PlayerPosition);for(int i=0;i<2;i++){var a=EquippedArtifacts[i];if(a!=null&&ArtifactTimer(a)<=0&&a.effect==ArtifactEffect.ReloadSurge){reloadSurgeExpiry[a.id]=artifactCombatClock+3;artifactTimers[a.id]=a.cooldown;ActivateLegendaryModule(a);}}RefreshReloadSurgeSummary();}

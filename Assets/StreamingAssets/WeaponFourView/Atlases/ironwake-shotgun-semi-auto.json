@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/ironwake-shotgun-semi-auto.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "ironwake-series-v1.png cell 11",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        187,
+        488,
+        137
+      ]
+    },
+    "right": {
+      "source": "ironwake-series-v1.png cell 11 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        187,
+        488,
+        137
+      ]
+    },
+    "front": {
+      "source": "ironwake-series-v1.png cell 11 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "ironwake-series-v1.png cell 11 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/ironwake-series-v1.png",
+  "sourceCell": 11,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

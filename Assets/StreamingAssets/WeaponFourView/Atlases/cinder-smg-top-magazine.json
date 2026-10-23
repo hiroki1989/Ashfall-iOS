@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-smg-top-magazine.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-series-v1.png cell 17",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        126,
+        488,
+        260
+      ]
+    },
+    "right": {
+      "source": "cinder-series-v1.png cell 17 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        126,
+        488,
+        260
+      ]
+    },
+    "front": {
+      "source": "cinder-series-v1.png cell 17 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-series-v1.png cell 17 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeries",
+  "sourceFile": "Assets/Resources/Art/GunSeries/cinder-series-v1.png",
+  "sourceCell": 17,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

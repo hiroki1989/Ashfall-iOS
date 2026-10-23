@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-legendary-2.png",
+  "tilePixels": 512,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-legendaries-v1.png cell 2",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        183,
+        488,
+        146
+      ]
+    },
+    "right": {
+      "source": "voltarc-legendaries-v1.png cell 2 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        183,
+        488,
+        146
+      ]
+    },
+    "front": {
+      "source": "voltarc-legendaries-v1.png cell 2 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-legendaries-v1.png cell 2 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "BespokeLegendaries",
+  "sourceFile": "Assets/Resources/Art/BespokeLegendaries/voltarc-legendaries-v1.png",
+  "sourceCell": 2,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}
