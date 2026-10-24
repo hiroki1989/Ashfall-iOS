@@ -9,7 +9,7 @@ namespace NeonVault
         void ApplyProductDropModel(GameObject root,object item)
         {
             if(!root)return;
-            foreach(Transform child in root.transform)if(!child.name.StartsWith("Loot locator")){child.gameObject.SetActive(false);Destroy(child.gameObject);}
+            foreach(Transform child in root.transform)if(!child.name.StartsWith("Loot rarity ")){child.gameObject.SetActive(false);Destroy(child.gameObject);}
             Transform model=null;
             if(item is Gun gun)model=ManufacturerEquipment3D.BuildWeapon(root.transform,gun).root;
             else if(item is ArmorItem armor)model=BespokeLegendaryDesigns.Index(armor)>=0?BespokeLegendaryModels3D.BuildArmor(root.transform,armor,BespokeLegendaryDesigns.Index(armor)):DistinctEquipmentModels3D.BuildArmor(root.transform,armor,DistinctEquipmentDesigns.For(armor));
@@ -53,7 +53,8 @@ namespace NeonVault
 
         /// <summary>Creates a distinct, readable 3D field prop without baking UI text into art.</summary>
         public GameObject CreateLootPresentation(string displayName, Vector3 position, Vector3 size, Color accent,
-            LootPresentationKind kind, AmmoType ammoType = AmmoType.AssaultRifle, int amount = 0)
+            LootPresentationKind kind, AmmoType ammoType = AmmoType.AssaultRifle, int amount = 0,
+            Rarity rarity = Rarity.Common)
         {
             var root = new GameObject("Loot / " + displayName);
             root.transform.SetParent(world, false);
@@ -139,8 +140,9 @@ namespace NeonVault
                 }
             }
 
-            var locator=art.Ring("Loot locator / " + kind,position+Vector3.up*.025f,kind==LootPresentationKind.Chest?1.05f:kind==LootPresentationKind.AmmoCrate?.86f:kind==LootPresentationKind.Ammo?.48f:.62f,.025f,accent,true);
-            locator.SetParent(root.transform,true);
+            if(kind==LootPresentationKind.Weapon||kind==LootPresentationKind.Armor||
+               kind==LootPresentationKind.Module||kind==LootPresentationKind.Melee)
+                LootRarityBeacon.Add(root.transform,rarity);
             return root;
         }
     }

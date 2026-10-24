@@ -704,8 +704,20 @@ Modly/Shap-E試作は見た目が受け入れ水準に達せず不採用。既�
 
 ユーザー了承により、この復元済み敵8を暫定版として本編へ反映。`FaithfulEnemy3D.Build()` が通常プレイでも `TryBuildImportedEnemy()` を優先することと13部位/3atlasの読み込みを確認。診断用に消していた輪郭線を通常値へ戻し、Unity 6000.6.0f1 Windows `enemy8-accepted-model-build.log` HERO_BUILD_OK、`enemy8-accepted-model-review/` は1386 checks/0 failures。正面、歩行側面、攻撃側面をPMOが実画面で確認。背面の黒帯と手の精度は既知の残課題。iOS/Metal実機未検証、IPA未作成。
 
+## 2026-10-25 / IPAをApp Store Connectへアップロード
+
+ユーザー指定 `C:/Users/hiroki/Downloads/15669784938264-ash-8-default-ios-2.ipa` を既存Ash8アプリ `com.hiroki1989.ashfall` へApp Store Connect Build Upload APIで直接アップロード。必要なbundle metadataはversion 11/build 11。全15分割を送信し、ファイルcommit HTTP200・asset `COMPLETE`。Build Upload ID `99e811c5-184a-4251-97a4-556bb1fd402c`。App Store Connectのbuild一覧で `11 PROCESSING` を確認。Apple側の処理中であり、VALID/TestFlight配信可能状態は未確認。
+
 ## 2026-10-24 / 弾薬上限の銃種別化・30度照準・敵8テクスチャ再検証
 
 変更ファイル: `Assets/Scripts/VaultInventory.cs`、`VaultAmmo.cs`、`VaultCapacityUpgrades.cs`、`VaultEquipmentScreen.cs`、`VaultAutoAim.cs`、`SmokeRun.cs`、`FaithfulEnemy3D.cs`、`FaithfulEnemyImported3D.cs`、`Development/Tools/Enemy3DRebuild/build_visual_hull_enemy8.py`、`Assets/Resources/Art/Enemy3DRebuild/NewMesh/Enemy_8/`。弾薬上限の購入段階を拳銃/散弾/ライフル/狙撃/軽機関銃の5種に分割し、旧セーブの共通段階を5種へ移行。照準補助の近距離・精度100の上限を30度とし、精度が低い武器では急激に広がらない6乗曲線にした。敵8は4方向絵の面別投影、胴専用テクスチャ、腕の待機姿勢を試作し、メッシュを約3.3万面へ軽量化した。
 
 検証: 最終 `D:/Unity/AshfallArtValidation/enemy-live-build.log` HERO_BUILD_OK。`final-economy-review/economy-review-result.txt` は136件合格（銃種別独立購入、上限10、25度捕捉/31度非捕捉を含む）。`capacity-screen-review/merchant-capacity-ja.png` で9強化枠を実画面確認。敵8の `final-enemy-review/` は1386件失敗0、前・横・後・歩行・攻撃を撮影。胴側面の横縞は除去し、通常プレイの新敵8メッシュを有効化した。ただし手の形状と胴との重なり、足先の模様はまだ不自然。敵0～7/9の新造形とテクスチャの完成品質は未達。自動テスト成功は敵の見た目の承認を意味しない。iOS/Metal実機・新規IPAは未検証。`git diff --check` 通過。
+
+## 2026-10-25 / ドロップ表示・報酬表示の整合
+
+変更ファイル: `LootRarityBeacon.cs`、`LootRarityLight.shader`、`VaultLootPresentation.cs`、`VaultUI.cs`、`VaultMobileUI.cs`、`VaultHealthUI.cs`、`VaultProgression.cs`、`VaultExpeditionMissions.cs`、`VaultMobileAuxUI.cs`、`Development/Tools/SharedArmor/audit_illustration_mapping.py`、`render_illustration.py`。装備ドロップへレア度別の光柱と地面の淡い発光を追加し、旧輪っかを除去。装備ポップアップを絵・レア度・レベル・評価へ簡素化。瀕死の赤縁を実画面全体へ描画。初回クリア報酬と別に任務スクラップが付与される仕様を画面上で分離し、受取通知は実際に付与した両方の内容をまとめて表示。
+
+結果: 防具398製品・168テクスチャのID対応とファイルを監査し、異なるイラストへの取り違えはなし。一部の手装備は元絵と対応していても共通メッシュへの投影で模様がにじむ。修正は未実施。
+
+検証: Unity 6000.6.0f1 Windows統合ビルド `D:/Unity/AshfallArtValidation/loot-reward-build.log` HERO_BUILD_OK、`git diff --check`通過。従来の全体`--smoke`は古い日本語レジェンダリー武器名の期待値で冒頭停止するため今回の動作検証には使えない。iOS/Metal実機と今回の画面効果は未確認。新規IPAは未作成。

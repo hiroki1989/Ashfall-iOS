@@ -66,19 +66,26 @@ namespace NeonVault
                 Vector3 p=cam.WorldToScreenPoint(PlayerPosition+worldAim*6+Vector3.up*.9f);
                 Vector2 reticle=MobileCanvasPoint(p);DrawCrosshair(reticle.x,reticle.y);
                 var drop=NearDrop();var armor=NearArmor();var module=NearArtifact();var melee=NearMeleeDrop();
-                string loot=drop!=null?VaultLanguage.GunName(drop.gun):armor!=null?Armory.Name(armor.item):module!=null?module.item.Name:melee!=null?MeleeWeaponCatalog.Name(melee.item):null;
-                if(loot!=null||NearbyAmmoCrate||NearbySupplyChest)
+                bool equipmentNearby=drop!=null||armor!=null||module!=null||melee!=null;
+                if(equipmentNearby||NearbyAmmoCrate||NearbySupplyChest)
                 {
-                    Panel(new Rect(365,480,710,160),Gold);
+                    Rarity lootRarity=drop!=null?drop.gun.rarity:armor!=null?armor.item.rarity:module!=null?module.item.rarity:melee!=null?melee.item.rarity:Rarity.Common;
+                    Color lootColor=equipmentNearby?Arsenal.Colors[Mathf.Clamp((int)lootRarity,0,Arsenal.Colors.Length-1)]:Gold;
+                    Panel(new Rect(365,480,710,160),lootColor);
                     if(drop!=null)ItemPortraits.Draw(new Rect(382,495,128,128),drop.gun);
                     else if(armor!=null)ItemPortraits.Draw(new Rect(382,495,128,128),armor.item);
                     else if(module!=null)ManufacturerBranding.ModulePortrait(new Rect(382,495,128,128),module.item);
                     else if(melee!=null)DrawMeleeIcon(new Rect(382,495,128,128),melee.item.family);
                     string rarity=drop!=null?VaultLanguage.RarityName(drop.gun.rarity):armor!=null?VaultLanguage.RarityName(armor.item.rarity):module!=null?VaultLanguage.RarityName(module.item.rarity):melee!=null?VaultLanguage.RarityName(melee.item.rarity):NearbyAmmoCrate?T("AMMO CRATE","弾薬箱"):T("SUPPLY CHEST","物資チェスト");
                     int score=drop!=null?GearScoring.Score(drop.gun):armor!=null?GearScoring.Score(armor.item):module!=null?GearScoring.Score(module.item):melee!=null?MeleeWeaponCatalog.Score(melee.item):0;
-                    Text(528,494,loot??rarity,new GUIStyle(label){fontSize=34,wordWrap=true},Gold,520);
-                    Text(528,544,(score>0?T("SCORE ","評価 ")+score+"  / ":"")+rarity,new GUIStyle(label){fontSize=29,wordWrap=true},Mist,520);
-                    Text(528,595,T("Tap TAKE to collect / open","「拾得」で回収・開封"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,520);
+                    int level=drop!=null?drop.gun.level:armor!=null?armor.item.level:module!=null?module.item.level:melee!=null?melee.item.level:0;
+                    Text(528,492,rarity,new GUIStyle(label){fontSize=34},lootColor,520);
+                    if(equipmentNearby)
+                    {
+                        Text(528,540,T("LEVEL ","レベル ")+level,new GUIStyle(label){fontSize=29},Mist,520);
+                        Text(528,586,T("SCORE ","評価 ")+score,new GUIStyle(label){fontSize=32},Color.white,520);
+                    }
+                    else Text(528,560,T("Tap TAKE to open","「拾得」で開封"),new GUIStyle(label){fontSize=29},Cyan,520);
                 }
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&foe.hp<foe.maxHp&&Layout.IsVisible(foe.transform.position))
                 {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),Gold);}

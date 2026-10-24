@@ -383,13 +383,13 @@ namespace NeonVault
         {
             GearBalance.Migrate(weapon);
             p.y=.3f;
-            var obj=CreateLootPresentation(weapon.name,p,new Vector3(.65f,.28f,1.05f),weapon.color,LootPresentationKind.Weapon);
+            var obj=CreateLootPresentation(weapon.name,p,new Vector3(.65f,.28f,1.05f),weapon.color,LootPresentationKind.Weapon,rarity:weapon.rarity);
             ApplyProductDropModel(obj,weapon);drops.Add(new Drop {gun=weapon,position=p,visual=obj});
         }
         void AddMeleeDrop(MeleeWeaponItem item,Vector3 p)
         {
             if(item==null)return;p.y=.32f;
-            var obj=CreateLootPresentation(VaultLanguage.RarityName(item.rarity)+" "+MeleeWeaponCatalog.Name(item),p,new Vector3(.62f,.24f,.72f),item.color,LootPresentationKind.Melee);
+            var obj=CreateLootPresentation(VaultLanguage.RarityName(item.rarity)+" "+MeleeWeaponCatalog.Name(item),p,new Vector3(.62f,.24f,.72f),item.color,LootPresentationKind.Melee,rarity:item.rarity);
             meleeDrops.Add(new MeleeDrop{item=item,position=p,visual=obj});
         }
         MeleeDrop NearMeleeDrop()

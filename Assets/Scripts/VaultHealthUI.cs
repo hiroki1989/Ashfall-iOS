@@ -32,9 +32,13 @@ namespace NeonVault
             }
             float severity=1-Mathf.Clamp01(hp/Mathf.Max(1,maxHp)*4);
             float pulse=.88f+.12f*Mathf.Sin(Time.unscaledTime*3.2f);
+            Matrix4x4 previousMatrix=GUI.matrix;
+            Color previousColor=GUI.color;
+            GUI.matrix=Matrix4x4.identity;
             GUI.color=new Color(1,1,1,(.68f+.32f*severity)*pulse);
-            GUI.DrawTexture(new Rect(0,0,1440,900),criticalHealthVignette);
-            GUI.color=Color.white;
+            GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),criticalHealthVignette);
+            GUI.color=previousColor;
+            GUI.matrix=previousMatrix;
         }
 
         void DrawHealthPanel(Rect bounds,bool mobile)

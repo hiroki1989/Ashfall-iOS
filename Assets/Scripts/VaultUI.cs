@@ -235,24 +235,10 @@ namespace NeonVault
             bool showArmor=armorDrop!=null&&armorD<gunD&&armorD<=meleeD&&armorD<=moduleD;
             bool showMelee=meleeDrop!=null&&meleeD<gunD&&meleeD<armorD&&meleeD<=moduleD;
             bool showModule=moduleDrop!=null&&moduleD<gunD&&moduleD<armorD&&moduleD<meleeD;
-            if(showGun)
-            {
-                Panel(new Rect(410,628,620,141),drop.gun.color);ItemPortraits.Draw(new Rect(422,647,76,76),drop.gun);Text(510,640,T(MobileTouchControls.Enabled?"TAP TAKE WEAPON / ":"[F] PICK UP WEAPON / ",MobileTouchControls.Enabled?"タップで回収 / ":"[F] 銃を拾う / ")+VaultLanguage.RarityName(drop.gun.rarity),tiny,drop.gun.color);
-                Text(510,665,VaultLanguage.GunName(drop.gun),label,Color.white,500);Text(510,701,ManufacturerCatalog.Name(ManufacturerBranding.Maker(drop.gun),VaultLanguage.Japanese),tiny,Mist,500);
-                Text(430,736,GunNumbers(drop.gun)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(drop.gun),new GUIStyle(tiny){wordWrap=true},Gold,575);
-            }
-            if(showArmor)
-            {
-                ArmorItem item=armorDrop.item;Color rarityColor=Arsenal.Colors[(int)item.rarity];Panel(new Rect(410,610,620,159),rarityColor);
-                Text(430,622,T(MobileTouchControls.Enabled?"TAP TAKE ARMOR / ":"[F] PICK UP ARMOR / ",MobileTouchControls.Enabled?"タップで回収 / ":"[F] 防具を拾う / ")+Armory.SlotName(item.slot)+" / Lv "+item.level,tiny,rarityColor,575);
-                ItemPortraits.Draw(new Rect(422,654,76,76),item);Text(510,647,Armory.Name(item),label,rarityColor,500);
-                Text(510,677,LegendaryDescription(item,Armory.Description(item)),new GUIStyle(small){wordWrap=true},Mist,500);
-                GUIStyle statsStyle=new GUIStyle(tiny){wordWrap=true};Text(430,714,Armory.Stats(item)+"\n"+T("SCORE ","評価 ")+GearScoring.Score(item),statsStyle,Gold,575);
-            }
-            if(showModule)
-            {ArtifactItem relic=moduleDrop.item;Color rarityColor=Arsenal.Colors[(int)relic.rarity];Panel(new Rect(410,610,620,159),rarityColor);ManufacturerBranding.ModulePortrait(new Rect(422,654,76,76),relic);Text(510,622,T(MobileTouchControls.Enabled?"TAP TAKE MODULE / ":"[F] FIELD MODULE / ",MobileTouchControls.Enabled?"タップで回収 / ":"[F] 拡張モジュール / ")+VaultLanguage.RarityName(relic.rarity)+" / Lv "+relic.level,tiny,rarityColor,500);Text(510,647,relic.Name+"  ·  "+T("SCORE ","評価 ")+GearScoring.Score(relic),label,Color.white,500);Text(510,681,LegendaryDescription(relic,relic.Description),new GUIStyle(small){wordWrap=true},Mist,500);}
-            if(showMelee)
-            {MeleeWeaponItem meleeLoot=meleeDrop.item;Color rarityColor=meleeLoot.color;Panel(new Rect(410,610,620,159),rarityColor);DrawMeleeIcon(new Rect(422,654,64,64),meleeLoot.family);Text(510,622,T(MobileTouchControls.Enabled?"TAP TAKE MELEE / ":"[F] PICK UP MELEE / ",MobileTouchControls.Enabled?"タップで回収 / ":"[F] 近接武器を拾う / ")+VaultLanguage.RarityName(meleeLoot.rarity)+" / Lv "+meleeLoot.level,tiny,rarityColor,500);Text(510,647,MeleeWeaponCatalog.Name(meleeLoot)+"  ·  "+T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(meleeLoot),label,Color.white,500);Text(510,681,T("DMG ","威力 ")+meleeLoot.damage+"  ·  "+T("RATE ","速度 ")+(1/Mathf.Max(.01f,meleeLoot.interval)).ToString("0.0")+T("/s  · RANGE ","/秒  · 射程 ")+meleeLoot.range.ToString("0.0")+"m",small,Mist,500);Text(510,714,T("ARC ","攻撃角 ")+meleeLoot.arcDegrees.ToString("0")+"°  ·  "+(meleeLoot.uniqueEffect?LegendaryRedOpen+T("LEGENDARY UNIQUE EFFECT","レジェンダリー固有効果")+LegendaryRedClose:T("Store and equip in [I]","[I]で所持品に保存・装備")),tiny,Cyan,500);}
+            if(showGun)DrawCompactLootCard(drop.gun,drop.gun.rarity,drop.gun.level,GearScoring.Score(drop.gun));
+            if(showArmor)DrawCompactLootCard(armorDrop.item,armorDrop.item.rarity,armorDrop.item.level,GearScoring.Score(armorDrop.item));
+            if(showModule)DrawCompactLootCard(moduleDrop.item,moduleDrop.item.rarity,moduleDrop.item.level,GearScoring.Score(moduleDrop.item));
+            if(showMelee)DrawCompactLootCard(meleeDrop.item,meleeDrop.item.rarity,meleeDrop.item.level,MeleeWeaponCatalog.Score(meleeDrop.item));
             if(NearbyAmmoCrate||NearbySupplyChest)
             {bool crate=NearbyAmmoCrate;Panel(new Rect(410,474,620,58),crate?new Color(.92f,.45f,.18f):Gold);Text(428,482,crate?T(MobileTouchControls.Enabled?"TAP OPEN AMMO CRATE":"[F] OPEN AMMO CRATE",MobileTouchControls.Enabled?"タップで弾薬箱を開ける":"[F] 弾薬箱を開ける"):T(MobileTouchControls.Enabled?"TAP OPEN SUPPLY CACHE":"[F] OPEN SUPPLY CACHE",MobileTouchControls.Enabled?"タップで物資箱を開ける":"[F] 物資箱を開ける"),small,Color.white,580);Text(428,509,crate?AmmoLabel(NearbyAmmoCrateType)+T(" · FULL PACK"," · 1パック"):T("Contains salvage, ammunition, or equipment","回収品・弾薬・装備のいずれか"),tiny,Mist,580);}
             if(cleared)
@@ -265,6 +251,19 @@ namespace NeonVault
                 Text(x-60,y-18,Foe.Name(f.kind),tiny,f.kind==8?Cyan:Mist,160);
             }
             DrawCrosshair(mx,my);
+        }
+        void DrawCompactLootCard(object item,Rarity rarity,int level,int score)
+        {
+            Color accent=Arsenal.Colors[Mathf.Clamp((int)rarity,0,Arsenal.Colors.Length-1)];
+            Panel(new Rect(410,628,620,141),accent);
+            Rect portrait=new Rect(426,645,106,106);
+            if(item is Gun gun)ItemPortraits.Draw(portrait,gun);
+            else if(item is ArmorItem armor)ItemPortraits.Draw(portrait,armor);
+            else if(item is ArtifactItem module)ManufacturerBranding.ModulePortrait(portrait,module);
+            else if(item is MeleeWeaponItem melee)DrawMeleeIcon(portrait,melee.family);
+            Text(550,640,VaultLanguage.RarityName(rarity),label,accent,440);
+            Text(550,680,T("LEVEL ","レベル ")+level,small,Mist,440);
+            Text(550,716,T("SCORE ","評価 ")+score,label,Color.white,440);
         }
         void DrawCrosshair(float mx,float my)
         {
@@ -299,9 +298,10 @@ namespace NeonVault
             Text(1042,503,stage.Target,small,new Color(1,.51f,.37f),330);
             Text(1042,548,T("FIRST CLEAR CACHE","初回クリア報酬"),tiny,Mist,320);
             Text(1042,572,ExpeditionRewardDescription(stage.id),small,Cyan,330);
-            Text(1042,619,cleared?T("SITE CLEARED","制圧済み"):unlocked?T("CONTRACT AVAILABLE","出撃可能"):T("CLEARANCE TOO LOW","許可レベル不足"),tiny,cleared?Cyan:unlocked?Gold:new Color(1,.40f,.31f),330);
+            Text(1042,609,T("MISSION PAYOUT / ","任務達成報酬 / ")+MissionRewardDescription(stage.id),tiny,Gold,330);
+            Text(1042,640,cleared?T("SITE CLEARED","制圧済み"):unlocked?T("CONTRACT AVAILABLE","出撃可能"):T("CLEARANCE TOO LOW","許可レベル不足"),tiny,cleared?Cyan:unlocked?Gold:new Color(1,.40f,.31f),330);
             if(Button(new Rect(1040,680,335,62),unlocked?T("DEPLOY TO SITE","地点へ出撃"):T("LOCKED / REPAY TO LEVEL UP","ロック中 / 返済で成長"),unlocked)&&unlocked)EnterExpeditionStage(stage.id);
-            Text(1042,757,T("REWARD IS FIXED PER SITE; CLAIMED ONCE.","報酬は地点ごとに固定・初回のみ。"),tiny,Mist,330);
+            Text(1042,757,T("FIRST CLEAR AND MISSION PAYOUT: ONCE PER SITE.","初回・任務報酬は地点ごとに一度だけ。"),tiny,Mist,330);
         }
         void DrawMap()
         {

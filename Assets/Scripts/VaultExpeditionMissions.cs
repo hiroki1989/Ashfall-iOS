@@ -25,12 +25,23 @@ namespace NeonVault
         public void ExpeditionSupplyRecovered(){if(SelectedExpeditionStage==null||SelectedExpeditionStage.mission!=ExpeditionMission.RecoverSupplies||missionCompleted)return;missionKills=1;missionCompleted=true;Notify("SUPPLY CACHE RECOVERED","補給物資を回収");}
         public void ExpeditionRunCompleted(){if(SelectedExpeditionStage==null||missionCompleted)return;if(SelectedExpeditionStage.mission==ExpeditionMission.ClearHostiles){missionCompleted=true;missionKills=kills;Notify("ZONE PURGED","区域制圧");}}
 
-        bool TryClaimMissionReward()
+        int MissionRewardAmount(int stageId)
         {
-            if(!missionCompleted||SelectedExpeditionStage==null)return false;
-            string key="stage:"+SelectedStageId;if(completedMissionClaims.Contains(key))return false;completedMissionClaims.Add(key);
-            int amount=ScaleScrap(20000000+new System.Random(ExpeditionMap.RewardSeed(SelectedStageId)).Next(200001)*100);AwardCredits(amount);
-            Notify("MISSION REWARD / SCRAP +"+amount,"任務報酬 / スクラップ +"+amount);return true;
+            return ScaleScrap(20000000+new System.Random(ExpeditionMap.RewardSeed(stageId)).Next(200001)*100);
+        }
+
+        string MissionRewardDescription(int stageId)
+        {
+            int amount=MissionRewardAmount(stageId);
+            return VaultLanguage.T("SCRAP +","スクラップ +")+amount.ToString("N0");
+        }
+
+        int TryClaimMissionReward()
+        {
+            if(!missionCompleted||SelectedExpeditionStage==null)return 0;
+            string key="stage:"+SelectedStageId;if(completedMissionClaims.Contains(key))return 0;completedMissionClaims.Add(key);
+            int amount=MissionRewardAmount(SelectedStageId);AwardCredits(amount);
+            return amount;
         }
     }
 }

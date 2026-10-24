@@ -84,8 +84,9 @@ def main():
     slot = job.get("slot", job.get("index"))
     mesh = json.loads((VALIDATION / "source-mesh.json").read_text())
     vertices = np.asarray(mesh["vertices"], dtype=np.float32)
-    staged = VALIDATION / "illustration-staging" / f"{product}.png"
-    source = staged if staged.exists() else ROOT / "Assets/Resources/Art/SharedArmorIllustration" / f"{product}.png"
+    catalog = json.loads((ROOT / "Assets/Resources/Art/SharedArmorIllustration/catalog.json").read_text(encoding="utf-8"))
+    atlas = next(entry["atlas"] for entry in catalog["entries"] if entry["id"] == product)
+    source = ROOT / "Assets/StreamingAssets/SharedArmorIllustration" / f"{atlas}.png"
     texture = np.asarray(Image.open(source).convert("RGB"))
     frames = [render(vertices, mesh["triangles"], texture, view, slot) for view in ("front", "side", "back")]
     output = VALIDATION / "illustration-qa"

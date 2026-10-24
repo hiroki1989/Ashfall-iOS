@@ -17,7 +17,8 @@ namespace NeonVault
             expeditionMapScroll=GUI.BeginScrollView(view,expeditionMapScroll,new Rect(0,0,size.x,size.y));DrawCityAtlas();GUI.EndScrollView();
             var stage=ExpeditionMap.Get(expeditionMapSelection);bool unlocked=stage.level<=DebtLevel;
             MobileCopyAt(42,640,stage.Name+" / Lv "+stage.level+"  ("+T("YOU ","現在 ")+DebtLevel+")",unlocked?Cyan:Gold);
-            MobileCopyAt(42,694,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese)+" / "+ExpeditionRewardDescription(stage.id),Mist,1350);
+            MobileCopyAt(42,684,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese),Mist,1350);
+            MobileCopyAt(42,727,T("FIRST CLEAR ","初回 ")+ExpeditionRewardDescription(stage.id)+" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id),Cyan,1350);
             if(MobileButton(new Rect(40,780,270,110),T("BACK","拠点へ"))){mobileMapEntered=false;screen=Screen.Hub;}
             if(MobileButton(new Rect(330,780,125,110),"−"))SetCityZoom(expeditionCityZoom/1.2f,view.size*.5f);
             if(MobileButton(new Rect(475,780,125,110),"+"))SetCityZoom(expeditionCityZoom*1.2f,view.size*.5f);

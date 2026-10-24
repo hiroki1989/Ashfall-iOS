@@ -20,7 +20,32 @@ namespace NeonVault {
   public bool EnterDungeon(int index){if(index<0||index>HighestUnlocked||index>=3)return false;SelectedStageId=-1;ResetExpeditionMission();DungeonIndex=index;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
   public bool EnterExpeditionStage(int stageId){if(stageId<0||stageId>=ExpeditionMap.StageCount)return false;var stage=ExpeditionMap.Get(stageId);if(stage.level>DebtLevel)return false;SelectedStageId=stageId;ResetExpeditionMission();DungeonIndex=stage.legacyDungeonIndex;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
   public void OnDungeonFinished(bool won){if(won){ExpeditionRunCompleted();if(SelectedExpeditionStage==null||MissionCompleted){HighestUnlocked=Mathf.Min(2,Mathf.Max(HighestUnlocked,DungeonIndex+1));AwardCredits(ScaleScrap(new[]{5000000,10000000,20000000}[DungeonIndex]));if(SelectedStageId>=0)GrantExpeditionReward(SelectedStageId);}else Notify("MISSION FAILED / EXTRACTION PAYOUT ONLY","任務失敗 / 脱出報酬のみ");}else AwardCredits(ScaleScrap(Mathf.Min(1000000,kills*10000)));shopCycle++;shopPurchased.Clear();CreateShopStock();SaveProgression();}
-  void GrantExpeditionReward(int stageId){if(clearedExpeditionStages.Contains(stageId))return;var r=new System.Random(ExpeditionMap.RewardSeed(stageId));int kind=r.Next(4);var stage=ExpeditionMap.Get(stageId);switch(kind){case 0:AwardCredits(ScaleScrap(25000000+r.Next(250001)*100));break;case 1:var gear=RollExpeditionGun(r);if(!StoreWeapon(gear))AwardCredits(ScaleScrap(40000000));break;case 2:var armor=RollExpeditionArmor(r);if(!StoreArmor(armor))AwardCredits(ScaleScrap(40000000));break;default:ExpeditionTokens++;break;}if(MissionCompleted)TryClaimMissionReward();clearedExpeditionStages.Add(stageId);SaveProgression();}
+  void GrantExpeditionReward(int stageId)
+  {
+   if(clearedExpeditionStages.Contains(stageId))return;
+   var r=new System.Random(ExpeditionMap.RewardSeed(stageId));int kind=r.Next(4);
+   string cacheEn="",cacheJa="";
+   switch(kind)
+   {
+    case 0:
+     int scrap=ScaleScrap(25000000+r.Next(250001)*100);AwardCredits(scrap);
+     cacheEn="SCRAP +"+scrap.ToString("N0");cacheJa="スクラップ +"+scrap.ToString("N0");break;
+    case 1:
+     var gear=RollExpeditionGun(r);
+     if(StoreWeapon(gear)){cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
+     else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
+    case 2:
+     var armor=RollExpeditionArmor(r);
+     if(StoreArmor(armor)){cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
+     else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
+    default:ExpeditionTokens++;cacheEn="SKILL TOKEN +1";cacheJa="スキルトークン +1";break;
+   }
+   int missionScrap=MissionCompleted?TryClaimMissionReward():0;
+   clearedExpeditionStages.Add(stageId);SaveProgression();
+   string missionEn=missionScrap>0?" / MISSION SCRAP +"+missionScrap.ToString("N0"):"";
+   string missionJa=missionScrap>0?" / 任務スクラップ +"+missionScrap.ToString("N0"):"";
+   Notify("FIRST CLEAR / "+cacheEn+missionEn,"初回クリア / "+cacheJa+missionJa);
+  }
   public string ExpeditionRewardDescription(int stageId){var r=new System.Random(ExpeditionMap.RewardSeed(stageId));int kind=r.Next(4);if(kind==0){int amount=ScaleScrap(25000000+r.Next(250001)*100);return VaultLanguage.T("SCRAP +"+amount.ToString("N0"),"スクラップ +"+amount.ToString("N0"));}if(kind==1)return VaultLanguage.T("GEAR CACHE / weapon (salvage if full)", "装備箱 / 銃（満杯時は換金）");if(kind==2)return VaultLanguage.T("GEAR CACHE / armor (salvage if full)","装備箱 / 防具（満杯時は換金）");return VaultLanguage.T("SKILL TOKEN +1","スキルトークン +1");}
   public void AwardCredits(int amount){Credits=Mathf.Max(0,Credits+Mathf.Max(0,amount));SaveProgression();}
   public bool TrySpendCredits(int amount){if(amount<=0||Credits<amount)return false;Credits-=amount;SaveProgression();return true;}
@@ -50,7 +75,7 @@ namespace NeonVault {
   readonly List<ArtifactDrop> artifactDrops=new List<ArtifactDrop>();
   ArtifactDrop NearArtifact(){ArtifactDrop nearest=null;float distance=2.6f;foreach(var d in artifactDrops){float n=Vector3.Distance(PlayerPosition,d.position);if(n<distance){nearest=d;distance=n;}}return nearest;}
   public ArtifactItem NearbyArtifact=>NearArtifact()?.item;
-  public void AddArtifactDrop(ArtifactItem item,Vector3 position){if(item==null)return;position.y=.5f;var visual=CreateLootPresentation(item.Name,position,new Vector3(.45f,.3f,.55f),Arsenal.Colors[(int)item.rarity],LootPresentationKind.Module);ApplyProductDropModel(visual,item);artifactDrops.Add(new ArtifactDrop{item=item,position=position,visual=visual});}
+  public void AddArtifactDrop(ArtifactItem item,Vector3 position){if(item==null)return;position.y=.5f;var visual=CreateLootPresentation(item.Name,position,new Vector3(.45f,.3f,.55f),Arsenal.Colors[(int)item.rarity],LootPresentationKind.Module,rarity:item.rarity);ApplyProductDropModel(visual,item);artifactDrops.Add(new ArtifactDrop{item=item,position=position,visual=visual});}
   public void ClearArtifactDrops(){foreach(var d in artifactDrops)if(d.visual!=null)Destroy(d.visual);artifactDrops.Clear();}
   public bool PickupArtifactNearest(){var d=NearArtifact();if(d==null)return false;float distance=Vector3.Distance(PlayerPosition,d.position);var weapon=NearDrop();var armor=NearArmor();if(weapon!=null&&Vector3.Distance(PlayerPosition,weapon.position)<distance)return false;if(armor!=null&&Vector3.Distance(PlayerPosition,armor.position)<distance)return false;if(!StoreArtifact(d.item)){Notify("Artifact storage full. Discard unused artifacts in [I].","拡張モジュール枠が満杯です。[I]で整理してください。");return true;}artifactDrops.Remove(d);Destroy(d.visual);Notify(ArtifactCatalog.DisplayName(d.item,false)+" collected. Equip in one of two slots [I].",ArtifactCatalog.DisplayName(d.item,true)+"を入手。2枠のいずれかに装備できます [I]");return true;}
   public void DrawHub(){Panel(new Rect(38,100,480,202),Gold);Text(58,116,T("LAST LIGHT / SAFEHOUSE","灯火基地 / 避難拠点"),new GUIStyle(heading){fontSize=29},Gold,450);Text(60,178,T("Scrap credits ","スクラップ ")+Credits.ToString("N0"),small,Cyan,430);Text(60,213,T("COLLAR DEBT / ","首輪の負債 / ")+DebtRemaining.ToString("N0"),small,new Color(1,.43f,.32f),430);Text(60,247,T("LEVEL ","レベル ")+DebtLevel+"  ·  "+T("SKILL POINTS ","スキルポイント ")+DebtSkillPoints,tiny,Gold,430);Text(60,274,MobileTouchControls.Enabled?T("Use the sticks / tap USE to talk","スティックで移動 / 調べるボタンで会話"):T("WASD move · E talk to Briggs / Mara / Ione","WASD移動 · Eでブリッグス・マラ・イオネと会話"),tiny,Mist,440);if(Button(new Rect(38,735,320,50),T("EXPEDITION GATE","出撃ゲート")))screen=Screen.DungeonSelect;if(Button(new Rect(380,735,320,50),T("MERCHANT","装備商人"))){debtPage=false;debtSkillTreePage=false;shopSellingPage=false;pendingSaleKey=null;screen=Screen.Shop;}if(Button(new Rect(722,735,320,50),T("EQUIPMENT [I]","装備 [I]")))ToggleInventory();}
