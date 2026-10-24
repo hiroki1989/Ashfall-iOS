@@ -56,6 +56,9 @@ namespace NeonVault
         {var t=new GameObject(name).transform;t.SetParent(parent,false);t.localPosition=p;return t;}
         void Build()
         {
+            // The authored Enemy_8 mesh and its four-view paint replace the
+            // earlier primitive rig in both gameplay and visual review.
+            if(TryBuildImportedEnemy())return;
             if(TryBuildSharedGeometry())return;
             bool brute=kind==3,gaunt=kind==4||kind==9,soldier=kind==2||kind==5||kind==8;
             girth=brute?.39f:kind==7?.35f:kind==6?.31f:kind==8?.28f:kind==2?.26f:gaunt?.175f:.215f;
@@ -93,7 +96,7 @@ namespace NeonVault
             Belt();
             if(kind==2||kind==5)Firearm();
             else muzzle=Joint("Mouth attack origin",head,V(0,-.01f,.14f));
-            SculptDetails();Batch(rig);CacheSharedGeometry();Ready=true;previous=transform.position;LateUpdate();
+            SculptDetails();ApplyEnemyShapeRebuild();Batch(rig);ApplyAuthoredEnemyPaint();CacheSharedGeometry();Ready=true;previous=transform.position;LateUpdate();
         }
         void SculptDetails()
         {
@@ -121,7 +124,7 @@ namespace NeonVault
             Loft("Calf and tibia",shins[i],V(0,-legLength,0),flesh,new[]{0f,legLength*.30f,legLength*.68f,legLength},new[]{thick*.48f,thick*.65f,thick*.84f,thick*.67f},new[]{thick*.46f,thick*.70f,thick*.80f,thick*.64f},24,.002f);
             Ellipsoid("Exposed kneecap",shins[i],V(0,.005f,.055f),V(thick*.73f,.073f,.045f),flesh);
             float shoe=brute?.12f:.075f;
-            Ellipsoid("Foot heel and instep",feet[i],V(0,-.008f,.038f),V(shoe,.067f,.145f),kind==3||kind==4?flesh:leather);
+            Ellipsoid("Foot heel and instep",feet[i],V(0,-.008f,.038f),V(shoe,.067f,.145f),kind==3||kind==4?flesh:kind==8?steel:leather);
             if(kind==3||kind==4){for(int f=0;f<5;f++)Ellipsoid("Bare individual toe",feet[i],V((f-2)*shoe*.35f,-.025f,.15f-Mathf.Abs(f-1)*.011f),V(shoe*.19f,.028f,.041f),flesh,12,8);}
             else
             {
@@ -345,49 +348,60 @@ namespace NeonVault
             float lateral=delta.sqrMagnitude>.00001f?travel.normalized.x:0;
 
 
-            float lean=(kind==4?12:GaitHunch[kind]) +anticipate*(kind==4?12:8);
+            // Distinct silhouettes: spitters rear back, gunners brace, chargers coil,
+            // and the healer opens its chest. Keep the pelvis above the grounded feet.
+            float crouch=anticipate*(kind==4?19:kind==8?10:kind==7?7:kind==0?8:0);
+            float rear=anticipate*(kind==1?-13:kind==2?-5:kind==3?-10:kind==5?-7:kind==6?-8:kind==9?-9:0);
+            float lean=(kind==4?12:GaitHunch[kind])+crouch+rear;
             float pitchAttack=kind==1?-24:kind==3?28:kind==4?-23:kind==7?-12:kind==9?-7:-17;
-            rig.localRotation=Quaternion.Euler(lean+strike*pitchAttack+hitLocal.z*hit*45,0,wave*GaitRoll[kind]*moving+breath*(kind==9?2:0)+hitLocal.x*hit*35);
+            float hitPulse=hit>0?Mathf.Sin((1-hit/.23f)*Mathf.PI)*Mathf.Clamp01(hit/.12f):0;
+            float recoil=kind==2||kind==5?strike*7:0;
+            rig.localRotation=Quaternion.Euler(lean+strike*pitchAttack+recoil+hitLocal.z*hitPulse*11,0,wave*GaitRoll[kind]*moving+breath*(kind==9?2:0)+hitLocal.x*hitPulse*9);
             float bob=kind==3?-.035f*Mathf.Pow(Mathf.Abs(wave),.5f):kind==4?.035f*Mathf.Abs(wave):kind==7?-.018f*Mathf.Abs(wave):.018f*Mathf.Abs(wave);
-            rig.localPosition=V(wave*(kind==7?.055f:kind==1?.025f:.008f)*moving,bob*moving+(kind==4?-.10f:0),strike*(kind==4?.16f:kind==3?.06f:0));
+            rig.localPosition=V(wave*(kind==7?.025f:kind==1?.017f:.008f)*moving,bob*moving+(kind==4?-.10f:0),strike*(kind==4?.16f:kind==3?.06f:0));
             chest.localPosition=V(0,1.34f+breath*(kind==7?.018f:.007f),0);
-            chest.localRotation=Quaternion.Euler((kind==4?30:0)+strike*(kind==3?18:9)+breath*(kind==1?2:0),wave*(kind==3?9:kind==7?3:kind==4?14:6)*moving,breath*(kind==9?3:0));
+            chest.localRotation=Quaternion.Euler((kind==4?30:0)+anticipate*(kind==1?-16:kind==3?-9:kind==9?-12:kind==7?8:kind==6?-6:0)+strike*(kind==3?18:kind==7?15:9)+breath*(kind==1?2:0),wave*(kind==3?6:kind==7?3:kind==4?10:5)*moving,breath*(kind==9?3:0));
             pelvis.localRotation=Quaternion.Euler(kind==4?12:0,-wave*(kind==3?7:4)*moving,wave*(kind==7?5:1)*moving);
             for(int i=0;i<2;i++)
             {
                 int side=i==0?-1:1;float w=i==0?wave:-wave;
-                float legSwing=kind==3?22:kind==4?48:kind==7?17:kind==8?21:kind==9?14:30;
+                float legSwing=kind==0?27:kind==1?22:kind==2?24:kind==3?19:kind==4?39:kind==5?27:kind==6?30:kind==7?14:kind==8?18:15;
                 float spread=kind==3?side*8:kind==4?side*12:kind==7?side*7:kind==8?side*5:0;
-                thighs[i].localRotation=Quaternion.Euler(w*legSwing*moving*forward+(kind==4?-10:0)+strike*(kind==3?-13:kind==4?20:0),side*(kind==7?9:0),spread-lateral*w*17*moving);
-                shins[i].localRotation=Quaternion.Euler((kind==4?18:0)+Mathf.Max(0,-w)*(kind==4?75:kind==3?36:kind==7?24:44)*moving+strike*(kind==3?20:0),0,0);
-                feet[i].localRotation=Quaternion.Euler(-Mathf.Max(0,-w)*(kind==4?35:16)*moving,0,side*(kind==7?12:5));
+                float lift=Mathf.Max(0,-w)*moving;
+                thighs[i].localRotation=Quaternion.Euler(w*legSwing*moving*forward+(kind==4?-10:0)+strike*(kind==3?-13:kind==4?20:0),side*(kind==7?9:0),spread-lateral*w*10*moving);
+                shins[i].localRotation=Quaternion.Euler((kind==4?18:0)+lift*(kind==4?57:kind==3?29:kind==7?20:kind==8?28:37)+strike*(kind==3?12:0),0,0);
+                feet[i].localRotation=Quaternion.Euler(-lift*(kind==4?25:13),0,side*(kind==7?9:4));
                 bool gun=kind==2||kind==5;
                 float armPitch=gun?-62:-12-w*(kind==3?9:kind==4?31:kind==7?7:19)*moving;
                 float elbow=gun?-60:kind==4?-44:kind==9?-68:-18;
                 float abduction=side*(kind==3?22:kind==4?29:kind==7?27:kind==9?36:10);
-                if(kind==1){armPitch=-28-w*12*moving-strike*25;elbow=-55-strike*16;}
+                if(kind==0){armPitch=-24-w*15*moving-anticipate*36-strike*72;elbow=-35-anticipate*18-strike*22;}
+                else if(kind==1){armPitch=-28-w*12*moving-anticipate*34-strike*25;elbow=-55-anticipate*19-strike*16;}
+                else if(kind==2){armPitch=-62-anticipate*8+strike*10;elbow=-60-anticipate*12;}
                 else if(kind==3){armPitch-=anticipate*105;armPitch+=strike*65;elbow=-32-anticipate*36+strike*15;}
                 else if(kind==4){armPitch=-35-w*25*moving-anticipate*55+strike*85;elbow=-15+strike*18;}
-                else if(kind==7){armPitch=-22-strike*52;elbow=-35;}
-                else if(kind==8){armPitch=-30-w*8*moving-strike*75;elbow=-25-strike*35;}
-                else if(kind==9){armPitch=-48+Mathf.Sin(Time.time*1.7f+side)*9-strike*35;elbow=-70+breath*12;abduction+=side*strike*16;}
-                else if(!gun){armPitch-=strike*68+anticipate*24;elbow-=strike*35;}
+                else if(kind==5){armPitch=-71-anticipate*13+strike*13;elbow=-66-anticipate*9;}
+                else if(kind==6){armPitch=-32-w*11*moving-anticipate*42+strike*32;elbow=-42-anticipate*23;abduction+=side*(anticipate*13+strike*8);}
+                else if(kind==7){armPitch=-22-anticipate*32-strike*52;elbow=-35-anticipate*18;abduction+=side*anticipate*8;}
+                else if(kind==8){armPitch=-30-w*8*moving-anticipate*27-strike*75;elbow=-25-strike*35;}
+                else if(kind==9){armPitch=-48+Mathf.Sin(Time.time*1.7f+side)*5-anticipate*42-strike*35;elbow=-70+breath*8-anticipate*15;abduction+=side*(anticipate*24+strike*16);}
+                if(ImportedShapeActive&&kind==8){armPitch=-5-w*8*moving-anticipate*27-strike*75;elbow=-10-strike*35;abduction=side*(38+anticipate*8);}
                 arms[i].localRotation=Quaternion.Euler(armPitch,gun?side*-18:side*(kind==4?12:0),abduction);
                 forearms[i].localRotation=Quaternion.Euler(elbow,0,side*strike*(kind==4?15:0));
             }
-            head.localRotation=Quaternion.Euler((kind==4?-58:-lean*.48f)+strike*(kind==1?-30:kind==3?20:kind==9?-12:8),breath*(kind==4?7:kind==0?5:2),breath*(kind==0?4:kind==9?5:0));
+            head.localRotation=Quaternion.Euler((kind==4?-58:-lean*.48f)+anticipate*(kind==1?-18:kind==7?12:kind==9?-10:kind==0?8:0)+strike*(kind==1?-30:kind==3?20:kind==9?-12:8)-hitLocal.z*hitPulse*7,breath*(kind==4?5:kind==0?4:2),breath*(kind==0?3:kind==9?4:0)-hitLocal.x*hitPulse*7);
             GroundContact(strike);
         }
         void AnimateDeath(float dt)
         {
             death+=dt;float t=Mathf.Clamp01(death/DeathDuration),fall=Mathf.SmoothStep(0,1,t);
             float kneel=Mathf.Sin(Mathf.Min(1,t*2)*Mathf.PI*.5f);
-            float pitch=kind==7?-72:kind==3?45:kind==4?100:87;
-            float roll=kind==7?38:kind==3?-47:kind==9?26:-12;
+            float pitch=kind==0?80:kind==1?78:kind==2?86:kind==3?45:kind==4?100:kind==5?83:kind==6?76:kind==7?-72:kind==8?72:68;
+            float roll=kind==0?-15:kind==1?18:kind==2?-18:kind==3?-47:kind==4?12:kind==5?21:kind==6?-25:kind==7?38:kind==8?-19:26;
             rig.localRotation=Quaternion.Euler(Mathf.Lerp(baseLean,pitch,fall),0,roll*fall);
             rig.localPosition=V(0,-(kind==3?.36f:kind==7?.18f:.15f)*kneel,.15f*fall);
             chest.localRotation=Quaternion.Euler(20*kneel,0,roll*.25f*fall);head.localRotation=Quaternion.Euler(20*fall,18*fall,0);
-            for(int i=0;i<2;i++){thighs[i].localRotation=Quaternion.Euler(-32*kneel,0,(i==0?-1:1)*9*fall);shins[i].localRotation=Quaternion.Euler(85*kneel,0,0);arms[i].localRotation=Quaternion.Euler(-25+65*fall,0,(i==0?-1:1)*35*fall);forearms[i].localRotation=Quaternion.Euler(-18-24*fall,0,0);}
+            for(int i=0;i<2;i++){float side=i==0?-1:1;thighs[i].localRotation=Quaternion.Euler(-32*kneel,0,side*(kind==3?14:9)*fall);shins[i].localRotation=Quaternion.Euler((kind==4?65:85)*kneel,0,0);feet[i].localRotation=Quaternion.Euler(-12*kneel,0,0);arms[i].localRotation=Quaternion.Euler(-25+(kind==9?85:65)*fall,0,side*(kind==7?52:35)*fall);forearms[i].localRotation=Quaternion.Euler(-18-24*fall,0,0);}
         }
         // Geometry helpers: independent joint batches preserve animation and reduce draw calls.
         void MeshPart(string name,Transform p,Material mat,List<Vector3> verts,List<int> ix,bool twoSided=false)

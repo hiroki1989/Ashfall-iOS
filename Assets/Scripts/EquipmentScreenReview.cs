@@ -35,9 +35,20 @@ namespace NeonVault
             Drag(game,new Vector2(1100,450),new Vector2(1100,290));Check(Scroll(game,"eqDetailScroll")>0,"touch drag scrolls item description");yield return Capture("inventory-detail-after");
             var inspector=FindAnyObjectByType<EquipmentHeroPreview>();Check(inspector!=null,"live preview exists on the equipment screen");
             if(inspector){float angle=inspector.Angle;Drag(game,new Vector2(700,400),new Vector2(780,400));Check(Mathf.Abs(inspector.Angle-angle)>30,"touch drag rotates live character");}
+            var blueprint=Armory.CreateCatalog("distinct.armor.006",Rarity.Common,1,new System.Random(6006));
+            game.StoreArmor(blueprint);game.EquipArmor(blueprint);
+            Set(game,"eqCategory",1);Set(game,"eqSelectedKey",null);
+            GeneratedWardenPreviewAssets.SetEnabled(true);
+            if(inspector){inspector.Angle=25;yield return Capture("blueprint-armor-006-front");inspector.Angle=90;yield return Capture("blueprint-armor-006-side");inspector.Angle=160;yield return Capture("blueprint-armor-006-rear");}
+            GeneratedWardenPreviewAssets.SetEnabled(false);
+            game.EquipArmor(Armory.TrailWarden(ArmorSlot.Chest));
             game.ToggleInventory();game.screen=VaultGame.Screen.Shop;Set(game,"debtPage",false);Check(game.EquipmentMenuVisible&&game.EquipmentGestureRegion(new Vector2(1100,450))==2,"merchant supports independent touch scrolling");
             Set(game,"shopSellingPage",false);Set(game,"eqCategory",0);yield return Capture("merchant-buy");
             Set(game,"shopSellingPage",true);yield return Capture("merchant-sell");
+            Set(game,"eqUpgradePage",true);Set(game,"shopSellingPage",false);
+            VaultLanguage.Set(true,false);yield return Capture("merchant-capacity-ja");
+            VaultLanguage.Set(false,false);yield return Capture("merchant-capacity-en");
+            Set(game,"eqUpgradePage",false);
             var preview=FindAnyObjectByType<EquipmentHeroPreview>();Check(preview!=null,"live preview exists");
             var pack=preview?preview.GetComponentInChildren<TacticalBackpackVisual>(true):null;
             report.Add("Tactical backpack triangles="+(pack?pack.TriangleCount:0));

@@ -1,3 +1,13 @@
+## 2026-10-24 / HP表示と瀕死演出
+変更: `VaultHealthUI.cs`でPC/iOS共通のHPパネルを実装。整数の現在値/最大値、刻み付きゲージ、残り25%以下の赤い警告色を表示。瀕死時は中央を透明に保った赤い周辺グラデーションを控えめに脈動させる。`VaultUI.cs`、`VaultMobileUI.cs`に接続。`HealthUIReview.cs`で満タン/26%/25%を日英撮影、`MobileInputReview.cs`に瀕死画面を追加。
+検証: `D:/Unity/AshfallArtValidation/health-ui-final-build.log` HERO_BUILD_OK。`health-ui-desktop-final/`でPC日英の満タン/26%/25%画像を確認。`health-ui-mobile/`でiPhone/iPad日英の通常・瀕死画面を確認し、273件失敗0。中央視界、照準、射撃ボタン、ミニマップを視認可能。
+未解決: iOS実機のMetal/IL2CPP・物理タッチと端末ごとの輝度差は未確認。
+
+## 2026-10-24 / 源真ゴシックと装備画面の可読性
+変更: `GenShinGothic-P-Regular/Bold.ttf` とライセンスをAssetsへ追加。本文・日英見出し・モバイル操作・回避表示の基本フォントに設定。装備/商人の明色パネルでは文字色の二重乗算を解消し、濃い文字に変更。一覧は評価と比較差分、詳細は主要性能と効果を優先し、追加情報を「詳細を表示」へ移動。モジュールの長い障壁説明と重複した防具/価格表示を初期表示から整理。
+検証: 最終Windows統合ビルド `D:/Unity/AshfallArtValidation/font-inventory-release-build.log` はHERO_BUILD_OK。`font-inventory-final-screen/` の日英装備画面を目視し、白背景で文字が読めることとモジュール要約を確認。装備QAは12525件中既知の合成ドラッグ3件のみ失敗。フォントと画面整理後のモバイルQA `font-inventory-mobile/` は269件失敗0（日英/iPhone/iPad）、最後の短い文言・ボタン幅調整後の実機iOSは未確認。
+未解決: iOS実機のMetal/IL2CPPと物理タッチ表示は未検証。
+
 ## 2026-10-24 / UI構成刷新・射撃アイコン
 変更: VaultEquipmentScreen.cs、EquipmentHeroPreview.cs、VaultMobileUI.cs、MobileTouchControls.cs、MobileInputReview.cs。装備/商人を明るいスレート色と下線ナビ、明暗の文字階層、カード/詳細/プレビューへ刷新。プレビュー背景を統一。モバイルメニューとHUDを整理し、操作9種をベクターアイコン化。射撃を右下へ移し、幅1.5倍/面積2.25倍に拡大。照準スティックは内側に配置、半透明と独立入力を維持。
 検証: ui-rebuild-final-build.log HERO_BUILD_OK。ui-rebuild-mobile のiPhone/iPad日英撮影と269件チェック失敗0（重なり・safe area・同時移動照準射撃・射撃面積/下部配置）。装備QA ui-rebuild-equipment は12525件中既存の合成ドラッグ3件失敗。日英画面を目視、HPゲージ間隔を微調整して再ビルド。差分チェック通過。
@@ -668,3 +678,34 @@ Rig担当の追加確認: 腕下げ基準のbindposeで腕はモーションに�
 `TacticalBackpackVisual.cs` の旧8周×5段の主袋と平板ポーチを、64周×48段の布シェル、曲面ロールトップ/ベッドロール、独立した背面/側面ポーチ、肩ハーネスと固定ベルトへ置換。戦闘ソケット/銃収納方向は維持。実装面数は14,728三角形（収納銃を除く）。面数だけの細分化にしないため各部の厚み、布の襞、テーパーを形状へ付与。素材のBaseMap/BaseColorを明示。
 
 Unity 6000.6.0f1 Windowsビルド `D:/Unity/AshfallArtValidation/backpack-material-build.log` HERO_BUILD_OK。`D:/Unity/AshfallArtValidation/backpack-material-qa/` の後ろ/横画面で収納銃と追加形状を確認。QAは12,522件中3件失敗（前段と同じタッチドラッグ3件）、旧モデル重なりはpreview/worldとも0。iOS実機未検証。
+## 2026-10-24 / 敵3D再制作（進行中）
+
+対象 `D:/Unity/Ashfall-iOS`。敵10種の元2Dシートから前・斜・横・後・脚の投影atlasと頭部専用atlasを作成し、`FaithfulEnemyPaint3D.cs` で既存可動メッシュの静止姿勢UVへ焼き付けた。描画shaderはUV固定の敵塗装をサポート。`FaithfulEnemy3D.cs` では敵種別の歩幅・前傾・予備動作・攻撃・被弾・死亡動作を分化。`FaithfulEnemyCacheReview.cs` は十種の前/横/後の画像と描画バッファを出力する。
+
+検証: 最終Unity 6000.6.0f1 Windows build `D:/Unity/QA-enemy-rebuild-stable-build.log` は `HERO_BUILD_OK`。実行時QA `D:/Unity/QA-enemy-rebuild-stable/` は1509件/失敗0、敵10種の前/横/後画像と各種の歩行脚関節の動作を確認。元絵と前・側面画像を比較し、頭の平色と胸への顔重複投影は修正した。開発用の方向別PNG/JSONはArtSourceへ移し、Resourcesには20枚の実行時atlasのみ残した。
+
+未完了: 現在の敵の主要な形状は既存の手組みメッシュで、新規形状は10種の胴体輪郭のみ。肩・背面の試作形状は実画面で広い単色板に見えたため無効化した。プレイヤー素体と同等の新造形ではない。大型敵の肩装甲と腰、各敵の手足のシルエット・元絵との一致はまだ不足。10種の新規形状、接合部の個別UV調整、移動/攻撃を含む全方向動画QA、iOS/Metal実機確認が必要。現行画像を完成品質として扱わない。
+
+追加進捗: `EnemyShapeRebuild.cs` で腰、手の甲、足先の小さな可動形状を追加。試作した大型敵の半球状肩殻は元絵から遠ざかるため実画面QAで却下し、組み込まなかった。`projection.json` の有効画像矩形から `EnemyProjectionBounds.cs` を生成し、各部位のUVをセル余白から画像本体へ合わせた。脚の大きな三角模様が減り、膝と脛に元絵の模様が戻った。敵8の錆びた装甲は元絵の投影へ切り替え、胸・膝・足先の材質を揃え、側面の胸当てを小さく回り込ませた。歩行側面を敵10種分撮るQAを追加。
+
+最終確認: `D:/Unity/QA-enemy-rebuild-wrap-build.log` は `HERO_BUILD_OK`。Windows実行 `D:/Unity/QA-enemy-rebuild-wrap/` は1515件/失敗0、10種の正面/横/背面/歩行側面を撮影。元絵対比では特に大型敵の肩・腰の輪郭、敵8を含む横からの体積、手足の形状がまだ不足しており、プレイヤー素体相当という受け入れ条件には達していない。攻撃中の全方向実画面とiOS/Metal実機も未確認。
+
+その後の最終QA: `D:/Unity/QA-enemy-rebuild-motion-build.log` HERO_BUILD_OK、`D:/Unity/QA-enemy-rebuild-motion/` で敵10種の攻撃側面を追加撮影し1525件/失敗0。敵3/8の横方向攻撃では全身が前傾しすぎ、腕・肩・脚の元絵に忠実な接合とシルエットは依然不足。自動チェックはクラッシュや非有限関節の検出であり、見た目の合格を意味しない。現時点では重いHunyuan一括生成をしておらず、既存メッシュ中心のためプレイヤー素体相当への作り直しは未完了。
+## 2026-10-24 / 弾薬・所持枠・オートエイムと敵造形の試作
+変更ファイル: `VaultAmmo.cs`、`VaultCapacityUpgrades.cs`、`VaultInventory.cs`、`VaultProgression.cs`、`VaultGame.cs`、`VaultLootPresentation.cs`、`VaultEquipmentScreen.cs`、`VaultAutoAim.cs`、`SmokeRun.cs`。軽機関銃弾を独立させ、弾薬ドロップ率と量を増加、通常装備ドロップを約1/3に変更。商人で弾薬上限と銃・防具・モジュール・近接武器の所持枠を各10段階拡張可能にし、セーブへ保存。命中精度依存の最大20度・遮蔽物確認付きオートエイムを追加。
+結果: 防具`distinct.armor.006`は斜めイラストの直接投影をやめ、正面・背面・左右の設計図からUVアトラスを作り直した。敵8は旧メッシュと別の13部位・約7.8万面の試作メッシュを作成したが、正面の投影崩れが残るため通常プレイにはまだ適用せず`--enemy-cache-review`のみで確認できる。
+検証: `D:/Unity/AshfallArtValidation/economy-review-build2.log` HERO_BUILD_OK。Windows実行の`economy-review2/economy-review-result.txt`は74件合格（弾薬5種、ドロップ量・頻度、5カテゴリ×10段階購入、上限増加）。敵試作は`enemy8-projection-review/`で1386件失敗0だが正面画像を目視不合格とした。`git diff --check`通過。既存の全体`--smoke`は古いレジェンダリー武器名の期待値で途中停止するため、今回の検証根拠には使用しない。
+追加検証: `D:/Unity/AshfallArtValidation/economy-autoaim-review/economy-review-result.txt` は78件合格（遮蔽物のない敵に対し精度100で15度補正、精度0で補正なし、21度では精度100でも補正なし）。`capacity-armor-screen-review/merchant-capacity-ja.png`と後続の英語版で拡張UIを実画面確認し、カードの重なりなし。`armor-blueprint-preview-review/blueprint-armor-006-{front,side,rear}.png`で承認済みの新外観上に正面・側面・背面の防具テクスチャが反映されることを目視確認。装備画面QAは12,530件中3件が従来の合成タッチドラッグ検証失敗。最後の統合ビルドは`armor-blueprint-preview-build.log` HERO_BUILD_OK。
+未解決: 敵8は前後投影に直しても正面に大きな引き伸ばし模様が残り、`enemy8-two-plane-review/`を目視不合格として通常プレイでの新メッシュを無効化した。敵0～7/9の新造形、残りの防具の設計図アトラス、オートエイムの実戦難易度、iOS/Metal実機は未検証。新規IPAは未作成。
+
+## 2026-10-25 / Modly試作後、従来の敵生成工程へ復帰
+
+Modly/Shap-E試作は見た目が受け入れ水準に達せず不採用。既存の4方向イラストからのvisual hull＋部位別投影工程に復帰した。敵8の背面に残る黒い帯を調査し、outlineを消した版でも残ることをWindows実画面で確認。胸の裏打ちと頭/胸の分割位置を変えた候補を2回生成し、Unity 6000.6.0f1でビルド（ともにHERO_BUILD_OK）して前後画像を撮影したが、帯は解消せず候補を不採用とした。生成スクリプトと13部位/atlasは試作前へ復元済み。背面の帯はメッシュ境界・capのUV投影に起因する可能性が高く、形状の単純な追加では解決しない。Windows buildの最新出力は却下候補なので配布しない。敵8の見た目修正と敵0～7/9の新造形は未完了。
+
+ユーザー了承により、この復元済み敵8を暫定版として本編へ反映。`FaithfulEnemy3D.Build()` が通常プレイでも `TryBuildImportedEnemy()` を優先することと13部位/3atlasの読み込みを確認。診断用に消していた輪郭線を通常値へ戻し、Unity 6000.6.0f1 Windows `enemy8-accepted-model-build.log` HERO_BUILD_OK、`enemy8-accepted-model-review/` は1386 checks/0 failures。正面、歩行側面、攻撃側面をPMOが実画面で確認。背面の黒帯と手の精度は既知の残課題。iOS/Metal実機未検証、IPA未作成。
+
+## 2026-10-24 / 弾薬上限の銃種別化・30度照準・敵8テクスチャ再検証
+
+変更ファイル: `Assets/Scripts/VaultInventory.cs`、`VaultAmmo.cs`、`VaultCapacityUpgrades.cs`、`VaultEquipmentScreen.cs`、`VaultAutoAim.cs`、`SmokeRun.cs`、`FaithfulEnemy3D.cs`、`FaithfulEnemyImported3D.cs`、`Development/Tools/Enemy3DRebuild/build_visual_hull_enemy8.py`、`Assets/Resources/Art/Enemy3DRebuild/NewMesh/Enemy_8/`。弾薬上限の購入段階を拳銃/散弾/ライフル/狙撃/軽機関銃の5種に分割し、旧セーブの共通段階を5種へ移行。照準補助の近距離・精度100の上限を30度とし、精度が低い武器では急激に広がらない6乗曲線にした。敵8は4方向絵の面別投影、胴専用テクスチャ、腕の待機姿勢を試作し、メッシュを約3.3万面へ軽量化した。
+
+検証: 最終 `D:/Unity/AshfallArtValidation/enemy-live-build.log` HERO_BUILD_OK。`final-economy-review/economy-review-result.txt` は136件合格（銃種別独立購入、上限10、25度捕捉/31度非捕捉を含む）。`capacity-screen-review/merchant-capacity-ja.png` で9強化枠を実画面確認。敵8の `final-enemy-review/` は1386件失敗0、前・横・後・歩行・攻撃を撮影。胴側面の横縞は除去し、通常プレイの新敵8メッシュを有効化した。ただし手の形状と胴との重なり、足先の模様はまだ不自然。敵0～7/9の新造形とテクスチャの完成品質は未達。自動テスト成功は敵の見た目の承認を意味しない。iOS/Metal実機・新規IPAは未検証。`git diff --check` 通過。

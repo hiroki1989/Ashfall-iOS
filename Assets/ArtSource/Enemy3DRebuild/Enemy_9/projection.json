@@ -1,0 +1,447 @@
+{
+  "source": "LayeredEnemies/Enemy_9.png",
+  "layout": "4 columns x 4 rows; pixels top-left origin",
+  "atlas": {
+    "file": "projection-atlas.png",
+    "size": [
+      1536,
+      1536
+    ],
+    "cellSize": [
+      384,
+      384
+    ],
+    "origin": "top-left"
+  },
+  "tiles": {
+    "body_front": {
+      "file": "body_front.png",
+      "sourceCell": [
+        0,
+        0
+      ],
+      "sourceBounds": [
+        0,
+        0,
+        406,
+        314
+      ],
+      "opaqueBoundsInCell": [
+        23,
+        17,
+        387,
+        308
+      ],
+      "size": [
+        380,
+        307
+      ],
+      "atlasCell": [
+        0,
+        0
+      ],
+      "atlasContentBounds": [
+        12,
+        46,
+        372,
+        337
+      ]
+    },
+    "body_front_oblique": {
+      "file": "body_front_oblique.png",
+      "sourceCell": [
+        3,
+        0
+      ],
+      "sourceBounds": [
+        848,
+        0,
+        1254,
+        314
+      ],
+      "opaqueBoundsInCell": [
+        96,
+        20,
+        378,
+        307
+      ],
+      "size": [
+        298,
+        303
+      ],
+      "atlasCell": [
+        1,
+        0
+      ],
+      "atlasContentBounds": [
+        399,
+        12,
+        753,
+        372
+      ]
+    },
+    "body_profile": {
+      "file": "body_profile.png",
+      "sourceCell": [
+        2,
+        1
+      ],
+      "sourceBounds": [
+        535,
+        314,
+        1032,
+        627
+      ],
+      "opaqueBoundsInCell": [
+        137,
+        14,
+        408,
+        311
+      ],
+      "size": [
+        287,
+        313
+      ],
+      "atlasCell": [
+        2,
+        0
+      ],
+      "atlasContentBounds": [
+        795,
+        12,
+        1125,
+        372
+      ]
+    },
+    "body_rear_oblique": {
+      "file": "body_rear_oblique.png",
+      "sourceCell": [
+        1,
+        2
+      ],
+      "sourceBounds": [
+        222,
+        627,
+        719,
+        940
+      ],
+      "opaqueBoundsInCell": [
+        96,
+        14,
+        437,
+        305
+      ],
+      "size": [
+        357,
+        307
+      ],
+      "atlasCell": [
+        3,
+        0
+      ],
+      "atlasContentBounds": [
+        1164,
+        37,
+        1524,
+        347
+      ]
+    },
+    "body_back": {
+      "file": "body_back.png",
+      "sourceCell": [
+        0,
+        3
+      ],
+      "sourceBounds": [
+        0,
+        940,
+        406,
+        1254
+      ],
+      "opaqueBoundsInCell": [
+        17,
+        0,
+        382,
+        304
+      ],
+      "size": [
+        381,
+        320
+      ],
+      "atlasCell": [
+        0,
+        1
+      ],
+      "atlasContentBounds": [
+        12,
+        425,
+        372,
+        727
+      ]
+    },
+    "leg_front_L": {
+      "file": "leg_front_L.png",
+      "sourceCell": [
+        1,
+        0
+      ],
+      "sourceBounds": [
+        314,
+        0,
+        627,
+        314
+      ],
+      "opaqueBoundsInCell": [
+        104,
+        27,
+        229,
+        298
+      ],
+      "size": [
+        141,
+        287
+      ],
+      "atlasCell": [
+        1,
+        1
+      ],
+      "atlasContentBounds": [
+        487,
+        396,
+        664,
+        756
+      ]
+    },
+    "leg_front_R": {
+      "file": "leg_front_R.png",
+      "sourceCell": [
+        2,
+        0
+      ],
+      "sourceBounds": [
+        627,
+        0,
+        940,
+        314
+      ],
+      "opaqueBoundsInCell": [
+        88,
+        26,
+        208,
+        301
+      ],
+      "size": [
+        136,
+        291
+      ],
+      "atlasCell": [
+        2,
+        1
+      ],
+      "atlasContentBounds": [
+        876,
+        396,
+        1044,
+        756
+      ]
+    },
+    "leg_side_A_L": {
+      "file": "leg_side_A_L.png",
+      "sourceCell": [
+        0,
+        1
+      ],
+      "sourceBounds": [
+        0,
+        314,
+        314,
+        627
+      ],
+      "opaqueBoundsInCell": [
+        114,
+        19,
+        224,
+        299
+      ],
+      "size": [
+        126,
+        296
+      ],
+      "atlasCell": [
+        3,
+        1
+      ],
+      "atlasContentBounds": [
+        1267,
+        396,
+        1420,
+        756
+      ]
+    },
+    "leg_side_A_R": {
+      "file": "leg_side_A_R.png",
+      "sourceCell": [
+        3,
+        1
+      ],
+      "sourceBounds": [
+        940,
+        314,
+        1254,
+        627
+      ],
+      "opaqueBoundsInCell": [
+        113,
+        21,
+        214,
+        298
+      ],
+      "size": [
+        117,
+        293
+      ],
+      "atlasCell": [
+        0,
+        2
+      ],
+      "atlasContentBounds": [
+        120,
+        780,
+        264,
+        1140
+      ]
+    },
+    "leg_side_B_L": {
+      "file": "leg_side_B_L.png",
+      "sourceCell": [
+        0,
+        2
+      ],
+      "sourceBounds": [
+        0,
+        627,
+        314,
+        940
+      ],
+      "opaqueBoundsInCell": [
+        117,
+        14,
+        223,
+        293
+      ],
+      "size": [
+        122,
+        295
+      ],
+      "atlasCell": [
+        1,
+        2
+      ],
+      "atlasContentBounds": [
+        501,
+        780,
+        650,
+        1140
+      ]
+    },
+    "leg_side_B_R": {
+      "file": "leg_side_B_R.png",
+      "sourceCell": [
+        3,
+        2
+      ],
+      "sourceBounds": [
+        940,
+        627,
+        1254,
+        940
+      ],
+      "opaqueBoundsInCell": [
+        116,
+        20,
+        202,
+        296
+      ],
+      "size": [
+        102,
+        292
+      ],
+      "atlasCell": [
+        2,
+        2
+      ],
+      "atlasContentBounds": [
+        897,
+        780,
+        1023,
+        1140
+      ]
+    },
+    "leg_back_L": {
+      "file": "leg_back_L.png",
+      "sourceCell": [
+        1,
+        3
+      ],
+      "sourceBounds": [
+        314,
+        940,
+        627,
+        1254
+      ],
+      "opaqueBoundsInCell": [
+        129,
+        10,
+        226,
+        276
+      ],
+      "size": [
+        113,
+        282
+      ],
+      "atlasCell": [
+        3,
+        2
+      ],
+      "atlasContentBounds": [
+        1272,
+        780,
+        1416,
+        1140
+      ]
+    },
+    "leg_back_R": {
+      "file": "leg_back_R.png",
+      "sourceCell": [
+        2,
+        3
+      ],
+      "sourceBounds": [
+        627,
+        940,
+        940,
+        1254
+      ],
+      "opaqueBoundsInCell": [
+        130,
+        11,
+        239,
+        282
+      ],
+      "size": [
+        125,
+        287
+      ],
+      "atlasCell": [
+        0,
+        3
+      ],
+      "atlasContentBounds": [
+        113,
+        1164,
+        270,
+        1524
+      ]
+    }
+  }
+}

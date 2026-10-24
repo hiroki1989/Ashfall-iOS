@@ -1,0 +1,90 @@
+{
+  "atlas": "head-atlas-filled.png",
+  "size": [
+    1152,
+    384
+  ],
+  "cellSize": [
+    384,
+    384
+  ],
+  "origin": "top-left",
+  "views": {
+    "body_front": {
+      "sourceFile": "body_front.png",
+      "sourceCrop": [
+        153,
+        43,
+        206,
+        112
+      ],
+      "opaqueBoundsInCrop": [
+        0,
+        0,
+        53,
+        69
+      ],
+      "atlasCell": [
+        0,
+        0
+      ],
+      "atlasContentBounds": [
+        61,
+        22,
+        322,
+        362
+      ]
+    },
+    "body_profile": {
+      "sourceFile": "body_profile.png",
+      "sourceCrop": [
+        146,
+        25,
+        204,
+        103
+      ],
+      "opaqueBoundsInCrop": [
+        0,
+        0,
+        52,
+        78
+      ],
+      "atlasCell": [
+        1,
+        0
+      ],
+      "atlasContentBounds": [
+        462,
+        22,
+        689,
+        362
+      ]
+    },
+    "body_back": {
+      "sourceFile": "body_back.png",
+      "sourceCrop": [
+        160,
+        39,
+        231,
+        114
+      ],
+      "opaqueBoundsInCrop": [
+        0,
+        0,
+        71,
+        75
+      ],
+      "atlasCell": [
+        2,
+        0
+      ],
+      "atlasContentBounds": [
+        799,
+        22,
+        1121,
+        362
+      ]
+    }
+  },
+  "note": "Enemy_3 uses its small skull; rear view is partly covered by bone."
+}

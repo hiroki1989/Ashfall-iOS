@@ -5,7 +5,15 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public const int WeaponCapacity=10,WeaponSlotCount=4,ArmorCapacity=50,MeleeWeaponCapacity=12;
+        public const int WeaponSlotCount=4;
+        public int WeaponCapacity=>10+2*WeaponCapacityTier;
+        public int ArmorCapacity=>50+10*ArmorCapacityTier;
+        public int MeleeWeaponCapacity=>12+3*MeleeCapacityTier;
+        public int WeaponCapacityTier{get;private set;}
+        public int ArmorCapacityTier{get;private set;}
+        public int MeleeCapacityTier{get;private set;}
+        readonly int[] ammoCapacityTiers=new int[AmmoTypeCount];
+        public int AmmoCapacityTierFor(AmmoType type)=>((int)type>=0&&(int)type<AmmoTypeCount)?ammoCapacityTiers[(int)type]:0;
         public readonly List<Gun> Weapons=new List<Gun>();
         public readonly List<ArmorItem> ArmorInventory=new List<ArmorItem>();
         public ArmorItem[] EquippedArmor=new ArmorItem[5];
@@ -35,7 +43,7 @@ namespace NeonVault
         class ArmorDrop {public ArmorItem item;public Vector3 position;public GameObject visual;}
         int trailWardenGrantVersion,trailWardenDelivered;
         // One-time complimentary items may exceed capacity; ordinary acquisition keeps its existing limit.
-        [Serializable] class LoadoutSave {public int trailWardenGrantVersion,trailWardenDelivered;public List<Gun> weapons;public List<ArmorItem> armor;public List<MeleeWeaponItem> meleeWeapons;public string equippedMelee;public string[] equipped;public int selected;public string[] weaponSlots;public int activeWeaponSlot;public int[] ammoReserves;public string[] magazineIds;public int[] magazines;}
+        [Serializable] class LoadoutSave {public int trailWardenGrantVersion,trailWardenDelivered;public int weaponCapacityTier,armorCapacityTier,meleeCapacityTier,ammoCapacityTier;public int[] ammoCapacityTiers;public List<Gun> weapons;public List<ArmorItem> armor;public List<MeleeWeaponItem> meleeWeapons;public string equippedMelee;public string[] equipped;public int selected;public string[] weaponSlots;public int activeWeaponSlot;public int[] ammoReserves;public string[] magazineIds;public int[] magazines;}
         float ArmorTotal(Func<ArmorItem,float> value){float total=0;foreach(var item in EquippedArmor)if(Armory.IsActiveArmor(item))total+=value(item);return total;}
         public float EffectiveDamage=>gun==null?0:gun.damage*(1+damageBonus+DebtDamageBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage"))*(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier*(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
         public float EffectiveFireRate=>gun==null?0:(1+fireBonus+DebtFireRateBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.fireBonus)+ArtifactAffixBonus("fireRate"))/gun.interval;
@@ -49,14 +57,14 @@ namespace NeonVault
         public ActorEquipmentVisual PlayerAppearance=>player==null?null:player.GetComponent<ActorEquipmentVisual>();
         void LoadInventory(string storageKey="Vault.Loadout.v1",bool reviewTrailWardenMigration=false)
         {
-            MeleeWeaponInventory.Clear();EquippedMeleeWeapon=null;trailWardenGrantVersion=0;trailWardenDelivered=0;
+            MeleeWeaponInventory.Clear();EquippedMeleeWeapon=null;trailWardenGrantVersion=0;trailWardenDelivered=0;WeaponCapacityTier=ArmorCapacityTier=MeleeCapacityTier=0;Array.Clear(ammoCapacityTiers,0,ammoCapacityTiers.Length);
             bool legacySlots=true,loadedAmmoReserves=false,hasSavedArmorSlots=false;
             if((!smoke||storageKey!="Vault.Loadout.v1")&&PlayerPrefs.HasKey(storageKey))
             {
                 try
                 {
                     var save=JsonUtility.FromJson<LoadoutSave>(PlayerPrefs.GetString(storageKey));
-                    if(save!=null){trailWardenGrantVersion=save.trailWardenGrantVersion;trailWardenDelivered=save.trailWardenDelivered;}
+                    if(save!=null){trailWardenGrantVersion=save.trailWardenGrantVersion;trailWardenDelivered=save.trailWardenDelivered;WeaponCapacityTier=Mathf.Clamp(save.weaponCapacityTier,0,10);ArmorCapacityTier=Mathf.Clamp(save.armorCapacityTier,0,10);MeleeCapacityTier=Mathf.Clamp(save.meleeCapacityTier,0,10);for(int i=0;i<AmmoTypeCount;i++)ammoCapacityTiers[i]=save.ammoCapacityTiers!=null&&i<save.ammoCapacityTiers.Length?Mathf.Clamp(save.ammoCapacityTiers[i],0,10):Mathf.Clamp(save.ammoCapacityTier,0,10);}
                     if(save?.weapons!=null)foreach(var item in save.weapons)if(item!=null&&item.damage>0&&item.interval>0&&(Weapons.Count<WeaponCapacity||save.trailWardenGrantVersion>0)){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");Weapons.Add(item);}
                     if(save?.armor!=null)foreach(var item in save.armor)if(item!=null&&(int)item.slot>=0&&(int)item.slot<5&&(item.slot==ArmorSlot.Head||ActiveArmorCount<ArmorCapacity||save.trailWardenGrantVersion>0)){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");ArmorInventory.Add(item);}
                     if(save?.meleeWeapons!=null)foreach(var item in save.meleeWeapons)if(item!=null&&item.damage>0&&item.interval>0&&MeleeWeaponInventory.Count<MeleeWeaponCapacity){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");if(!MeleeWeaponInventory.Exists(m=>m.id==item.id))MeleeWeaponInventory.Add(item);}
@@ -112,7 +120,7 @@ namespace NeonVault
             if(smoke&&storageKey=="Vault.Loadout.v1")return;var ids=new string[5];for(int i=0;i<5;i++)ids[i]=EquippedArmor[i]?.id;
             if(gun!=null)magazineAmmo[gun.id]=ammo;
             var magIds=new string[Weapons.Count];var mags=new int[Weapons.Count];for(int i=0;i<Weapons.Count;i++){magIds[i]=Weapons[i].id;mags[i]=magazineAmmo.TryGetValue(Weapons[i].id,out int value)?value:Weapons[i].magazine;}
-            PlayerPrefs.SetString(storageKey,JsonUtility.ToJson(new LoadoutSave{trailWardenGrantVersion=trailWardenGrantVersion,trailWardenDelivered=trailWardenDelivered,weapons=Weapons,armor=ArmorInventory,meleeWeapons=MeleeWeaponInventory,equippedMelee=EquippedMeleeWeapon?.id,equipped=ids,selected=SelectedWeapon,weaponSlots=(string[])weaponSlotIds.Clone(),activeWeaponSlot=ActiveWeaponSlot,ammoReserves=SaveAmmoReserves(),magazineIds=magIds,magazines=mags}));PlayerPrefs.Save();
+            PlayerPrefs.SetString(storageKey,JsonUtility.ToJson(new LoadoutSave{trailWardenGrantVersion=trailWardenGrantVersion,trailWardenDelivered=trailWardenDelivered,weaponCapacityTier=WeaponCapacityTier,armorCapacityTier=ArmorCapacityTier,meleeCapacityTier=MeleeCapacityTier,ammoCapacityTiers=(int[])ammoCapacityTiers.Clone(),weapons=Weapons,armor=ArmorInventory,meleeWeapons=MeleeWeaponInventory,equippedMelee=EquippedMeleeWeapon?.id,equipped=ids,selected=SelectedWeapon,weaponSlots=(string[])weaponSlotIds.Clone(),activeWeaponSlot=ActiveWeaponSlot,ammoReserves=SaveAmmoReserves(),magazineIds=magIds,magazines=mags}));PlayerPrefs.Save();
         }
         public bool VerifyPersistence()
         {

@@ -180,7 +180,8 @@ namespace NeonVault
                     textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true, fontStyle = FontStyle.Bold };
                     textStyle.normal.textColor = new Color(1f,.97f,.83f);
                 }
-                Font bundledFont = Resources.Load<Font>("Fonts/NotoSansJP");
+                Font bundledFont = Resources.Load<Font>("Fonts/GenShinGothic-P-Regular");
+                if(bundledFont==null)bundledFont=Resources.Load<Font>("Fonts/NotoSansJP");
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
                 if (combat || hub) Stick(AimRect, aimStick, fingers.ContainsValue(-2));

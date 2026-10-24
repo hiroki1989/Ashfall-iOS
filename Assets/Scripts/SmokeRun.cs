@@ -233,7 +233,7 @@ namespace NeonVault
             Check(Armory.Name(uniqueHead,false)!=Armory.Name(uniqueChest,false)&&Armory.Name(uniqueHead,true)!=Armory.Name(uniqueChest,true),"legendary armor names identify their individual equipment piece in both languages");
             for(int model=0;model<Arsenal.ModelCount;model++)
             {
-                var expected=Arsenal.Category(model)==WeaponClass.Handgun?AmmoType.Handgun:Arsenal.Category(model)==WeaponClass.Shotgun?AmmoType.Shotgun:Arsenal.Category(model)==WeaponClass.SniperRifle?AmmoType.SniperRifle:AmmoType.AssaultRifle;
+                var expected=model==6||model==10||model==11?AmmoType.LightMachineGun:Arsenal.Category(model)==WeaponClass.Handgun?AmmoType.Handgun:Arsenal.Category(model)==WeaponClass.Shotgun?AmmoType.Shotgun:Arsenal.Category(model)==WeaponClass.SniperRifle?AmmoType.SniperRifle:AmmoType.AssaultRifle;
                 Check(VaultGame.AmmoForGun(Arsenal.Model(model,Rarity.Common))==expected,"weapon model uses its own reserve-ammo family / "+model);
             }
         }
@@ -248,15 +248,15 @@ namespace NeonVault
             int scrapDrops=0;bool scrapRange=true;for(int i=0;i<1000;i++)if(game.TryRollScrapDrop(false,out int amount)){scrapDrops++;scrapRange&=amount>=game.ScaleScrap(12000+game.DungeonIndex*3000)&&amount<=game.ScaleScrap(32000+game.DungeonIndex*3000);}
             Check(scrapRange,"regular scrap rewards stay in the reduced range");
             Check(scrapDrops>=390&&scrapDrops<=510,"regular scrap drop frequency is moderately below the old 50% rate / "+scrapDrops+" of 1000");
-            int ammoDrops=0,ammoAmount=0;bool ammoRange=true;for(int i=0;i<1000;i++){var type=(AmmoType)(i%4);if(game.TryRollAmmoDrop(false,type,out int amount)){ammoDrops++;ammoAmount+=amount;ammoRange&=amount>0&&amount<=game.AmmoPackSize(type);}}
+            int ammoDrops=0,ammoAmount=0;bool ammoRange=true;for(int i=0;i<1000;i++){var type=(AmmoType)(i%VaultGame.AmmoTypeCount);if(game.TryRollAmmoDrop(false,type,out int amount)){ammoDrops++;ammoAmount+=amount;ammoRange&=amount>0&&amount<=game.AmmoPackSize(type);}}
             Check(ammoRange,"regular ammo rewards remain partial packs");
-            Check(ammoDrops>=250&&ammoDrops<=400&&ammoAmount>0,"regular enemies favor ammo more often while keeping pickups modest");
+            Check(ammoDrops>=580&&ammoDrops<=700&&ammoAmount>0,"regular enemies drop ammunition at the raised rate across all five types / "+ammoDrops+" of 1000");
             int bossDrops=0;bool bossScrapRange=true;for(int i=0;i<1000;i++)if(game.TryRollScrapDrop(true,out int amount)){bossDrops++;bossScrapRange&=amount>=game.ScaleScrap(550000)&&amount<=game.ScaleScrap(900000);}
             Check(bossScrapRange,"boss scrap rewards stay below their former range");
             Check(bossDrops>=750&&bossDrops<=850,"boss scrap rate is modestly lower than its old 95% rate / "+bossDrops+" of 1000");
-            int bossAmmoDrops=0;bool bossAmmoRange=true;for(int i=0;i<100;i++)if(game.TryRollAmmoDrop(true,AmmoType.AssaultRifle,out int amount)){bossAmmoDrops++;bossAmmoRange&=amount>0&&amount<game.AmmoPackSize(AmmoType.AssaultRifle);}
+            int bossAmmoDrops=0;bool bossAmmoRange=true;for(int i=0;i<100;i++)if(game.TryRollAmmoDrop(true,AmmoType.AssaultRifle,out int amount)){bossAmmoDrops++;bossAmmoRange&=amount>0&&amount<=game.AmmoPackSize(AmmoType.AssaultRifle);}
             Check(bossAmmoRange,"boss ammo rewards are a useful partial refill");
-            Check(bossAmmoDrops>=75&&bossAmmoDrops<=100,"boss ammunition favors drops without guaranteeing a full crate / "+bossAmmoDrops+" of 100");
+            Check(bossAmmoDrops==100,"bosses guarantee ammunition / "+bossAmmoDrops+" of 100");
         }
         IEnumerator CaptureReticleAccuracy(VaultGame game)
         {
@@ -976,7 +976,7 @@ namespace NeonVault
             var equippedPrimary=game.WeaponInSlot(0);var equippedSecondary=game.WeaponInSlot(1);
             for(int cycle=0;cycle<6;cycle++){game.CycleWeapon(1);Check(game.gun==(cycle%2==0?equippedSecondary:equippedPrimary),"weapon cycling is limited to the two equipped slots / "+cycle);}
             Check(game.VerifyPersistence(),"both equipped weapon slots and active slot survive actual save reload");
-            while(game.Weapons.Count<VaultGame.WeaponCapacity)Check(game.StoreWeapon(Arsenal.Roll(seedA,3)),"weapon stores in available slot "+game.Weapons.Count);
+            while(game.Weapons.Count<game.WeaponCapacity)Check(game.StoreWeapon(Arsenal.Roll(seedA,3)),"weapon stores in available slot "+game.Weapons.Count);
             var overflow=Arsenal.Roll(seedA,3);var selectedGun=game.gun;
             Check(!game.StoreWeapon(overflow)&&game.Weapons.Count==10&&game.gun==selectedGun,"eleventh weapon rejected without replacing equipped gun");
             game.SelectWeapon(0);game.ammo=3;game.CycleWeapon(1);game.ammo=2;game.CycleWeapon(-1);
@@ -1083,7 +1083,7 @@ namespace NeonVault
             }
             yield return CaptureActor(game,"actor-armored.png",-game.GameCamera.transform.forward);
             yield return CaptureActor(game,"actor-armored-detail.png",-game.GameCamera.transform.forward,1.8f);
-            while(game.ArmorInventory.Count<VaultGame.ArmorCapacity)Check(game.StoreArmor(Armory.Roll(visualRandom,20)),"armor stores in available slot "+game.ArmorInventory.Count);
+            while(game.ArmorInventory.Count<game.ArmorCapacity)Check(game.StoreArmor(Armory.Roll(visualRandom,20)),"armor stores in available slot "+game.ArmorInventory.Count);
             var armorOverflow=Armory.Roll(visualRandom,20);var fullArmor=game.ArmorInventory.ToArray();var fullEquipped=(ArmorItem[])game.EquippedArmor.Clone();
             Check(!game.StoreArmor(armorOverflow)&&game.ArmorInventory.Count==50,"fifty-first armor rejected at capacity");
             bool armorUnchanged=true;for(int i=0;i<fullArmor.Length;i++)armorUnchanged&=game.ArmorInventory[i]==fullArmor[i];
@@ -1319,6 +1319,49 @@ namespace NeonVault
             var game=GetComponent<VaultGame>();
             Check(Camera.main==game.GameCamera,"3D animation and weapons use the active quarter-view camera");
             yield return new WaitForSeconds(.5f);
+            if(Array.IndexOf(args,"--economy-review")>=0)
+            {
+                game.StartRun(281104);game.invincible=999;
+                var autoAim=typeof(VaultGame).GetMethod("AutoAimDirection",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+                Vector3 reviewOrigin=game.PlayerPosition+Vector3.up*1.2f,reviewAxis=Vector3.zero;
+                for(int direction=0;direction<8;direction++)
+                {
+                    var candidate=Quaternion.Euler(0,direction*45,0)*Vector3.forward;
+                    if(game.Layout.ClearLine(reviewOrigin,reviewOrigin+candidate*3,.12f)){reviewAxis=candidate;break;}
+                }
+                Check(autoAim!=null&&game.Enemies.Count>0&&reviewAxis.sqrMagnitude>.9f,"auto-aim review has an unobstructed nearby target");
+                foreach(var foe in game.Enemies)foe.dead=true;
+                var nearbyReviewFoe=game.Enemies[0];nearbyReviewFoe.dead=false;nearbyReviewFoe.transform.position=game.PlayerPosition+reviewAxis*3;
+                Vector3 fifteen=Quaternion.Euler(0,15,0)*reviewAxis;
+                Vector3 twentyFive=Quaternion.Euler(0,25,0)*reviewAxis;
+                Vector3 thirtyOne=Quaternion.Euler(0,31,0)*reviewAxis;
+                Vector3 high=(Vector3)autoAim.Invoke(game,new object[]{reviewOrigin,fifteen,100f});
+                Vector3 low=(Vector3)autoAim.Invoke(game,new object[]{reviewOrigin,fifteen,0f});
+                Vector3 nearLimit=(Vector3)autoAim.Invoke(game,new object[]{reviewOrigin,twentyFive,100f});
+                Vector3 outside=(Vector3)autoAim.Invoke(game,new object[]{reviewOrigin,thirtyOne,100f});
+                Check(Vector3.Angle(high,reviewAxis)<.2f,"100 accuracy snaps a visible target within 30 degrees");
+                Check(Vector3.Angle(nearLimit,reviewAxis)<.2f,"100 accuracy snaps a visible target at 25 degrees");
+                Check(Vector3.Angle(low,fifteen)<.2f,"low accuracy leaves a 15-degree miss unassisted");
+                Check(Vector3.Angle(outside,thirtyOne)<.2f,"even 100 accuracy does not snap past 30 degrees");
+                VerifyFieldEconomy(game);
+                game.AwardCredits(3000000);game.screen=VaultGame.Screen.Shop;
+                int[] baseAmmo=new int[VaultGame.AmmoTypeCount];
+                for(int i=0;i<baseAmmo.Length;i++)baseAmmo[i]=game.AmmoCapacity((AmmoType)i);
+                Check(game.BuyStorageUpgrade(StorageUpgrade.AmmoHandgun)&&game.AmmoCapacity(AmmoType.Handgun)>baseAmmo[0],"handgun reserve upgrade increases only handgun capacity");
+                for(int i=1;i<baseAmmo.Length;i++)Check(game.AmmoCapacity((AmmoType)i)==baseAmmo[i],"handgun reserve upgrade leaves ammo type "+i+" unchanged");
+                var categories=new[]{StorageUpgrade.AmmoHandgun,StorageUpgrade.AmmoShotgun,StorageUpgrade.AmmoRifle,StorageUpgrade.AmmoSniper,StorageUpgrade.AmmoLMG,StorageUpgrade.Weapons,StorageUpgrade.Armor,StorageUpgrade.Modules,StorageUpgrade.Melee};
+                foreach(var category in categories)
+                {
+                    int originalCost=game.StorageUpgradeCost(category);
+                    int startingTier=game.StorageTier(category);
+                    Check(originalCost>0&&startingTier<=1,"merchant offers "+category+" expansion");
+                    for(int tier=startingTier+1;tier<=10;tier++)Check(game.BuyStorageUpgrade(category)&&game.StorageTier(category)==tier,"merchant buys "+category+" tier "+tier);
+                    Check(game.StorageUpgradeCost(category)==0&&!game.BuyStorageUpgrade(category),category+" stops at ten expansions");
+                }
+                for(int i=0;i<baseAmmo.Length;i++)Check(game.AmmoCapacity((AmmoType)i)>baseAmmo[i],"reserve cap rises for ammo type "+i);
+                Check(game.WeaponCapacity>10&&game.ArmorCapacity>50&&game.ArtifactCapacity>24&&game.MeleeWeaponCapacity>12,"all equipment storage categories expand");
+                File.WriteAllText(Path.Combine(output,"economy-review-result.txt"),"PASS / "+checks+" checks / "+Application.unityVersion);Application.Quit(0);yield break;
+            }
             if(Array.IndexOf(args,"--approved-fieldkit-equipment-review")>=0)
             {
                 game.StartRun(104729);game.invincible=999;game.enabled=false;foreach(var enemy in game.Enemies)if(enemy!=null)enemy.enabled=false;

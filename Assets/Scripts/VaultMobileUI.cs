@@ -43,10 +43,9 @@ namespace NeonVault
         void DrawMobileHUD()
         {
             if(gun==null)return;
-            Box(new Rect(20,20,420,125),new Color(.035f,.055f,.075f,.86f));
-            Text(38,26,Mathf.CeilToInt(hp)+" / "+maxHp+" HP",new GUIStyle(number){fontSize=34},hp<maxHp*.25f?UiDanger:UiPaper,390);
-            Text(38,79,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=20,wordWrap=true},Mist,380);
-            Box(new Rect(38,74,382,4),new Color(.22f,.27f,.28f));Box(new Rect(38,74,382*Mathf.Clamp01(hp/maxHp),4),Cyan);
+            DrawCriticalHealthVignette();
+            DrawHealthPanel(new Rect(20,20,420,125),true);
+            Text(46,106,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=19,wordWrap=false,clipping=TextClipping.Clip},Mist,370);
             Box(new Rect(456,20,574,125),new Color(.035f,.055f,.075f,.86f));
             Box(new Rect(456,20,3,125),gun.color);
             Text(476,29,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+"  "+VaultLanguage.GunName(gun),new GUIStyle(label){fontSize=20,wordWrap=true},Mist,530);

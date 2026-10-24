@@ -1,0 +1,37 @@
+{
+  "original": "Assets/Resources/Art/LayeredEnemies/Enemy_8.png",
+  "canvas": [
+    512,
+    512
+  ],
+  "placements": [
+    [
+      "leg_front_L.png",
+      [
+        171,
+        242,
+        282,
+        471
+      ]
+    ],
+    [
+      "leg_front_R.png",
+      [
+        231,
+        242,
+        342,
+        471
+      ]
+    ],
+    [
+      "body_front.png",
+      [
+        105,
+        22,
+        407,
+        329
+      ]
+    ]
+  ],
+  "purpose": "Hunyuan3D-2mini shape only; no AI texture"
+}

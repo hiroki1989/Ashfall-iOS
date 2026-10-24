@@ -247,6 +247,7 @@ namespace NeonVault
             if(camera==null)return;
             if(numbers>=NumberLimit){DamageFloat oldest=null;foreach(var number in Object.FindObjectsByType<DamageFloat>(FindObjectsSortMode.None))if(oldest==null||number.Age>oldest.Age)oldest=number;oldest?.Retire();}
             var obj=ObjectAt("Avoided hit",p,parent);var text=obj.AddComponent<TextMesh>();
+            if(avoidFont==null)avoidFont=Resources.Load<Font>("Fonts/GenShinGothic-P-Regular");
             if(avoidFont==null)avoidFont=Resources.Load<Font>("Fonts/NotoSansJP");
             if(avoidFont==null)avoidFont=Font.CreateDynamicFontFromOSFont(new[]{"HiraginoSans-W3","Hiragino Sans","Yu Gothic UI","Meiryo","Segoe UI"},42);
             text.font=avoidFont;text.GetComponent<MeshRenderer>().sharedMaterial=avoidFont.material;text.fontSize=42;text.fontStyle=FontStyle.Bold;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.text=VaultLanguage.T("DODGED","回避");text.color=new Color(.4f,.94f,.9f);

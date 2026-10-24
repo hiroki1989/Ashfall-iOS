@@ -65,9 +65,11 @@ namespace NeonVault
             Application.targetFrameRate=MobileTouchControls.Enabled?30:120;
             if(MobileTouchControls.Enabled)QualitySettings.vSyncCount=0;
             cores=PlayerPrefs.GetInt("Vault.Cores",0); rank=PlayerPrefs.GetInt("Vault.Rank",0);
-            font=Resources.Load<Font>("Fonts/NotoSansJP");
+            font=Resources.Load<Font>("Fonts/GenShinGothic-P-Regular");
+            if(font==null)font=Resources.Load<Font>("Fonts/NotoSansJP");
             if(font==null)font=Font.CreateDynamicFontFromOSFont(Application.platform==RuntimePlatform.IPhonePlayer?new[]{"HiraginoSans-W3","Hiragino Sans","Arial"}:new[]{"Yu Gothic UI","Meiryo","Segoe UI","Arial"},20);
-            englishHeadingFont=Resources.Load<Font>("Fonts/BarlowCondensed-Bold");
+            englishHeadingFont=Resources.Load<Font>("Fonts/GenShinGothic-P-Bold");
+            if(englishHeadingFont==null)englishHeadingFont=Resources.Load<Font>("Fonts/BarlowCondensed-Bold");
             pixel=new Texture2D(1,1); pixel.SetPixel(0,0,Color.white); pixel.Apply();
             cam=new GameObject("Isometric camera").AddComponent<Camera>(); cam.orthographic=true; cam.orthographicSize=13.5f; cam.backgroundColor=Ink; cam.clearFlags=CameraClearFlags.SolidColor;
             cam.tag="MainCamera";
@@ -80,10 +82,10 @@ namespace NeonVault
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
             audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=GunReport(true,true);pickupSound=Tone(620,.16f);
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
-            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
+            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
             ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);BuildRoom(false);
-            if(Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0) gameObject.AddComponent<SmokeRun>();
+            if(Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0) gameObject.AddComponent<SmokeRun>();
         }
         AudioClip Tone(float frequency,float duration)
         {
@@ -293,6 +295,14 @@ namespace NeonVault
                 var direction=aimedPoint-PlayerWeapon.MuzzlePosition;direction.y=0;if(direction.sqrMagnitude>.0001f)aim=direction.normalized;
                 player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
             }
+            // Both mouse and touch aim arrive here. Keep the player's input
+            // direction so releasing the touch stick does not retain a snap.
+            Vector3 inputAim=aim;
+            var assisted=AutoAimDirection(PlayerWeapon.MuzzlePosition,aim,EffectiveAccuracy);
+            if(Vector3.Dot(assisted,aim)<.99999f)
+            {
+                aim=assisted;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
+            }
             LegendaryTrigger("fire",PlayerPosition);
             ammo--;fireTimer=1/EffectiveFireRate;audioSource.PlayOneShot(gun.effect==GunEffect.Scatter?scatterSound:VaultLanguage.DisplayModel(gun)>=7?coilSound:fireSound,.5f);shake=gun.effect==GunEffect.Scatter?.38f:.25f;
             CombatVisuals.Muzzle(PlayerWeapon.MuzzlePosition,aim,gun.color,gun.effect,world,VaultLanguage.DisplayModel(gun));
@@ -313,6 +323,7 @@ namespace NeonVault
                 if(shot.critical)shot.damage*=EffectiveCriticalMultiplier;
                 LegendaryModifyShot(shot);
             }
+            aim=inputAim;
         }
         public bool AttackMelee()=>meleeAttack!=null&&meleeAttack.TryAttack(EquippedMeleeWeapon,aim,PlayerPosition,world);
         public void ResetMeleeCooldown()=>meleeAttack?.ResetCooldown();
@@ -353,18 +364,18 @@ namespace NeonVault
             if(!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
-            var ammoType=(AmmoType)rng.Next(4);if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
-            if(rng.NextDouble()<(f.kind==3?1:.24))AddDrop(RollExpeditionGun(rng,f.kind==3),f.transform.position);
-            if(rng.NextDouble()<(f.kind==3?1:.26))AddArmorDrop(RollExpeditionArmor(rng,f.kind==3),f.transform.position+Vector3.right*.8f);
-            if(rng.NextDouble()<(f.kind==3?.55:.12))AddArtifactDrop(RollExpeditionArtifact(rng,f.kind==3),f.transform.position+Vector3.left*.8f);
-            if(rng.NextDouble()<(f.kind==3?.75:.18))AddMeleeDrop(RollExpeditionMelee(rng,f.kind==3),f.transform.position+Vector3.forward*.8f);
+            var ammoType=(AmmoType)rng.Next(AmmoTypeCount);if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
+            if(rng.NextDouble()<(f.kind==3?1f/3f:.08f))AddDrop(RollExpeditionGun(rng,f.kind==3),f.transform.position);
+            if(rng.NextDouble()<(f.kind==3?1f/3f:.087f))AddArmorDrop(RollExpeditionArmor(rng,f.kind==3),f.transform.position+Vector3.right*.8f);
+            if(rng.NextDouble()<(f.kind==3?.183f:.04f))AddArtifactDrop(RollExpeditionArtifact(rng,f.kind==3),f.transform.position+Vector3.left*.8f);
+            if(rng.NextDouble()<(f.kind==3?.25f:.06f))AddMeleeDrop(RollExpeditionMelee(rng,f.kind==3),f.transform.position+Vector3.forward*.8f);
             bool alive=false; foreach(var e in Enemies) if(e!=null&&!e.dead)alive=true;
             if(!alive)
             {
                 cleared=true; hp=Mathf.Min(maxHp,hp+8);
                 if(room==CurrentDungeon.AreaCount-1) {Notify("ALPHA MUTANT DOWN / Loot [F] / Extraction [E]","変異体の主を撃破 / 戦利品 [F] / 脱出 [E]");return;}
-                AddDrop(RollExpeditionGun(rng),player.position+Vector3.forward*.5f);
-                AddArmorDrop(RollExpeditionArmor(rng),player.position+Vector3.left*.8f);
+                if(rng.Next(3)==0)AddDrop(RollExpeditionGun(rng),player.position+Vector3.forward*.5f);
+                if(rng.Next(3)==0)AddArmorDrop(RollExpeditionArmor(rng),player.position+Vector3.left*.8f);
                 Notify("ZONE CLEAR / +8 HP / Loot [F] / Exit [E]","区域制圧 / HP +8 / 戦利品 [F] / 出口 [E]");
             }
         }

@@ -35,12 +35,12 @@ namespace NeonVault
         {
             if(label!=null)
             {
-                Font displayFont=VaultLanguage.Japanese||englishHeadingFont==null?font:englishHeadingFont;
+                Font displayFont=englishHeadingFont==null?font:englishHeadingFont;
                 title.font=displayFont;heading.font=displayFont;return;
             }
             label=new GUIStyle(GUI.skin.label){font=font,fontSize=20,wordWrap=false};label.normal.textColor=Color.white;
             small=new GUIStyle(label){fontSize=14};tiny=new GUIStyle(label){fontSize=12};
-            Font headingFont=VaultLanguage.Japanese||englishHeadingFont==null?font:englishHeadingFont;
+            Font headingFont=englishHeadingFont==null?font:englishHeadingFont;
             title=new GUIStyle(label){font=headingFont,fontSize=68,fontStyle=FontStyle.Bold};
             heading=new GUIStyle(label){font=headingFont,fontSize=38,fontStyle=FontStyle.Bold};
             number=new GUIStyle(label){fontSize=42,fontStyle=FontStyle.Bold};
@@ -200,6 +200,7 @@ namespace NeonVault
         }
         void DrawHUD()
         {
+            DrawCriticalHealthVignette();
             int alive=0;foreach(var f in Enemies)if(f!=null&&!f.dead)alive++;
             Panel(new Rect(24,22,338,88),Gold*.7f);
             Text(42,32,T("ZONE","探索区域"),tiny,Mist);Text(42,56,(room+1).ToString("00")+" / "+CurrentDungeon.AreaCount.ToString("00"),label,Gold);
@@ -208,11 +209,7 @@ namespace NeonVault
             Text(440,61,cleared?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,Mist,720);
             if(SelectedExpeditionStage!=null){var stage=SelectedExpeditionStage;string mission=ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese);if(stage.mission==ExpeditionMission.HuntTarget||stage.mission==ExpeditionMission.DestroyNest)mission+=" / "+stage.Target;mission+="  ·  "+MissionProgress;Text(42,117,mission,new GUIStyle(tiny){wordWrap=true},MissionCompleted?Cyan:Gold,350);}else Text(42,121,T("SEED "+seed+"  /  "+Mathf.FloorToInt(runTime)+"s","シード "+seed+"  /  "+Mathf.FloorToInt(runTime)+"秒"),tiny,Mist,350);
             if(toastTimer>0){Panel(new Rect(405,111,720,44),Gold*.6f);Text(421,123,Toast,small,Gold,695);}
-            Panel(new Rect(24,754,375,122),Cyan);
-            Text(43,765,T("VITALS","生存状態"),tiny,Mist);
-            Text(42,785,Mathf.CeilToInt(hp).ToString(),number,Color.white,110);Text(138,805,"/ "+maxHp+" HP",small,Mist,160);
-            float value=Mathf.Clamp01(hp/maxHp);
-            for(int i=0;i<15;i++){Rect r=new Rect(44+i*22,841,18,12);Box(r,new Color(.15f,.23f,.24f));Box(new Rect(r.x,r.y,r.width*Mathf.Clamp01(value*15-i),r.height),hp<maxHp*.25f?new Color(1,.27f,.3f):Cyan);}
+            DrawHealthPanel(new Rect(24,754,375,122),false);
             Panel(new Rect(414,798,197,78),dodgeCooldown<=0?Cyan:Gold*.4f);
             Diamond(436,836,7,dodgeCooldown<=0?Cyan:Mist);
             Text(455,809,T("SPACE / DASH","SPACE / 回避"),tiny,Mist,150);Text(455,836,dodgeCooldown<=0?T("READY","使用可能"):dodgeCooldown.ToString("0.0")+T("s","秒"),small,Cyan,150);

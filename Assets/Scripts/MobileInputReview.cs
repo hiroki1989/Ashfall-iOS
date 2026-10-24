@@ -194,6 +194,9 @@ namespace NeonVault
                 VaultLanguage.Set(ja,false); string lang=ja?"ja":"en";
                 game.StartRun(240017); game.invincible=99999; foreach(var enemy in game.Enemies) if(enemy) enemy.enabled=false; Time.timeScale=1;
                 yield return Capture(device+"-combat-"+lang);
+                game.hp=game.maxHp*.25f;
+                yield return Capture(device+"-critical-health-"+lang);
+                game.hp=game.maxHp;
                 game.ToggleInventory();
                 typeof(VaultGame).GetField("mobileInventoryTab",BindingFlags.Instance|BindingFlags.NonPublic)?.SetValue(game,0);
                 yield return Capture(device+"-inventory-guns-"+lang);

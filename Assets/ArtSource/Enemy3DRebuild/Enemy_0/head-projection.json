@@ -1,0 +1,90 @@
+{
+  "atlas": "head-atlas-filled.png",
+  "size": [
+    1152,
+    384
+  ],
+  "cellSize": [
+    384,
+    384
+  ],
+  "origin": "top-left",
+  "views": {
+    "body_front": {
+      "sourceFile": "body_front.png",
+      "sourceCrop": [
+        126,
+        4,
+        226,
+        104
+      ],
+      "opaqueBoundsInCrop": [
+        1,
+        4,
+        100,
+        100
+      ],
+      "atlasCell": [
+        0,
+        0
+      ],
+      "atlasContentBounds": [
+        22,
+        27,
+        362,
+        357
+      ]
+    },
+    "body_profile": {
+      "sourceFile": "body_profile.png",
+      "sourceCrop": [
+        85,
+        3,
+        197,
+        108
+      ],
+      "opaqueBoundsInCrop": [
+        0,
+        5,
+        109,
+        105
+      ],
+      "atlasCell": [
+        1,
+        0
+      ],
+      "atlasContentBounds": [
+        406,
+        36,
+        746,
+        348
+      ]
+    },
+    "body_back": {
+      "sourceFile": "body_back.png",
+      "sourceCrop": [
+        125,
+        4,
+        234,
+        101
+      ],
+      "opaqueBoundsInCrop": [
+        0,
+        4,
+        109,
+        97
+      ],
+      "atlasCell": [
+        2,
+        0
+      ],
+      "atlasContentBounds": [
+        790,
+        47,
+        1130,
+        337
+      ]
+    }
+  },
+  "note": ""
+}

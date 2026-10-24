@@ -52,7 +52,7 @@ namespace NeonVault
                 if (chamber == Layout.chambers[Layout.EntryChamberIndex] || chamber == Layout.chambers[Layout.ExitChamberIndex]) continue;
                 Vector3 p = Layout.Center(chamber) + new Vector3((float)rng.NextDouble()*3.4f-1.7f,0,(float)rng.NextDouble()*2.8f-1.4f);
                 if (Vector3.Distance(p, Layout.Entry) < 8f || Blocked(p,.75f)) continue;
-                var type = (AmmoType)rng.Next(4);
+                var type = (AmmoType)rng.Next(AmmoTypeCount);
                 int amount = AmmoPackSize(type); // A crate is a full, legible pack of one ammunition class.
                 var visual = CreateLootPresentation(AmmoPickupName(type,amount),new Vector3(p.x,.31f,p.z),new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,amount);
                 fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,type=type,amount=amount,visual=visual});

@@ -15,6 +15,8 @@ Shader "NeonVault/DetailedHeroInk3D"
         _AtlasStrength ("Authored surface detail", Range(0,1)) = 0
         _CreatureAtlas ("Creature skin / hide / bone / membrane", 2D) = "white" {}
         _CreatureSurface ("Creature material quadrant", Float) = -1
+        [HideInInspector] _EnemyAtlas ("Enemy authored atlas", 2D) = "white" {}
+        [HideInInspector] _EnemyProjectionEnabled ("Enemy authored projection", Float) = 0
         _MicroRelief ("Material surface relief", Range(0,2)) = .7
         [HideInInspector] _ProjectionSheet ("Equipment projection", 2D) = "white" {}
         [HideInInspector] _ProjectionUv ("Equipment projection crop", Vector) = (0,0,1,1)
@@ -52,6 +54,8 @@ Shader "NeonVault/DetailedHeroInk3D"
         float _AtlasStrength;
         sampler2D _CreatureAtlas;
         float _CreatureSurface,_MicroRelief;
+        sampler2D _EnemyAtlas;
+        float _EnemyProjectionEnabled;
         sampler2D _ProjectionSheet,_AccessoryProjectionSheet;
         float4 _ProjectionUv,_ProjectionSideUv,_AccessoryProjectionUv,_ProjectionMin,_ProjectionSize;
         float4x4 _ProjectionWorldToRoot,_ProjectionWorldNormalToRoot;
@@ -221,6 +225,15 @@ Shader "NeonVault/DetailedHeroInk3D"
                 float h=dot(paint,float3(.2126,.7152,.0722));
                 relief=h*(_CreatureSurface<1.5?.00065:.0009);
                 polish=_CreatureSurface>2.5?lerp(.7,1.2,h):lerp(.35,.85,h);
+            }
+            if(_EnemyProjectionEnabled>.5 && IN.accessoryMask>.01)
+            {
+                // UVs are baked in the bind pose. They move with each articulated limb.
+                float4 authored=tex2D(_EnemyAtlas,IN.accessoryUV);
+                float coverage=saturate(authored.a*IN.accessoryMask);
+                color=lerp(color,authored.rgb,coverage);
+                pigment=lerp(pigment,1,coverage);
+                mark*=1-coverage;
             }
             // A derivative-based surface gradient gives the painted pores, weave and pits
             // real light response, using the mesh's authored tangent frame.
