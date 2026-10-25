@@ -18,7 +18,7 @@ namespace NeonVault
         Transform rig,pelvis,chest,head,muzzle;
         readonly Transform[] thighs=new Transform[2],shins=new Transform[2],feet=new Transform[2],arms=new Transform[2],forearms=new Transform[2];
         Material flesh,scar,bone,cloth,leather,steel,dark,green,eye;
-        Foe owner;int kind;Vector3 previous;float phase,attack,hit,death=-1;Vector3 hitLocal;
+        Foe owner;int kind,bossAttackStyle=-1;Vector3 previous;float phase,attack,hit,death=-1;Vector3 hitLocal;
         float girth,armLength,legLength,headHeight,baseLean;
         static Vector3 V(float x,float y,float z)=>new Vector3(x,y,z);
         static readonly float[] heights={2.05f,2.02f,2.16f,3.5f,1.9f,2.22f,2.08f,2.5f,2.26f,2.65f};
@@ -35,7 +35,7 @@ namespace NeonVault
             // Legacy weapon is gameplay targeting only; this model owns the visible gun.
             if(owner&&owner.weapon)foreach(var r in owner.weapon.GetComponentsInChildren<Renderer>())r.enabled=false;
         }
-        public void NotifyAttack(){if(death<0)attack=.38f;}
+        public void NotifyAttack(){if(death<0){attack=.38f;bossAttackStyle=owner?owner.BossAttackStyle:-1;}}
         public void NotifyHit(Vector3 point){if(death>=0)return;hit=.23f;hitLocal=transform.InverseTransformDirection(transform.position-point).normalized;}
         public void BeginDeath(){if(death>=0)return;death=0;attack=hit=0;}
         Material Pigment(string name,string surface,Color color)
@@ -390,7 +390,48 @@ namespace NeonVault
                 forearms[i].localRotation=Quaternion.Euler(elbow,0,side*strike*(kind==4?15:0));
             }
             head.localRotation=Quaternion.Euler((kind==4?-58:-lean*.48f)+anticipate*(kind==1?-18:kind==7?12:kind==9?-10:kind==0?8:0)+strike*(kind==1?-30:kind==3?20:kind==9?-12:8)-hitLocal.z*hitPulse*7,breath*(kind==4?5:kind==0?4:2),breath*(kind==0?3:kind==9?4:0)-hitLocal.x*hitPulse*7);
+            if(kind==3) AnimateColossusAttack(anticipate,strike);
             GroundContact(strike);
+        }
+        void AnimateColossusAttack(float windup,float strike)
+        {
+            int style=owner&&owner.IsTelegraphing?owner.BossAttackStyle:bossAttackStyle;
+            if(windup<=0&&strike<=0&&!(owner&&owner.IsLunging))return;
+            float motion=Mathf.Max(strike,owner&&owner.IsLunging?.8f:0);
+            if(style==0)
+            {
+                // Low, committed shoulder charge. Both arms guard the head.
+                rig.localRotation*=Quaternion.Euler(-24*windup+34*motion,0,0);
+                rig.localPosition+=V(0,-.16f*windup,-.12f*windup+.18f*motion);
+                for(int i=0;i<2;i++)
+                {
+                    int side=i==0?-1:1;
+                    arms[i].localRotation=Quaternion.Euler(-18-18*windup-35*motion,side*10,side*(10+8*motion));
+                    forearms[i].localRotation=Quaternion.Euler(-45-20*motion,0,0);
+                    thighs[i].localRotation*=Quaternion.Euler((i==0?-1:1)*(26*windup+36*motion),0,0);
+                }
+            }
+            else if(style==1)
+            {
+                // Raised fists remain legible through the long warning, then drive down.
+                chest.localRotation*=Quaternion.Euler(-17*windup+48*strike,0,0);
+                for(int i=0;i<2;i++)
+                {
+                    int side=i==0?-1:1;
+                    arms[i].localRotation=Quaternion.Euler(-148*windup+46*strike,0,side*(18+12*windup));
+                    forearms[i].localRotation=Quaternion.Euler(-46-22*windup+38*strike,0,0);
+                }
+                rig.localPosition+=V(0,-.10f*windup-.18f*strike,.12f*strike);
+            }
+            else if(style==2)
+            {
+                // One-sided wind-up and horizontal sweep; the rear arc stays readable.
+                chest.localRotation*=Quaternion.Euler(0,-46*windup+88*strike,0);
+                arms[0].localRotation=Quaternion.Euler(-34-30*windup,0,-32-18*windup);
+                forearms[0].localRotation=Quaternion.Euler(-62+20*strike,0,0);
+                arms[1].localRotation=Quaternion.Euler(-36-38*windup+24*strike,0,46-20*strike);
+                forearms[1].localRotation=Quaternion.Euler(-95+68*strike,0,0);
+            }
         }
         void AnimateDeath(float dt)
         {

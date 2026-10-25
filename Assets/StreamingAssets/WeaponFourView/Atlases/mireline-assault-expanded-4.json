@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-assault-expanded-4.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-assault-series-v2.png cell 4",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        92,
+        232,
+        72
+      ]
+    },
+    "right": {
+      "source": "mireline-assault-series-v2.png cell 4 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        92,
+        232,
+        72
+      ]
+    },
+    "front": {
+      "source": "mireline-assault-series-v2.png cell 4 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-assault-series-v2.png cell 4 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/mireline-assault-series-v2.png",
+  "sourceCell": 4,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

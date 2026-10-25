@@ -93,9 +93,69 @@ namespace NeonVault
                     Line("Navy canvas retention strap",g,M("NavyCanvas"),.006f,V(-side,-.02f,z-.04f),V(-side,-.06f,z+.015f),V(side,-.06f,z+.015f),V(side,-.02f,z-.04f));break;
             }
         }
+        // The eight later lineages have distinct working assemblies, not scaled copies of
+        // the first four. Their sockets remain on the original receiver coordinate system.
+        static void ExpandedSeries(Transform g,int gunClass,int series,float muzzle,float width,int maker)
+        {
+            bool pistol=gunClass==1;
+            float front=pistol?Mathf.Min(muzzle-.025f,.27f):Mathf.Min(muzzle-.04f,.54f);
+            float flank=width*.5f+.012f;
+            switch(series)
+            {
+                case 4: // Exposed reciprocating action and low feed cradle.
+                    Slab(g,"Open bolt guide bridge","ProductSteel",width+.019f,.03f,.095f,.27f,.017f);
+                    for(int side=-1;side<=1;side+=2)Rod("Exposed recoil spring guide",g,M("ProductSteel"),V(side*flank,.082f,-.105f),V(side*flank,.082f,front),.006f);
+                    Magazine(g,pistol?.015f:.095f,pistol?.13f:.21f,.063f);
+                    break;
+                case 5: // Tandem chamber, visibly split at the muzzle.
+                    for(int side=-1;side<=1;side+=2){Barrel(g,.15f,muzzle-.015f,pistol?.014f:.021f,side*.035f);Slab(g,"Separate chamber breech","ProductSteel",.035f,.09f,.016f,.15f,.075f);}
+                    Slab(g,"Twin chamber locking yoke","Brass",width+.045f,.17f,.063f,.025f,.08f);
+                    break;
+                case 6: // Large upper rotary feed and side reduction gears.
+                    {var pan=Root("Rotary upper ammunition cassette",g);pan.localPosition=V(0,.105f,.035f);pan.localRotation=Quaternion.Euler(-90,0,0);Tube("Indexed feed pan",pan,M("ProductSteel"),Vector3.zero,pistol?.071f:.115f,.035f,.08f,-1,28);for(int i=0;i<10;i++){float a=i*Mathf.PI/5;Rod("Pan radial rib",pan,M("Brass"),V(0,0,.038f),V(Mathf.Cos(a)*.09f,Mathf.Sin(a)*.09f,.038f),.003f);}}
+                    for(int side=-1;side<=1;side+=2){var gear=Root("External feed reduction gear",g);gear.localPosition=V(side*flank,.025f,-.025f);gear.localRotation=Quaternion.Euler(0,90,0);Tube("Gear wheel",gear,M("Brass"),Vector3.zero,.035f,.012f,.08f,-1,16);}
+                    break;
+                case 7: // Under-barrel pressure cylinder with articulated links.
+                    Tube("Long pressure cylinder",g,M("ProductSteel"),V(0,-.075f,.14f),.031f,front-.08f,.07f,-1,24);
+                    for(int side=-1;side<=1;side+=2){Rod("Pressure linkage",g,M("Brass"),V(side*.05f,-.035f,.05f),V(side*.05f,-.055f,front-.04f),.008f);Rod("Actuator cross pin",g,M("ProductSteel"),V(side*.05f,-.055f,front-.04f),V(side*.07f,-.055f,front-.04f),.009f);}
+                    break;
+                case 8: // Deep longitudinal side cassettes.
+                    for(int side=-1;side<=1;side+=2){Slab(g,"Removable longitudinal feed cassette",maker==0||maker==4?"Wood":"ProductSteel",.040f,.045f,-.015f,.29f,.13f);var cassette=Root("Side cassette mount",g);cassette.localPosition=V(side*(flank+.026f),-.01f,.035f);Slab(cassette,"Side cassette outer wall","Dark",.023f,0,0,.28f,.105f);for(int i=0;i<4;i++)Rod("Cassette loading notch",cassette,M("Brass"),V(-.013f,.04f,-.105f+i*.065f),V(.013f,.04f,-.105f+i*.065f),.003f);}
+                    break;
+                case 9: // Jacketed cooling barrel and broad ventilated shroud.
+                    for(int i=0;i<7;i++)Tube("Separate barrel cooling ring",g,M("ProductSteel"),V(0,0,.20f+i*(front-.20f)/7),pistol?.034f:.049f,.012f,.78f,-1,20);
+                    for(int side=-1;side<=1;side+=2)Rod("Open cooling jacket rail",g,M("ProductSteel"),V(side*(pistol?.035f:.05f),.025f,.18f),V(side*(pistol?.035f:.05f),.025f,front),.006f);
+                    Slab(g,"Tall heat shield","Dark",width+.01f,.32f,.075f,Mathf.Max(.09f,front-.22f),.018f);
+                    break;
+                case 10: // Stepped counterweight and mechanical elevation arm.
+                    Slab(g,"Offset balance weight","ProductSteel",width+.055f,-.105f,-.065f,.13f,.12f);
+                    for(int side=-1;side<=1;side+=2)Rod("Triangulated elevation arm",g,M("Brass"),V(side*flank,.04f,-.13f),V(side*(flank+.024f),.13f,.14f),.007f);
+                    Slab(g,"Raised range ladder","ProductSteel",.026f,.11f,.155f,.13f,.10f);
+                    break;
+                case 11: // Forward fork, two stabilizers, exposed central bore.
+                    for(int side=-1;side<=1;side+=2){Slab(g,"Forked forward action tine","ProductSteel",.026f,.28f,side*.028f,Mathf.Max(.13f,front-.16f),.06f);Rod("Fork tension cable",g,M("Brass"),V(side*.058f,.052f,.10f),V(side*.065f,.052f,front),.006f);}
+                    Tube("Floating muzzle sleeve",g,M("ProductSteel"),V(0,0,muzzle-.075f),pistol?.038f:.053f,.075f,.66f,-1,20);
+                    break;
+            }
+            // Class-specific visible mechanics keep rifles, pistols and support guns apart.
+            if(gunClass==1){Slab(g,"Compact slide return cap","Dark",width+.025f,-.09f,.063f,.035f,.035f);}
+            else if(gunClass==2){Rod("Shotgun shell lifter",g,M("Brass"),V(-flank,-.08f,.055f),V(flank,-.08f,.055f),.008f);}
+            else if(gunClass==3){Bipod(g,Mathf.Min(front,.48f));}
+            else if(gunClass==4){Slab(g,"Compact charging shroud","Dark",width+.015f,-.04f,.075f,.17f,.025f);}
+            else if(gunClass==5){Scope(g,-.10f,.27f);}
+            else Rail(g,-.08f,.18f,.093f);
+        }
+        static void EditionHardware(Transform g,int edition,int gunClass,float muzzle,float width)
+        {
+            if(edition==0){Slab(g,"Field service latch","Brass",.018f,-.095f,.048f,.028f,.026f);return;}
+            if(edition==1){Slab(g,"Short edition folding rear sight","ProductSteel",.032f,-.078f,.097f,.023f,.047f);Rod("Short edition sling swivel",g,M("ProductSteel"),V(-width*.6f,-.045f,-.15f),V(-width*.85f,-.080f,-.15f),.005f);return;}
+            if(edition==2){Slab(g,"Reinforced receiver bridge","ProductSteel",width+.02f,-.02f,.101f,.19f,.025f);for(int side=-1;side<=1;side+=2)Rod("Reinforced cross brace",g,M("Brass"),V(side*width*.65f,-.06f,-.105f),V(side*width*.65f,.06f,.12f),.006f);return;}
+            if(edition==3){Slab(g,"Range cheek riser","Dark",width+.015f,-.17f,.066f,.11f,.048f);if(gunClass!=1)Bipod(g,Mathf.Min(.48f,muzzle-.12f));}
+        }
         public static DetailedHeroEquipment3D.WeaponSockets Build(Transform parent,Gun gun,EquipmentRecipe r)
         {
-            int c=Mathf.Clamp(r.gunClass,0,5),s=Mathf.Clamp(r.series,0,3);
+            if(GunSilhouette3D.TryBuildRegular(parent,r,out var painted))return painted;
+            int c=Mathf.Clamp(r.gunClass,0,5),series=Mathf.Clamp(r.series,0,11),s=series%4;
             var g=Root("Distinct product / "+r.id+" / class "+c+" series "+s,parent);
             float rear=-.34f,end=.64f,support=.26f,grip=-.045f,width=.078f,makerZ=-.035f;
             if(c==1)
@@ -142,6 +202,7 @@ namespace NeonVault
                         if(s==1||s==3)Bipod(g,.56f);if(s==3)Tube("Heavy rectangular brake collar",g,M("ProductSteel"),V(0,0,end-.06f),.047f,.06f,.74f,-1,8);break;
                 }
             }
+            if(series>=4)ExpandedSeries(g,c,series,end,width,r.maker);
             Maker(g,r,makerZ,width,c==1);
             if(c==1&&s==0){foreach(Transform piece in g){if(piece.name.Contains("pistol grip")||piece.name.Contains("checkering")||piece.name.Contains("Flush grip magazine")){var pos=piece.localPosition;pos.y+=.015f;piece.localPosition=pos;var scale=piece.localScale;scale.y*=.82f;piece.localScale=scale;}}}
             // Individual variants preserve architecture but visibly change handling and hardware.
@@ -157,6 +218,7 @@ namespace NeonVault
                 Tube("Range barrel stabilizer collar",g,M("ProductSteel"),V(0,0,end-.095f),c==2?.038f:.030f,.035f,.76f,-1,20);
                 Slab(g,"Range adjustable rear sight","ProductSteel",.038f,-.075f,.075f,.045f,.025f);
             }
+            EditionHardware(g,r.seriesVariant,c,end,width);
             float length=r.seriesVariant==1?.85f:r.seriesVariant==2?1.04f:r.seriesVariant==3?1.17f:1f;
             // Bake the whole construction through an intermediate root. Compact resolves nested
             // rotations correctly, including transverse drums, before the player scales its root.

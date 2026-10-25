@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-handgun-expanded-3.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-handgun-series-v2.png cell 3",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        83,
+        232,
+        89
+      ]
+    },
+    "right": {
+      "source": "voltarc-handgun-series-v2.png cell 3 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        83,
+        232,
+        89
+      ]
+    },
+    "front": {
+      "source": "voltarc-handgun-series-v2.png cell 3 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-handgun-series-v2.png cell 3 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/voltarc-handgun-series-v2.png",
+  "sourceCell": 3,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

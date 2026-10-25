@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/aegis-handgun-expanded-1.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "aegis-handgun-series-v2.png cell 1",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        82,
+        232,
+        91
+      ]
+    },
+    "right": {
+      "source": "aegis-handgun-series-v2.png cell 1 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        82,
+        232,
+        91
+      ]
+    },
+    "front": {
+      "source": "aegis-handgun-series-v2.png cell 1 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "aegis-handgun-series-v2.png cell 1 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/aegis-handgun-series-v2.png",
+  "sourceCell": 1,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

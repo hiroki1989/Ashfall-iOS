@@ -14,6 +14,6 @@ namespace NeonVault {
   };
   public static DungeonProfile Get(int index)=>All[Mathf.Clamp(index,0,All.Length-1)];
   public static int ItemLevel(System.Random random,int index){var d=Get(index);return random.Next(d.minLevel,d.maxLevel+1);}
-  public static Rarity RollRarity(System.Random random,bool boss=false){double p=random.NextDouble()*100;if(boss){if(p<5)return Rarity.Legendary;p=(p-5)/95*99.5;}else if(p>=99.5)return Rarity.Legendary;return p<55?Rarity.Common:p<84?Rarity.Uncommon:p<96?Rarity.Rare:Rarity.Epic;}
+  public static Rarity RollRarity(System.Random random,bool boss=false){double p=random.NextDouble()*100;float multiplier=VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.legendaryDropMultiplier:1f;double legendaryChance=Mathf.Clamp((boss?5f:.5f)*multiplier,0,100);if(p<legendaryChance)return Rarity.Legendary;p=(p-legendaryChance)/(100-legendaryChance)*99.5;return p<55?Rarity.Common:p<84?Rarity.Uncommon:p<96?Rarity.Rare:Rarity.Epic;}
  }
 }

@@ -4,7 +4,7 @@ namespace NeonVault {
  // Class/body: assault=0, handgun=1, shotgun=2, LMG=3, SMG=4, sniper=5.
  // Each maker has four complete series per class, each with four tuned variants.
  public static class GunSeriesDesigns {
-  public const int ClassCount=6,SeriesCount=4,VariantsPerSeries=4,RegularCount=576;
+  public const int ClassCount=6,SeriesCount=12,VariantsPerSeries=4,RegularCount=1728,FirstNewLegendary=1758;
   static readonly string[] classes={"Assault Rifle","Handgun","Shotgun","LMG","SMG","Sniper Rifle"};
   static readonly string[] classesJa={"アサルトライフル","拳銃","ショットガン","軽機関銃","短機関銃","狙撃銃"};
   static readonly string[] makerNames={"Kestrel","Ironwake","Voltarc","Mireline","Cinder","Aegis"};
@@ -38,17 +38,19 @@ namespace NeonVault {
   static readonly string[] variants={"Field","Short","Reinforced","Range"};
   static readonly string[] variantsJa={"野戦型","短銃身型","強装型","遠射型"};
   public static string ClassName(int gunClass,bool japanese=false)=>(japanese?classesJa:classes)[Mathf.Clamp(gunClass,0,5)];
-  public static string SeriesName(int maker,int gunClass,int series,bool japanese=false){maker=Mathf.Clamp(maker,0,5);gunClass=Mathf.Clamp(gunClass,0,5);series=Mathf.Clamp(series,0,3);string role=maker==3&&gunClass==4&&series==1?(japanese?"密閉箱型給弾":"Sealed Box Feed"):(japanese?seriesNamesJa:seriesNames)[gunClass,series];return (japanese?rootsJa:roots)[maker,series]+" "+role;}
+  public static string SeriesName(int maker,int gunClass,int series,bool japanese=false){maker=Mathf.Clamp(maker,0,5);gunClass=Mathf.Clamp(gunClass,0,5);series=Mathf.Clamp(series,0,11);if(series>=4)return ExpandedGunDesigns.SeriesName(maker,gunClass,series-4,japanese);string role=maker==3&&gunClass==4&&series==1?(japanese?"密閉箱型給弾":"Sealed Box Feed"):(japanese?seriesNamesJa:seriesNames)[gunClass,series];return (japanese?rootsJa:roots)[maker,series]+" "+role;}
   public static string VariantName(int variant,bool japanese=false)=>(japanese?variantsJa:variants)[Mathf.Clamp(variant,0,3)];
-  public static int Model(int gunClass,int series){switch(gunClass){case 1:return new[]{17,15,14,16}[series];case 2:return 13;case 3:return 6;case 4:return 1;case 5:return series==3?8:2;default:return 12;}}
+  public static int Model(int gunClass,int series){switch(gunClass){case 1:return new[]{17,15,14,16}[series%4];case 2:return 13;case 3:return 6;case 4:return 1;case 5:return series%4==3?8:2;default:return 12;}}
   public static void Configure(EquipmentRecipe r){
-   if(r.legendary){r.gunClass=new[]{5,1,2,3,4}[r.index%5];r.body=r.gunClass;r.series=0;r.seriesVariant=0;return;}
-   int local=(r.index-30)/6;r.gunClass=local/16;r.series=local/4%4;r.seriesVariant=local%4;
+   if(r.legendary){int variant=LegendaryCatalog.VariantFromCatalogIndex(r.index);r.gunClass=new[]{5,1,2,3,4}[variant%5];r.body=r.gunClass;r.series=0;r.seriesVariant=0;r.visualDirection=LegendaryCatalog.VisualDirection(r.index);return;}
+   int local=r.index<606?(r.index-30)/6:(r.index-606)/6;
+   r.gunClass=local/(r.index<606?16:32);r.series=r.index<606?local/4%4:4+local/4%8;r.seriesVariant=local%4;
    r.body=r.gunClass;r.family=Model(r.gunClass,r.series);
    // These part keys remain useful for procedural detail, but never select a gun class.
    r.barrel=r.series;r.stock=r.seriesVariant;r.attachment=(r.series+r.maker)%6;
    r.name=makerNames[r.maker]+" "+SeriesName(r.maker,r.gunClass,r.series)+" "+ClassName(r.gunClass)+" / "+VariantName(r.seriesVariant);
    r.japanese=makerNamesJa[r.maker]+"・"+SeriesName(r.maker,r.gunClass,r.series,true)+" "+ClassName(r.gunClass,true)+"・"+VariantName(r.seriesVariant,true);
+   if(r.series>=4)r.visualDirection=ExpandedGunDesigns.VisualDirection(r.maker,r.gunClass,r.series-4);
   }
   // Series tune damage / interval / accuracy / magazine / reload as a whole.
   // Every compact line sacrifices output or reach; every heavy line pays handling costs.
@@ -59,7 +61,7 @@ namespace NeonVault {
   static readonly float[,] aim={ {0,-8,-3,5},{-7,0,4,-4},{0,-12,-9,-5},{-3,3,-5,7},{0,4,-5,-8},{0,2,-6,-2} };
   public static void Apply(Gun g,EquipmentRecipe r){
    int c=r.gunClass,s=r.series,v=r.seriesVariant;
-   g.damage*=damage[c,s];g.interval*=interval[c,s];g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*capacity[c,s]));g.reloadSeconds*=reload[c,s];g.accuracy+=aim[c,s];
+   if(s>=4)ExpandedGunDesigns.Apply(g,c,s-4);else {g.damage*=damage[c,s];g.interval*=interval[c,s];g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*capacity[c,s]));g.reloadSeconds*=reload[c,s];g.accuracy+=aim[c,s];}
 
 
    switch(v){case 1:g.damage*=.91f;g.interval*=.9f;g.accuracy-=7;g.reloadSeconds*=.86f;g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*.85f));g.movementBonus+=.025f;break;
@@ -86,7 +88,7 @@ namespace NeonVault {
    {"箱型機関：均衡の取れた近距離連射", "上部弾倉：正確な射撃、弾数・連射速度は控えめ", "螺旋弾倉：大容量・高速連射、威力が低く装填は長い", "ドラム給弾：最大容量と高速連射、精度が低く装填は長い"},
    {"木銃床ボルト：均衡の取れた精密射撃", "シャーシ機構：安定射撃と増弾、連射・装填は遅い", "ブルパップ機構：小型・増弾、威力・精度は控えめ", "重対物機構：高威力だが連射・装填は遅い"}};
   public static string Description(EquipmentRecipe r,bool japanese=false){
-   string mechanism=r.maker==3&&r.gunClass==4&&r.series==1?(japanese?"密閉箱型給弾：正確な射撃、弾数・連射速度は控えめ":"Sealed box feed: controlled accurate fire, smaller capacity and slower cadence"):(japanese?descriptionsJa:descriptions)[r.gunClass,r.series];return ClassName(r.gunClass,japanese)+" / "+SeriesName(r.maker,r.gunClass,r.series,japanese)+" / "+mechanism+" / "+VariantName(r.seriesVariant,japanese);
+   string mechanism=r.series>=4?ExpandedGunDesigns.Description(r.gunClass,r.series-4,japanese):r.maker==3&&r.gunClass==4&&r.series==1?(japanese?"密閉箱型給弾：正確な射撃、弾数・連射速度は控えめ":"Sealed box feed: controlled accurate fire, smaller capacity and slower cadence"):(japanese?descriptionsJa:descriptions)[r.gunClass,r.series];return ClassName(r.gunClass,japanese)+" / "+SeriesName(r.maker,r.gunClass,r.series,japanese)+" / "+mechanism+" / "+VariantName(r.seriesVariant,japanese);
   }
  }
 }

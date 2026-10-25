@@ -9,7 +9,8 @@ namespace NeonVault
         // secondary projectile has a short lifetime and a strict per-proc cap.
         void ResolveDistinctLegendaryGun(int maker,int variant,Vector3 origin,Foe struck)
         {
-            if(gun==null||world==null||maker<0||maker>=6||variant<0||variant>=5)return;
+            if(gun==null||world==null||maker<0||maker>=6||variant<0||variant>=15)return;
+            if(variant>=5){ResolveExpandedLegendaryGun(maker,variant-5,origin,struck);return;}
             int id=maker*5+variant;
             float power=gun.damage;
             Color color=LegendaryEffectColor(maker);
@@ -133,6 +134,66 @@ namespace NeonVault
             }
         }
 
+        // The ten later relic mechanisms have distinct projectile paths or hit
+        // consequences. Manufacturer signatures are applied after the mechanism,
+        // so no two makers are stat-only reskins of the same relic.
+        void ResolveExpandedLegendaryGun(int maker,int mechanism,Vector3 origin,Foe struck)
+        {
+            float power=gun.damage;Color color=LegendaryEffectColor(maker);
+            Vector3 source=origin+Vector3.up*.65f;
+            var targets=LegendaryGunTargets(origin,10);
+            Foe first=struck!=null&&!struck.dead?struck:targets.Count>0?targets[0]:null;
+            Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:Vector3.forward;
+            Burst(origin,color,4);
+            switch(mechanism)
+            {
+                case 0: // Prism: three narrow crossing sight lanes.
+                    for(int a=-1;a<=1;a++)LegendaryGunShot(source,Quaternion.Euler(0,a*11,0)*forward,power*.36f,color);
+                    break;
+                case 1: // Twin horizon: two separately guided short-lived rounds.
+                    for(int i=0;i<Mathf.Min(2,targets.Count);i++)LegendaryGunShot(source,targets[i].transform.position-source,power*.52f,color);
+                    break;
+                case 2: // Cross examination: four diagonal trajectories.
+                    foreach(int a in new[]{-31,-12,12,31})LegendaryGunShot(source,Quaternion.Euler(0,a,0)*forward,power*.27f,color);
+                    break;
+                case 3: // Ghost measure: an echo at the contact point, then another behind it.
+                    ScheduleLegendaryPulse(origin,power*.52f,1.15f,1,maker,.22f);
+                    ScheduleLegendaryPulse(origin+forward*1.3f,power*.38f,1.0f,1,maker,.52f);
+                    break;
+                case 4: // Long vigil: a thin escalating lane, strongest at distance.
+                    foreach(var foe in targets)if(LegendaryGunInLane(origin,forward,foe.transform.position,10,.48f))
+                        LegendaryStrike(foe,power*(.36f+.045f*Vector3.Distance(origin,foe.transform.position)),color);
+                    break;
+                case 5: // Needle court: a single distant priority target.
+                    if(targets.Count>0)LegendaryGunShot(source,targets[targets.Count-1].transform.position-source,power*.85f,color);
+                    break;
+                case 6: // White feint: two crossing shots from offset flanks.
+                    {Vector3 side=Vector3.Cross(Vector3.up,forward).normalized*.7f;
+                     LegendaryGunShot(source+side,Quaternion.Euler(0,-17,0)*forward,power*.48f,color);
+                     LegendaryGunShot(source-side,Quaternion.Euler(0,17,0)*forward,power*.48f,color);}
+                    break;
+                case 7: // Second angle: impact rebounds toward another survivor.
+                    if(first!=null){foreach(var foe in targets)if(foe!=first){LegendaryGunShot(first.transform.position+Vector3.up*.5f,foe.transform.position-first.transform.position,power*.68f,color);break;}}
+                    break;
+                case 8: // Silent trajectory: a precise suppressed follow-up stalls attack.
+                    if(first!=null){LegendaryStrike(first,power*.68f,color);first.DelayNextAttack(.65f);}
+                    break;
+                case 9: // Final bearing: a heavy terminal impact with a small outer ring.
+                    LegendaryGunBlast(origin,1.15f,power*.88f,color,true);
+                    ScheduleLegendaryPulse(origin,power*.28f,2.0f,1,maker,.28f);
+                    break;
+            }
+            switch(maker)
+            {
+                case 0:legendaryPrecisionUntil=Mathf.Max(legendaryPrecisionUntil,legendaryClock+1.2f);break;
+                case 1:if(first!=null)LegendaryGunPush(first,forward,.55f);break;
+                case 2:if(first!=null)first.DelayNextAttack(.4f);break;
+                case 3:if(first!=null)LegendaryGunHeal(1.5f);break;
+                case 4:if(first!=null)LegendaryGunBlast(first.transform.position,.65f,power*.12f,color,false);break;
+                case 5:LegendaryGunBarrier(2);break;
+            }
+        }
+
         List<Foe> LegendaryGunTargets(Vector3 origin,float radius)
         {
             var result=new List<Foe>();float limit=radius*radius;
@@ -163,7 +224,8 @@ namespace NeonVault
 
         static string DistinctLegendaryGunDescription(int maker,int variant,bool ja)
         {
-            if(maker<0||maker>=6||variant<0||variant>=5)return "";
+            if(maker<0||maker>=6||variant<0||variant>=15)return "";
+            if(variant>=5){int s=variant-5;string[] mechanismEn={"Three crossing projectiles fan through a narrow prism lane.","Two guided rounds seek separate nearby targets.","Four diagonal rounds form a crossfire.","A delayed impact echoes twice at offset positions.","A thin long lane hits harder at greater distance.","One heavy round seeks the farthest visible enemy.","Two rounds cross in from opposite flanks.","The impact rebounds toward another survivor.","A quiet precision follow-up delays the target attack.","A compact heavy blast ripples outward a moment later."};string[] mechanismJa={"狭い交差射線へ3発の分光弾。","別々の近くの敵を追う誘導弾2発。","斜め4方向へ交差射撃。","命中地点とその先で遅延衝撃が2回発生。","遠い敵ほど強い細い長距離射線。","見えている最遠の敵を狙う重弾1発。","左右から2発の弾が交差。","命中地点から別の生存者へ跳弾。","静かな追撃が敵の攻撃を遅らせる。","小さな重爆発のあと外側へ衝撃が広がる。"};string[] makerEn={" Precise sight for 1.2s."," Push the first target."," Interrupt the first target."," Siphon a little HP."," Scatter fragments at the first target."," Gain a small barrier."};string[] makerJa={" 1.2秒間、照準を強化。"," 最初の敵を押し出す。"," 最初の敵の攻撃を遅らせる。"," 少量のHPを吸収。"," 最初の敵に破片を散らす。"," 少量の障壁を得る。"};return (ja?mechanismJa:mechanismEn)[s]+(ja?makerJa:makerEn)[maker];}
             string[] trigger=ja?new[]{"3射ごと（待機1秒）：","銃弾命中時（待機2秒）：","撃破時（待機2秒）：","装填時（待機3秒）：","ダッシュ時（待機3秒）："}:new[]{"Every third shot (1s cooldown): ","On bullet hit (2s cooldown): ","On kill (2s cooldown): ","On reload (3s cooldown): ","On dash (3s cooldown): "};
             string[] en={
                 "Strike the nearest foe for 150% bonus damage; shots gain 25% damage and perfect accuracy for 3s.",

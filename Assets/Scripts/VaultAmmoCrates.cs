@@ -13,8 +13,8 @@ namespace NeonVault
             public GameObject visual;
         }
 
-        readonly List<int> ammoCrateRoomPlan = new List<int>(2);
-        readonly List<FieldAmmoCrate> fieldAmmoCrates = new List<FieldAmmoCrate>(2);
+        readonly List<int> ammoCrateRoomPlan = new List<int>(12);
+        readonly List<FieldAmmoCrate> fieldAmmoCrates = new List<FieldAmmoCrate>(12);
         int ammoCratePlanCount;
         public int AmmoCratesPlannedThisRun => ammoCratePlanCount;
         public int AmmoCratesNearbyCount => fieldAmmoCrates.Count;
@@ -25,41 +25,56 @@ namespace NeonVault
             ammoCrateRoomPlan.Clear();
             fieldAmmoCrates.Clear();
             ammoCratePlanCount=0;
-            if (rng == null || CurrentDungeon.AreaCount <= 1) return;
-
-            var available = new List<int>();
-            // Reserve the boss chamber for its guaranteed combat/loot flow.
-            for (int i = 0; i < CurrentDungeon.AreaCount - 1; i++) available.Add(i);
-            int count = Mathf.Min(rng.Next(1, 3), available.Count);
-            ammoCratePlanCount=count;
-            for (int i = 0; i < count; i++)
-            {
-                int pick = rng.Next(available.Count);
-                ammoCrateRoomPlan.Add(available[pick]);
-                available.RemoveAt(pick);
-            }
+            if (rng == null || CurrentDungeon.AreaCount <= 0) return;
+            for (int i = 0; i < CurrentDungeon.AreaCount; i++) ammoCrateRoomPlan.Add(i);
+            ammoCratePlanCount=CurrentDungeon.AreaCount*AmmoCratesPerFloor;
         }
 
         /// <summary>Call for each populated combat room after its SectorLayout has been generated.</summary>
         public void SpawnAmmoCratesForCurrentRoom()
         {
             fieldAmmoCrates.RemoveAll(crate => crate == null || crate.visual == null);
-            if (room >= CurrentDungeon.AreaCount - 1 || !ammoCrateRoomPlan.Remove(room) || Layout == null || Layout.chambers.Count < 3) return;
+            if (!ammoCrateRoomPlan.Remove(room) || Layout == null || Layout.chambers.Count == 0) return;
 
-            for (int attempt = 0; attempt < 72; attempt++)
+            for (int placed = 0; placed < AmmoCratesPerFloor; placed++)
             {
-                var chamber = Layout.chambers[rng.Next(Layout.chambers.Count)];
-                if (chamber == Layout.chambers[Layout.EntryChamberIndex] || chamber == Layout.chambers[Layout.ExitChamberIndex]) continue;
-                Vector3 p = Layout.Center(chamber) + new Vector3((float)rng.NextDouble()*3.4f-1.7f,0,(float)rng.NextDouble()*2.8f-1.4f);
-                if (Vector3.Distance(p, Layout.Entry) < 8f || Blocked(p,.75f)) continue;
-                var type = (AmmoType)rng.Next(AmmoTypeCount);
-                int amount = AmmoPackSize(type); // A crate is a full, legible pack of one ammunition class.
-                var visual = CreateLootPresentation(AmmoPickupName(type,amount),new Vector3(p.x,.31f,p.z),new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,amount);
-                fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,type=type,amount=amount,visual=visual});
-                return;
+                bool found=false;
+                for (int attempt = 0; attempt < 96; attempt++)
+                {
+                    var chamber = Layout.chambers[rng.Next(Layout.chambers.Count)];
+                    if (chamber == Layout.chambers[Layout.EntryChamberIndex] || chamber == Layout.chambers[Layout.ExitChamberIndex]) continue;
+                    Vector3 p = Layout.Center(chamber) + new Vector3((float)rng.NextDouble()*6f-3f,0,(float)rng.NextDouble()*5f-2.5f);
+                    if (TryPlaceAmmoCrate(p)){found=true;break;}
+                }
+                // Random samples can repeatedly hit walls or the protected entry.
+                // Scan the connected floor as a fallback before accepting fewer crates.
+                if(!found)
+                {
+                    int cells=Layout.Columns*Layout.Rows;
+                    int start=rng.Next(cells);
+                    for(int n=0;n<cells;n++)
+                    {
+                        int index=(start+n)%cells;
+                        var p=Layout.Center(new Vector2Int(index%Layout.Columns,index/Layout.Columns));
+                        if(TryPlaceAmmoCrate(p)){found=true;break;}
+                    }
+                }
+                if (!found) { Debug.LogWarning("Could not safely place all ammunition crates in room " + room); break; }
             }
-            Debug.LogWarning("Could not place this room's planned ammunition crate in a safe chamber.");
         }
+
+        bool TryPlaceAmmoCrate(Vector3 p)
+        {
+            if(Vector3.Distance(p,Layout.Entry)<7f||Vector3.Distance(p,Layout.Exit)<2f||Blocked(p,.75f))return false;
+            foreach(var existing in fieldAmmoCrates)if(Vector3.Distance(p,existing.position)<2.3f)return false;
+            var type=(AmmoType)rng.Next(AmmoTypeCount);
+            int amount=AmmoPackSize(type);
+            var visual=CreateLootPresentation(AmmoPickupName(type,amount),new Vector3(p.x,.31f,p.z),new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,amount);
+            fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,type=type,amount=amount,visual=visual});
+            return true;
+        }
+
+        int AmmoCratesPerFloor => Mathf.Clamp(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.ammoCratesPerFloor : 10,0,30);
 
         public bool OpenNearbyAmmoCrate()
         {

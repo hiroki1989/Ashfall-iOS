@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/kestrel-lmg-expanded-2.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "kestrel-lmg-series-v2.png cell 2",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        97,
+        232,
+        62
+      ]
+    },
+    "right": {
+      "source": "kestrel-lmg-series-v2.png cell 2 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        97,
+        232,
+        62
+      ]
+    },
+    "front": {
+      "source": "kestrel-lmg-series-v2.png cell 2 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "kestrel-lmg-series-v2.png cell 2 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/kestrel-lmg-series-v2.png",
+  "sourceCell": 2,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-legendary-expanded-4.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-legendaries-v2.png cell 4",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        67,
+        232,
+        122
+      ]
+    },
+    "right": {
+      "source": "mireline-legendaries-v2.png cell 4 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        67,
+        232,
+        122
+      ]
+    },
+    "front": {
+      "source": "mireline-legendaries-v2.png cell 4 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-legendaries-v2.png cell 4 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "BespokeLegendariesExpanded",
+  "sourceFile": "Assets/Resources/Art/BespokeLegendariesExpanded/mireline-legendaries-v2.png",
+  "sourceCell": 4,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

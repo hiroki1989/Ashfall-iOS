@@ -3,23 +3,26 @@ namespace NeonVault {
  public sealed class EquipmentRecipe {
   public int maker,index,family,body,barrel,stock,attachment,slot;
   public int gunClass,series,seriesVariant;
-  public bool legendary; public string id,name,japanese;
+  public bool legendary; public string id,name,japanese,visualDirection;
  }
  public static class DistinctEquipmentDesigns {
-  public static readonly EquipmentRecipe[] Guns=Build("gun",30+GunSeriesDesigns.RegularCount), Armor=Build("armor",500), Modules=Build("module",200);
+  public static readonly EquipmentRecipe[] Guns=Build("gun",GunSeriesDesigns.FirstNewLegendary+LegendaryCatalog.NewGunCount), Armor=Build("armor",500), Modules=Build("module",200);
   static readonly System.Collections.Generic.Dictionary<string,EquipmentRecipe> lookup=BuildLookup();
   static System.Collections.Generic.Dictionary<string,EquipmentRecipe> BuildLookup(){var map=new System.Collections.Generic.Dictionary<string,EquipmentRecipe>();foreach(var pool in new[]{Guns,Armor,Modules})foreach(var r in pool)map.Add(r.id,r);return map;}
   static EquipmentRecipe[] Build(string kind,int count){
    var a=new EquipmentRecipe[count];
    for(int i=0;i<count;i++){
-    bool legend=kind!="module"&&i<30;int maker=legend?i/5:i%6;
+    bool newGunLegend=kind=="gun"&&i>=GunSeriesDesigns.FirstNewLegendary;
+    bool legend=(kind!="module"&&i<30)||newGunLegend;
+    int maker=newGunLegend?(i-GunSeriesDesigns.FirstNewLegendary)/10:legend?i/5:i%6;
     int local=legend?i%5:kind=="module"?i/6:(i-30)/6+5;
     int family=kind=="gun"?new[]{12,15,13,6,1,2}[local%6]:kind=="armor"?(legend?i%5:local%5):local%7;
     // Mixed radix parts form a unique physical assembly per maker; no tier suffixes.
     int body=local%6,barrel=local/6%6,stock=local/36%6,attachment=kind=="module"?local/6%6:kind=="armor"?local/6%6:(local*5+maker)%6;
     var r=new EquipmentRecipe{index=i,maker=maker,family=family,slot=kind=="armor"?family:0,body=body,barrel=barrel,stock=stock,attachment=attachment,legendary=legend||(kind=="module"&&family>=4),id="distinct."+kind+"."+i.ToString("000")};
-    if(kind=="gun"&&legend){r.family=new[]{2,15,13,6,1}[i%5];r.barrel=(maker+i%5)%6;r.stock=5;}
+    if(kind=="gun"&&legend){int variant=newGunLegend?5+(i-GunSeriesDesigns.FirstNewLegendary)%10:i%5;r.family=new[]{2,15,13,6,1}[variant%5];r.barrel=(maker+variant)%6;r.stock=5;}
     Name(r,kind);
+    if(kind=="gun"&&newGunLegend){int edition=(i-GunSeriesDesigns.FirstNewLegendary)%10;r.name+=" / "+new[]{"Long Fuse","Wild Card","Iron Choir","Black Ledger","Copper Wake","Double Debt","Flash Lock","Ash Circuit","Grave Bell","Last Light"}[edition];r.japanese+="・"+new[]{"長導火","切札","鉄の聖歌","黒い帳簿","銅の航跡","二重債務","閃光錠","灰の回路","墓鐘","最後の灯"}[edition];}
     if(kind=="gun")GunSeriesDesigns.Configure(r);
     a[i]=r;
    }return a;

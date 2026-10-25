@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-assault-expanded-7.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-assault-series-v2.png cell 7",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        93,
+        232,
+        69
+      ]
+    },
+    "right": {
+      "source": "voltarc-assault-series-v2.png cell 7 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        93,
+        232,
+        69
+      ]
+    },
+    "front": {
+      "source": "voltarc-assault-series-v2.png cell 7 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-assault-series-v2.png cell 7 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/voltarc-assault-series-v2.png",
+  "sourceCell": 7,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

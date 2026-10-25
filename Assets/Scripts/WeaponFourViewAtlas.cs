@@ -76,6 +76,13 @@ namespace NeonVault
             catch(Exception error){Debug.LogError("Weapon atlas load: "+atlasKey+" / "+error.Message);return null;}
         }
 
+        public static string ModelKey(string id)
+        {
+            ReadCatalog();
+            return !string.IsNullOrEmpty(id)&&paths.TryGetValue(id,out var atlas)
+                ?Path.GetFileNameWithoutExtension(atlas):null;
+        }
+
         public static void Release(string atlasKey)
         {
             if(string.IsNullOrEmpty(atlasKey)||!loaded.TryGetValue(atlasKey,out var cached))return;

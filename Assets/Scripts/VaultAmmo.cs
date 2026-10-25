@@ -10,7 +10,7 @@ namespace NeonVault
     {
         public const int AmmoTypeCount=5;
         public int ScrapLevelMultiplier=>Mathf.Clamp(1+Mathf.Max(0,DebtLevel-1)/2,1,20);
-        public int ScaleScrap(int baseHundredths)=>Mathf.Max(1,Mathf.RoundToInt(baseHundredths/100f*ScrapLevelMultiplier));
+        public int ScaleScrap(int baseHundredths)=>Mathf.Max(1,Mathf.RoundToInt(baseHundredths/100f*ScrapLevelMultiplier*Mathf.Max(0f,VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.scrapGainMultiplier:1f)));
         static readonly int[] AmmoPackSizes={30,12,30,6,60};
         static readonly int[] BaseAmmoCapacities={240,96,360,60,480};
         public int AmmoCapacitySkillBonus(AmmoType type)=>ValidAmmo(type)?Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*(DebtAmmoCapacityBonus(AmmoModel(type)))):0;
@@ -22,7 +22,7 @@ namespace NeonVault
         readonly List<SupplyDrop> supplyDrops=new List<SupplyDrop>();
         int chestRoomForRun=-1;
         class Chest { public Vector3 position; public GameObject visual; public bool opened; }
-        class SupplyDrop { public int credits; public AmmoType ammoType; public int ammoAmount; public Vector3 position; public GameObject visual; }
+        class SupplyDrop { public int credits; public AmmoType ammoType; public int ammoAmount; public bool healthPack; public Vector3 position; public GameObject visual; }
 
         public static AmmoType AmmoForGun(Gun item)
         {
@@ -77,6 +77,15 @@ namespace NeonVault
             for(int i=supplyDrops.Count-1;i>=0;i--)
             {
                 var d=supplyDrops[i];if(Vector3.Distance(PlayerPosition,d.position)>1.25f)continue;
+                if(d.healthPack)
+                {
+                    if(hp>=maxHp-.01f)continue;
+                    float restored=Mathf.Min(maxHp-hp,maxHp*.05f);
+                    hp=Mathf.Min(maxHp,hp+restored);
+                    if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickupSound);
+                    Notify("HEALTH PACK +"+Mathf.CeilToInt(restored)+" HP","回復パック HP +"+Mathf.CeilToInt(restored));
+                    continue;
+                }
                 float ammoScale=DebtAmmoPickupBonus+ArmorTotal(a=>a.ammoBonus)+EquippedWeaponAffixBonus("ammo")+ArtifactAffixBonus("ammo");
                 if(d.credits>0)AwardCredits(d.credits);int reserveBefore=AmmoReserve(d.ammoType);int requestedAmmo=d.ammoAmount>0?Mathf.Max(1,Mathf.RoundToInt(d.ammoAmount*(1+ammoScale))+Mathf.RoundToInt(DebtAmmoBonus(AmmoModel(d.ammoType)))):0;int pickedAmmo=Mathf.Min(requestedAmmo,AmmoCapacity(d.ammoType)-reserveBefore);if(d.ammoAmount>0&&pickedAmmo<=0)continue;if(pickedAmmo>0)AddAmmo(d.ammoType,pickedAmmo);
                 if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickupSound);
@@ -93,6 +102,12 @@ namespace NeonVault
         {
             p.y=.22f;Color color=type==AmmoType.Shotgun?new Color(1,.64f,.22f):type==AmmoType.SniperRifle?new Color(.45f,.8f,1):type==AmmoType.Handgun?new Color(.86f,.82f,.56f):Cyan;
             var visual=CreateLootPresentation(AmmoPickupName(type,amount),p,new Vector3(.62f,.24f,.58f),color,LootPresentationKind.Ammo,type,amount);supplyDrops.Add(new SupplyDrop{ammoType=type,ammoAmount=amount,position=p,visual=visual});
+        }
+        void AddHealthPackDrop(Vector3 p)
+        {
+            p.y=.24f;
+            var visual=CreateLootPresentation(VaultLanguage.T("Health pack","回復パック"),p,new Vector3(.50f,.25f,.42f),new Color(.89f,.22f,.19f),LootPresentationKind.HealthPack);
+            supplyDrops.Add(new SupplyDrop{healthPack=true,position=p,visual=visual});
         }
         void SpawnRoomChest()
         {

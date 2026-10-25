@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    public enum LootPresentationKind { Weapon, Armor, Module, Scrap, Ammo, AmmoCrate, Chest, Melee }
+    public enum LootPresentationKind { Weapon, Armor, Module, Scrap, Ammo, AmmoCrate, Chest, Melee, HealthPack }
 
     public partial class VaultGame
     {
@@ -27,7 +27,8 @@ namespace NeonVault
         {
             amount=0;
             // Modestly reduce both the old 50%/15–40k common reward and 95%/650–1,000k boss reward.
-            if(rng==null||rng.NextDouble()>=(boss?.80:.45))return false;
+            float chance=VaultBalanceProfile.Current!=null?(boss?VaultBalanceProfile.Current.scrapDropChanceBoss:VaultBalanceProfile.Current.scrapDropChance):(boss?.80f:.45f);
+            if(rng==null||rng.NextDouble()>=Mathf.Clamp01(chance))return false;
             amount=ScaleScrap(boss?rng.Next(550000,900001):rng.Next(12000+DungeonIndex*3000,32001+DungeonIndex*3000));
             return true;
         }
@@ -35,8 +36,10 @@ namespace NeonVault
         public bool TryRollAmmoDrop(bool boss,AmmoType type,out int amount)
         {
             amount=0;
-            if(rng==null||AmmoPackSize(type)<=0||rng.NextDouble()>=(boss?1f:.64f))return false;
-            amount=Mathf.Max(1,Mathf.RoundToInt(AmmoPackSize(type)*(boss?.80f:.60f)));
+            float chance=VaultBalanceProfile.Current!=null?(boss?VaultBalanceProfile.Current.ammoDropChanceBoss:VaultBalanceProfile.Current.ammoDropChance):(boss?1f:.64f);
+            float quantity=VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.ammoQuantityMultiplier:1f;
+            if(rng==null||AmmoPackSize(type)<=0||rng.NextDouble()>=Mathf.Clamp01(chance))return false;
+            amount=Mathf.Max(1,Mathf.RoundToInt(AmmoPackSize(type)*(boss?.80f:.60f)*Mathf.Max(.01f,quantity)));
             return true;
         }
 
@@ -73,7 +76,16 @@ namespace NeonVault
                 art.Part("SUPPLY CHEST / beacon",PrimitiveType.Cylinder,new Vector3(0,sy*.68f,0),new Vector3(.20f,.045f,.20f),new Color(.30f,1f,.86f),root.transform,true);
             }
 
-            if (kind == LootPresentationKind.Ammo || kind == LootPresentationKind.AmmoCrate)
+            if (kind == LootPresentationKind.HealthPack)
+            {
+                var canvas=new Color(.76f,.75f,.67f);
+                art.Part("Health pack / canvas pouch",PrimitiveType.Cube,Vector3.zero,new Vector3(sx,sy,sz),canvas,root.transform);
+                art.Part("Health pack / red cross vertical",PrimitiveType.Cube,new Vector3(0,sy*.52f,0),new Vector3(sx*.13f,.025f,sz*.53f),accent,root.transform,true);
+                art.Part("Health pack / red cross horizontal",PrimitiveType.Cube,new Vector3(0,sy*.54f,0),new Vector3(sx*.53f,.025f,sz*.13f),accent,root.transform,true);
+                for(int side=-1;side<=1;side+=2)
+                    art.Part("Health pack / closure",PrimitiveType.Cube,new Vector3(side*sx*.42f,sy*.1f,0),new Vector3(.055f,sy*.7f,sz*.82f),new Color(.17f,.24f,.21f),root.transform);
+            }
+            else if (kind == LootPresentationKind.Ammo || kind == LootPresentationKind.AmmoCrate)
             {
                 // Distinct compact field box with exposed brass casings; caliber is color-coded.
                 Color brass = ammoType == AmmoType.Shotgun ? new Color(1f,.47f,.13f) :

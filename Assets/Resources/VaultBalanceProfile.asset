@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d6281d1a0f84dbfb443071cd5517241, type: 3}
+  m_Name: VaultBalanceProfile
+  m_EditorClassIdentifier:
+  enemyHpMultiplier: 1
+  startingHpMultiplier: 1
+  enemyCountMultiplier: 1
+  enemyDamageMultiplier: 1
+  weaponDropChanceNormal: 0.08
+  weaponDropChanceBoss: 0.333333
+  armorDropChance: 0.087
+  armorDropChanceBoss: 0.333333
+  moduleDropChance: 0.04
+  moduleDropChanceBoss: 0.183
+  meleeDropChance: 0.06
+  meleeDropChanceBoss: 0.25
+  legendaryDropMultiplier: 1
+  ammoDropChance: 0.64
+  ammoDropChanceBoss: 1
+  ammoQuantityMultiplier: 1
+  ammoCratesPerFloor: 10
+  scrapGainMultiplier: 1
+  scrapDropChance: 0.45
+  scrapDropChanceBoss: 0.8
+  shopCommonWeight: 0
+  shopUncommonWeight: 3
+  shopRareWeight: 1
+  shopEpicWeight: 0
+  shopLegendaryWeight: 0
+  autoAimMinAngle: 3
+  autoAimMaxAngle: 30
+  autoAimMinDistance: 5
+  autoAimMaxDistance: 160

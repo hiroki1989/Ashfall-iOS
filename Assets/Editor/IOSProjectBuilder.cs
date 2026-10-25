@@ -29,7 +29,8 @@ namespace NeonVault.Editor
             PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneAndiPad;
             PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
             PlayerSettings.iOS.targetOSVersionString = "15.0";
-            PlayerSettings.iOS.buildNumber = "1";
+            PlayerSettings.bundleVersion = "13";
+            PlayerSettings.iOS.buildNumber = "13";
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
             PlayerSettings.allowedAutorotateToPortrait = false;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;

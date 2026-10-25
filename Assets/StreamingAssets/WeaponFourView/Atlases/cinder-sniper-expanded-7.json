@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/cinder-sniper-expanded-7.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "cinder-sniper-series-v2.png cell 7",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        102,
+        232,
+        51
+      ]
+    },
+    "right": {
+      "source": "cinder-sniper-series-v2.png cell 7 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        102,
+        232,
+        51
+      ]
+    },
+    "front": {
+      "source": "cinder-sniper-series-v2.png cell 7 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "cinder-sniper-series-v2.png cell 7 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/cinder-sniper-series-v2.png",
+  "sourceCell": 7,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

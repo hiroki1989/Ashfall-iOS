@@ -7,10 +7,11 @@ namespace NeonVault
     public sealed class DetailedHero3DReview:MonoBehaviour
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void Launch(){var args=Environment.GetCommandLineArgs();if(Array.IndexOf(args,"--hero3d-review")>=0||Array.IndexOf(args,"--hero3d-playcheck")>=0)new GameObject("Actual Unity 3D hero review").AddComponent<DetailedHero3DReview>();}
+        static void Launch(){var args=Environment.GetCommandLineArgs();if(Array.IndexOf(args,"--hero3d-review")>=0||Array.IndexOf(args,"--hero3d-playcheck")>=0||Array.IndexOf(args,"--boss-pose-review")>=0)new GameObject("Actual Unity 3D hero review").AddComponent<DetailedHero3DReview>();}
         IEnumerator Start()
         {
             yield return null;
+            if(Array.IndexOf(Environment.GetCommandLineArgs(),"--boss-pose-review")>=0){yield return BossPoseReview();yield break;}
             if(Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0){yield return PlayCheck();yield break;}
             foreach(var game in FindObjectsByType<VaultGame>(FindObjectsSortMode.None))game.enabled=false;
             var stage=new GameObject("Isolated geometric studio").transform;stage.position=new Vector3(1000,0,1000);
@@ -103,6 +104,31 @@ namespace NeonVault
                 File.WriteAllText(Path.Combine(path,"result.txt"),"CAPTURED actual Unity mesh renders; visual acceptance pending.\nRenderers="+hero.GetComponentsInChildren<Renderer>().Length);
             }
             finally{Application.Quit();}
+        }
+        IEnumerator BossPoseReview()
+        {
+            foreach(var game in FindObjectsByType<VaultGame>(FindObjectsSortMode.None))game.enabled=false;
+            var args=Environment.GetCommandLineArgs();int at=Array.IndexOf(args,"--qa-output");string path=at>=0&&at+1<args.Length?args[at+1]:"D:/Unity/BossPoseQA";Directory.CreateDirectory(path);
+            var stage=new GameObject("Boss pose studio").transform;stage.position=new Vector3(1000,0,1000);
+            var model=FaithfulEnemy3D.Create(stage,stage.position,3).GetComponent<FaithfulEnemy3D>();
+            var foe=model.gameObject.AddComponent<Foe>();foe.Init(null,3,0);model.Init(foe);
+            var camera=new GameObject("Boss pose camera").AddComponent<Camera>();camera.depth=100;camera.orthographic=true;camera.orthographicSize=2.3f;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=new Color(.12f,.13f,.15f);camera.transform.position=stage.position+new Vector3(0,3.4f,7f);camera.transform.LookAt(stage.position+Vector3.up*1.45f);
+            RenderSettings.fog=false;RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Flat;RenderSettings.ambientLight=new Color(.55f,.55f,.54f);
+            foreach(var old in FindObjectsByType<Light>(FindObjectsSortMode.None))old.enabled=false;
+            var light=new GameObject("Boss pose light").AddComponent<Light>();light.type=LightType.Directional;light.intensity=1.25f;light.transform.rotation=Quaternion.Euler(45,-35,0);
+            var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance;
+            var move=typeof(Foe).GetField("bossMove",flags);var charging=typeof(Foe).GetField("charging",flags);var charge=typeof(Foe).GetField("charge",flags);
+            string[] names={"rush","slam","sweep"};
+            for(int style=0;style<3;style++)
+            {
+                move.SetValue(foe,Enum.ToObject(move.FieldType,style));charging.SetValue(foe,true);charge.SetValue(foe,foe.TelegraphSeconds*.35f);
+                yield return null;Capture(camera,Path.Combine(path,names[style]+"-warning.png"));
+                charging.SetValue(foe,false);model.NotifyAttack();yield return new WaitForSeconds(.12f);
+                Capture(camera,Path.Combine(path,names[style]+"-strike.png"));
+                yield return new WaitForSeconds(.35f);
+            }
+            File.WriteAllText(Path.Combine(path,"result.txt"),"CAPTURED three distinct boss warning and strike poses / "+Application.unityVersion);
+            Application.Quit();
         }
         static string MeshStats(Transform root)
         {

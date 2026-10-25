@@ -721,3 +721,13 @@ Modly/Shap-E試作は見た目が受け入れ水準に達せず不採用。既�
 結果: 防具398製品・168テクスチャのID対応とファイルを監査し、異なるイラストへの取り違えはなし。一部の手装備は元絵と対応していても共通メッシュへの投影で模様がにじむ。修正は未実施。
 
 検証: Unity 6000.6.0f1 Windows統合ビルド `D:/Unity/AshfallArtValidation/loot-reward-build.log` HERO_BUILD_OK、`git diff --check`通過。従来の全体`--smoke`は古い日本語レジェンダリー武器名の期待値で冒頭停止するため今回の動作検証には使えない。iOS/Metal実機と今回の画面効果は未確認。新規IPAは未作成。
+## 2026-10-25 / 銃種拡張・戦闘調整（視覚品質の継続課題あり）
+変更: 銃1818種（通常1728、レジェンダリー90）と製品別イラスト参照、拡張シリーズ3D・効果を接続。追加銃の投影元参照を修正。敵HP赤、ドロップ光柱、命中精度連動の最大30度オートエイム、回復パック、弾薬箱10個/フロア、ボスの突進・叩きつけ・薙ぎ払い別ポーズ、日本語Inspectorの調整項目、iOSバージョン/ビルド13を反映。
+結果: 弾薬箱はランダム配置失敗時に通行可能床を走査して補完。近距離・高命中率での射線補正を射撃中も維持。
+検証: `D:/Unity/ashfall-build-13-final.log` HERO_BUILD_OK。`D:/Unity/QA-ashfall-13-final3/economy-review-result.txt` 137件通過。`D:/Unity/QA-ashfall-boss-13-final/` に3技×予備/攻撃6枚を撮影し、姿勢差を目視確認。銃カタログ参照は `D:/Unity/QA-ashfall-guns-13b/result.txt` 39819件失敗0。`git diff --check`通過。
+未解決: 銃のイラストと3Dの外形・細部は実画面で差が残り、外観一致は未合格。ボスの動作は隔離撮影で確認したが実戦での避けやすさ・攻撃の同期は未評価。iOS実機/Metal/物理タッチも未検証。
+## 2026-10-25 / 通常銃の原画輪郭メッシュ化
+変更ファイル: `Development/Tools/WeaponFourView/build_silhouettes.py`、`Assets/Resources/GunSilhouettes/`（432系列のOBJとmeta）、`GunSilhouette3D.cs`、`GunSeriesModels3D.cs`、`WeaponFourViewAtlas.cs`、`DetailedHeroInk3D.shader`、拳銃2系列のアトラスJSON。通常銃の共通プロシージャル形状を、各原画の透明輪郭から作る薄い閉メッシュへ切替。4版は同じ系列メッシュを共有。拳銃の原画に含まれた台座・重複銃の独立形状を除き、該当2系列の投影範囲を本体へ寄せた。銃の上面は原画の横伸びを避ける暗い縁に変更。
+結果: 最終Windows統合ビルド `D:/Unity/ashfall-silhouette-edge2-build.log` は `HERO_BUILD_OK`。可視ウィンドウでの装備QA `D:/Unity/QA-ashfall-guns-silhouette-edge2-visible/result.txt` は39,819件失敗0。原画/3D並列画像でケストレル拳銃とアサルトライフル、ヴォルトアーク軽機関銃を目視し、3D側の浮遊台座・重複銃と上面の明るい筋の解消を確認。`-batchmode` 撮影161件はGUIが描かれず黒画像になったため無効な視覚検証として扱った。
+検証: 修正後のWindows統合ビルド、可視画面QA、代表銃の画像目視、Python/JSON構文、`git diff --check`通過。
+未解決: 原画自体に複数銃や台座が描かれた品はインベントリ画と3Dの構図差が残る。側面以外は専用原画ではなく、薄い押し出し立体に留まる。レジェンダリー90品は既存の専用モデル。iOS実機表示・長時間性能は未検証。

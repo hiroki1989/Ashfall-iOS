@@ -60,7 +60,9 @@ namespace NeonVault
         }
         public static DetailedHeroEquipment3D.WeaponSockets BuildWeapon(Transform parent,Gun gun,int index)
         {
-            index=Mathf.Clamp(index,0,29);int maker=index/5,kind=index%5;var g=G("Bespoke legendary weapon "+index,parent);string m=metal[maker],a=accent[maker];float end=.66f,rear=-.34f;
+            index=index<30?Mathf.Clamp(index,0,29):Mathf.Clamp(index,GunSeriesDesigns.FirstNewLegendary,GunSeriesDesigns.FirstNewLegendary+LegendaryCatalog.NewGunCount-1);
+            if(index>=30)return BuildExpandedWeapon(parent,gun,index);
+            int maker=index/5,kind=index%5;var g=G("Bespoke legendary weapon "+index,parent);string m=metal[maker],a=accent[maker];float end=.66f,rear=-.34f;
             // Only the hand contact geometry is common. Each receiver, barrel/feed,
             // stock and signature mechanism is independently placed in its case.
             if(index<21||index>24)Profile("Anatomical grip",g,M(maker==4?"Wood":"LeatherDark"),.056f,new Vector2(-.067f,-.025f),new Vector2(.004f,-.04f),new Vector2(-.036f,-.18f),new Vector2(-.101f,-.16f));
@@ -184,6 +186,67 @@ namespace NeonVault
             }
             else g.localScale=Vector3.one*.68f;
             var sockets=Finish(g,V(0,-.095f,-.045f),V(0,-.055f,kind==1?.13f:.23f),V(0,-.015f,rear),V(0,0,end));
+            EquipmentProjection3D.Apply(g,DistinctEquipmentDesigns.For(gun),true);
+            return sockets;
+        }
+
+        // Ten later bespoke mechanisms per maker. Every index gets its own barrel,
+        // feed and sight construction; the maker layer adds visible working parts.
+        static DetailedHeroEquipment3D.WeaponSockets BuildExpandedWeapon(Transform parent,Gun gun,int index)
+        {
+            int local=index-GunSeriesDesigns.FirstNewLegendary,maker=local/10,variant=local%10;
+            string m=metal[maker],a=accent[maker];
+            var g=G("Bespoke expanded legendary weapon "+index,parent);
+            bool pistol=variant==1||variant==6;
+            float rear=pistol?-.15f:variant==4||variant==9?-.29f:-.39f;
+            float end=pistol?.40f:variant==4||variant==9?.47f:.72f;
+            Panel(g,"Individual machined receiver",m,0,.02f,0,pistol?.09f:.12f,pistol?.10f:.13f,pistol?.28f:.36f);
+            Profile("Contoured maker grip",g,M(maker==4?"Wood":"LeatherDark"),.06f,new Vector2(-.11f,-.04f),new Vector2(-.02f,-.04f),new Vector2(-.06f,-.19f),new Vector2(-.13f,-.16f));
+            if(!pistol)Stock(g,maker==0||maker==4?"Wood":m,rear);
+            Line("Open trigger bow",g,M("ProductSteel"),.004f,V(0,-.05f,0),V(0,-.12f,.015f),V(0,-.12f,.075f),V(0,-.05f,.09f));
+            switch(variant)
+            {
+                case 0: // Indexed long precision barrel.
+                    Barrel(g,.17f,end-.17f,.021f);Scope(g,-.11f,.30f);Feed(g,m,.06f,.13f);Bipod(g,end-.14f);
+                    for(int i=0;i<4;i++)Panel(g,"Indexed crown vent","Dark",.033f,0,end-.08f+i*.018f,.004f,.025f,.012f);break;
+                case 1: // Exposed large revolver cylinder.
+                    Panel(g,"Open cylinder top strap",m,0,.105f,.025f,.085f,.022f,.30f);Cylinder(g,m,-.085f,.067f,.15f,6,maker==2||maker==3);Barrel(g,.075f,.29f,.029f,.055f);LeatherGrip(g,-.09f,-.21f,.07f);break;
+                case 2: // Pump shotgun with crossed mechanical sight guides.
+                    Barrel(g,.14f,.39f,.031f);
+                    Tube("Tubular shell magazine",g,M(m),V(0,-.066f,.12f),.026f,.37f,.1f);
+                    Panel(g,"Sliding ribbed pump",maker==0||maker==4?"Wood":m,0,-.048f,.29f,.092f,.068f,.20f);
+                    for(int side=-1;side<=1;side+=2)Strut(g,"Brass",V(side*.045f,.045f,.27f),V(-side*.045f,.045f,.43f),.005f);
+                    Sling(g,rear+.06f,.35f);break;
+                case 3: // Dual belt support weapon.
+                    Barrel(g,.17f,.52f,.032f);for(int side=-1;side<=1;side+=2){Panel(g,"Twin linked belt feed",a,side*.10f,-.10f,.025f,.08f,.17f,.18f);Belt(g,side*.10f,.02f);}VentedJacket(g,.25f,.31f,.055f,7);Bipod(g,.48f);break;
+                case 4: // Compact offset-feed carbine.
+                    Barrel(g,.18f,.24f,.022f);Feed(g,a,.075f,.20f,12);Panel(g,"Forward vertical hold",m,0,-.10f,.22f,.055f,.16f,.055f);Strut(g,"ProductSteel",V(.06f,.04f,-.16f),V(.06f,.04f,.24f),.007f);break;
+                case 5: // Split receiver sniper with floating bore.
+                    Barrel(g,.19f,.54f,.017f);Scope(g,-.15f,.34f);for(int side=-1;side<=1;side+=2)Strut(g,m,V(side*.068f,.06f,-.17f),V(side*.066f,.02f,.47f),.009f);Panel(g,"Separated bolt housing",a,.07f,.04f,-.05f,.025f,.06f,.18f);Bipod(g,.55f);break;
+                case 6: // Heavy single chamber hand cannon.
+                    Barrel(g,.12f,.31f,.047f);Panel(g,"Broad single shot upper frame",m,0,.11f,.08f,.12f,.035f,.33f);Panel(g,"Swinging loading gate",a,.075f,.02f,-.01f,.018f,.10f,.11f);Tube("Large brake",g,M(m),V(0,0,.32f),.056f,.07f,.72f);break;
+                case 7: // Lever-fed shotgun.
+                    Barrel(g,.15f,.43f,.033f);Tube("Parallel tube magazine",g,M(m),V(0,-.065f,.14f),.026f,.43f,.09f);Line("Open lever bow",g,M("Brass"),.008f,V(0,-.07f,-.04f),V(0,-.16f,-.08f),V(0,-.17f,.08f),V(0,-.06f,.10f));Sling(g,rear+.04f,.42f);break;
+                case 8: // Shielded rotary LMG.
+                    Barrel(g,.18f,.49f,.029f);Drum(g,a,-.11f,-.10f,.02f,.12f);Panel(g,"Deep barrel canopy",m,0,.10f,.31f,.16f,.04f,.31f);for(int i=0;i<6;i++)Coils(g,.28f+i*.033f,1,.047f);Bipod(g,.48f);break;
+                case 9: // Compact terminal-dial submachine mechanism.
+                    Barrel(g,.16f,.26f,.025f);Feed(g,a,.045f,.20f);
+                    for(int side=-1;side<=1;side+=2)Strut(g,m,V(side*.065f,-.02f,.08f),V(side*.065f,-.02f,.39f),.009f);
+                    Tube("Terminal muzzle collar",g,M(m),V(0,0,.40f),.052f,.075f,.63f);
+                    var dial=G("Visible range and charge dial",g);dial.localPosition=V(.083f,.015f,.17f);dial.localRotation=Quaternion.Euler(0,90,0);Tube("Dial rim",dial,M("Brass"),Vector3.zero,.048f,.012f,.7f,-1,24);
+                    break;
+            }
+            // Maker mechanisms remain exposed above the unique mechanical archetype.
+            switch(maker)
+            {
+                case 0:Panel(g,"Kestrel graduated range micrometer",a,.062f,.09f,-.07f,.026f,.08f,.10f);for(int i=0;i<5;i++)Strut(g,"Brass",V(.078f,.04f+i*.01f,-.09f),V(.079f,.04f+i*.01f,-.03f),.0018f);break;
+                case 1:for(int side=-1;side<=1;side+=2){Tank(g,a,side*.09f,-.015f,-.06f,.022f,.15f);Strut(g,"IronwakeCopper",V(side*.09f,.06f,-.09f),V(side*.09f,.06f,.15f),.011f);}break;
+                case 2:for(int side=-1;side<=1;side+=2)Tank(g,"AmberGlass",side*.066f,.09f,-.035f,.020f,.13f);Coils(g,.13f,5,.045f);break;
+                case 3:for(int side=-1;side<=1;side+=2)Tank(g,"BloodGlass",side*.077f,-.025f,.03f,.025f,.18f);Line("Sealed spore return",g,M("LeatherDark"),.006f,V(-.08f,.06f,-.07f),V(-.10f,.10f,.15f),V(-.04f,.025f,.26f));break;
+                case 4:Panel(g,"Cinder reclaimed timber splint","Wood",0,-.05f,-.01f,.14f,.06f,.28f);for(int i=0;i<3;i++)Panel(g,"Welded shrapnel retainer","ProductSteel",0,.04f,-.10f+i*.09f,.15f,.11f,.014f);Tank(g,"AmberGlass",.085f,.035f,.07f,.02f,.12f);break;
+                case 5:Panel(g,"Aegis overlapping ballistic cheek shield","AegisWhite",-.085f,.02f,.025f,.035f,.15f,.24f);Panel(g,"Counterfire guard","AegisBlue",0,.12f,.15f,.16f,.025f,.21f);for(int side=-1;side<=1;side+=2)Strut(g,"ProductSteel",V(side*.085f,-.05f,-.12f),V(side*.09f,.075f,.18f),.007f);break;
+            }
+            var sockets=Finish(g,V(0,-.095f,-.045f),V(0,-.055f,pistol?.12f:.24f),V(0,-.015f,rear),V(0,0,end));
             EquipmentProjection3D.Apply(g,DistinctEquipmentDesigns.For(gun),true);
             return sockets;
         }

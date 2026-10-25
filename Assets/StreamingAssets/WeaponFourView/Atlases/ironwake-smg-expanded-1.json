@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/ironwake-smg-expanded-1.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "ironwake-smg-series-v2.png cell 1",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        88,
+        232,
+        79
+      ]
+    },
+    "right": {
+      "source": "ironwake-smg-series-v2.png cell 1 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        88,
+        232,
+        79
+      ]
+    },
+    "front": {
+      "source": "ironwake-smg-series-v2.png cell 1 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "ironwake-smg-series-v2.png cell 1 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/ironwake-smg-series-v2.png",
+  "sourceCell": 1,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

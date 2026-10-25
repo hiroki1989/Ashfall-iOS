@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-smg-expanded-6.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-smg-series-v2.png cell 6",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        91,
+        232,
+        73
+      ]
+    },
+    "right": {
+      "source": "mireline-smg-series-v2.png cell 6 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        91,
+        232,
+        73
+      ]
+    },
+    "front": {
+      "source": "mireline-smg-series-v2.png cell 6 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-smg-series-v2.png cell 6 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/mireline-smg-series-v2.png",
+  "sourceCell": 6,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

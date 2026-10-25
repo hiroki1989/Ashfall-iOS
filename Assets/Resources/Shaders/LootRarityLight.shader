@@ -34,7 +34,7 @@ Shader "NeonVault/LootRarityLight"
                 float halo = pow(saturate(1.0 - length(input.uv - .5) * 2.0), 2.3);
                 float centre = pow(saturate(1.0 - abs(input.uv.x * 2.0 - 1.0)), 2.5);
                 float rise = smoothstep(0.0, .12, input.uv.y);
-                float fade = 1.0 - smoothstep(.38, 1.0, input.uv.y);
+                float fade = 1.0 - smoothstep(.78, 1.0, input.uv.y);
                 float pulse = .88 + .12 * sin(_Time.y * 2.8 + input.uv.y * 6.0);
                 float alpha = _Ground > .5 ? halo * .34 : centre * rise * fade * .43 * pulse;
                 return fixed4(_Color.rgb * 1.25, alpha * _Color.a);

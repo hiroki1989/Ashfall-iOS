@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/ironwake-legendary-expanded-9.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "ironwake-legendaries-v2.png cell 9",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        62,
+        232,
+        131
+      ]
+    },
+    "right": {
+      "source": "ironwake-legendaries-v2.png cell 9 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        62,
+        232,
+        131
+      ]
+    },
+    "front": {
+      "source": "ironwake-legendaries-v2.png cell 9 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "ironwake-legendaries-v2.png cell 9 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "BespokeLegendariesExpanded",
+  "sourceFile": "Assets/Resources/Art/BespokeLegendariesExpanded/ironwake-legendaries-v2.png",
+  "sourceCell": 9,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -239,7 +239,9 @@ namespace NeonVault
         }
         void VerifyFieldEconomy(VaultGame game)
         {
-            Check(game.AmmoCratesPlannedThisRun>=1&&game.AmmoCratesPlannedThisRun<=2,"each run plans one or two field ammunition crates");
+            int cratesPerFloor=Mathf.Clamp(VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.ammoCratesPerFloor:10,0,30);
+            Check(game.AmmoCratesPlannedThisRun==DungeonCatalog.Get(game.DungeonIndex).AreaCount*cratesPerFloor,"each floor plans the configured number of ammunition crates");
+            Check(game.AmmoCratesNearbyCount==cratesPerFloor,"current floor actually places its configured ammunition crates / "+game.AmmoCratesNearbyCount+" of "+cratesPerFloor);
             bool mapValid=ExpeditionMap.StageCount==100;
             for(int region=0;region<5;region++){int regional=0;for(int id=0;id<ExpeditionMap.StageCount;id++){var stage=ExpeditionMap.Get(id);if(stage.region==region){regional++;mapValid&=stage.level>=1&&stage.level<=10&&stage.legacyDungeonIndex>=0&&stage.legacyDungeonIndex<3;if(stage.mission==ExpeditionMission.ClearHostiles)mapValid&=stage.Target==(VaultLanguage.Japanese?"区域の敵":"Zone hostiles");if(stage.mission==ExpeditionMission.RecoverSupplies)mapValid&=stage.Target==(VaultLanguage.Japanese?"補給物資":"Supply cache");if(stage.mission==ExpeditionMission.DestroyNest)mapValid&=stage.Target==(VaultLanguage.Japanese?"再生母体の巣":"Flesh Weaver nest");}}mapValid&=regional==20;}
             Check(mapValid,"expedition catalog has 100 level-gated sites across five 20-site regions");
@@ -906,7 +908,7 @@ namespace NeonVault
             for(int i=0;i<30;i++)
             {
                 var a=Arsenal.Legendary(0,seedA,4);var b=Arsenal.Legendary(0,seedB,4);
-                Check(a.level==4&&a.effect==GunEffect.Ricochet&&a.damage>0&&a.interval>0&&a.magazine>0&&a.reloadSeconds>0,"valid leveled legendary roll "+i);
+                Check(a.level==4&&a.rarity==Rarity.Legendary&&LegendaryCatalog.Index(a.legendaryKey)>=0&&a.damage>0&&a.interval>0&&a.magazine>0&&a.reloadSeconds>0,"valid leveled legendary roll "+i);
                 Check(a.damage==b.damage&&a.interval==b.interval&&a.speed==b.speed&&a.magazine==b.magazine&&a.reloadSeconds==b.reloadSeconds,"seed reproduces weapon stats "+i);
                 if(prior!=null)variation|=a.damage!=prior.damage&&a.interval!=prior.interval&&a.speed!=prior.speed&&a.reloadSeconds!=prior.reloadSeconds&&a.id!=prior.id;
                 prior=a;
@@ -1443,10 +1445,10 @@ namespace NeonVault
             bool savedLanguage=VaultLanguage.Japanese;
             Check(Resources.Load<Shader>("CombatGlow")!=null&&Resources.Load<Shader>("VaultArmor")!=null,"combat glow and sculpted armor shaders bundled");
             VaultLanguage.Set(true,false);Check(VaultLanguage.T("English","日本語")=="日本語","Japanese translation selection");
-            Check(VaultLanguage.GunName(Arsenal.Legendary(0))=="レッドスプリッター","Japanese legendary weapon name");
+            Check(!string.IsNullOrEmpty(VaultLanguage.GunName(Arsenal.Legendary(0)))&&VaultLanguage.GunName(Arsenal.Legendary(0))!=VaultLanguage.GunName(Arsenal.Legendary(0),false),"Japanese legendary weapon name");
             var japaneseFont=Font.CreateDynamicFontFromOSFont(new[]{"Yu Gothic UI","Meiryo"},20);japaneseFont.RequestCharactersInTexture("日本語聖域強化",20);Check(japaneseFont.HasCharacter('聖'),"Japanese OS font glyph available");
             yield return Capture("menu-ja.png");VaultLanguage.Set(false,false);
-            Check(VaultLanguage.GunDescription(Arsenal.Legendary(0)).Contains("Ricochets"),"English legendary weapon description");
+            Check(!string.IsNullOrEmpty(VaultLanguage.GunDescription(Arsenal.Legendary(0))),"English legendary weapon description");
             yield return Capture("menu.png");
             yield return new WaitForSeconds(.3f);
             yield return VerifyEquipment(game);

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/ironwake-assault-expanded-7.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "ironwake-assault-series-v2.png cell 7",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        92,
+        232,
+        72
+      ]
+    },
+    "right": {
+      "source": "ironwake-assault-series-v2.png cell 7 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        92,
+        232,
+        72
+      ]
+    },
+    "front": {
+      "source": "ironwake-assault-series-v2.png cell 7 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "ironwake-assault-series-v2.png cell 7 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/ironwake-assault-series-v2.png",
+  "sourceCell": 7,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

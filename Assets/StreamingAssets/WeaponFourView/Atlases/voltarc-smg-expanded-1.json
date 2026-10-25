@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/voltarc-smg-expanded-1.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "voltarc-smg-series-v2.png cell 1",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        91,
+        232,
+        73
+      ]
+    },
+    "right": {
+      "source": "voltarc-smg-series-v2.png cell 1 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        91,
+        232,
+        73
+      ]
+    },
+    "front": {
+      "source": "voltarc-smg-series-v2.png cell 1 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "voltarc-smg-series-v2.png cell 1 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/voltarc-smg-series-v2.png",
+  "sourceCell": 1,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

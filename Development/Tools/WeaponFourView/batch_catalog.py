@@ -81,6 +81,26 @@ def regular():
                                         'maker':maker,'gunClass':cls,'series':series,'seriesVariant':variant,
                                         'atlas':atlas,'geometry':'GunSeriesModels3D.Build',
                                         'paintingSharedWithinSeries':True,'status':'texture-ready-mesh-uv-pending'})
+    # Eight freshly painted series per maker/class. The two-by-four sheet is
+    # deliberately separate from the older four-series composition.
+    for maker,name in enumerate(MAKERS):
+        for cls,class_name in enumerate(CLASSES):
+            sheet_path=SOURCE/'GunSeriesExpanded'/f'{name}-{class_name}-series-v2.png'
+            cells=json.loads(sheet_path.with_name(sheet_path.stem+'-bounds.json').read_text(encoding='utf-8'))['cells']
+            with Image.open(sheet_path) as sheet:
+                for series in range(8):
+                    b=cells[series];w,h=sheet.size
+                    left=round(b['x']*w);right=round((b['x']+b['width'])*w)
+                    top=round((1-b['y']-b['height'])*h);bottom=round((1-b['y'])*h)
+                    crop=sheet.crop((left,top,right,bottom)).convert('RGBA')
+                    atlas=pack(crop,f'{sheet_path.name} cell {series}',f'{name}-{class_name}-expanded-{series}.png','GunSeriesExpanded',series,sheet_path,256)
+                    for variant in range(4):
+                        index=606+(cls*32+series*4+variant)*6+maker
+                        entries.append({'catalogId':f'distinct.gun.{index:03d}',
+                                        'name':f'{name.title()} expanded {class_name} {series} / {VARIANTS[variant]}',
+                                        'maker':maker,'gunClass':cls,'series':series+4,'seriesVariant':variant,
+                                        'atlas':atlas,'geometry':'GunSeriesModels3D.Build',
+                                        'paintingSharedWithinSeries':True,'status':'texture-ready-mesh-uv-pending'})
     return entries
 
 
@@ -102,19 +122,34 @@ def legendary():
                                 'name':f'{name.title()} legendary {cell}', 'maker':maker,
                                 'atlas':atlas,'geometry':'BespokeLegendaryModels3D.BuildWeapon',
                                 'status':'texture-ready-mesh-uv-pending'})
+    for maker,name in enumerate(MAKERS):
+        sheet_path=SOURCE/'BespokeLegendariesExpanded'/f'{name}-legendaries-v2.png'
+        cells=json.loads(sheet_path.with_name(sheet_path.stem+'-bounds.json').read_text(encoding='utf-8'))['cells']
+        with Image.open(sheet_path) as sheet:
+            w,h=sheet.size
+            for cell,b in enumerate(cells):
+                left=round(b['x']*w);right=round((b['x']+b['width'])*w)
+                top=round((1-b['y']-b['height'])*h);bottom=round((1-b['y'])*h)
+                crop=sheet.crop((left,top,right,bottom)).convert('RGBA')
+                atlas=pack(crop,f'{sheet_path.name} cell {cell}',f'{name}-legendary-expanded-{cell}.png','BespokeLegendariesExpanded',cell,sheet_path,256)
+                index=1758+maker*10+cell
+                entries.append({'catalogId':f'distinct.gun.{index:03d}',
+                                'name':f'{name.title()} legendary expanded {cell}', 'maker':maker,
+                                'atlas':atlas,'geometry':'BespokeLegendaryModels3D.BuildWeapon',
+                                'status':'texture-ready-mesh-uv-pending'})
     return entries
 
 
 def main():
     entries=regular()+legendary()
-    if len(entries)!=606 or len({e['catalogId'] for e in entries})!=606:
-        raise AssertionError('catalog coverage is not 606 unique gun IDs')
-    manifest={'schema':1,'productCount':606,'uniquePaintings':174,
-              'regularProductCount':576,'legendaryProductCount':30,
+    if len(entries)!=1818 or len({e['catalogId'] for e in entries})!=1818:
+        raise AssertionError('catalog coverage is not 1818 unique gun IDs')
+    manifest={'schema':1,'productCount':1818,'uniquePaintings':522,
+              'regularProductCount':1728,'legendaryProductCount':90,
               'runtimeRequirement':'Apply the four-view UV projection to each currently generated mesh, preserving procedural series and variant geometry. Texture alone does not register an exact product model.',
               'products':sorted(entries,key=lambda e:e['catalogId'])}
     (OUT/'product-catalog.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
-    print(json.dumps({'products':len(entries),'atlases':174,'output':str(OUT/'product-catalog.json')}))
+    print(json.dumps({'products':len(entries),'atlases':522,'output':str(OUT/'product-catalog.json')}))
 
 
 if __name__=='__main__':

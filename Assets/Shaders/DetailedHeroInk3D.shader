@@ -189,7 +189,11 @@ Shader "NeonVault/DetailedHeroInk3D"
                 }
                 else uv=_ProjectionUv.xy+uv*_ProjectionUv.zw;
                 float4 illustration=tex2D(_ProjectionSheet,uv);
-                color=lerp(color,illustration.rgb,illustration.a);
+                // The thin extrusion edge has no dedicated painted view.
+                // Sampling the side across it produces stretched bright bars;
+                // use a restrained dark edge instead.
+                bool gunEdge=_ProjectionMode>2.5&&abs(projectionNormal.y)>.73;
+                color=gunEdge?color*.32:lerp(color,illustration.rgb,illustration.a);
             }
             if(_AccessoryProjectionEnabled>.5 && IN.accessoryMask>.5)
             {

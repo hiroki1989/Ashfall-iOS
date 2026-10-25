@@ -125,7 +125,7 @@ namespace NeonVault
         {
             return Model(9+(index%3+3)%3,Rarity.Legendary);
         }
-        public static Gun Legendary(int index, System.Random random, int level) => LegendaryCatalog.CreateGun(random.Next(30),random,level);
+        public static Gun Legendary(int index, System.Random random, int level) => LegendaryCatalog.CreateGun(random.Next(LegendaryCatalog.GunCount),random,level);
         public static Gun RollCatalogStats(Gun gun,System.Random random,int level)=>Randomize(gun,random,level);
         public static Gun Roll(System.Random random, int depth)
         {
@@ -136,7 +136,7 @@ namespace NeonVault
         public static Gun CreateForDungeon(System.Random random,int dungeon,Rarity rarity,int level)
         {
             if(rarity==Rarity.Legendary)return Legendary(dungeon,random,level);
-            var item=Catalog(30+random.Next(CatalogCount-30),rarity);
+            int pick=random.Next(GunSeriesDesigns.RegularCount);var item=Catalog(pick<576?30+pick:606+pick-576,rarity);
             return Randomize(item,random,level);
         }
         static Gun Randomize(Gun gun,System.Random random,int level)

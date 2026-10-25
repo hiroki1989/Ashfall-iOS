@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "atlas": "Atlases/mireline-sniper-expanded-5.png",
+  "tilePixels": 256,
+  "layoutTopLeft": [
+    [
+      "left",
+      "right"
+    ],
+    [
+      "front",
+      "back"
+    ]
+  ],
+  "views": {
+    "left": {
+      "source": "mireline-sniper-series-v2.png cell 5",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        94,
+        232,
+        67
+      ]
+    },
+    "right": {
+      "source": "mireline-sniper-series-v2.png cell 5 / mirrored",
+      "method": "silhouette-crop-edge-fill",
+      "visibleRect": [
+        12,
+        94,
+        232,
+        67
+      ]
+    },
+    "front": {
+      "source": "mireline-sniper-series-v2.png cell 5 / muzzle neutral",
+      "method": "neutral-median"
+    },
+    "back": {
+      "source": "mireline-sniper-series-v2.png cell 5 / stock neutral",
+      "method": "neutral-median"
+    }
+  },
+  "sourceKind": "GunSeriesExpanded",
+  "sourceFile": "Assets/Resources/Art/GunSeriesExpanded/mireline-sniper-series-v2.png",
+  "sourceCell": 5,
+  "paintedSides": 1,
+  "mirroredSides": 1,
+  "paintedEndCaps": 0,
+  "status": "projection-input"
+}

@@ -75,22 +75,17 @@ namespace NeonVault
         {
             if (!root) return;
             var beamPaint = Paint(rarity, false);
-            var groundPaint = Paint(rarity, true);
-            if (!beamPaint || !groundPaint) return;
+            if (!beamPaint) return;
             int tier = Mathf.Clamp((int)rarity, 0, Arsenal.Colors.Length - 1);
             var beam = new GameObject("Loot rarity beam");
             beam.transform.SetParent(root, false);
-            beam.transform.localPosition = Vector3.up * .14f;
-            beam.transform.localScale = new Vector3(.10f + tier * .018f, 1.10f + tier * .28f, .10f + tier * .018f);
+            // The light column rises from the pickup to approximately the player's height.
+            // Rarity changes width and color, rather than making common items hard to see.
+            beam.transform.localPosition = Vector3.up * .10f;
+            beam.transform.localScale = new Vector3(.10f + tier * .018f, 2.2f, .10f + tier * .018f);
             beam.AddComponent<MeshFilter>().sharedMesh = Column();
             beam.AddComponent<MeshRenderer>().sharedMaterial = beamPaint;
 
-            var halo = new GameObject("Loot rarity halo");
-            halo.transform.SetParent(root, false);
-            halo.transform.localPosition = Vector3.up * (.035f - root.position.y);
-            halo.transform.localScale = Vector3.one * (.38f + tier * .055f);
-            halo.AddComponent<MeshFilter>().sharedMesh = Ground();
-            halo.AddComponent<MeshRenderer>().sharedMaterial = groundPaint;
         }
     }
 }

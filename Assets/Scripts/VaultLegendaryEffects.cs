@@ -11,7 +11,7 @@ namespace NeonVault
         public static bool DecodeLegendaryKey(string key,out int maker,out int variant)
         {
             maker=variant=-1;if(string.IsNullOrEmpty(key))return false;
-            var parts=key.Split('-');return parts.Length==3&&(parts[0]=="gun"||parts[0]=="armor")&&int.TryParse(parts[1],out maker)&&int.TryParse(parts[2],out variant)&&maker>=0&&maker<6&&variant>=0&&variant<5;
+            var parts=key.Split('-');return parts.Length==3&&(parts[0]=="gun"||parts[0]=="armor")&&int.TryParse(parts[1],out maker)&&int.TryParse(parts[2],out variant)&&maker>=0&&maker<6&&variant>=0&&variant<(parts[0]=="gun"?15:5);
         }
         public static string LegendaryRuntimeDescription(string key,bool japanese)
         {
@@ -49,11 +49,11 @@ namespace NeonVault
         void TryLegendaryEffect(string key,bool armor,string trigger,Vector3 origin,Foe struck)
         {
             if(!DecodeLegendaryKey(key,out int maker,out int variant)||armor!=key.StartsWith("armor-"))return;
-            string expected=armor?new[]{"hurt","kill","reload","dash","pulse"}[variant]:new[]{"fire","hit","kill","reload","dash"}[variant];
-            if(trigger!=expected||(!armor&&variant==0&&legendaryShots%3!=0)||(armor&&variant==4&&legendaryClock<5))return;
+            string expected=armor?new[]{"hurt","kill","reload","dash","pulse"}[variant]:new[]{"fire","hit","kill","reload","dash"}[variant%5];
+            if(trigger!=expected||(!armor&&variant%5==0&&legendaryShots%3!=0)||(armor&&variant==4&&legendaryClock<5))return;
             // One timer per catalog effect prevents stacked armor duplicates and recursive procs.
             if(legendaryReady.TryGetValue(key,out float ready)&&legendaryClock<ready)return;
-            float cooldown=armor?(variant==4?5:4):variant==0?1:variant<3?2:3;
+            float cooldown=armor?(variant==4?5:4):variant%5==0?1:variant%5<3?2:3;
             legendaryReady[key]=legendaryClock+cooldown;legendaryResolving=true;
             try{ResolveLegendaryEffect(maker,variant,armor,origin,struck);}finally{legendaryResolving=false;}
         }

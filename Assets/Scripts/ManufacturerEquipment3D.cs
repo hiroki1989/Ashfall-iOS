@@ -213,6 +213,8 @@ namespace NeonVault
         [System.Serializable] sealed class Manifest { public FamilyEntry[] items; }
         static Manifest manifest;
         static bool manifestRead;
+        static readonly Dictionary<string,Rect[]> expandedGunBounds=new Dictionary<string,Rect[]>();
+        static readonly string[] expandedGunClasses={"assault","handgun","shotgun","lmg","smg","sniper"};
         static readonly MaterialPropertyBlock block=new MaterialPropertyBlock();
         internal static MaterialPropertyBlock SharedBlock=>block;
 
@@ -399,6 +401,26 @@ namespace NeonVault
 
         static FamilyEntry Find(EquipmentRecipe r,bool gun,bool accessory)
         {
+            // The original family manifest predates the added series. Resolve
+            // their painted side profiles directly, so every generated atlas
+            // has a matching shader source and never falls back to bare metal.
+            if(gun&&!accessory&&(r.series>=4&&!r.legendary||r.legendary&&r.index>=GunSeriesDesigns.FirstNewLegendary))
+            {
+                bool legendary=r.legendary;
+                string path=legendary
+                    ?"Art/BespokeLegendariesExpanded/"+ManufacturerCatalog.Id(r.maker)+"-legendaries-v2"
+                    :"Art/GunSeriesExpanded/"+ManufacturerCatalog.Id(r.maker)+"-"+expandedGunClasses[Mathf.Clamp(r.gunClass,0,5)]+"-series-v2";
+                int cell=legendary?LegendaryCatalog.VariantFromCatalogIndex(r.index)-5:r.series-4;
+                if(!expandedGunBounds.TryGetValue(path,out var bounds))
+                {
+                    var data=Resources.Load<TextAsset>(path+"-bounds");
+                    bounds=data?DistinctEquipmentPortraits.ParseBounds(data.text,legendary?10:8):null;
+                    expandedGunBounds[path]=bounds;
+                }
+                if(bounds==null||cell<0||cell>=bounds.Length)return null;
+                Rect crop=bounds[cell];
+                return new FamilyEntry{kind="gun",sourceSheetResourcePath=path,shaderSampleUv=new Uv{x=crop.x,y=crop.y,width=crop.width,height=crop.height}};
+            }
             if(!manifestRead)
             {
                 manifestRead=true;

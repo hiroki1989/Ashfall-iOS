@@ -121,7 +121,7 @@ namespace NeonVault
                 cell=available[rng.Next(available.Count)];
                 route.Add(cell);
             }
-            room=0;kills=0;ricochetEvents=0;splitEvents=0;runTime=0;baseMaxHp=100;RecalculateArmor();hp=maxHp;damageBonus=0;fireBonus=0;
+            room=0;kills=0;ricochetEvents=0;splitEvents=0;runTime=0;baseMaxHp=100*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.startingHpMultiplier : 1f);RecalculateArmor();hp=maxHp;damageBonus=0;fireBonus=0;
             chestRoomForRun=rng.NextDouble()<.5?rng.Next(CurrentDungeon.AreaCount):-1;
             PrepareAmmoCratesForRun();
             ResetArtifactCombat();runDamage=0;runFire=0;runVitality=0;runDash=0;runChain=0;runHarvest=0;debtChainCount=0;debtChainTimer=0;
@@ -160,7 +160,7 @@ namespace NeonVault
             if(populate)
             {
                 if(room==CurrentDungeon.AreaCount-1) SpawnFoe(Layout.Exit,3);
-                else for(int i=0;i<CurrentDungeon.EnemyCount(room);i++)
+                else for(int i=0;i<Mathf.Max(1,Mathf.RoundToInt(CurrentDungeon.EnemyCount(room)*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyCountMultiplier : 1f)));i++)
                 {
                     Vector3 p; int attempts=0;
                     do {var cell=Layout.chambers[rng.Next(Layout.chambers.Count)];p=Layout.Center(cell)+new Vector3((float)rng.NextDouble()*6-3,0,(float)rng.NextDouble()*4-2);attempts++;} while((Blocked(p,.8f)||!Layout.SpawnSafe(p))&&attempts<200);
@@ -203,7 +203,7 @@ namespace NeonVault
             if(kind==5){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
             f.GetComponent<FaithfulEnemy3D>().Init(f);
             Enemies.Add(f);
-            f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier,CurrentDungeon.damageScale*FloorCombatMultiplier,DungeonIndex*.10f);
+            f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             f.timer=2.5f;
         }
         public bool Blocked(Vector3 p,float radius)
@@ -262,6 +262,11 @@ namespace NeonVault
                     player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
                 }
             }
+            // Keep the held firing pose on the assisted target between shots.
+            // Previously only Fire() snapped for one frame, so rapid camera
+            // updates visibly returned the weapon to the unassisted direction.
+            if(VaultMobileInputBridge.Firing&&reload<=0&&PlayerWeapon!=null)
+                aim=AutoAimDirection(PlayerWeapon.MuzzlePosition,aim,EffectiveAccuracy);
             player.rotation=Quaternion.LookRotation(aim);
             PlayerWeapon.Aim(aim);
             for(int i=0;i<satellites.Count;i++) { float a=runTime*4+i*Mathf.PI*2/3; satellites[i].position=player.position+new Vector3(Mathf.Sin(a),.35f,Mathf.Cos(a))*1.65f; }
@@ -365,10 +370,17 @@ namespace NeonVault
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
             var ammoType=(AmmoType)rng.Next(AmmoTypeCount);if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
-            if(rng.NextDouble()<(f.kind==3?1f/3f:.08f))AddDrop(RollExpeditionGun(rng,f.kind==3),f.transform.position);
-            if(rng.NextDouble()<(f.kind==3?1f/3f:.087f))AddArmorDrop(RollExpeditionArmor(rng,f.kind==3),f.transform.position+Vector3.right*.8f);
-            if(rng.NextDouble()<(f.kind==3?.183f:.04f))AddArtifactDrop(RollExpeditionArtifact(rng,f.kind==3),f.transform.position+Vector3.left*.8f);
-            if(rng.NextDouble()<(f.kind==3?.25f:.06f))AddMeleeDrop(RollExpeditionMelee(rng,f.kind==3),f.transform.position+Vector3.forward*.8f);
+            float gunDropChance=boss?(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceBoss : 1f/3f)
+                :(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceNormal : .08f);
+            gunDropChance=Mathf.Clamp01(gunDropChance);
+            if(rng.NextDouble()<gunDropChance)AddDrop(RollExpeditionGun(rng,boss),f.transform.position);
+            if(rng.NextDouble()<gunDropChance)AddHealthPackDrop(f.transform.position+new Vector3(.55f,0,.55f));
+            float armorChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.armorDropChanceBoss:VaultBalanceProfile.Current.armorDropChance) : (boss?1f/3f:.087f);
+            float moduleChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.moduleDropChanceBoss:VaultBalanceProfile.Current.moduleDropChance) : (boss?.183f:.04f);
+            float meleeChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.meleeDropChanceBoss:VaultBalanceProfile.Current.meleeDropChance) : (boss?.25f:.06f);
+            if(rng.NextDouble()<Mathf.Clamp01(armorChance))AddArmorDrop(RollExpeditionArmor(rng,boss),f.transform.position+Vector3.right*.8f);
+            if(rng.NextDouble()<Mathf.Clamp01(moduleChance))AddArtifactDrop(RollExpeditionArtifact(rng,boss),f.transform.position+Vector3.left*.8f);
+            if(rng.NextDouble()<Mathf.Clamp01(meleeChance))AddMeleeDrop(RollExpeditionMelee(rng,boss),f.transform.position+Vector3.forward*.8f);
             bool alive=false; foreach(var e in Enemies) if(e!=null&&!e.dead)alive=true;
             if(!alive)
             {

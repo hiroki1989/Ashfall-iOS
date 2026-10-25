@@ -12,15 +12,19 @@ namespace NeonVault
         public bool IsTelegraphing=>charging;
         public float TelegraphProgress=>charging?Mathf.Clamp01(1-charge/TelegraphSeconds):0;
         public bool IsLunging=>dash>0;
+        // Stable visual contract: 0 rush, 1 overhead slam, 2 sweeping strike.
+        public int BossAttackStyle=>kind==3?(int)bossMove:-1;
         public bool IsMelee=>kind==0||kind==4||kind==8;
         public float HealingRadius=>10f;
         public static float TargetDodgeChance(float accuracy)=>Mathf.Clamp((82-Mathf.Clamp(accuracy,1,100))*.006f,0,.30f);
-        public float TelegraphSeconds=>kind==5?.95f:kind==7?1.2f:kind==4?.65f:kind==0||kind==8?.7f:.85f;
+        public float TelegraphSeconds=>kind==3?(bossMove==BossMove.Slam?1.25f:bossMove==BossMove.Sweep?.82f:.6f):kind==5?.95f:kind==7?1.2f:kind==4?.65f:kind==0||kind==8?.7f:.85f;
         public static string Name(int kind)=>VaultLanguage.T(new[]{"SHAMBLER","ACID SPITTER","RAD GUNNER","WASTELAND COLOSSUS","POUNCER","NEEDLE STALKER","RAD CYCLER","BLOATER","PLATED CORPSE","FLESH WEAVER"}[Mathf.Clamp(kind,0,9)],new[]{"徘徊屍","酸吐き","放射兵","荒野の巨骸","跳び屍","針撃ち","放射旋回体","膨張屍","装甲屍","再生母体"}[Mathf.Clamp(kind,0,9)]);
+        enum BossMove { Rush, Slam, Sweep }
         bool alerted, charging;float charge,dash,damageScale=1,resistance,lockedRadialAngle;Vector3 lockedAim,lockedTarget;GameObject warning;
+        BossMove bossMove;int bossAttackCount;
         public void Init(VaultGame g,int k,int depth)
         {
-            game=g;kind=k;maxHp=hp=k==3?650:45+k*9;speed=k==3?1.8f:k==4?3.8f:k==0?2.7f:k==8?2.35f:k==1||k==5?2.3f:3.1f;timer=.75f+k*.09f;
+            game=g;kind=k;maxHp=hp=k==3?650:45+k*9;speed=k==3?3.25f:k==4?3.8f:k==0?2.7f:k==8?2.35f:k==1||k==5?2.3f:3.1f;timer=.75f+k*.09f;
             resistance=Mathf.Min(.3f,depth*.025f);damageScale=1;
         }
         public void ConfigureDifficulty(float health,float damage,float resist){maxHp*=health;hp=maxHp;damageScale*=damage;resistance=Mathf.Clamp(resist,0,.45f);}
@@ -39,12 +43,13 @@ namespace NeonVault
             bool visible=game.LineOfSight(transform.position,game.PlayerPosition);
             if(distance<17&&visible)alerted=true;if(!alerted)return;
             if(!charging&&dash<=0){if(distance>.01f)transform.rotation=Quaternion.LookRotation(direction);if(weapon!=null)weapon.Aim(direction);}
-            if(dash>0){dash-=Time.deltaTime;transform.position=game.MoveWithinRoom(transform.position,lockedAim*14*Time.deltaTime,.6f);if(Vector3.Distance(game.PlayerPosition,transform.position)<1.25f&&contact<=0){game.Hurt(22*damageScale);contact=1;dash=0;}}
+            if(dash>0){dash-=Time.deltaTime;transform.position=game.MoveWithinRoom(transform.position,lockedAim*(kind==3?18:14)*Time.deltaTime,.6f);if(Vector3.Distance(game.PlayerPosition,transform.position)<(kind==3?1.5f:1.25f)&&contact<=0){game.Hurt((kind==3?29:22)*damageScale);contact=1;dash=0;}}
             else if(!charging)
             {
                 Vector3 movement=direction;
                 bool mobile=(kind!=1&&kind!=5&&kind!=9)||distance>10||!visible;
                 if((kind==0||kind==8)&&distance<1.65f)mobile=false;
+                if(kind==3&&distance<2.4f)mobile=false;
                 if(kind==7&&distance<3.5f)mobile=false;
                 if((kind==1||kind==5||kind==9)&&visible&&distance<5){movement=-direction;mobile=true;}
                 if(kind==6&&visible&&distance<13){movement=(Vector3.Cross(Vector3.up,direction)+direction*(distance>8?.35f:-.35f)).normalized;mobile=true;}
@@ -53,29 +58,66 @@ namespace NeonVault
             contact-=Time.deltaTime; // Damage comes from readable attacks, never passive body contact.
             if(charging)
             {
-                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();timer=kind==3?1.85f:kind==5?2.5f:kind==7?3.2f:kind==0||kind==8?1.1f:kind==4?1.9f:kind==9?3.3f:2f;return;
+                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();timer=kind==3?(bossMove==BossMove.Slam?2.1f:bossMove==BossMove.Sweep?1.45f:1.7f):kind==5?2.5f:kind==7?3.2f:kind==0||kind==8?1.1f:kind==4?1.9f:kind==9?3.3f:2f;return;
             }
             timer-=Time.deltaTime;
             if(timer>0||!visible||distance>18)return;
             if((kind==0||kind==8)&&distance>2.25f||kind==7&&distance>4.5f||kind==4&&distance>10)return;
+            if(kind==3)
+            {
+                // A distant boss closes with a committed rush. At close range it alternates
+                // between a slow, punishing slam and a faster frontal sweep with a safe rear arc.
+                bossMove=distance>4.4f||bossAttackCount%4==3?BossMove.Rush:bossAttackCount%2==0?BossMove.Slam:BossMove.Sweep;
+                bossAttackCount++;
+            }
             lockedTarget=game.PlayerPosition;lockedTarget.y=.08f;lockedAim=direction;charging=true;charge=TelegraphSeconds;
-            if(kind==7){lockedTarget=transform.position;lockedTarget.y=.08f;warning=CombatVisuals.WarningCircle(lockedTarget,3.5f,transform.parent);}
+            if(kind==3)
+            {
+                warning=new GameObject("Colossus attack warning");warning.transform.SetParent(transform.parent,false);
+                if(bossMove==BossMove.Rush)
+                {
+                    CombatVisuals.WarningLine(transform.position,lockedAim,Mathf.Min(distance+1.5f,9),warning.transform);
+                }
+                else if(bossMove==BossMove.Slam)
+                {
+                    lockedTarget=transform.position;lockedTarget.y=.08f;
+                    CombatVisuals.WarningCircle(lockedTarget,3.3f,warning.transform);
+                }
+                else
+                {
+                    for(int i=-1;i<=1;i++)CombatVisuals.WarningLine(transform.position,Quaternion.Euler(0,i*42,0)*lockedAim,3.5f,warning.transform);
+                }
+            }
+            else if(kind==7){lockedTarget=transform.position;lockedTarget.y=.08f;warning=CombatVisuals.WarningCircle(lockedTarget,3.5f,transform.parent);}
             else if(kind==0||kind==8)warning=CombatVisuals.WarningCircle(transform.position+lockedAim*1.1f,1.2f,transform.parent);
             else if(kind==9)warning=CombatVisuals.WarningCircle(transform.position,HealingRadius,transform.parent);
-            else if(kind==3||kind==6)
+            else if(kind==6)
             {
                 // Freeze the barrage phase before its warning, so every spoke matches a fired bullet.
                 lockedRadialAngle=Time.time*.35f;
                 warning=new GameObject("Radial barrage warning");warning.transform.SetParent(transform.parent,false);
-                int count=kind==3?16:9;
+                int count=9;
                 for(int i=0;i<count;i++){float angle=i*Mathf.PI*2/count+lockedRadialAngle;CombatVisuals.WarningLine(transform.position,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),5,warning.transform);}
-                if(kind==3)CombatVisuals.WarningLine(transform.position,lockedAim,Mathf.Min(distance+2,20),warning.transform);
             }
             else warning=CombatVisuals.WarningLine(transform.position+Vector3.up*.05f,lockedAim,kind==4?9:Mathf.Min(distance+2,20),transform.parent);
         }
         void Attack()
         {
             GetComponent<EnemyPainted2D>()?.NotifyAttack();GetComponent<FaithfulEnemy3D>()?.NotifyAttack();
+            if(kind==3)
+            {
+                if(bossMove==BossMove.Rush){contact=0;dash=.46f;return;}
+                if(bossMove==BossMove.Slam)
+                {
+                    CombatVisuals.Burst(transform.position,new Color(.88f,.4f,.17f),18,transform.parent);
+                    var hazard=new GameObject("Colossus heavy slam");hazard.transform.SetParent(transform.parent,false);hazard.transform.position=lockedTarget;
+                    var blast=hazard.AddComponent<GroundBlast>();blast.game=game;blast.damage=39*damageScale;blast.radius=3.3f;return;
+                }
+                Vector3 reach=game.PlayerPosition-transform.position;reach.y=0;
+                CombatVisuals.Burst(transform.position+lockedAim*1.4f,new Color(.92f,.54f,.22f),12,transform.parent);
+                if(reach.magnitude<3.5f&&Vector3.Dot(reach.normalized,lockedAim)>.5f&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(27*damageScale);
+                return;
+            }
             if(kind==0||kind==8){Vector3 impact=transform.position+lockedAim*1.1f;Vector3 toPlayer=game.PlayerPosition-impact;toPlayer.y=0;CombatVisuals.Burst(impact,new Color(.75f,.4f,.16f),9,transform.parent);if(toPlayer.magnitude<1.2f&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt((kind==8?23:17)*damageScale);return;}
             if(kind==4){dash=.55f;return;}
             if(kind==7){var hazard=new GameObject("Bloater chemical blast");hazard.transform.SetParent(transform.parent,false);hazard.transform.position=lockedTarget;var blast=hazard.AddComponent<GroundBlast>();blast.game=game;blast.damage=19*damageScale;blast.radius=3.5f;return;}
@@ -89,12 +131,12 @@ namespace NeonVault
             Vector3 muzzle=faithful!=null&&faithful.Ready?faithful.MuzzlePosition:painted!=null&&painted.Ready?painted.MuzzlePosition:weapon!=null?weapon.MuzzlePosition:transform.position+Vector3.up*1.05f;
             if(weapon!=null)weapon.Kick();
             Color flare=kind==1?new Color(.48f,.8f,.12f):kind==5?new Color(.6f,.82f,1):kind==6?new Color(.65f,.85f,.18f):new Color(1,.48f,.12f);
-            CombatVisuals.Muzzle(muzzle,lockedAim,flare,kind==6?GunEffect.Orbit:kind==3?GunEffect.Scatter:GunEffect.Normal,transform.parent,kind==5?7:kind==2?8:-1);
-            if(kind==3||kind==6)
+            CombatVisuals.Muzzle(muzzle,lockedAim,flare,kind==6?GunEffect.Orbit:GunEffect.Normal,transform.parent,kind==5?7:kind==2?8:-1);
+            if(kind==6)
             {
-                int count=kind==3?16:9;for(int i=0;i<count;i++){float a=i*Mathf.PI*2/count+lockedRadialAngle;game.SpawnBullet(muzzle,new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),false,(kind==3?10:8)*damageScale,kind==3?6:7,new Color(.65f,.83f,.18f),GunEffect.Normal);}
+                int count=9;for(int i=0;i<count;i++){float a=i*Mathf.PI*2/count+lockedRadialAngle;game.SpawnBullet(muzzle,new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),false,8*damageScale,7,new Color(.65f,.83f,.18f),GunEffect.Normal);}
             }
-            if(kind!=6)for(int i=kind==2||kind==3?-1:0;i<=(kind==2||kind==3?1:0);i++){var shot=game.SpawnBullet(muzzle,Quaternion.Euler(0,i*14,0)*lockedAim,false,(kind==5?22:10)*damageScale,kind==5?22:kind==1?11:13,(kind==1?new Color(.55f,.8f,.12f):kind==2?new Color(.75f,.85f,.25f):new Color(1,.67f,.28f)),GunEffect.Normal);shot.corrosive=kind==1;}
+            if(kind!=6)for(int i=kind==2?-1:0;i<=(kind==2?1:0);i++){var shot=game.SpawnBullet(muzzle,Quaternion.Euler(0,i*14,0)*lockedAim,false,(kind==5?22:10)*damageScale,kind==5?22:kind==1?11:13,(kind==1?new Color(.55f,.8f,.12f):kind==2?new Color(.75f,.85f,.25f):new Color(1,.67f,.28f)),GunEffect.Normal);shot.corrosive=kind==1;}
         }
         public bool Hit(float damage,Vector3? hitPoint=null,Color? hitColor=null,float accuracy=100)
         {
