@@ -50,9 +50,9 @@ namespace NeonVault
         }
 
         public string AmmoPickupEnglish(AmmoType type,int amount)=>
-            (type==AmmoType.Handgun?"Handgun rounds":type==AmmoType.Shotgun?"Shotgun shells":type==AmmoType.SniperRifle?"Sniper rounds":type==AmmoType.LightMachineGun?"LMG rounds":"Rifle rounds")+" ×"+amount;
+            (type==AmmoType.Handgun?"Handgun rounds":type==AmmoType.Shotgun?"Shotgun shells":type==AmmoType.SniperRifle?"Sniper rounds":"Machine gun rounds")+" ×"+amount;
         public string AmmoPickupJapanese(AmmoType type,int amount)=>
-            (type==AmmoType.Handgun?"拳銃弾":type==AmmoType.Shotgun?"散弾":type==AmmoType.SniperRifle?"狙撃弾":type==AmmoType.LightMachineGun?"軽機関銃弾":"ライフル弾")+" ×"+amount;
+            (type==AmmoType.Handgun?"拳銃弾":type==AmmoType.Shotgun?"散弾":type==AmmoType.SniperRifle?"狙撃弾":"機関銃弾")+" ×"+amount;
 
         /// <summary>Creates a distinct, readable 3D field prop without baking UI text into art.</summary>
         public GameObject CreateLootPresentation(string displayName, Vector3 position, Vector3 size, Color accent,

@@ -18,7 +18,8 @@ namespace NeonVault
             var stage=ExpeditionMap.Get(expeditionMapSelection);bool unlocked=stage.level<=DebtLevel;
             MobileCopyAt(42,640,stage.Name+" / Lv "+stage.level+"  ("+T("YOU ","現在 ")+DebtLevel+")",unlocked?Cyan:Gold);
             MobileCopyAt(42,684,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese),Mist,1350);
-            MobileCopyAt(42,727,T("FIRST CLEAR ","初回 ")+ExpeditionRewardDescription(stage.id)+" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id),Cyan,1350);
+            bool done=clearedExpeditionStages.Contains(stage.id);
+            MobileCopyAt(42,727,(done?T("CLEARED · REPLAY ","クリア済 · 再攻略 "):T("FIRST CLEAR ","初回 "))+ExpeditionRewardDescription(stage.id)+(done?"":" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id)),Cyan,1350);
             if(MobileButton(new Rect(40,780,270,110),T("BACK","拠点へ"))){mobileMapEntered=false;screen=Screen.Hub;}
             if(MobileButton(new Rect(330,780,125,110),"−"))SetCityZoom(expeditionCityZoom/1.2f,view.size*.5f);
             if(MobileButton(new Rect(475,780,125,110),"+"))SetCityZoom(expeditionCityZoom*1.2f,view.size*.5f);
@@ -90,7 +91,7 @@ namespace NeonVault
             }
             if(MobileButton(new Rect(40,650,240,110),T("PREV","前へ")))mobileShopPage=Mathf.Max(0,mobileShopPage-1);
             if(MobileButton(new Rect(300,650,240,110),T("NEXT","次へ")))mobileShopPage=Mathf.Min(Mathf.Max(0,(visibleOffers.Count-1)/2),mobileShopPage+1);
-            for(int i=0;i<4;i++){var ammoType=(AmmoType)i;if(MobileButton(new Rect(40+i*340,780,325,110),AmmoLabel(ammoType)+"\n"+AmmoPackCost(ammoType)))BuyAmmo(ammoType,1);}
+            for(int i=0;i<ActiveAmmoTypeCount;i++){var ammoType=ActiveAmmoTypeAt(i);if(MobileButton(new Rect(40+i*340,780,325,110),AmmoLabel(ammoType)+"\n"+AmmoPackCost(ammoType)))BuyAmmo(ammoType,1);}
         }
         string MobileSaleLegendaryDetail(SaleEntry entry)
         {

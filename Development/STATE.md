@@ -39,6 +39,11 @@ Unity Editor終了後、Windows統合ビルド`weapon-color-final-build.log`はH
 今回の継続: Kestrel Field Helmet (`distinct.armor.030`) の4view sheetと専用真横sourceを`Assets/ArtSource/GeneratedEquipment/KestrelFieldHelmet/`へ保存。ローカル2mini front-only shape: 309,592 vertices/619,180 faces。Blenderで0.245×0.260×0.285mへ正規化、32,196 faces、4K atlas、FBX出力。初回renderで透過余白由来の小型貼り付きを検出。source画像を各 view 90%占有へ調整後も、front/sideディテールの位置が形状と合わず二重縁/破片状の投影が残る。可視カメラ優先の面割り当ても実施したが不合格。`D:/Unity/AshfallArtValidation/equipment3d-batch/kestrel-field-helmet/`に全source/shape/bake/render/script。Resourcesへ未登録、Unityゲーム未統合。
 GeneratedEquipmentAssetCatalog/Factoryの共通パス・ソケット設計は用意済みだが、商品別の採用モデルがなくまだランタイム未接続。全装備（銃・防具・近接、module除く）の生成・テクスチャ・フィット・統合は未完了。初期Warden一式と同じローカル2mini→Blender投影・焼き付け・軽量化を基準とし、失敗候補は登録しない。Fitは`CharacterRigStandard`の共通寸法/ソケットに正規化する。
 # 現在の状態
+## 2026-10-25 / 遠征任務・報酬・機関銃弾・レジェンダリー表示
+対象 D:/Unity/Ashfall-iOS。100地点の任務を敵18体制圧、最終階の主討伐、2フロアで3箱回収、敵8体＋2箱、別々の2フロアで箱を開く調査、3フロアで5箱回収に変更。回収・調査は敵を残して次階へ進め、達成後は出口から帰還可能。各階の弾薬箱10個を任務に算入し、弾薬満タンでも任務箱を調査可能。進行カウンタを既存チェックポイントのintへ格納。
+遠征装備報酬のレア度を通常 Rare/Epic/Legendary=50/35/15、初回は40/35/25へ分離。初回スキル報酬を既存 DebtSkillPoints に合算（旧 token セーブも維持）、再攻略は装備またはスクラップでスキルポイント重複なし。都市地図のクリア済バッジ、日英の再攻略報酬表示を追加。レジェンダリー光柱は濃橙・他の1.5倍高・加算コア付き。効果光線/電撃を強調し、効果由来ダメージは濃橙（レジェンダリー優先、通常クリティカル黄、モジュール赤）。
+アサルト/SMG/LMGの表示と使用弾を機関銃・機関銃弾へ統一。弾薬は拳銃/散弾/機関銃/狙撃の4種表示、旧LMG保存IDは保持しロード時に残弾を共通枠へ上限内移行、容量tierは高い方へ移行。新規ドロップ・弾薬箱は4種抽選。検証: Unity 6000.6.0f1 Windows BuildHeroReview `D:/Unity/build-expedition-contracts-release-20261025.log` HERO_BUILD_OK、git diff --check 通過。QAはコード上の達成可能性を確認。`--smoke` は非表示Windows実行の menu-ja.png framebuffer取得失敗で冒頭停止し、ゲーム動作の合否は未判定。最終WorldActors色優先変更後の再ビルド `D:/Unity/build-expedition-contracts-final2-20261025.log` も HERO_BUILD_OK。iOS/Metal実機、視覚確認、IPA生成は未実施。
+
 ## 2026-10-21 / 胴・脚の二重模様の継続修正
 対象D:/Unity/Ashfall-iOS。前回局所銀除去だけでは布/袖口/手袋/ポーチ/縫目の重複残存。単色/骨色90/270×待機/射撃8枚で偽手袋はtexture無しで消失と確定、Rig追加変更なし。
 全体円筒chart・材質帯・nearest輪郭伸長の試作は縞/細部劣化で不採用。元FBXから無遮蔽胴±Xと脚内側clayを切出し、builtin imagegenで専用sourceを作成。脚v1はブーツ境界誤りで不採用、v2は上57%布/下43%高い革bootへ修正。反対脚innerは鏡映して各templateへ個別登録。原画/カメラ/promptsはAssets/Resources/Art/GeneratedWarden/HiddenSurfaceSourceへ保存。

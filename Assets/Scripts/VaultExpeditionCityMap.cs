@@ -161,7 +161,14 @@ namespace NeonVault
             if (expeditionCitySiteStyle == null) expeditionCitySiteStyle = new GUIStyle(centered) { fontSize = MobileTouchControls.Enabled?27:10, padding = new RectOffset(0, 0, 0, 0) };
             if(GUI.Button(r,(id+1).ToString("00")+"·L"+stage.level,expeditionCitySiteStyle)) expeditionMapSelection=id;
             GUI.color = Color.white;
-            if(done) Box(new Rect(r.x,r.yMax-3,r.width,3),Cyan);
+            if(done)
+            {
+                float badge=MobileTouchControls.Enabled?26:13;
+                Rect badgeRect=new Rect(r.xMax-badge*.65f,r.y-badge*.45f,badge,badge);
+                Box(badgeRect,Cyan);
+                Text(badgeRect.x+1,badgeRect.y-1,"✓",new GUIStyle(centered){fontSize=MobileTouchControls.Enabled?21:11,fontStyle=FontStyle.Bold},new Color(.025f,.045f,.05f),badge);
+                Box(new Rect(r.x,r.yMax-3,r.width,3),Cyan);
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    public enum ExpeditionMission { ClearHostiles, HuntTarget, RecoverSupplies, DestroyNest }
+    public enum ExpeditionMission { ClearHostiles, HuntTarget, RecoverSupplies, DestroyNest, SurveySectors, SalvageSweep }
 
     [Serializable]
     public sealed class ExpeditionStage
@@ -78,16 +78,16 @@ namespace NeonVault
             new[]{"根縛りの王","樹冠の蜘蛛","庭園管理人","開花怪異","狐火の群れ"},
             new[]{"赤い巨人","静電預言者","クレーター喰らい","塩の亡霊","無の追跡者"}
         };
-        static readonly string[] missionEn = {"Purge the zone","Hunt the marked mutant","Recover field supplies","Destroy the infestation"};
-        static readonly string[] missionJa = {"区域を掃討","標的の変異体を狩る","現地物資を回収","巣を破壊"};
+        static readonly string[] missionEn = {"Defeat 18 hostiles","Defeat the alpha mutant","Recover 3 caches across 2 floors","Break the infestation: 8 kills and 2 caches","Open a cache on each of 2 floors","Salvage 5 caches across 3 floors"};
+        static readonly string[] missionJa = {"敵を18体倒す","変異体の主を倒す","2フロア以上で物資を計3箱回収","感染網を断つ：敵8体と物資2箱","別々の2フロアで各1箱を開く","3フロア以上で物資を計5箱回収"};
         static readonly Color[] colors = {new Color(.31f,.63f,.55f),new Color(.84f,.43f,.23f),new Color(.23f,.62f,.72f),new Color(.48f,.68f,.35f),new Color(.86f,.28f,.20f)};
         public static ExpeditionStage Get(int id)
         {
             id=Mathf.Clamp(id,0,StageCount-1); int region=id/20, n=id%20, place=n/4, variant=n%4;
             string loc=places[region][place], locJa=placesJa[region][place]; int danger=1+id/10;
-            int mission=(id+region+place)%4;
-            string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==2?"Supply cache":"Flesh Weaver nest";
-            string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==2?"補給物資":"再生母体の巣";
+            int mission=(id+region+place)%missionEn.Length;
+            string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==3?"Infestation network":"Supply cache";
+            string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==3?"感染網":"補給物資";
             return new ExpeditionStage { id=id,region=region,level=danger,legacyDungeonIndex=region==0?0:region<3?1:2,
                 englishName=loc+" / " + (variant+1).ToString("00"), japaneseName=locJa+"・"+(variant+1).ToString("00"),
                 englishLocation=regions[region]+" — "+loc,japaneseLocation=regionsJa[region]+" — "+locJa,
@@ -98,6 +98,6 @@ namespace NeonVault
         public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=Mathf.Clamp(region,0,4)*20;id<Mathf.Clamp(region,0,4)*20+20;id++)if(Get(id).mission==mission)count++;return count;}
         public static int RewardSeed(int stageId)=>unchecked(0x51A7D00D ^ (stageId+1)*7919);
         public static string MissionLabel(ExpeditionMission mission,bool japanese)=>japanese?missionJa[(int)mission]:missionEn[(int)mission];
-        static string RewardLabel(int id,bool ja) { string[] en={"Credits cache","Unusual gear","Armor cache","Skill token"};string[] jp={"クレジット備蓄","異能装備","防具箱","スキルトークン"};int kind=new System.Random(RewardSeed(id)).Next(4);return (ja?jp:en)[kind]; }
+        static string RewardLabel(int id,bool ja) { string[] en={"Credits cache","Unusual gear","Armor cache","Skill point"};string[] jp={"クレジット備蓄","異能装備","防具箱","スキルポイント"};int kind=new System.Random(RewardSeed(id)).Next(4);return (ja?jp:en)[kind]; }
     }
 }

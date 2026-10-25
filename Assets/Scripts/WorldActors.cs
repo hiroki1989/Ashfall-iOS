@@ -138,7 +138,7 @@ namespace NeonVault
             }
             if(kind!=6)for(int i=kind==2?-1:0;i<=(kind==2?1:0);i++){var shot=game.SpawnBullet(muzzle,Quaternion.Euler(0,i*14,0)*lockedAim,false,(kind==5?22:10)*damageScale,kind==5?22:kind==1?11:13,(kind==1?new Color(.55f,.8f,.12f):kind==2?new Color(.75f,.85f,.25f):new Color(1,.67f,.28f)),GunEffect.Normal);shot.corrosive=kind==1;}
         }
-        public bool Hit(float damage,Vector3? hitPoint=null,Color? hitColor=null,float accuracy=100)
+        public bool Hit(float damage,Vector3? hitPoint=null,Color? hitColor=null,float accuracy=100,Color? numberColor=null)
         {
             if(dead)return false;Vector3 point=hitPoint??(transform.position+Vector3.up*.8f);
             // Poorly controlled fire can clip the target without landing a damaging hit.
@@ -146,7 +146,7 @@ namespace NeonVault
             if(evadeChance>0&&UnityEngine.Random.value<evadeChance){CombatVisuals.EvadeNumber(point,game.GameCamera,transform.parent);return false;}
             damage*=1-resistance;
             if(kind==8&&hitPoint.HasValue){Vector3 approach=point-transform.position;approach.y=0;float facing=Vector3.Dot(transform.forward,approach.normalized);damage*=facing>.3f?.55f:facing<-.3f?1.35f:1;}
-            CombatVisuals.DamageNumber(point,damage,hitColor??new Color(1,.84f,.42f),game.GameCamera,transform.parent);
+            CombatVisuals.DamageNumber(point,damage,numberColor??hitColor??new Color(1,.84f,.42f),game.GameCamera,transform.parent);
             hp-=damage;var painted=GetComponent<EnemyPainted2D>();painted?.NotifyHit(point);GetComponent<FaithfulEnemy3D>()?.NotifyHit(point);game.Burst(point,hitColor??(kind==3?new Color(.7f,.8f,.2f):new Color(.55f,.16f,.1f)),4);
             if(hp<=0){dead=true;ClearWarning();painted?.BeginDeath();var meshLife=GetComponent<FaithfulEnemy3D>();meshLife?.BeginDeath();game.FoeKilled(this);Destroy(gameObject,meshLife!=null?FaithfulEnemy3D.DeathDuration:painted!=null&&painted.Ready?EnemyPainted2D.DeathDuration+.03f:0);}return true;
         }
@@ -163,12 +163,13 @@ namespace NeonVault
         public Vector3 velocity;
         public float damage, life=3;
         public float hitAccuracy=100;
-        public bool friendly,corrosive,critical,moduleAmplified;
+        public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect;
         public GunEffect effect;
         public int bounces;
         public Foe last;
         public Color visualColor=Color.cyan;
-        public Color DamageNumberColor=>critical?new Color(1,.9f,.12f):moduleAmplified?new Color(1,.22f,.16f):Color.white;
+        public static readonly Color LegendaryDamageColor=new Color(1f,.36f,.04f);
+        public Color DamageNumberColor=>legendaryEffect?LegendaryDamageColor:critical?new Color(1,.9f,.12f):moduleAmplified?new Color(1,.22f,.16f):Color.white;
         void Update()
         {
             if(game==null || !game.Active) return;
@@ -202,7 +203,7 @@ namespace NeonVault
                         for(int i=-1;i<=1;i+=2)
                         {
                             var split=game.SpawnBullet(transform.position,Quaternion.Euler(0,i*40,0)*velocity.normalized,true,damage*.3f,18,Color.cyan,GunEffect.Normal,hitAccuracy);
-                            split.critical=critical;split.moduleAmplified=moduleAmplified;split.last=target; // Leave the struck enemy before looking for a new collision.
+                            split.critical=critical;split.moduleAmplified=moduleAmplified;split.legendaryEffect=legendaryEffect;split.last=target; // Leave the struck enemy before looking for a new collision.
                         }
                         if(next!=null) { velocity=(next.transform.position-transform.position).normalized*25; life=2; return; }
                     }

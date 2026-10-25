@@ -63,8 +63,8 @@ namespace NeonVault
             var shader = Resources.Load<Shader>("Shaders/LootRarityLight");
             if (!shader) return null;
             var material = new Material(shader) { name = "Loot rarity " + rarity + (ground ? " ground" : " beam") };
-            Color color = Arsenal.Colors[index];
-            color.a = index == 0 ? .55f : index == 1 ? .70f : .90f;
+            Color color = rarity == Rarity.Legendary ? new Color(1f, .32f, .025f) : Arsenal.Colors[index];
+            color.a = rarity == Rarity.Legendary ? 1f : index == 0 ? .55f : index == 1 ? .70f : .90f;
             material.SetColor("_Color", color);
             material.SetFloat("_Ground", ground ? 1 : 0);
             cache[index] = material;
@@ -79,12 +79,21 @@ namespace NeonVault
             int tier = Mathf.Clamp((int)rarity, 0, Arsenal.Colors.Length - 1);
             var beam = new GameObject("Loot rarity beam");
             beam.transform.SetParent(root, false);
-            // The light column rises from the pickup to approximately the player's height.
-            // Rarity changes width and color, rather than making common items hard to see.
+            // Legendary light rises 1.5 times higher, with a second additive core.
             beam.transform.localPosition = Vector3.up * .10f;
-            beam.transform.localScale = new Vector3(.10f + tier * .018f, 2.2f, .10f + tier * .018f);
+            float width = .10f + tier * .018f;
+            beam.transform.localScale = new Vector3(width, rarity == Rarity.Legendary ? 3.3f : 2.2f, width);
             beam.AddComponent<MeshFilter>().sharedMesh = Column();
             beam.AddComponent<MeshRenderer>().sharedMaterial = beamPaint;
+
+            if (rarity == Rarity.Legendary)
+            {
+                var core = new GameObject("Legendary bright core");
+                core.transform.SetParent(beam.transform, false);
+                core.transform.localScale = new Vector3(.48f, 1f, .48f);
+                core.AddComponent<MeshFilter>().sharedMesh = Column();
+                core.AddComponent<MeshRenderer>().sharedMaterial = beamPaint;
+            }
 
         }
     }

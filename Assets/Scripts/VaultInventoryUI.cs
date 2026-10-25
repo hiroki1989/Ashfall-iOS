@@ -206,7 +206,7 @@ namespace NeonVault
         void DrawAmmoInventoryStrip(float y)
         {
             Panel(new Rect(40,y,1360,30),Cyan);
-            for(int i=0;i<AmmoTypeCount;i++){var type=(AmmoType)i;Text(58+i*270,y+5,AmmoLabel(type)+"  "+AmmoReserve(type)+T(" in reserve"," 発"),tiny,Mist,260);}
+            for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);Text(58+i*335,y+5,AmmoLabel(type)+"  "+AmmoReserve(type)+T(" in reserve"," 発"),tiny,Mist,325);}
         }
         internal void DrawMeleeIcon(Rect rect,MeleeWeaponFamily family)
         {

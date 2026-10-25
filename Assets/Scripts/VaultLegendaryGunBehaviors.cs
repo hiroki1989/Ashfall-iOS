@@ -17,7 +17,7 @@ namespace NeonVault
             Vector3 source=origin+Vector3.up*.65f;
             var targets=LegendaryGunTargets(origin,10);
             Foe first=variant==1?struck:struck!=null&&!struck.dead?struck:targets.Count>0?targets[0]:null;
-            Burst(origin,color,5);
+            Burst(origin,color,13);
             switch(id)
             {
                 // Kestrel: deliberate geometry and target selection.
@@ -144,7 +144,7 @@ namespace NeonVault
             var targets=LegendaryGunTargets(origin,10);
             Foe first=struck!=null&&!struck.dead?struck:targets.Count>0?targets[0]:null;
             Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:Vector3.forward;
-            Burst(origin,color,4);
+            Burst(origin,color,11);
             switch(mechanism)
             {
                 case 0: // Prism: three narrow crossing sight lanes.
@@ -209,7 +209,7 @@ namespace NeonVault
         {
             direction.y=0;if(direction.sqrMagnitude<.01f)return;
             var shot=SpawnBullet(source,direction.normalized,true,damage,22,color,effect,100);
-            shot.life=.55f;shot.moduleAmplified=true;
+            shot.life=.55f;shot.legendaryEffect=true;
         }
         void LegendaryGunPush(Foe foe,Vector3 direction,float distance)
         {if(foe==null||foe.dead)return;direction.y=0;if(direction.sqrMagnitude>.01f)foe.transform.position=MoveWithinRoom(foe.transform.position,direction.normalized*distance,.6f);}

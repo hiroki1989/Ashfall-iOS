@@ -51,7 +51,7 @@ namespace NeonVault
             Text(476,29,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+"  "+VaultLanguage.GunName(gun),new GUIStyle(label){fontSize=20,wordWrap=true},Mist,530);
             Text(476,83,reload>0?T("RELOADING ","装填中 ")+Mathf.CeilToInt(reload*10)/10f:ammo+" / "+EffectiveMagazine+T("   RESERVE ","   予備 ")+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=30},UiPaper,530);
             int alive=0;foreach(var enemy in Enemies)if(enemy&&!enemy.dead)alive++;
-            Text(38,154,cleared?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},cleared?Gold:Mist,740);
+            Text(38,154,ExpeditionExitOpen?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},ExpeditionExitOpen?Gold:Mist,740);
             if(toastTimer>0)Text(360,210,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,670);
             Rect mapRect=new Rect(1165,165,250,150);Box(mapRect,new Color(.035f,.055f,.075f,.74f));
             if(Layout!=null)

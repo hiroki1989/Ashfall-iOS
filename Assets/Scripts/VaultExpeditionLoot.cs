@@ -25,6 +25,40 @@ namespace NeonVault
                 rarity=(Rarity)Mathf.Max((int)rarity,(int)DungeonCatalog.RollRarity(random,boss));
             return rarity;
         }
+        // Contract equipment has its own rarity table; ordinary enemy/cache drops
+        // keep their existing rates. A first-clear cache adds ten percentage points
+        // to legendary by taking them from the lowest eligible tier.
+        public static Rarity RollExpeditionRewardRarity(System.Random random,bool firstClear=false)
+        {
+            double roll=random.NextDouble();
+            if(roll<(firstClear?.25:.15))return Rarity.Legendary;
+            if(roll<(firstClear?.60:.50))return Rarity.Epic;
+            return Rarity.Rare;
+        }
+        public Gun RollExpeditionGun(System.Random random,Rarity rewardRarity)
+        {
+            if(SelectedExpeditionStage==null)return Arsenal.CreateForDungeon(random,DungeonIndex,rewardRarity,DungeonCatalog.ItemLevel(random,DungeonIndex));
+            int level=ExpeditionLootLevel(random),focus=ExpeditionLootFocus(4);
+            Gun item=null;
+            for(int i=0;i<10;i++)
+            {
+                item=Arsenal.CreateForDungeon(random,DungeonIndex,rewardRarity,level);
+                if((int)Arsenal.Category(item.modelVariant)==focus)break;
+            }
+            return item;
+        }
+        public ArmorItem RollExpeditionArmor(System.Random random,Rarity rewardRarity)
+        {
+            if(SelectedExpeditionStage==null)return Armory.CreateForDungeon(random,DungeonIndex,rewardRarity,DungeonCatalog.ItemLevel(random,DungeonIndex));
+            int level=ExpeditionLootLevel(random),focus=1+ExpeditionLootFocus(4);
+            ArmorItem item=null;
+            for(int i=0;i<10;i++)
+            {
+                item=Armory.CreateForDungeon(random,DungeonIndex,rewardRarity,level);
+                if((int)item.slot==focus)break;
+            }
+            return item;
+        }
         public Gun RollExpeditionGun(System.Random random,bool boss=false)
         {
             if(SelectedExpeditionStage==null)return Arsenal.RollForDungeon(random,DungeonIndex,boss);

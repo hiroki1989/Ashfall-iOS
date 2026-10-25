@@ -67,7 +67,7 @@ namespace NeonVault
         {
             if(Vector3.Distance(p,Layout.Entry)<7f||Vector3.Distance(p,Layout.Exit)<2f||Blocked(p,.75f))return false;
             foreach(var existing in fieldAmmoCrates)if(Vector3.Distance(p,existing.position)<2.3f)return false;
-            var type=(AmmoType)rng.Next(AmmoTypeCount);
+            var type=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));
             int amount=AmmoPackSize(type);
             var visual=CreateLootPresentation(AmmoPickupName(type,amount),new Vector3(p.x,.31f,p.z),new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,amount);
             fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,type=type,amount=amount,visual=visual});
@@ -89,7 +89,21 @@ namespace NeonVault
             float scale=DebtAmmoPickupBonus+ArmorTotal(a=>a.ammoBonus)+EquippedWeaponAffixBonus("ammo")+ArtifactAffixBonus("ammo");
             int requested=Mathf.Max(1,Mathf.RoundToInt(nearest.amount*(1+scale))+Mathf.RoundToInt(DebtAmmoBonus(AmmoModel(nearest.type))));
             int picked=Mathf.Min(requested,AmmoCapacity(nearest.type)-AmmoReserve(nearest.type));
-            if(picked<=0){Notify("AMMO FULL / "+AmmoLabel(nearest.type),"弾薬満杯 / "+AmmoLabel(nearest.type));return true;}
+            if(picked<=0)
+            {
+                // Contract caches are inspectable even when every reserve is full
+                // (new games start with full ammunition). Do not soft-lock surveys.
+                if(SelectedExpeditionStage!=null&&!MissionCompleted&&
+                   (ExpeditionAllowsBypass||SelectedExpeditionStage.mission==ExpeditionMission.DestroyNest))
+                {
+                    ExpeditionSupplyRecovered();
+                    if(nearest.visual!=null)Destroy(nearest.visual);
+                    fieldAmmoCrates.Remove(nearest);
+                    Notify("CACHE INSPECTED / AMMO FULL","物資箱を調査 / 弾薬満杯");
+                }
+                else Notify("AMMO FULL / "+AmmoLabel(nearest.type),"弾薬満杯 / "+AmmoLabel(nearest.type));
+                return true;
+            }
             AddAmmo(nearest.type,picked);
             ExpeditionSupplyRecovered();
             if(nearest.visual!=null)Destroy(nearest.visual);

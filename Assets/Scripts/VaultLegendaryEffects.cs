@@ -28,7 +28,7 @@ namespace NeonVault
             {
                 var pulse=legendaryAftershocks[i];if(legendaryClock<pulse.next)continue;
                 pulse.next=legendaryClock+.5f;pulse.ticks--;legendaryResolving=true;
-                try{Burst(pulse.position,LegendaryEffectColor(pulse.maker),6);foreach(var foe in Enemies.ToArray())if(foe!=null&&!foe.dead&&(foe.transform.position-pulse.position).sqrMagnitude<=pulse.radius*pulse.radius&&LineOfSight(pulse.position,foe.transform.position))LegendaryStrike(foe,pulse.damage,LegendaryEffectColor(pulse.maker));}finally{legendaryResolving=false;}
+                try{Burst(pulse.position,LegendaryEffectColor(pulse.maker),12);foreach(var foe in Enemies.ToArray())if(foe!=null&&!foe.dead&&(foe.transform.position-pulse.position).sqrMagnitude<=pulse.radius*pulse.radius&&LineOfSight(pulse.position,foe.transform.position))LegendaryStrike(foe,pulse.damage,LegendaryEffectColor(pulse.maker));}finally{legendaryResolving=false;}
                 if(pulse.ticks<=0)legendaryAftershocks.RemoveAt(i);
             }
             LegendaryTrigger("pulse",PlayerPosition);
@@ -36,7 +36,7 @@ namespace NeonVault
         void ScheduleLegendaryPulse(Vector3 position,float damage,float radius,int ticks,int maker,float initialDelay=.35f)
         {
             if(legendaryAftershocks.Count>=16)legendaryAftershocks.RemoveAt(0);
-            Burst(position,LegendaryEffectColor(maker),4);
+            Burst(position,LegendaryEffectColor(maker),9);
             legendaryAftershocks.Add(new LegendaryAftershock{position=position,damage=damage,radius=radius,ticks=ticks,maker=maker,next=legendaryClock+initialDelay});
         }
         void LegendaryTrigger(string trigger,Vector3 origin,Foe struck=null)
@@ -59,6 +59,7 @@ namespace NeonVault
         }
         void ResolveLegendaryEffect(int maker,int variant,bool armor,Vector3 origin,Foe struck)
         {
+            LegendarySignature(origin,maker,LegendaryEffectColor(maker),LegendaryGunTargets(origin,8));
             if(armor){ResolveArmorLegendary(maker,variant,origin);return;}
             ResolveDistinctLegendaryGun(maker,variant,origin,struck);
         }
@@ -124,7 +125,7 @@ namespace NeonVault
                 case 28: invincible=Mathf.Max(invincible,.22f);ArmorPush(PlayerPosition,1.9f,1.1f,color);break;
                 case 29: if(ArtifactShield>=5){ArtifactShield-=5;UpdateBarrierVisual();foreach(var foe in nearby)if((foe.transform.position-PlayerPosition).sqrMagnitude<6.25f)LegendaryStrike(foe,power*.8f,color);}break;
             }
-            Burst(PlayerPosition,color,4);
+            Burst(PlayerPosition,color,12);
         }
         void ArmorBarrier(float amount){ArtifactShield=Mathf.Min(60,ArtifactShield+amount);UpdateBarrierVisual();}
         void ArmorStagger(Foe foe,float seconds,Color color)
@@ -149,32 +150,33 @@ namespace NeonVault
         void LegendarySignature(Vector3 origin,int maker,Color color,List<Foe> targets)
         {
             var obj=new GameObject("Legendary signature / "+maker);obj.transform.SetParent(world,false);
-            var line=obj.AddComponent<LineRenderer>();line.useWorldSpace=true;line.startWidth=.065f;line.endWidth=.025f;
+            var line=obj.AddComponent<LineRenderer>();line.useWorldSpace=true;line.startWidth=.14f;line.endWidth=.06f;
             line.material=new Material(Resources.Load<Shader>("VaultTrail"));line.material.color=color;line.startColor=line.endColor=color;
             if(maker==0||maker==2||maker==3)
             {
-                int links=maker==2?Mathf.Min(3,targets.Count):Mathf.Min(1,targets.Count);line.positionCount=1+links*8;
+                int links=maker==2?Mathf.Min(3,targets.Count):Mathf.Min(2,targets.Count);line.positionCount=1+links*8;
                 Vector3 from=origin+Vector3.up*.65f;line.SetPosition(0,from);
-                for(int n=0;n<links;n++){Vector3 to=targets[n].transform.position+Vector3.up*.7f;for(int k=1;k<=8;k++){float t=k/8f;Vector3 at=Vector3.Lerp(from,to,t);if(maker==2&&k<8)at+=Vector3.up*Mathf.Sin(k*2.3f)*.18f;line.SetPosition(n*8+k,at);}from=to;}
+                for(int n=0;n<links;n++){Vector3 to=targets[n].transform.position+Vector3.up*.7f;for(int k=1;k<=8;k++){float t=k/8f;Vector3 at=Vector3.Lerp(from,to,t);if(maker==2&&k<8)at+=Vector3.up*Mathf.Sin(k*2.3f)*.38f;line.SetPosition(n*8+k,at);}from=to;}
             }
             else
             {
                 line.loop=true;line.positionCount=48;float radius=maker==4?4:maker==1?2.8f:2.5f;
                 for(int i=0;i<48;i++){float a=i*Mathf.PI*2/48;line.SetPosition(i,origin+new Vector3(Mathf.Cos(a)*radius,.15f,Mathf.Sin(a)*radius));}
             }
-            obj.AddComponent<LegendarySignatureLifetime>();Destroy(obj,.24f);
+            obj.AddComponent<LegendarySignatureLifetime>();Destroy(obj,.38f);
         }
         void LegendaryStrike(Foe foe,float damage,Color color)
         {
             if(foe==null||foe.dead)return;var point=foe.transform.position+Vector3.up*.75f;
             CombatVisuals.Impact(point,Vector3.up,color,GunEffect.Normal,world);
-            foe.Hit(damage,point,color,100);
+            Burst(point,color,7);
+            foe.Hit(damage,point,color,100,Shot.LegendaryDamageColor);
         }
         public void LegendaryBulletHit(Foe foe,Vector3 point)=>LegendaryTrigger("hit",point,foe);
         void LegendaryModifyShot(Shot shot)
         {
             if(shot==null||!shot.friendly)return;
-            if(legendaryClock<legendaryPrecisionUntil){shot.damage*=1.25f;shot.hitAccuracy=100;shot.moduleAmplified=true;}
+            if(legendaryClock<legendaryPrecisionUntil){shot.damage*=1.25f;shot.hitAccuracy=100;shot.legendaryEffect=true;}
         }
     }
     public sealed class LegendarySignatureLifetime:MonoBehaviour

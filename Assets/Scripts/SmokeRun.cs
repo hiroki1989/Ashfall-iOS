@@ -233,7 +233,7 @@ namespace NeonVault
             Check(Armory.Name(uniqueHead,false)!=Armory.Name(uniqueChest,false)&&Armory.Name(uniqueHead,true)!=Armory.Name(uniqueChest,true),"legendary armor names identify their individual equipment piece in both languages");
             for(int model=0;model<Arsenal.ModelCount;model++)
             {
-                var expected=model==6||model==10||model==11?AmmoType.LightMachineGun:Arsenal.Category(model)==WeaponClass.Handgun?AmmoType.Handgun:Arsenal.Category(model)==WeaponClass.Shotgun?AmmoType.Shotgun:Arsenal.Category(model)==WeaponClass.SniperRifle?AmmoType.SniperRifle:AmmoType.AssaultRifle;
+                var expected=Arsenal.Category(model)==WeaponClass.Handgun?AmmoType.Handgun:Arsenal.Category(model)==WeaponClass.Shotgun?AmmoType.Shotgun:Arsenal.Category(model)==WeaponClass.SniperRifle?AmmoType.SniperRifle:AmmoType.AssaultRifle;
                 Check(VaultGame.AmmoForGun(Arsenal.Model(model,Rarity.Common))==expected,"weapon model uses its own reserve-ammo family / "+model);
             }
         }
@@ -243,8 +243,14 @@ namespace NeonVault
             Check(game.AmmoCratesPlannedThisRun==DungeonCatalog.Get(game.DungeonIndex).AreaCount*cratesPerFloor,"each floor plans the configured number of ammunition crates");
             Check(game.AmmoCratesNearbyCount==cratesPerFloor,"current floor actually places its configured ammunition crates / "+game.AmmoCratesNearbyCount+" of "+cratesPerFloor);
             bool mapValid=ExpeditionMap.StageCount==100;
-            for(int region=0;region<5;region++){int regional=0;for(int id=0;id<ExpeditionMap.StageCount;id++){var stage=ExpeditionMap.Get(id);if(stage.region==region){regional++;mapValid&=stage.level>=1&&stage.level<=10&&stage.legacyDungeonIndex>=0&&stage.legacyDungeonIndex<3;if(stage.mission==ExpeditionMission.ClearHostiles)mapValid&=stage.Target==(VaultLanguage.Japanese?"区域の敵":"Zone hostiles");if(stage.mission==ExpeditionMission.RecoverSupplies)mapValid&=stage.Target==(VaultLanguage.Japanese?"補給物資":"Supply cache");if(stage.mission==ExpeditionMission.DestroyNest)mapValid&=stage.Target==(VaultLanguage.Japanese?"再生母体の巣":"Flesh Weaver nest");}}mapValid&=regional==20;}
+            int[] missionKinds=new int[6];
+            for(int region=0;region<5;region++){int regional=0;for(int id=0;id<ExpeditionMap.StageCount;id++){var stage=ExpeditionMap.Get(id);if(stage.region==region){regional++;mapValid&=stage.level>=1&&stage.level<=10&&stage.legacyDungeonIndex>=0&&stage.legacyDungeonIndex<3&&stage.Target.Length>0&&ExpeditionMap.MissionLabel(stage.mission,false).Length>0&&ExpeditionMap.MissionLabel(stage.mission,true).Length>0;missionKinds[(int)stage.mission]++;}}mapValid&=regional==20;}
+            foreach(int count in missionKinds)mapValid&=count>=10;
             Check(mapValid,"expedition catalog has 100 level-gated sites across five 20-site regions");
+            var rewardRandom=new System.Random(24680);int[] normalRewardRarities=new int[5],firstRewardRarities=new int[5];
+            for(int i=0;i<10000;i++){normalRewardRarities[(int)VaultGame.RollExpeditionRewardRarity(rewardRandom)]++;firstRewardRarities[(int)VaultGame.RollExpeditionRewardRarity(rewardRandom,true)]++;}
+            Check(normalRewardRarities[(int)Rarity.Common]==0&&normalRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(normalRewardRarities[(int)Rarity.Rare]-5000)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Legendary]-1500)<200,"contract equipment rarity is rare 50%, epic 35%, legendary 15%");
+            Check(firstRewardRarities[(int)Rarity.Common]==0&&firstRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(firstRewardRarities[(int)Rarity.Rare]-4000)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Legendary]-2500)<220,"first-clear contract equipment raises legendary chance by ten points");
             Check(game.ScrapLevelMultiplier>=1&&game.ScaleScrap(10000)>=100,"scrap transactions use the reduced base scale and level growth");
             Check(game.AmmoPickupEnglish(AmmoType.Handgun,9)=="Handgun rounds ×9"&&game.AmmoPickupJapanese(AmmoType.Shotgun,4)=="散弾 ×4","ammo pickup labels identify type and exact quantity in both languages");
             int scrapDrops=0;bool scrapRange=true;for(int i=0;i<1000;i++)if(game.TryRollScrapDrop(false,out int amount)){scrapDrops++;scrapRange&=amount>=game.ScaleScrap(12000+game.DungeonIndex*3000)&&amount<=game.ScaleScrap(32000+game.DungeonIndex*3000);}

@@ -280,7 +280,7 @@ namespace NeonVault
             else if(VaultMobileInputBridge.Firing&&fireTimer<=0)Fire();
             if(VaultMobileInputBridge.MeleePressed)AttackMelee();
             if(VaultMobileInputBridge.Pressed(MobileAction.Pickup,KeyCode.F)&&!OpenNearbyAmmoCrate()&&!OpenNearbyChest())PickupNearest();
-            if(cleared&&VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)&&Vector3.Distance(player.position,ExitPosition)<3)Advance();
+            if(ExpeditionExitOpen&&VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)&&Vector3.Distance(player.position,ExitPosition)<3)Advance();
             shake=Mathf.Max(0,shake-Time.deltaTime*4);
             UpdateCamera(false);
         }
@@ -369,7 +369,7 @@ namespace NeonVault
             if(!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
-            var ammoType=(AmmoType)rng.Next(AmmoTypeCount);if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
+            var ammoType=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
             float gunDropChance=boss?(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceBoss : 1f/3f)
                 :(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceNormal : .08f);
             gunDropChance=Mathf.Clamp01(gunDropChance);
@@ -452,10 +452,11 @@ namespace NeonVault
             if(!StoreWeapon(drop.gun)){Notify("10 weapon slots full / discard a weapon in [I]","銃10枠が満杯 / [I]で所持品を整理してください");return;}drops.Remove(drop);Destroy(drop.visual);
             audioSource.PlayOneShot(pickupSound);Notify("WEAPON: "+VaultLanguage.GunName(drop.gun,false)+" / Assign in [I]","銃: "+VaultLanguage.GunName(drop.gun,true)+" / [I]で装備");
         }
+        bool ExpeditionExitOpen=>cleared||(ExpeditionAllowsBypass&&(room<CurrentDungeon.AreaCount-1||MissionCompleted));
         public void Advance()
         {
-            if(screen!=Screen.Playing||!cleared)return;
-            if(room>=CurrentDungeon.AreaCount-1){Finish(true);return;}
+            if(screen!=Screen.Playing||!ExpeditionExitOpen)return;
+            if(room>=CurrentDungeon.AreaCount-1||(ExpeditionAllowsBypass&&MissionCompleted)){Finish(true);return;}
             choices=new[]{0,1,2,3,4,5,6};
             for(int i=choices.Length-1;i>0;i--) { int j=rng.Next(i+1); int a=choices[i];choices[i]=choices[j];choices[j]=a; }
             screen=Screen.Reward;

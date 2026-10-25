@@ -8,13 +8,18 @@ namespace NeonVault
 
     public partial class VaultGame
     {
+        // Keep the fifth saved slot for migration from older LMG ammunition saves.
         public const int AmmoTypeCount=5;
+        public const int ActiveAmmoTypeCount=4;
+        static readonly AmmoType[] ActiveAmmoTypes={AmmoType.Handgun,AmmoType.Shotgun,AmmoType.AssaultRifle,AmmoType.SniperRifle};
+        public static AmmoType ActiveAmmoTypeAt(int index)=>ActiveAmmoTypes[Mathf.Clamp(index,0,ActiveAmmoTypeCount-1)];
+        public static AmmoType NormalizeAmmoType(AmmoType type)=>type==AmmoType.LightMachineGun?AmmoType.AssaultRifle:type;
         public int ScrapLevelMultiplier=>Mathf.Clamp(1+Mathf.Max(0,DebtLevel-1)/2,1,20);
         public int ScaleScrap(int baseHundredths)=>Mathf.Max(1,Mathf.RoundToInt(baseHundredths/100f*ScrapLevelMultiplier*Mathf.Max(0f,VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.scrapGainMultiplier:1f)));
         static readonly int[] AmmoPackSizes={30,12,30,6,60};
         static readonly int[] BaseAmmoCapacities={240,96,360,60,480};
-        public int AmmoCapacitySkillBonus(AmmoType type)=>ValidAmmo(type)?Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*(DebtAmmoCapacityBonus(AmmoModel(type)))):0;
-        public int AmmoCapacity(AmmoType type)=>ValidAmmo(type)?BaseAmmoCapacities[(int)type]+AmmoCapacitySkillBonus(type)+Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*.1f*AmmoCapacityTierFor(type)):0;
+        public int AmmoCapacitySkillBonus(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*DebtAmmoCapacityBonus(AmmoModel(type))):0;}
+        public int AmmoCapacity(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?BaseAmmoCapacities[(int)type]+AmmoCapacitySkillBonus(type)+Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*.1f*AmmoCapacityTierFor(type)):0;}
         // Match the salvage-credit economy used by the safehouse vendors.
         static readonly int[] AmmoPackCosts={1800,2400,2000,2200,2800};
         readonly int[] ammoReserves=new int[AmmoTypeCount];
@@ -27,8 +32,6 @@ namespace NeonVault
         public static AmmoType AmmoForGun(Gun item)
         {
             int model=VaultLanguage.DisplayModel(item);
-            var recipe=DistinctEquipmentDesigns.For(item);
-            if(model==6||(recipe!=null&&recipe.gunClass==3))return AmmoType.LightMachineGun;
             switch(Arsenal.Category(model))
             {
                 case WeaponClass.Handgun:return AmmoType.Handgun;
@@ -37,19 +40,31 @@ namespace NeonVault
                 default:return AmmoType.AssaultRifle;
             }
         }
-        public int AmmoReserve(AmmoType type)=>ValidAmmo(type)?ammoReserves[(int)type]:0;
-        public int AmmoPackSize(AmmoType type)=>ValidAmmo(type)?AmmoPackSizes[(int)type]:0;
-        public int AmmoPackCost(AmmoType type)=>ValidAmmo(type)?PriceAfterDiscount(AmmoPackCosts[(int)type]):0;
-        public string AmmoLabel(AmmoType type)=>VaultLanguage.T(AmmoEnglish(type),AmmoJapanese(type));
+        public int AmmoReserve(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?ammoReserves[(int)type]:0;}
+        public int AmmoPackSize(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?AmmoPackSizes[(int)type]:0;}
+        public int AmmoPackCost(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?PriceAfterDiscount(AmmoPackCosts[(int)type]):0;}
+        public string AmmoLabel(AmmoType type)=>VaultLanguage.T(AmmoEnglish(NormalizeAmmoType(type)),AmmoJapanese(NormalizeAmmoType(type)));
         public int EffectiveMagazine=>gun==null?0:Mathf.Max(1,Mathf.RoundToInt(gun.magazine*(1+ArmorTotal(a=>a.ammoBonus)+ArtifactAffixBonus("ammo"))));
         static bool ValidAmmo(AmmoType type)=>(int)type>=0&&(int)type<AmmoTypeCount;
-        static string AmmoEnglish(AmmoType type)=>type==AmmoType.Handgun?"Handgun rounds":type==AmmoType.Shotgun?"Shotgun shells":type==AmmoType.SniperRifle?"Sniper rounds":type==AmmoType.LightMachineGun?"LMG rounds":"Rifle rounds";
-        static string AmmoJapanese(AmmoType type)=>type==AmmoType.Handgun?"拳銃弾":type==AmmoType.Shotgun?"散弾":type==AmmoType.SniperRifle?"狙撃弾":type==AmmoType.LightMachineGun?"軽機関銃弾":"ライフル弾";
+        static string AmmoEnglish(AmmoType type)=>type==AmmoType.Handgun?"Handgun rounds":type==AmmoType.Shotgun?"Shotgun shells":type==AmmoType.SniperRifle?"Sniper rounds":"Machine gun rounds";
+        static string AmmoJapanese(AmmoType type)=>type==AmmoType.Handgun?"拳銃弾":type==AmmoType.Shotgun?"散弾":type==AmmoType.SniperRifle?"狙撃弾":"機関銃弾";
         int[] SaveAmmoReserves()=>(int[])ammoReserves.Clone();
-        void LoadAmmoReserves(int[] saved){Array.Clear(ammoReserves,0,ammoReserves.Length);if(saved!=null)for(int i=0;i<Math.Min(saved.Length,ammoReserves.Length);i++)ammoReserves[i]=Mathf.Clamp(saved[i],0,AmmoCapacity((AmmoType)i));}
-        void SeedAmmoReserves(){for(int i=0;i<AmmoTypeCount;i++)ammoReserves[i]=AmmoCapacity((AmmoType)i);}
+        void LoadAmmoReserves(int[] saved)
+        {
+            Array.Clear(ammoReserves,0,ammoReserves.Length);
+            if(saved==null)return;
+            for(int i=0;i<Math.Min(saved.Length,ammoReserves.Length);i++)
+            {
+                if(i==(int)AmmoType.LightMachineGun)continue;
+                ammoReserves[i]=Mathf.Clamp(saved[i],0,AmmoCapacity((AmmoType)i));
+            }
+            if(saved.Length>(int)AmmoType.LightMachineGun)
+                ammoReserves[(int)AmmoType.AssaultRifle]=Mathf.Min(AmmoCapacity(AmmoType.AssaultRifle),ammoReserves[(int)AmmoType.AssaultRifle]+Mathf.Max(0,saved[(int)AmmoType.LightMachineGun]));
+        }
+        void SeedAmmoReserves(){Array.Clear(ammoReserves,0,ammoReserves.Length);for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);ammoReserves[(int)type]=AmmoCapacity(type);}}
         public bool BuyAmmo(AmmoType type,int packs)
         {
+            type=NormalizeAmmoType(type);
             if(!ValidAmmo(type)||packs<=0||packs>20)return false;
             int amount=Mathf.Min(AmmoPackSizes[(int)type]*packs,AmmoCapacity(type)-AmmoReserve(type));
             if(amount<=0)return false;
@@ -58,7 +73,7 @@ namespace NeonVault
             ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();return true;
         }
         public void AddAmmo(AmmoType type,int amount)
-        {if(!ValidAmmo(type)||amount<=0)return;ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();}
+        {type=NormalizeAmmoType(type);if(!ValidAmmo(type)||amount<=0)return;ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();}
         bool TryStartReload()
         {
             if(gun==null||reload>0||ammo>=EffectiveMagazine||AmmoReserve(AmmoForGun(gun))<=0)return false;
@@ -93,13 +108,14 @@ namespace NeonVault
                 else Notify(AmmoPickupEnglish(d.ammoType,pickedAmmo),AmmoPickupJapanese(d.ammoType,pickedAmmo));
             }
         }
-        static int AmmoModel(AmmoType type)=>type==AmmoType.Handgun?14:type==AmmoType.Shotgun?3:type==AmmoType.SniperRifle?2:type==AmmoType.LightMachineGun?6:12;
+        static int AmmoModel(AmmoType type)=>type==AmmoType.Handgun?14:type==AmmoType.Shotgun?3:type==AmmoType.SniperRifle?2:12;
         void AddScrapDrop(Vector3 p,int credits)
         {
             p.y=.22f;var visual=CreateLootPresentation("Scrap",p,new Vector3(.40f,.20f,.42f),Gold,LootPresentationKind.Scrap);supplyDrops.Add(new SupplyDrop{credits=credits,position=p,visual=visual});
         }
         void AddAmmoDrop(Vector3 p,AmmoType type,int amount)
         {
+            type=NormalizeAmmoType(type);
             p.y=.22f;Color color=type==AmmoType.Shotgun?new Color(1,.64f,.22f):type==AmmoType.SniperRifle?new Color(.45f,.8f,1):type==AmmoType.Handgun?new Color(.86f,.82f,.56f):Cyan;
             var visual=CreateLootPresentation(AmmoPickupName(type,amount),p,new Vector3(.62f,.24f,.58f),color,LootPresentationKind.Ammo,type,amount);supplyDrops.Add(new SupplyDrop{ammoType=type,ammoAmount=amount,position=p,visual=visual});
         }
@@ -133,7 +149,7 @@ namespace NeonVault
                 var item=RollExpeditionArtifact(rng);if(StoreArtifact(item)){Notify("CACHE: "+item.Name,"物資箱: "+item.Name);Destroy(nearest.visual);}else{Notify("CACHE: module storage full","物資箱: モジュールの所持枠が満杯");return true;}
             }
             else if(roll<77){int amount=ScaleScrap(35000+DungeonIndex*15000+rng.Next(25001));AwardCredits(amount);Destroy(nearest.visual);Notify("CACHE: SCRAP +"+amount,"物資箱: スクラップ +"+amount);}
-            else {var type=(AmmoType)rng.Next(AmmoTypeCount);int amount=AmmoPackSizes[(int)type];AddAmmo(type,amount);Destroy(nearest.visual);Notify("CACHE: "+AmmoLabel(type)+" +"+amount,"物資箱: "+AmmoLabel(type)+" +"+amount);}
+            else {var type=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));int amount=AmmoPackSize(type);AddAmmo(type,amount);Destroy(nearest.visual);Notify("CACHE: "+AmmoLabel(type)+" +"+amount,"物資箱: "+AmmoLabel(type)+" +"+amount);}
             ExpeditionSupplyRecovered();nearest.opened=true;return true;
         }
     }

@@ -5,8 +5,8 @@ namespace NeonVault {
  // Each maker has four complete series per class, each with four tuned variants.
  public static class GunSeriesDesigns {
   public const int ClassCount=6,SeriesCount=12,VariantsPerSeries=4,RegularCount=1728,FirstNewLegendary=1758;
-  static readonly string[] classes={"Assault Rifle","Handgun","Shotgun","LMG","SMG","Sniper Rifle"};
-  static readonly string[] classesJa={"アサルトライフル","拳銃","ショットガン","軽機関銃","短機関銃","狙撃銃"};
+  static readonly string[] classes={"Machine Gun","Handgun","Shotgun","Machine Gun","Machine Gun","Sniper Rifle"};
+  static readonly string[] classesJa={"機関銃","拳銃","ショットガン","機関銃","機関銃","狙撃銃"};
   static readonly string[] makerNames={"Kestrel","Ironwake","Voltarc","Mireline","Cinder","Aegis"};
   static readonly string[] makerNamesJa={"ケストレル","アイアンウェイク","ヴォルトアーク","マイアライン","シンダー","イージス"};
   static readonly string[,] seriesNames={

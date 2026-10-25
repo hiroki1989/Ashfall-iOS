@@ -36,7 +36,8 @@ namespace NeonVault
                 return level;
             }
         }
-        public int DebtSkillPoints => Mathf.Max(0,DebtLevel-1-unlockedDebtSkills.Count);
+        // Legacy expedition token saves now contribute to the same spendable pool.
+        public int DebtSkillPoints => Mathf.Max(0,DebtLevel-1+ExpeditionTokens-unlockedDebtSkills.Count);
         public int DebtRemaining => Mathf.Max(0,InitialDebt-debtPaid);
         public int DebtNextLevelRemaining => DebtLevel>=DebtLevelCap?0:Mathf.Max(0,DebtTotalForLevel(DebtLevel+1)-debtPaid);
         public int DebtNextLevelRequirement => DebtLevel>=DebtLevelCap?0:DebtRequirementForLevel(DebtLevel+1);
