@@ -171,7 +171,7 @@ namespace NeonVault
                 // Avoid fragmented pairs/triples at rivers and camp safety boundaries.
                 if(positions.Count!=count)continue;
                 int level=Mathf.Max(1,DebtLevel+random.Next(-1,2));
-                foreach(var p in positions)worldEnemySpawns.Add(new WorldEnemySpawn{position=p,kind=roster[random.Next(roster.Length)],level=level,elite=random.NextDouble()<.045});
+                foreach(var p in positions)worldEnemySpawns.Add(new WorldEnemySpawn{position=p,kind=roster[random.Next(roster.Length)],level=level,elite=random.NextDouble()<.0225});
             }
         }
 

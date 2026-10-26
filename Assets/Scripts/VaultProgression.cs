@@ -11,6 +11,7 @@ namespace NeonVault {
   readonly Dictionary<string,float> artifactTimers=new Dictionary<string,float>(); float ArtifactTimer(ArtifactItem a)=>a!=null&&artifactTimers.TryGetValue(a.id,out float value)?value:0;float armorKillTimer,armorDashTimer;float reloadSurge;float artifactCombatClock;readonly Dictionary<string,float> reloadSurgeExpiry=new Dictionary<string,float>();int shopCycle; readonly List<ShopOffer> shopStock=new List<ShopOffer>();Vector2 artifactScroll;bool artifactPage;
   [Serializable] class ProgressSave{public int dungeon,unlocked,credits,cycle,stage=-1,tokens,moduleCapacityTier;public bool hasSelectedStage;public List<int> clearedStages;public List<ArtifactItem> artifacts;public string[] equipped;public List<int> purchased;}
   public class ShopOffer{public Gun gun;public ArmorItem armor;public ArtifactItem artifact;public MeleeWeaponItem melee;public int cost;public bool purchased;}
+  Gun completedRewardGun;ArmorItem completedRewardArmor;
   public IReadOnlyList<ShopOffer> ShopStock=>shopStock;
   public void OpenArtifactInventory(){artifactPage=true;if(!InventoryOpen)ToggleInventory();}
   readonly List<int> shopPurchased=new List<int>();
@@ -19,7 +20,7 @@ namespace NeonVault {
   public void EnterHub(){SaveInventory();EnsureOverworldState();IsOverworld=false;ClearRunCheckpoint();shake=0;runDamage=runFire=runVitality=runDash=runChain=runHarvest=0;damageBonus=fireBonus=0;ClearRunUpgradeHistory();shopSellingPage=false;pendingSaleKey=null;ResetGameplayOverlays();ResetArtifactCombat();RefreshPermanentStats();hp=maxHp;RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);screen=Screen.Hub;BuildHub();}
   public bool EnterDungeon(int index){if(!smoke||index<0||index>HighestUnlocked||index>=3)return false;SelectedStageId=-1;ResetExpeditionMission();DungeonIndex=index;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
   public bool EnterExpeditionStage(int stageId){if(stageId<0||stageId>=ExpeditionMap.StageCount)return false;if(!smoke&&(!IsOverworld||(WorldGeography.Entrances[stageId]-PlayerPosition).sqrMagnitude>3.5f*3.5f))return false;var stage=ExpeditionMap.Get(stageId);if(stage.level>DebtLevel)return false;SelectedStageId=stageId;ResetExpeditionMission();DungeonIndex=stage.legacyDungeonIndex;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
-  public void OnDungeonFinished(bool won){if(won){ExpeditionRunCompleted();if(SelectedExpeditionStage==null||MissionCompleted){HighestUnlocked=Mathf.Min(2,Mathf.Max(HighestUnlocked,DungeonIndex+1));AwardCredits(ScaleScrap(new[]{5000000,10000000,20000000}[DungeonIndex]));if(SelectedStageId>=0){if(clearedExpeditionStages.Contains(SelectedStageId))GrantRepeatExpeditionReward(SelectedStageId);else GrantExpeditionReward(SelectedStageId);}}else Notify("MISSION FAILED / EXTRACTION PAYOUT ONLY","任務失敗 / 脱出報酬のみ");}shopCycle++;shopPurchased.Clear();CreateShopStock();SaveProgression();}
+  public void OnDungeonFinished(bool won){completedRewardGun=null;completedRewardArmor=null;if(won){ExpeditionRunCompleted();if(SelectedExpeditionStage==null||MissionCompleted){HighestUnlocked=Mathf.Min(2,Mathf.Max(HighestUnlocked,DungeonIndex+1));AwardCredits(ScaleScrap(new[]{5000000,10000000,20000000}[DungeonIndex]));if(SelectedStageId>=0){if(clearedExpeditionStages.Contains(SelectedStageId))GrantRepeatExpeditionReward(SelectedStageId);else GrantExpeditionReward(SelectedStageId);}}else Notify("MISSION FAILED / EXTRACTION PAYOUT ONLY","任務失敗 / 脱出報酬のみ");}shopCycle++;shopPurchased.Clear();CreateShopStock();SaveProgression();}
   void GrantExpeditionReward(int stageId)
   {
    if(clearedExpeditionStages.Contains(stageId))return;
@@ -32,11 +33,11 @@ namespace NeonVault {
      cacheEn="SCRAP +"+scrap.ToString("N0");cacheJa="スクラップ +"+scrap.ToString("N0");break;
     case 1:
      var gear=RollExpeditionGun(r,RollExpeditionRewardRarity(r,true));
-     if(StoreWeapon(gear)){cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
+     if(StoreWeapon(gear)){completedRewardGun=gear;cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
      else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
     case 2:
      var armor=RollExpeditionArmor(r,RollExpeditionRewardRarity(r,true));
-     if(StoreArmor(armor)){cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
+     if(StoreArmor(armor)){completedRewardArmor=armor;cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
      else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
     default:ExpeditionTokens++;cacheEn="SKILL POINT +1";cacheJa="スキルポイント +1";break;
    }
@@ -57,7 +58,9 @@ namespace NeonVault {
    }
    bool weapon=r.Next(2)==0;
    Rarity rarity=RollExpeditionRewardRarity(r);
-   bool stored=weapon?StoreWeapon(RollExpeditionGun(r,rarity)):StoreArmor(RollExpeditionArmor(r,rarity));
+   var repeatGun=weapon?RollExpeditionGun(r,rarity):null;var repeatArmor=weapon?null:RollExpeditionArmor(r,rarity);
+   bool stored=weapon?StoreWeapon(repeatGun):StoreArmor(repeatArmor);
+   if(stored){completedRewardGun=repeatGun;completedRewardArmor=repeatArmor;}
    if(stored)Notify(weapon?"REPEAT REWARD / WEAPON":"REPEAT REWARD / ARMOR",weapon?"再攻略報酬 / 銃":"再攻略報酬 / 防具");
    else {int salvage=ScaleScrap(18000000);AwardCredits(salvage);Notify("REPEAT REWARD / SALVAGE +"+salvage.ToString("N0"),"再攻略報酬 / 換金 +"+salvage.ToString("N0"));}
   }
@@ -99,7 +102,7 @@ namespace NeonVault {
   public int ShopOfferPrice(ShopOffer offer)=>offer==null?0:PriceAfterDiscount(offer.cost);
   public void DrawShop(){if(debtPage){DrawDebtOffice();return;}if(shopSellingPage){DrawShopSelling();return;}Box(new Rect(0,0,1440,900),PanelInk);Text(65,85,T("SALVAGE EXCHANGE / MARA","回収品交換所 / マラ"),heading,Gold);Text(65,140,T("Scrap credits ","スクラップ ")+Credits.ToString("N0")+T(" / Stock refreshes after a completed attempt."," / 周回の終了で在庫が更新されます。"),small,Cyan,1150);if(Button(new Rect(865,72,225,48),T("SELL GEAR","装備を売却")))shopSellingPage=true;if(Button(new Rect(1110,72,225,48),T("DEBT OFFICE","返済窓口"))){debtPage=true;debtSkillTreePage=false;}int visibleRow=0;for(int i=0;i<shopStock.Count;i++){var o=shopStock[i];if(o.armor!=null&&!Armory.IsActiveArmor(o.armor))continue;float y=190+visibleRow++*105;Panel(new Rect(65,y,1300,96),Cyan);string name=o.gun!=null?VaultLanguage.GunName(o.gun):o.armor!=null?Armory.Name(o.armor):o.artifact!=null?o.artifact.Name:MeleeWeaponCatalog.Name(o.melee);string detail=o.gun!=null?GunNumbers(o.gun):o.armor!=null?Armory.Stats(o.armor):o.artifact!=null?o.artifact.Description:T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(o.melee)+" · "+T("DMG ","威力 ")+o.melee.damage+" · "+T("RANGE ","射程 ")+o.melee.range.ToString("0.0");int price=ShopOfferPrice(o);if(o.gun!=null)ItemPortraits.Draw(new Rect(80,y+7,78,78),o.gun);else if(o.armor!=null)ItemPortraits.Draw(new Rect(80,y+7,78,78),o.armor);else if(o.melee!=null)DrawMeleeIcon(new Rect(93,y+21,52,52),o.melee.family);else if(o.artifact!=null)ManufacturerBranding.ModulePortrait(new Rect(80,y+7,78,78),o.artifact);else Diamond(120,y+48,23,Cyan);Text(185,y+8,name,label,Gold,820);Text(185,y+42,detail,new GUIStyle(small){wordWrap=true},Mist,820);if(o.purchased)Text(1100,y+29,T("SOLD","売却済み"),label,Mist,230);else if(Button(new Rect(1090,y+24,245,48),T("BUY / ","購入 / ")+price))PurchaseShop(i);}
    Text(65,718,T("FIELD AMMUNITION / ONE PACK","弾薬補給 / 1パック"),small,Gold,500);
-   for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float x=65+i*320;Panel(new Rect(x,744,305,88),Cyan);Text(x+12,750,AmmoLabel(type)+"  /  "+AmmoReserve(type),tiny,Mist,285);if(Button(new Rect(x+10,786,285,40),T("BUY ","購入 ")+AmmoPackSize(type)+T("  /  ","発  /  ")+AmmoPackCost(type)))BuyAmmo(type,1);}
+   for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float x=40+i*278;Panel(new Rect(x,744,268,88),Cyan);Text(x+10,750,AmmoLabel(type)+"  /  "+AmmoReserve(type),tiny,Mist,248);if(Button(new Rect(x+8,786,252,40),T("BUY ","購入 ")+AmmoPackSize(type)+T("  /  ","発  /  ")+AmmoPackCost(type)))BuyAmmo(type,1);}
    if(Button(new Rect(65,847,290,42),T("RETURN TO LAST LIGHT","拠点へ戻る")))screen=Screen.Hub;}
   void DrawArtifactInventory(){Box(new Rect(0,0,1440,900),PanelInk);Text(48,32,T("FIELD MODULES / TWO SLOTS","拡張モジュール / 2枠"),heading,Gold,1050);Text(50,95,T("Permanent equipment. Trigger conditions and cooldowns reset each run.","恒久装備。発動条件と待機時間は周回開始でリセット。"),small,Mist,1100);if(Button(new Rect(1190,80,225,48),T("CLOSE [I / ESC]","閉じる [I / ESC]")))ToggleInventory();if(Button(new Rect(48,145,340,45),T("WEAPONS / ARMOR","銃 / 防具")))artifactPage=false;for(int i=0;i<2;i++){var a=EquippedArtifacts[i];Text(420+i*490,155,T("SLOT ","装備枠 ")+(i+1)+" / "+(a==null?T("EMPTY","未装備"):a.Name),small,Cyan,470);}artifactScroll=GUI.BeginScrollView(new Rect(48,220,1340,570),artifactScroll,new Rect(0,0,1300,Mathf.Max(560,ArtifactInventory.Count*140)));var orderedArtifacts=EquippedFirst(ArtifactInventory,a=>Array.IndexOf(EquippedArtifacts,a)>=0);for(int i=0;i<orderedArtifacts.Count;i++){var a=orderedArtifacts[i];float y=i*140;Panel(new Rect(0,y,1290,130),Arsenal.Colors[(int)a.rarity]);Text(20,y+12,a.Name+" / Lv "+a.level+" / "+VaultLanguage.RarityName(a.rarity),label,Arsenal.Colors[(int)a.rarity],910);Text(20,y+50,a.Description,new GUIStyle(small){wordWrap=true},Mist,910);for(int slot=0;slot<2;slot++)if(Button(new Rect(955+slot*155,y+16,150,44),T("SLOT ","枠 ")+(slot+1)+(EquippedArtifacts[slot]==a?" ✓":"")))EquipArtifact(a,slot);if(Array.IndexOf(EquippedArtifacts,a)<0&&Button(new Rect(955,y+74,305,38),T("DISCARD","破棄"))){DiscardArtifact(a);break;}}GUI.EndScrollView();Text(50,820,ArtifactInventory.Count+" / "+ArtifactCapacity+T(" owned · Effects require their listed trigger conditions"," 所持 · 記載の発動条件を満たす必要があります"),small,Mist,1200);}
  }

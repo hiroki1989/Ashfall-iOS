@@ -113,7 +113,7 @@ namespace NeonVault
                 return;
             }
             MobileCopyAt(260,220,screen==Screen.Victory?T("ZONE SECURED","汚染区域を制圧"):T("SIGNAL LOST","生存信号を喪失"),Gold);
-            MobileCopyAt(260,340,Toast,Mist,940);
+            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(260,335,920,150));else MobileCopyAt(260,340,Toast,Mist,940);
             if(MobileButton(new Rect(260,550,920,140),T("RETURN TO SAFEHOUSE","拠点へ帰還")))EnterHub();
         }    }
 }

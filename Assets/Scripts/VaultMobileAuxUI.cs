@@ -91,7 +91,7 @@ namespace NeonVault
             }
             if(MobileButton(new Rect(40,650,240,110),T("PREV","前へ")))mobileShopPage=Mathf.Max(0,mobileShopPage-1);
             if(MobileButton(new Rect(300,650,240,110),T("NEXT","次へ")))mobileShopPage=Mathf.Min(Mathf.Max(0,(visibleOffers.Count-1)/2),mobileShopPage+1);
-            for(int i=0;i<ActiveAmmoTypeCount;i++){var ammoType=ActiveAmmoTypeAt(i);if(MobileButton(new Rect(40+i*340,780,325,110),AmmoLabel(ammoType)+"\n"+AmmoPackCost(ammoType)))BuyAmmo(ammoType,1);}
+            for(int i=0;i<ActiveAmmoTypeCount;i++){var ammoType=ActiveAmmoTypeAt(i);if(MobileButton(new Rect(40+i*274,780,260,110),AmmoLabel(ammoType)+"\n"+AmmoPackCost(ammoType)))BuyAmmo(ammoType,1);}
         }
         string MobileSaleLegendaryDetail(SaleEntry entry)
         {
@@ -152,13 +152,16 @@ namespace NeonVault
                 int levelCost=DebtNextLevelRequirement;int remainingToNext=DebtNextLevelRemaining;
                 MobileCopyAt(40,205,T("NEXT LEVEL ","次のレベルまで ")+remainingToNext.ToString("N0")+" / "+levelCost.ToString("N0"),Cyan,1000);
                 Rect progress=new Rect(40,245,1360,22);Box(progress,new Color(.12f,.16f,.17f));Box(new Rect(progress.x,progress.y,progress.width*DebtProgressRatio,progress.height),new Color(1,.34f,.23f));
-                int[] payments={1000000,5000000,25000000};for(int i=0;i<3;i++)if(MobileButton(new Rect(40+i*455,295,440,130),T("REPAY ","返済 ")+payments[i].ToString("N0")))RepayDebt(payments[i]);
-                if(MobileButton(new Rect(40,475,1360,120),T("REPAY ALL AVAILABLE","払える分をすべて返済")))RepayDebt(Mathf.Min(Credits,DebtRemaining));
+                int limit=DebtPaymentLimit;debtPaymentAmount=Mathf.Clamp(debtPaymentAmount,0,limit);
+                MobileCopyAt(40,310,T("SELECT PAYMENT  /  ","返済額を選択  /  ")+debtPaymentAmount.ToString("N0")+" / "+limit.ToString("N0"),Cyan,1320);
+                if(limit>0)SetDebtPaymentFraction(GUI.HorizontalSlider(new Rect(55,408,1330,60),debtPaymentAmount/(float)limit,0f,1f));
+                if(MobileButton(new Rect(40,485,655,110),T("MAX AMOUNT","全額を選択")))debtPaymentAmount=limit;
+                if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(MobileButton(new Rect(40,650,1360,130),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
                 return;
             }
-            string[] en={"HANDGUN","SHOTGUN","ASSAULT","PRECISION"},ja={"ハンドガン","ショットガン","アサルト","精密射撃"};
-            for(int i=0;i<4;i++)if(MobileButton(new Rect(40+i*340,220,325,110),T(en[i],ja[i]))){debtTrack=i;mobileSkillPage=0;}
+            string[] en={"HANDGUN","SHOTGUN","ASSAULT","PRECISION","HEAVY MG"},ja={"ハンドガン","ショットガン","アサルトライフル","スナイパーライフル","ヘビーマシンガン"};
+            for(int i=0;i<en.Length;i++)if(MobileButton(new Rect(40+i*277,220,265,110),T(en[i],ja[i]))){debtTrack=i;mobileSkillPage=0;}
             var nodes=debtSkillNodes.FindAll(n=>n.track==en[debtTrack]);mobileSkillPage=Mathf.Clamp(mobileSkillPage,0,Mathf.Max(0,(nodes.Count-1)/2));
             for(int row=0;row<2;row++){int index=mobileSkillPage*2+row;if(index>=nodes.Count)break;var node=nodes[index];float y=350+row*185;Panel(new Rect(40,y,1360,170),Gold);MobileCopyAt(60,y+12,VaultLanguage.Japanese?node.ja:node.en,Gold,930);MobileCopyAt(60,y+65,DebtSkillDescription(node),Mist,930);bool owned=unlockedDebtSkills.Contains(node.id);if(MobileButton(new Rect(1035,y+30,325,110),owned?T("OWNED","取得済"):DebtSkillAvailable(node)?T("UNLOCK","習得"):T("LOCKED","条件不足"))&&!owned)TryUnlockDebtSkill(node.id);}
             if(MobileButton(new Rect(40,780,370,110),T("PREV","前へ")))mobileSkillPage=Mathf.Max(0,mobileSkillPage-1);

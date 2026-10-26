@@ -5,7 +5,7 @@ namespace NeonVault
     public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
     public enum GunEffect { Normal, Scatter, Ricochet, Orbit, Singularity }
     public enum GunHandling { OneHanded, TwoHanded }
-    public enum WeaponClass { Handgun, Shotgun, AssaultRifle, SniperRifle }
+    public enum WeaponClass { Handgun, Shotgun, AssaultRifle, SniperRifle, HeavyMachineGun }
     [System.Serializable] public class GearAffix { public string type; public float value; }
     [System.Serializable]
     public class Gun
@@ -83,7 +83,7 @@ namespace NeonVault
         }
         // SMGs keep a two-hand grip; short shotguns and sidearms remain one-handed.
         public static bool IsOneHanded(int model)=>model==5||(model>=14&&model<=17);
-        public static WeaponClass Category(int model) { if(model==3||model==4||model==5||model==13)return WeaponClass.Shotgun; if(model==2||model==7||model==8)return WeaponClass.SniperRifle; if(model>=14&&model<=17)return WeaponClass.Handgun; return WeaponClass.AssaultRifle; }
+        public static WeaponClass Category(int model) { if(model==3||model==4||model==5||model==13)return WeaponClass.Shotgun; if(model==2||model==7||model==8)return WeaponClass.SniperRifle; if(model>=14&&model<=17)return WeaponClass.Handgun; if(model==1||model==6)return WeaponClass.HeavyMachineGun; return WeaponClass.AssaultRifle; }
         public static GunHandling Handling(Gun gun)=>IsOneHanded(VaultLanguage.DisplayModel(gun))?GunHandling.OneHanded:GunHandling.TwoHanded;
         public static float DefaultAccuracy(int model)
         {

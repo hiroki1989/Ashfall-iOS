@@ -98,8 +98,10 @@ namespace NeonVault
         public void Floor(float w,float d,int sector)
         {
  var floor=Part("Wasteland concrete",PrimitiveType.Cube,new Vector3(0,-.26f,0),new Vector3(w*2,.4f,d*2),Color.white);
- var mat=DistrictMaterial(sector%3==1?0:3,new Color(.76f,.73f,.65f));
- if(mat==null){mat=new Material(Resources.Load<Shader>("VaultSurface"));mat.color=new Color(.46f,.47f,.43f);mat.mainTexture=Resources.Load<Texture2D>("Art/WastelandFloor");mat.mainTextureScale=new Vector2(w/3,d/3);owned.Add(mat);}floor.GetComponent<Renderer>().sharedMaterial=mat;
+ var source=DistrictMaterial(sector%3==1?0:3,new Color(.76f,.73f,.65f));
+ Material mat;
+ if(source!=null){mat=new Material(source);mat.color=source.color*.48f;owned.Add(mat);}
+ else{mat=new Material(Resources.Load<Shader>("VaultSurface"));mat.color=new Color(.23f,.24f,.22f);mat.mainTexture=Resources.Load<Texture2D>("Art/WastelandFloor");mat.mainTextureScale=new Vector2(w/3,d/3);owned.Add(mat);}floor.GetComponent<Renderer>().sharedMaterial=mat;
  Wall(new Vector3(0,0,d+.3f),w*2,0,true);Wall(new Vector3(w+.3f,0,0),d*2,90,true);Wall(new Vector3(0,0,-d-.3f),w*2,0,false);Wall(new Vector3(-w-.3f,0,0),d*2,90,false);
  WastelandFence(new Vector3(-w+4,0,d-1),7);
  for(int x=-(int)w;x<w;x+=6){Column(new Vector3(x,0,d),2.8f);Brazier(new Vector3(x+2,0,d-1));}

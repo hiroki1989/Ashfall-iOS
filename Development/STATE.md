@@ -1,3 +1,8 @@
+## 2026-10-26 / 地図・武器分類・報酬UI・導入演出（版18）
+変更: 広域地図を現在地中心のズーム/ドラッグ/ホイール/ピンチ式へ、道路を共有曲線と間欠的な住宅街道路にしミニマップへ拠点印を追加。床色をダンジョン/拠点で暗くし、中ボス抽選と装備4種の通常/ボスドロップ率を半減（Inspector設定と代替値）。アサルト/ヘビーマシンガン弾薬・スキル分離、名称と並び更新。初回ボス会話7場面、クリア画面に実際に獲得した銃/防具の絵と概要、返済額スライダー、拠点全回復、HPゲージ変更。ProjectSettingsとiOS builderの版/ビルド18。
+検証: UNITY_EDITORなしのランタイム全体コンパイル、Unity 6000.6.0f1 Editor取り込み/スクリプトコンパイル、実描画で拠点床色確認。Editor QAの近接命中10/10、UI/encounter review完了ログ。地図GUIの自動撮影はbatchmodeで画像未保存のため実画面視認・実機タッチは未検証。iOS IPAは未生成。QA中Unityの空きRAMが約1.2GBまで下がったため結果確認後停止し、PCクラッシュを回避。
+未解決: 実機iOSで広域地図ピンチ/表示、報酬画面の長文、ボス演出の画角/言語を要確認。
+
 ## 2026-10-26 / iOS 拠点遷移で背景だけ表示・操作不能
 原因: 拠点の ImportedWorldAssets.DressInterior→ApplySurfaces が、Playerで取得不可の Default-Material.mat を参照して NullReferenceException。プレイヤー生成・カメラ更新前に停止。Standalone Playerで material=null と primitive標準shader=Standard を再現。
 変更: 標準shaderをプリミティブの実マテリアルから一度だけ解決し、ImportedWorldAssets/Batch/RuinedCityArchitectureで共有。遷移中Updateを停止し、他の遷移失敗時は例外を記録してメニューへ戻す。

@@ -212,7 +212,7 @@ namespace NeonVault
             Enemies.Add(f);
             if(IsOverworld)ConfigureOverworldFoe(f);
             else f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
-            bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.055);
+            bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275);
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
         }
@@ -397,14 +397,14 @@ namespace NeonVault
             if(boss||f.elite)DropChampionReward(f,boss);
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
             var ammoType=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
-            float gunDropChance=boss?(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceBoss : 1f/3f)
-                :(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceNormal : .08f);
+            float gunDropChance=boss?(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceBoss : 1f/6f)
+                :(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceNormal : .04f);
             gunDropChance=Mathf.Clamp01(gunDropChance);
             if(rng.NextDouble()<gunDropChance)AddDrop(RollExpeditionGun(rng,boss),f.transform.position);
-            if(rng.NextDouble()<gunDropChance)AddHealthPackDrop(f.transform.position+new Vector3(.55f,0,.55f));
-            float armorChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.armorDropChanceBoss:VaultBalanceProfile.Current.armorDropChance) : (boss?1f/3f:.087f);
-            float moduleChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.moduleDropChanceBoss:VaultBalanceProfile.Current.moduleDropChance) : (boss?.183f:.04f);
-            float meleeChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.meleeDropChanceBoss:VaultBalanceProfile.Current.meleeDropChance) : (boss?.25f:.06f);
+            if(rng.NextDouble()<Mathf.Clamp01(gunDropChance*2f))AddHealthPackDrop(f.transform.position+new Vector3(.55f,0,.55f));
+            float armorChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.armorDropChanceBoss:VaultBalanceProfile.Current.armorDropChance) : (boss?1f/6f:.0435f);
+            float moduleChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.moduleDropChanceBoss:VaultBalanceProfile.Current.moduleDropChance) : (boss?.0915f:.02f);
+            float meleeChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.meleeDropChanceBoss:VaultBalanceProfile.Current.meleeDropChance) : (boss?.125f:.03f);
             if(rng.NextDouble()<Mathf.Clamp01(armorChance))AddArmorDrop(RollExpeditionArmor(rng,boss),f.transform.position+Vector3.right*.8f);
             if(rng.NextDouble()<Mathf.Clamp01(moduleChance))AddArtifactDrop(RollExpeditionArtifact(rng,boss),f.transform.position+Vector3.left*.8f);
             if(rng.NextDouble()<Mathf.Clamp01(meleeChance))AddMeleeDrop(RollExpeditionMelee(rng,boss),f.transform.position+Vector3.forward*.8f);

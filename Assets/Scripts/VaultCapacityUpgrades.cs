@@ -14,7 +14,7 @@ namespace NeonVault
                 case StorageUpgrade.AmmoShotgun:return (int)AmmoType.Shotgun;
                 case StorageUpgrade.AmmoRifle:return (int)AmmoType.AssaultRifle;
                 case StorageUpgrade.AmmoSniper:return (int)AmmoType.SniperRifle;
-                case StorageUpgrade.AmmoLMG:return (int)AmmoType.AssaultRifle;
+                case StorageUpgrade.AmmoLMG:return (int)AmmoType.LightMachineGun;
                 default:return -1;
             }
         }

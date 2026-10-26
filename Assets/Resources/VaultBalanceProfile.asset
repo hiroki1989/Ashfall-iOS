@@ -16,14 +16,14 @@ MonoBehaviour:
   startingHpMultiplier: 1
   enemyCountMultiplier: 1
   enemyDamageMultiplier: 1
-  weaponDropChanceNormal: 0.08
-  weaponDropChanceBoss: 0.333333
-  armorDropChance: 0.087
-  armorDropChanceBoss: 0.333333
-  moduleDropChance: 0.04
-  moduleDropChanceBoss: 0.183
-  meleeDropChance: 0.06
-  meleeDropChanceBoss: 0.25
+  weaponDropChanceNormal: 0.04
+  weaponDropChanceBoss: 0.1666665
+  armorDropChance: 0.0435
+  armorDropChanceBoss: 0.1666665
+  moduleDropChance: 0.02
+  moduleDropChanceBoss: 0.0915
+  meleeDropChance: 0.03
+  meleeDropChanceBoss: 0.125
   legendaryDropMultiplier: 1
   ammoDropChance: 0.64
   ammoDropChanceBoss: 1

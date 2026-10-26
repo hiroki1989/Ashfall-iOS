@@ -29,13 +29,13 @@ namespace NeonVault
             var recipe=DistinctEquipmentDesigns.Find(gun.catalogId);
             if(recipe!=null&&!recipe.legendary&&gun.catalogId.StartsWith("distinct.gun."))return GunSeriesDesigns.ClassName(recipe.gunClass,ja);
             int model=DisplayModel(gun);
-            if(model==1||model==6)return ja?"機関銃":"Machine Gun";
             switch(Arsenal.Category(model))
             {
-                case WeaponClass.Handgun:return ja?"拳銃":"Handgun";
+                case WeaponClass.Handgun:return ja?"ハンドガン":"Handgun";
                 case WeaponClass.Shotgun:return ja?"ショットガン":"Shotgun";
-                case WeaponClass.SniperRifle:return ja?"狙撃銃":"Sniper Rifle";
-                default:return ja?"機関銃":"Machine Gun";
+                case WeaponClass.SniperRifle:return ja?"スナイパーライフル":"Sniper Rifle";
+                case WeaponClass.HeavyMachineGun:return ja?"ヘビーマシンガン":"Heavy Machine Gun";
+                default:return ja?"アサルトライフル":"Assault Rifle";
             }
         }
         static string GunMechanismDescription(Gun gun,bool ja)

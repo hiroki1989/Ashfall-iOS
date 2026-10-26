@@ -233,7 +233,7 @@ namespace NeonVault
             Check(Armory.Name(uniqueHead,false)!=Armory.Name(uniqueChest,false)&&Armory.Name(uniqueHead,true)!=Armory.Name(uniqueChest,true),"legendary armor names identify their individual equipment piece in both languages");
             for(int model=0;model<Arsenal.ModelCount;model++)
             {
-                var expected=Arsenal.Category(model)==WeaponClass.Handgun?AmmoType.Handgun:Arsenal.Category(model)==WeaponClass.Shotgun?AmmoType.Shotgun:Arsenal.Category(model)==WeaponClass.SniperRifle?AmmoType.SniperRifle:AmmoType.AssaultRifle;
+                var expected=Arsenal.Category(model)==WeaponClass.Handgun?AmmoType.Handgun:Arsenal.Category(model)==WeaponClass.Shotgun?AmmoType.Shotgun:Arsenal.Category(model)==WeaponClass.SniperRifle?AmmoType.SniperRifle:Arsenal.Category(model)==WeaponClass.HeavyMachineGun?AmmoType.LightMachineGun:AmmoType.AssaultRifle;
                 Check(VaultGame.AmmoForGun(Arsenal.Model(model,Rarity.Common))==expected,"weapon model uses its own reserve-ammo family / "+model);
             }
         }
@@ -252,7 +252,7 @@ namespace NeonVault
             Check(normalRewardRarities[(int)Rarity.Common]==0&&normalRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(normalRewardRarities[(int)Rarity.Rare]-5000)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Legendary]-1500)<200,"contract equipment rarity is rare 50%, epic 35%, legendary 15%");
             Check(firstRewardRarities[(int)Rarity.Common]==0&&firstRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(firstRewardRarities[(int)Rarity.Rare]-4000)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Legendary]-2500)<220,"first-clear contract equipment raises legendary chance by ten points");
             Check(game.ScrapLevelMultiplier>=1&&game.ScaleScrap(10000)>=100,"scrap transactions use the reduced base scale and level growth");
-            Check(game.AmmoPickupEnglish(AmmoType.Handgun,9)=="Handgun rounds ×9"&&game.AmmoPickupJapanese(AmmoType.Shotgun,4)=="散弾 ×4","ammo pickup labels identify type and exact quantity in both languages");
+            Check(game.AmmoPickupEnglish(AmmoType.Handgun,9)=="Handgun rounds ×9"&&game.AmmoPickupJapanese(AmmoType.Shotgun,4)=="ショットガン弾 ×4","ammo pickup labels identify type and exact quantity in both languages");
             int scrapDrops=0;bool scrapRange=true;for(int i=0;i<1000;i++)if(game.TryRollScrapDrop(false,out int amount)){scrapDrops++;scrapRange&=amount>=game.ScaleScrap(12000+game.DungeonIndex*3000)&&amount<=game.ScaleScrap(32000+game.DungeonIndex*3000);}
             Check(scrapRange,"regular scrap rewards stay in the reduced range");
             Check(scrapDrops>=390&&scrapDrops<=510,"regular scrap drop frequency is moderately below the old 50% rate / "+scrapDrops+" of 1000");

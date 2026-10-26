@@ -97,6 +97,7 @@ namespace NeonVault {
     if(!floor&&!wall)continue;
     var source=Array.Find(concrete,m=>m.name.Contains(wall?"Spalling":"BrushedWorn"))??concrete[0];
     var material=new Material(shader);material.CopyPropertiesFromMaterial(source);material.shader=shader;
+    if(floor)material.color=new Color(.43f,.45f,.44f);
     material.SetFloat("_Glossiness",.15f);material.SetFloat("_Metallic",0);
     var size=r.bounds.size;material.mainTextureScale=new Vector2(Mathf.Max(1,size.x/3),Mathf.Max(1,Mathf.Max(size.z,size.y)/3));
     r.sharedMaterial=material;r.gameObject.AddComponent<ImportedSurfaceLifetime>().material=material;

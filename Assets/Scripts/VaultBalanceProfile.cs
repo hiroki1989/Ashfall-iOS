@@ -16,14 +16,14 @@ namespace NeonVault
         [InspectorName("敵の攻撃力倍率")] [Min(.1f)] public float enemyDamageMultiplier = 1f;
 
         [Header("装備・回復パックのドロップ率（0～1）")]
-        [InspectorName("銃のドロップ率・通常敵")] [Range(0,1)] public float weaponDropChanceNormal = .08f;
-        [InspectorName("銃のドロップ率・ボス")] [Range(0,1)] public float weaponDropChanceBoss = .333333f;
-        [InspectorName("防具のドロップ率・通常敵")] [Range(0,1)] public float armorDropChance = .087f;
-        [InspectorName("防具のドロップ率・ボス")] [Range(0,1)] public float armorDropChanceBoss = .333333f;
-        [InspectorName("モジュールのドロップ率・通常敵")] [Range(0,1)] public float moduleDropChance = .04f;
-        [InspectorName("モジュールのドロップ率・ボス")] [Range(0,1)] public float moduleDropChanceBoss = .183f;
-        [InspectorName("近接武器のドロップ率・通常敵")] [Range(0,1)] public float meleeDropChance = .06f;
-        [InspectorName("近接武器のドロップ率・ボス")] [Range(0,1)] public float meleeDropChanceBoss = .25f;
+        [InspectorName("銃のドロップ率・通常敵")] [Range(0,1)] public float weaponDropChanceNormal = .04f;
+        [InspectorName("銃のドロップ率・ボス")] [Range(0,1)] public float weaponDropChanceBoss = .1666665f;
+        [InspectorName("防具のドロップ率・通常敵")] [Range(0,1)] public float armorDropChance = .0435f;
+        [InspectorName("防具のドロップ率・ボス")] [Range(0,1)] public float armorDropChanceBoss = .1666665f;
+        [InspectorName("モジュールのドロップ率・通常敵")] [Range(0,1)] public float moduleDropChance = .02f;
+        [InspectorName("モジュールのドロップ率・ボス")] [Range(0,1)] public float moduleDropChanceBoss = .0915f;
+        [InspectorName("近接武器のドロップ率・通常敵")] [Range(0,1)] public float meleeDropChance = .03f;
+        [InspectorName("近接武器のドロップ率・ボス")] [Range(0,1)] public float meleeDropChanceBoss = .125f;
         [InspectorName("レジェンダリー出現率倍率")] [Min(0)] public float legendaryDropMultiplier = 1f;
 
         [Header("弾薬・スクラップ")]

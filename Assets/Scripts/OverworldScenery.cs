@@ -68,9 +68,9 @@ namespace NeonVault
             }
             Ribbon(t=>new Vector3(geography.RiverX(t),0,t),z*100-10,(z+1)*100+10,60,3,-.009f);
             for(int street=Mathf.FloorToInt(x*100/100f)-1;street<=Mathf.CeilToInt((x+1)*100/100f)+1;street++)
-            {int lane=street;Ribbon(t=>new Vector3(geography.StreetX(lane,t),0,t),z*100-15,(z+1)*100+15,geography.StreetWidth(lane)+3,7,-.005f);Ribbon(t=>new Vector3(geography.StreetX(lane,t),0,t),z*100-15,(z+1)*100+15,geography.StreetWidth(lane),2,0);}
+            {int lane=street;if(!geography.StreetSegmentOpen(lane,z,true))continue;Ribbon(t=>new Vector3(geography.StreetX(lane,t),0,t),z*100-15,(z+1)*100+15,geography.StreetWidth(lane)+3,7,-.005f);Ribbon(t=>new Vector3(geography.StreetX(lane,t),0,t),z*100-15,(z+1)*100+15,geography.StreetWidth(lane),2,0);}
             for(int street=Mathf.FloorToInt(z*100/100f)-1;street<=Mathf.CeilToInt((z+1)*100/100f)+1;street++)
-            {int lane=street;Ribbon(t=>new Vector3(t,0,geography.StreetZ(lane,t)),x*100-15,(x+1)*100+15,geography.StreetWidth(lane)+3,7,-.004f);Ribbon(t=>new Vector3(t,0,geography.StreetZ(lane,t)),x*100-15,(x+1)*100+15,geography.StreetWidth(lane),2,.001f);}
+            {int lane=street;if(!geography.StreetSegmentOpen(lane,x,false))continue;Ribbon(t=>new Vector3(t,0,geography.StreetZ(lane,t)),x*100-15,(x+1)*100+15,geography.StreetWidth(lane)+3,7,-.004f);Ribbon(t=>new Vector3(t,0,geography.StreetZ(lane,t)),x*100-15,(x+1)*100+15,geography.StreetWidth(lane),2,.001f);}
             for(int bridge=-4;bridge<=4;bridge++){float from=Mathf.Max(z*100,bridge*1000-45),to=Mathf.Min((z+1)*100,bridge*1000+45);if(to>from)Ribbon(t=>new Vector3(geography.RiverX(t),0,t),from,to,60,7,.002f);}            var data=geography.GetChunk(x,z);int index=0;
             foreach(var rect in data.Buildings)
             {

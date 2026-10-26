@@ -24,6 +24,19 @@ namespace NeonVault
         readonly HashSet<string> unlockedDebtSkills = new HashSet<string>();
         readonly List<DebtSkillNode> debtSkillNodes = BuildDebtSkillNodes();
         int debtPaid; bool debtIntroSeen=true, debtPage, debtSkillTreePage; int debtTrack;
+        int debtPaymentAmount;
+        int DebtPaymentLimit=>Mathf.Max(0,Mathf.Min(Credits,DebtRemaining));
+        void SetDebtPaymentFraction(float fraction)
+        {
+            int limit=DebtPaymentLimit;
+            debtPaymentAmount=fraction>=.9999f?limit:Mathf.Clamp(Mathf.RoundToInt(limit*Mathf.Clamp01(fraction)/1000f)*1000,0,limit);
+        }
+        bool RepaySelectedDebt()
+        {
+            bool paid=RepayDebt(Mathf.Clamp(debtPaymentAmount,0,DebtPaymentLimit));
+            debtPaymentAmount=Mathf.Min(debtPaymentAmount,DebtPaymentLimit);
+            return paid;
+        }
         Vector2 debtSkillScroll;
         readonly Vector3 debtCollectorPosition = new Vector3(0,.65f,5);
 
@@ -112,8 +125,9 @@ namespace NeonVault
         {
             if(model==14||model==15||model==16||model==17)return 0; // handguns
             if(model==3||model==4||model==5||model==13)return 1; // shotguns
-            if(model==1||model==6||model==9||model==10||model==12)return 2; // assault / automatic
+            if(model==0||model==9||model==10||model==12)return 2; // assault rifles
             if(model==2||model==7||model==8||model==11)return 3; // precision / long-range
+            if(model==1||model==6)return 4; // heavy machine guns
             return -1;
         }
         public float DebtDamageBonus(int weaponModel)=>SumDebtSkill(DebtSkillKind.Damage,DebtWeaponFamily(weaponModel));
@@ -170,18 +184,23 @@ namespace NeonVault
                 int[] payments={1000000,5000000,25000000};string[] labels={"1,000,000","5,000,000","25,000,000"};
                 for(int i=0;i<payments.Length;i++)if(Button(new Rect(68+i*260,330,230,62),T("PAY ","返済 ")+labels[i]+T(" SCRAP"," スクラップ"),i==2))
                 {int before=DebtLevel;if(RepayDebt(payments[i]))Notify("Debt payment recorded. Level "+before+" → "+DebtLevel,"返済を記録。レベル "+before+" → "+DebtLevel);}
-                if(Button(new Rect(68,409,750,58),T("PAY ALL AVAILABLE  /  ","払える分をすべて返済  /  ")+Mathf.Min(Credits,DebtRemaining).ToString("N0"),true))RepayDebt(Mathf.Min(Credits,DebtRemaining));
-                Text(68,494,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
-                Text(68,542,T("The collar detonator stays with the Raider Boss. Clearing your balance is the only way out.","起爆装置はレイダーのボスが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
-                if(Button(new Rect(68,632,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
+                int paymentLimit=DebtPaymentLimit;
+                debtPaymentAmount=Mathf.Clamp(debtPaymentAmount,0,paymentLimit);
+                Text(68,409,T("PAYMENT AMOUNT  /  ","返済額  /  ")+debtPaymentAmount.ToString("N0")+" / "+paymentLimit.ToString("N0"),label,Cyan,800);
+                if(paymentLimit>0)SetDebtPaymentFraction(GUI.HorizontalSlider(new Rect(68,457,750,25),debtPaymentAmount/(float)paymentLimit,0f,1f));
+                if(Button(new Rect(850,409,270,58),T("PAY SELECTED","指定額を返済"),true)&&debtPaymentAmount>0)RepaySelectedDebt();
+                if(Button(new Rect(850,476,270,50),T("SELECT ALL","全額を指定")))debtPaymentAmount=paymentLimit;
+                Text(68,556,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
+                Text(68,602,T("The collar detonator stays with the Raider Boss. Clearing your balance is the only way out.","起爆装置はレイダーのボスが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
+                if(Button(new Rect(68,694,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
             }
             if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る")))screen=Screen.Hub;
         }
 
         void DrawDebtSkillTree()
         {
-            string[] tracks={"HANDGUN","SHOTGUN","ASSAULT","PRECISION"};string[] ja={"ハンドガン","ショットガン","アサルト","精密射撃"};
-            for(int i=0;i<4;i++)if(Button(new Rect(68+i*220,266,202,46),T(tracks[i],ja[i]),i==debtTrack))debtTrack=i;
+            string[] tracks={"HANDGUN","SHOTGUN","ASSAULT","PRECISION","HEAVY MG"};string[] ja={"ハンドガン","ショットガン","アサルトライフル","スナイパーライフル","ヘビーマシンガン"};
+            for(int i=0;i<tracks.Length;i++)if(Button(new Rect(68+i*244,266,232,46),T(tracks[i],ja[i]),i==debtTrack))debtTrack=i;
             var nodes=debtSkillNodes.FindAll(n=>n.track==tracks[debtTrack]);
             debtSkillScroll=GUI.BeginScrollView(new Rect(68,323,1280,425),debtSkillScroll,new Rect(0,0,1235,Mathf.Max(425,nodes.Count*82)));
             for(int i=0;i<nodes.Count;i++)
@@ -212,18 +231,20 @@ namespace NeonVault
 
         static List<DebtSkillNode> BuildDebtSkillNodes()
         {
-            var n=new List<DebtSkillNode>();string[] tracks={"HANDGUN","SHOTGUN","ASSAULT","PRECISION"};
+            var n=new List<DebtSkillNode>();string[] tracks={"HANDGUN","SHOTGUN","ASSAULT","PRECISION","HEAVY MG"};
             string[][] titlesEn={
                 new[]{"Caliber I","Quick Draw I","Sight Picture I","Fresh Magazine I","Deep Pockets I","Caliber II","Reinforced Lining I","Impact Padding I","Emergency Recovery I","Last Stand Heal"},
                 new[]{"Heavy Payload I","Pump Rhythm I","Choke I","Shell Practice I","Shell Carrier I","Heavy Payload II","Reinforced Lining II","Impact Padding II","Emergency Recovery II","Scavenger's Reserve"},
                 new[]{"Pressure I","Sustained Fire I","Combat Sight I","Mag Drill I","Belt Carrier I","Pressure II","Ammo Scavenging I","Quartermaster I","Kill Chain I","Ammo Scavenging II"},
-                new[]{"Penetrator I","Bolt Timing I","Rangefinder I","Field Strip I","Long Case I","Penetrator II","Boss Hunter I","Third Weapon Slot","Fourth Weapon Slot","Boss Hunter II"}};
+                new[]{"Penetrator I","Bolt Timing I","Rangefinder I","Field Strip I","Long Case I","Penetrator II","Boss Hunter I","Third Weapon Slot","Fourth Weapon Slot","Boss Hunter II"},
+                new[]{"Suppressive Fire I","Sustained Fire I","Heavy Sight I","Feed Drill I","Belt Carrier I","Suppressive Fire II","Ammo Scavenging I","Quartermaster I","Kill Chain I","Ammo Scavenging II"}};
             string[][] titlesJa={
                 new[]{"口径強化 I","速射 I","照準 I","素早い装填 I","深い弾倉 I","口径強化 II","防護ライニング I","衝撃緩和 I","応急回復 I","起死回生"},
                 new[]{"重装弾 I","ポンプ操作 I","集弾 I","装填訓練 I","弾薬携行 I","重装弾 II","防護ライニング II","衝撃緩和 II","応急回復 II","回収弾薬"},
                 new[]{"制圧火力 I","継続射撃 I","戦闘照準 I","高速装填 I","ベルト給弾 I","制圧火力 II","弾薬回収 I","仕入れの達人 I","撃破連鎖 I","弾薬回収 II"},
-                new[]{"貫通弾 I","操作短縮 I","測距 I","分解整備 I","長尺弾倉 I","貫通弾 II","対ボス戦 I","武器枠 第3","武器枠 第4","対ボス戦 II"}};
-            for(int f=0;f<4;f++)
+                new[]{"貫通弾 I","操作短縮 I","測距 I","分解整備 I","長尺弾倉 I","貫通弾 II","対ボス戦 I","武器枠 第3","武器枠 第4","対ボス戦 II"},
+                new[]{"制圧火力 I","継続射撃 I","重機関照準 I","給弾訓練 I","ベルト携行 I","制圧火力 II","弾薬回収 I","仕入れの達人 I","撃破連鎖 I","弾薬回収 II"}};
+            for(int f=0;f<tracks.Length;f++)
             {
                 string prefix="weapon"+f+"_";
                 n.Add(new DebtSkillNode(prefix+"damage1",tracks[f],titlesEn[f][0],titlesJa[f][0],DebtSkillKind.Damage,.12f,f));
@@ -237,9 +258,9 @@ namespace NeonVault
                 n.Add(new DebtSkillNode(prefix+"reserve1",tracks[f],"Reserve Carrier I","予備弾携行 I",DebtSkillKind.AmmoCapacity,.50f,f,prefix+"ammo1"));
                 DebtSkillKind[] utilityKinds=f==0?new[]{DebtSkillKind.Health,DebtSkillKind.DamageReduction,DebtSkillKind.Recovery,DebtSkillKind.HealOnKill}:
                     f==1?new[]{DebtSkillKind.Health,DebtSkillKind.DamageReduction,DebtSkillKind.Recovery,DebtSkillKind.Ammo}:
-                    f==2?new[]{DebtSkillKind.AmmoPickup,DebtSkillKind.ShopDiscount,DebtSkillKind.KillChain,DebtSkillKind.AmmoPickup}:
+                    f==2||f==4?new[]{DebtSkillKind.AmmoPickup,DebtSkillKind.ShopDiscount,DebtSkillKind.KillChain,DebtSkillKind.AmmoPickup}:
                     new[]{DebtSkillKind.BossDamage,DebtSkillKind.WeaponSlot,DebtSkillKind.WeaponSlot,DebtSkillKind.BossDamage};
-                float[] values=f==0?new[]{20f,.05f,.5f,3f}:f==1?new[]{25f,.06f,.6f,3f}:f==2?new[]{.2f,.05f,.12f,.25f}:new[]{.12f,1f,1f,.18f};
+                float[] values=f==0?new[]{20f,.05f,.5f,3f}:f==1?new[]{25f,.06f,.6f,3f}:f==2||f==4?new[]{.2f,.05f,.12f,.25f}:new[]{.12f,1f,1f,.18f};
                 for(int j=0;j<4;j++)
                 {
                     string id=f==3&&j==1?"survival_slot1":f==3&&j==2?"survival_slot2":prefix+"utility"+(j+1);

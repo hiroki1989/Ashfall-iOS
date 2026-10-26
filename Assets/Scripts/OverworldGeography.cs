@@ -29,19 +29,36 @@ namespace NeonVault
         public bool PocketPark(Vector3 p)=>Mathf.Abs(Mathf.FloorToInt(p.x/250)+Mathf.FloorToInt(p.z/250)*3)%7==0&&Mathf.Abs(Mathf.Repeat(p.x,250)-150)<13&&Mathf.Abs(Mathf.Repeat(p.z,250)-150)<13;
         public bool Park(Vector3 p)=>PocketPark(p)||p.x<-1700||p.z>3000||Mathf.Sin(p.x*.0011f)*Mathf.Cos(p.z*.0013f)>.61f;
         // Shared by rendering and placement: narrow winding local streets join wider arterials.
-        public float StreetX(int street,float z)=>street*100-10*Mathf.Sin(z*.012f+street*.73f)-4*Mathf.Sin(z*.031f+street);
-        public float StreetZ(int street,float x)=>street*100-11*Mathf.Sin(x*.010f+street*.91f)-3*Mathf.Sin(x*.027f-street);
+        // District-scale bends keep neighbouring streets coherent while each lane has
+        // its own smaller meander. Rendering, map sampling and parcel clearance share these.
+        public float StreetX(int street,float z)=>street*100
+            +13*Mathf.Sin(z*.0019f+street*.17f)
+            +7*Mathf.Sin(z*.0061f+street*.83f)
+            +3*Mathf.Sin(z*.018f+street*1.37f);
+        public float StreetZ(int street,float x)=>street*100
+            +14*Mathf.Sin(x*.0017f-street*.19f)
+            +6*Mathf.Sin(x*.0058f+street*.71f)
+            +3*Mathf.Sin(x*.017f-street*1.11f);
         public float StreetWidth(int street)=>street%3==0?16:9;
+        public bool StreetSegmentOpen(int street,int segment,bool northSouth)
+        {
+            if(street%3==0)return true;
+            // Break up residential lanes into cul-de-sacs and ruined blocks while
+            // continuous arterials retain a connected route through the city.
+            int block=Mathf.FloorToInt(segment/2f);
+            int hash=unchecked(street*73856093 ^ block*19349663 ^ (northSouth?83492791:297121507));
+            return (hash&int.MaxValue)%7!=0;
+        }
         public float RoadDistance(Vector3 p)
         {
             float distance=float.MaxValue;int cx=Mathf.RoundToInt(p.x/100),cz=Mathf.RoundToInt(p.z/100);
-            for(int i=-1;i<=1;i++){distance=Mathf.Min(distance,Mathf.Abs(p.x-StreetX(cx+i,p.z)));distance=Mathf.Min(distance,Mathf.Abs(p.z-StreetZ(cz+i,p.x)));}
+            for(int i=-1;i<=1;i++){if(StreetSegmentOpen(cx+i,Mathf.FloorToInt(p.z/100),true))distance=Mathf.Min(distance,Mathf.Abs(p.x-StreetX(cx+i,p.z)));if(StreetSegmentOpen(cz+i,Mathf.FloorToInt(p.x/100),false))distance=Mathf.Min(distance,Mathf.Abs(p.z-StreetZ(cz+i,p.x)));}
             return distance;
         }
         public float RoadClearance(Vector3 p)
         {
             float distance=float.MaxValue;int cx=Mathf.RoundToInt(p.x/100),cz=Mathf.RoundToInt(p.z/100);
-            for(int i=-1;i<=1;i++){distance=Mathf.Min(distance,Mathf.Abs(p.x-StreetX(cx+i,p.z))-StreetWidth(cx+i)*.5f);distance=Mathf.Min(distance,Mathf.Abs(p.z-StreetZ(cz+i,p.x))-StreetWidth(cz+i)*.5f);}
+            for(int i=-1;i<=1;i++){if(StreetSegmentOpen(cx+i,Mathf.FloorToInt(p.z/100),true))distance=Mathf.Min(distance,Mathf.Abs(p.x-StreetX(cx+i,p.z))-StreetWidth(cx+i)*.5f);if(StreetSegmentOpen(cz+i,Mathf.FloorToInt(p.x/100),false))distance=Mathf.Min(distance,Mathf.Abs(p.z-StreetZ(cz+i,p.x))-StreetWidth(cz+i)*.5f);}
             return distance;
         }
         bool ParcelClear(Rect rect)
