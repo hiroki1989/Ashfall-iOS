@@ -1,4 +1,8 @@
-﻿## 2026-10-26 / 終了後のfat命中・影・通常transition検証
+## 2026-10-26 / iOS 起動直後に背景だけで停止する問題
+対象 D:/Unity/Ashfall-iOS。VaultGame.Awake でメニュー画面より先に BuildRoom(false) を同期実行し、ダンジョンの床/壁/装備・輸入素材まで生成していた。起動時はメニュー用画像だけを表示し、ダンジョン生成を新規出撃または保存再開時に遅延するよう変更。
+検証: Unity 6000.6.0f1 Editorで startup-menu-review の実画面を取得。screen=Menu、world=null、player=null、メニュー背景・文字・ボタン表示を確認。runtime C# 全体コンパイル成功、git diff --check 成功。実機iOS/新IPAは未検証。元のiPhoneの停止が完全に解消したかは次のビルドで確認が必要。
+
+## 2026-10-26 / 終了後のfat命中・影・通常transition検証
 変更: ImportedAssetReview、VaultLoading/OverworldScenery/VaultGame。
 検証: visual-review52通常Editor、--transition-reviewでsmoke保存保護を維持し実queue経路を有効化。fat kind1/2/6/7/9に対し近距離HP減少/範囲外不変10checks0fail。画面fixed-hud-shadowsでplayer/fat両影を目視、loading-uiで全画面背景/日本語表示確認、Hub↔worldのqueue完了result。初回49はQAがpublic hpへprivate reflectionを使いNullReference→QA修正済、50以降runtime例外なし。
 追加: loading全面nativeScreen描画で左右余白除去、WaitForEndOfFrameで生成前描画保証、worldstream Readyまでoverlay維持、pending中Active false、失敗時pending解除。BuildRoom(populate=true)もqueue化（次階）、falseはAwake/保存復元の同期契約維持。最後次階wrapperはcompileのみで実transition未確認。shadow145でPC画像復帰、iOS実機/長期連打・全セーブ復元・次階は未検証。UIはflat整備第一版、最新ゲーム相当の完成としない。画像/チェックD:/Unity/AssetIntegration/Review。
@@ -838,3 +842,4 @@ Modly/Shap-E試作は見た目が受け入れ水準に達せず不採用。既�
 結果: 最終Windows統合ビルド `D:/Unity/ashfall-silhouette-edge2-build.log` は `HERO_BUILD_OK`。可視ウィンドウでの装備QA `D:/Unity/QA-ashfall-guns-silhouette-edge2-visible/result.txt` は39,819件失敗0。原画/3D並列画像でケストレル拳銃とアサルトライフル、ヴォルトアーク軽機関銃を目視し、3D側の浮遊台座・重複銃と上面の明るい筋の解消を確認。`-batchmode` 撮影161件はGUIが描かれず黒画像になったため無効な視覚検証として扱った。
 検証: 修正後のWindows統合ビルド、可視画面QA、代表銃の画像目視、Python/JSON構文、`git diff --check`通過。
 未解決: 原画自体に複数銃や台座が描かれた品はインベントリ画と3Dの構図差が残る。側面以外は専用原画ではなく、薄い押し出し立体に留まる。レジェンダリー90品は既存の専用モデル。iOS実機表示・長時間性能は未検証。
+
