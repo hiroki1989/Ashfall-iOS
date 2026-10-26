@@ -4,8 +4,8 @@ namespace NeonVault
     public partial class VaultGame
     {
         static string T(string english,string japanese)=>VaultLanguage.T(english,japanese);
-        readonly Color Mist=new Color(175/255f,193/255f,203/255f), PanelInk=new Color(21/255f,36/255f,50/255f,.97f);
-        static readonly Color UiPaper=new Color(246/255f,240/255f,221/255f);
+        readonly Color Mist=new Color(.69f,.76f,.80f), PanelInk=new Color(.065f,.10f,.13f,.97f);
+        static readonly Color UiPaper=new Color(.96f,.94f,.87f);
         static readonly Color UiDanger=new Color(1f,113/255f,139/255f);
         const string LegendaryRedOpen="<color=#FF4545>";
         const string LegendaryRedClose="</color>";
@@ -61,23 +61,22 @@ namespace NeonVault
         {Line(new Vector2(x,y-size),new Vector2(x+size,y),color);Line(new Vector2(x+size,y),new Vector2(x,y+size),color);Line(new Vector2(x,y+size),new Vector2(x-size,y),color);Line(new Vector2(x-size,y),new Vector2(x,y-size),color);}
         void Panel(Rect r,Color accent)
         {
-            Box(new Rect(r.x+3,r.y+5,r.width,r.height),new Color(0,0,0,.24f));
-            Box(r,PanelInk);
-            Color border=new Color(.51f,.67f,.70f,.28f);
-            Box(new Rect(r.x,r.y,r.width,1),border);Box(new Rect(r.x,r.yMax-1,r.width,1),border);
-            Box(new Rect(r.x,r.y,1,r.height),border);Box(new Rect(r.xMax-1,r.y,1,r.height),border);
-            Box(new Rect(r.x+16,r.y,Mathf.Min(48,r.width-32),3),accent);
-            Box(new Rect(r.x+1,r.yMax-2,Mathf.Min(30,r.width-2),1),new Color(accent.r,accent.g,accent.b,.45f));
+            if(FieldUIArt.Icon(r,15,Color.white))return;
+            Box(new Rect(r.x,r.y+3,r.width,r.height),new Color(0,0,0,.14f));
+            Box(r,new Color(.055f,.075f,.095f,.94f));
+            Box(new Rect(r.x,r.y,3,r.height),new Color(accent.r,accent.g,accent.b,.65f));
+            Box(new Rect(r.x+16,r.yMax-1,r.width-32,1),new Color(.45f,.52f,.55f,.18f));
         }
         bool Button(Rect r,string value,bool primary=false)
         {
             bool hover=r.Contains(Event.current.mousePosition);
             Color accent=primary?Gold:Cyan;
             Panel(r,accent);
-            Box(new Rect(r.x+2,r.y+3,r.width-4,r.height-5),primary?(hover?new Color(.98f,.85f,.54f):Gold):(hover?new Color(.19f,.31f,.36f):new Color(.14f,.23f,.29f)));
-            Box(new Rect(r.x+2,r.y+3,4,r.height-6),accent);
+            Box(new Rect(r.x+2,r.y+3,r.width-4,r.height-5),hover?new Color(.20f,.27f,.31f):new Color(.11f,.15f,.18f));
+            Box(new Rect(r.x+16,r.yMax-3,r.width-32,2),new Color(accent.r,accent.g,accent.b,.65f));
             var style=new GUIStyle(button){fontStyle=FontStyle.Bold};
             style.normal.textColor=primary?Ink:UiPaper;style.hover.textColor=primary?Ink:UiPaper;style.active.textColor=primary?Ink:UiPaper;
+            FieldUIArt.Plate(r,primary);style.normal.textColor=UiPaper;style.hover.textColor=Color.white;style.active.textColor=Color.white;
             bool clicked=GUI.Button(r,value,style);
             Text(r.xMax-31,r.center.y-15,"›",new GUIStyle(label){fontSize=25},primary?Ink:accent,26);
             return clicked;
@@ -97,30 +96,33 @@ namespace NeonVault
             Styles();float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
+            if(worldTransitionPending){DrawWorldLoading();return;}
             if(MobileTouchControls.Enabled)
             {
+                if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
                 if(DebtIntroVisible){DrawMobileDebtIntro();return;}
                 if(manufacturerRegistry)DrawMobileManufacturer();
                 else if(InventoryOpen)DrawEquipmentScreen(false);
                 else if(screen==Screen.Menu)DrawMobileMenu();
                 else if(screen==Screen.Hub)DrawMobileHub();
                 else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawMobileShop();}
-                else if(screen==Screen.DungeonSelect)DrawMobileCityMap();
-                else if(screen==Screen.Playing)DrawMobileHUD();
-                else if(screen==Screen.Pause){DrawMobileHUD();DrawMobilePause();}
+                else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
+                else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();}
+                else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
                 if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
             }
+            if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
             if(DebtIntroVisible){DrawDebtIntro();return;}
             if(manufacturerRegistry)DrawManufacturerRegistry();
             else if(InventoryOpen)DrawEquipmentScreen(false);
             else if(screen==Screen.Menu)DrawMenu();
             else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,340,50),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}}
             else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawShop();}
-            else if(screen==Screen.DungeonSelect)DrawExpeditionWorldMap();
+            else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
             else
             {
-                DrawHUD();if(screen!=Screen.Playing)DrawOverlay();
+                if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen!=Screen.Playing)DrawOverlay();
             }
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
@@ -154,7 +156,7 @@ namespace NeonVault
             Text(60,204,"ASHFALL",title,Gold);Text(66,300,T("AFTER THE LAST LIGHT","最後の灯が消えた世界で"),heading,Color.white,800);
             Text(66,375,T("SCAVENGE. SURVIVE. RETURN.","拾え。生き延びろ。帰ってこい。"),label);
             Text(66,423,T("Outfit your survivor. Salvage experimental weapons.\nFace infected hordes across three contaminated zones.","避難拠点で装備を整え、実験兵器を回収。\n3つの汚染区域で、感染者の群れと変異体を突破せよ。"),small,Mist,560);
-            if(Button(new Rect(66,483,440,60),T("LAST LIGHT / HOME BASE","灯火基地 / 拠点へ"),true))EnterHub();
+            if(Button(new Rect(66,483,440,60),T("CONTINUE / ASHFALL","アッシュフォールへ"),true))ContinueOverworldGame();
             if(Button(new Rect(66,552,440,54),T("ARSENAL / EQUIPMENT","武器庫 / 装備")))ToggleInventory();
             if(HasSavedRun&&Button(new Rect(66,616,440,54),T("CONTINUE SAVED EXPEDITION","保存した探索を再開"),true))ResumeSavedRun();
             Line(new Vector2(67,686),new Vector2(506,686),new Color(.4f,.5f,.5f,.5f));
@@ -191,10 +193,10 @@ namespace NeonVault
             Diamond(720,205,12,Gold);Text(390,249,text,heading,screen==Screen.Victory?Gold:Color.white,680);
             Text(390,320,CurrentDungeon.Name+" / "+(room+1)+" / "+CurrentDungeon.AreaCount+T("  ·  Scrap ","  ·  スクラップ ")+Credits,small,Mist,660);
             if(screen==Screen.Pause)
-            {Text(390,365,T("Take a breath. Your arsenal is waiting.","ひと息つこう。戦いは、ここから続く。"),label,Mist);if(Button(new Rect(390,443,660,68),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}}
+            {DrawCameraZoom(390,365,660,false);if(Button(new Rect(390,443,660,68),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}}
             else
             {Text(390,372,Toast,label,Gold);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}
-            if(Button(new Rect(390,529,660,62),T("RETURN TO LAST LIGHT","灯火基地へ帰還")))EnterHub();
+            if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
             if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","武器庫 / 装備 [I]")))ToggleInventory();
             if(screen==Screen.Pause && Button(new Rect(390,654,660,48),T("SAVE EXPEDITION & RETURN TO MENU","探索を保存してメニューへ")))SaveRunAndReturnToMenu();
         }
@@ -243,11 +245,11 @@ namespace NeonVault
             {bool crate=NearbyAmmoCrate;Panel(new Rect(410,474,620,58),crate?new Color(.92f,.45f,.18f):Gold);Text(428,482,crate?T(MobileTouchControls.Enabled?"TAP OPEN AMMO CRATE":"[F] OPEN AMMO CRATE",MobileTouchControls.Enabled?"タップで弾薬箱を開ける":"[F] 弾薬箱を開ける"):T(MobileTouchControls.Enabled?"TAP OPEN SUPPLY CACHE":"[F] OPEN SUPPLY CACHE",MobileTouchControls.Enabled?"タップで物資箱を開ける":"[F] 物資箱を開ける"),small,Color.white,580);Text(428,509,crate?AmmoLabel(NearbyAmmoCrateType)+T(" · FULL PACK"," · 1パック"):T("Contains salvage, ammunition, or equipment","回収品・弾薬・装備のいずれか"),tiny,Mist,580);}
             if(ExpeditionExitOpen)
             {Vector3 p=cam.WorldToScreenPoint(ExitPosition+Vector3.up*2);if(p.z>0){float x=(p.x-(UnityEngine.Screen.width-1440*s)/2)/s,y=(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*s)/2)/s;Text(Mathf.Clamp(x-80,20,1260),Mathf.Clamp(y,170,680),T("[E] DESCEND","[E] 次のエリアへ"),small,Gold,190);}}
-            foreach(var f in Enemies)if(f!=null&&!f.dead&&(f.kind==3||f.hp<f.maxHp-.01f)&&Layout.IsVisible(f.transform.position))
+            foreach(var f in Enemies)if(f!=null&&!f.dead&&(f.kind==3||f.elite||f.hp<f.maxHp-.01f)&&Layout.IsVisible(f.transform.position))
             {
                 Vector3 p=cam.WorldToScreenPoint(f.transform.position+Vector3.up*(f.kind==3?4.6f:2.4f));if(p.z<=0)continue;
                 float x=(p.x-(UnityEngine.Screen.width-1440*s)/2)/s,y=(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*s)/2)/s;
-                Box(new Rect(x-28,y,56,4),PanelInk);Box(new Rect(x-28,y,56*Mathf.Clamp01(f.hp/f.maxHp),4),new Color(.92f,.12f,.16f));
+                Box(new Rect(x-28,y,56,4),PanelInk);Box(new Rect(x-28,y,56*Mathf.Clamp01(f.hp/f.maxHp),4),f.HealthBarColor);
                 Text(x-60,y-18,Foe.Name(f.kind),tiny,f.kind==8?Cyan:Mist,160);
             }
             DrawCrosshair(mx,my);

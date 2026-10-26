@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,7 +23,7 @@ namespace NeonVault
             public List<PositionCheckpoint> chests=new List<PositionCheckpoint>();
             public List<AmmoCrateCheckpoint> ammoCrates=new List<AmmoCrateCheckpoint>();
         }
-        [Serializable] sealed class FoeCheckpoint { public int kind; public float x,z,hp,maxHp,timer; }
+        [Serializable] sealed class FoeCheckpoint { public int kind; public bool elite; public float x,z,hp,maxHp,timer; }
         [Serializable] sealed class GunDropCheckpoint { public Gun item; public Vector3 position; }
         [Serializable] sealed class ArmorDropCheckpoint { public ArmorItem item; public Vector3 position; }
         [Serializable] sealed class ArtifactDropCheckpoint { public ArtifactItem item; public Vector3 position; }
@@ -37,6 +37,7 @@ namespace NeonVault
 
         public bool SaveRunCheckpoint()
         {
+            if(IsOverworld){if(screen!=Screen.Pause||smoke)return false;RememberOverworldPosition(PlayerPosition,true);SaveInventory();SaveProgression();return true;}
             if(smoke||screen!=Screen.Pause||player==null||world==null)return false;
             var save=new RunCheckpoint
             {
@@ -49,7 +50,7 @@ namespace NeonVault
             };
             save.routeX=new int[route.Count];save.routeY=new int[route.Count];for(int i=0;i<route.Count;i++){save.routeX[i]=route[i].x;save.routeY[i]=route[i].y;}
             var keys=new List<int>();var values=new List<int>();foreach(var pair in runUpgradeCounts){keys.Add(pair.Key);values.Add(pair.Value);}save.upgradeKeys=keys.ToArray();save.upgradeValues=values.ToArray();
-            foreach(var foe in Enemies)if(foe!=null&&!foe.dead)save.foes.Add(new FoeCheckpoint{kind=foe.kind,x=foe.transform.position.x,z=foe.transform.position.z,hp=foe.hp,maxHp=foe.maxHp,timer=foe.timer});
+            foreach(var foe in Enemies)if(foe!=null&&!foe.dead)save.foes.Add(new FoeCheckpoint{kind=foe.kind,elite=foe.elite,x=foe.transform.position.x,z=foe.transform.position.z,hp=foe.hp,maxHp=foe.maxHp,timer=foe.timer});
             foreach(var d in drops)save.guns.Add(new GunDropCheckpoint{item=d.gun,position=d.position});
             foreach(var d in armorDrops)save.armor.Add(new ArmorDropCheckpoint{item=d.item,position=d.position});
             foreach(var d in artifactDrops)save.modules.Add(new ArtifactDropCheckpoint{item=d.item,position=d.position});
@@ -68,6 +69,7 @@ namespace NeonVault
             catch(Exception e){Debug.LogWarning("Expedition checkpoint could not be read: "+e.GetType().Name);return false;}
             if(!ValidateCheckpoint(save))
             {Debug.LogWarning("Expedition checkpoint is invalid; retained without changing equipment or progression.");return false;}
+            IsOverworld=false;EnsureOverworldState();if(save.stage>=0)SetOverworldReturnStage(save.stage);
             DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);ResetGameplayOverlays();shake=0;meleeAttack?.ResetCooldown();seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
             if(save.foes==null)save.foes=new List<FoeCheckpoint>();if(save.guns==null)save.guns=new List<GunDropCheckpoint>();if(save.armor==null)save.armor=new List<ArmorDropCheckpoint>();if(save.modules==null)save.modules=new List<ArtifactDropCheckpoint>();if(save.melee==null)save.melee=new List<MeleeDropCheckpoint>();if(save.supplies==null)save.supplies=new List<SupplyCheckpoint>();if(save.chests==null)save.chests=new List<PositionCheckpoint>();if(save.ammoCrates==null)save.ammoCrates=new List<AmmoCrateCheckpoint>();
             route.Clear();for(int i=0;i<save.routeX.Length;i++)route.Add(new Vector2Int(save.routeX[i],save.routeY[i]));
@@ -77,7 +79,7 @@ namespace NeonVault
             ResetArtifactCombat();ArtifactShield=save.artifactShield;artifactCombatClock=save.artifactClock;missionKills=save.missionKills;missionCompleted=save.missionCompleted;
             runUpgradeCounts.Clear();if(save.upgradeKeys!=null&&save.upgradeValues!=null)for(int i=0;i<Math.Min(save.upgradeKeys.Length,save.upgradeValues.Length);i++)runUpgradeCounts[save.upgradeKeys[i]]=save.upgradeValues[i];
             screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);float groundedPlayerY=player.position.y;var savedPosition=new Vector3(save.playerX,groundedPlayerY,save.playerZ);player.position=Blocked(savedPosition,.45f)?new Vector3(Layout.Entry.x,groundedPlayerY,Layout.Entry.z):savedPosition;aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
-            foreach(var state in save.foes){var position=new Vector3(state.x,.65f,state.z);if(Blocked(position,.8f))position=FindEnemySpawn();SpawnFoe(position,state.kind);var foe=Enemies[Enemies.Count-1];foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
+            foreach(var state in save.foes){var position=new Vector3(state.x,.65f,state.z);if(Blocked(position,.8f))position=FindEnemySpawn();restoringChampionCheckpoint=true;try{SpawnFoe(position,state.kind);}finally{restoringChampionCheckpoint=false;}var foe=Enemies[Enemies.Count-1];if(state.elite){foe.elite=true;foe.ConfigureDifficulty(1,1.35f,.12f);foe.transform.localScale*=1.15f;}foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
             foreach(var d in save.guns)if(d.item!=null)AddDrop(d.item,d.position);
             foreach(var d in save.armor)if(d.item!=null)AddArmorDrop(d.item,d.position);
             foreach(var d in save.modules)if(d.item!=null)AddArtifactDrop(d.item,d.position);
@@ -115,7 +117,7 @@ namespace NeonVault
             if(save.chests!=null)foreach(var d in save.chests)if(d==null||!ValidPosition(d.position))return false;
             if(save.ammoCrates!=null)foreach(var d in save.ammoCrates)if(d==null||!ValidPosition(d.position))return false;
             if(save.foes!=null)foreach(var foe in save.foes)
-                if(foe==null||foe.kind<0||foe.kind>9||!Finite(foe.x)||!Finite(foe.z)||!Finite(foe.hp)||!Finite(foe.maxHp)||!Finite(foe.timer)||foe.hp<=0||foe.maxHp<=0)return false;
+                if(foe==null||foe.kind<0||foe.kind>10||!Finite(foe.x)||!Finite(foe.z)||!Finite(foe.hp)||!Finite(foe.maxHp)||!Finite(foe.timer)||foe.hp<=0||foe.maxHp<=0)return false;
             return true;
         }
 

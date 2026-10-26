@@ -61,7 +61,7 @@ namespace NeonVault
         }
         public int DebtExtraWeaponSlots => (unlockedDebtSkills.Contains("survival_slot1")?1:0) + (unlockedDebtSkills.Contains("survival_slot2")?1:0);
         bool DebtIntroReview => Array.IndexOf(Environment.GetCommandLineArgs(),"--debt-intro-review")>=0;
-        public bool DebtIntroVisible => !debtIntroSeen && (!smoke || DebtIntroReview);
+        public bool DebtIntroVisible => !debtIntroSeen && DebtIntroReview;
         public int DebtTotalPaid => debtPaid;
 
         void DebtSkillsInitialize()

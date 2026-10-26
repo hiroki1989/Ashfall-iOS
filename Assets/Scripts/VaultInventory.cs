@@ -228,7 +228,7 @@ namespace NeonVault
         public void DiscardArmor(ArmorItem item){if(!Armory.IsActiveArmor(item)||Array.IndexOf(EquippedArmor,item)>=0)return;ArmorInventory.Remove(item);SaveInventory();}
         public void ToggleInventory()
         {
-            if(InventoryOpen){InventoryOpen=false;screen=inventoryReturn;Time.timeScale=screen==Screen.Pause?0:1;return;}
+            if(InventoryOpen){InventoryOpen=false;screen=inventoryReturn;Time.timeScale=screen==Screen.Pause||screen==Screen.DungeonSelect?0:1;return;}
             if(screen!=Screen.Menu&&screen!=Screen.Playing&&screen!=Screen.Pause&&screen!=Screen.Hub&&screen!=Screen.Shop&&screen!=Screen.DungeonSelect)return;
             inventoryReturn=screen;InventoryOpen=true;Time.timeScale=0;
         }

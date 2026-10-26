@@ -14,6 +14,7 @@ namespace NeonVault
         }
         int ExpeditionLootLevel(System.Random random)
         {
+            if(IsOverworld)return Mathf.Max(1,DebtLevel+random.Next(-1,2));
             var stage=SelectedExpeditionStage;
             return stage==null?DungeonCatalog.ItemLevel(random,DungeonIndex):Mathf.Max(1,stage.level+random.Next(-1,3));
         }
@@ -61,6 +62,7 @@ namespace NeonVault
         }
         public Gun RollExpeditionGun(System.Random random,bool boss=false)
         {
+            if(IsOverworld)return Arsenal.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
             if(SelectedExpeditionStage==null)return Arsenal.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             bool focus=random.NextDouble()<.70;Gun item=null;
@@ -73,6 +75,7 @@ namespace NeonVault
         }
         public ArmorItem RollExpeditionArmor(System.Random random,bool boss=false)
         {
+            if(IsOverworld)return Armory.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
             if(SelectedExpeditionStage==null)return Armory.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             bool focus=random.NextDouble()<.70;ArmorItem item=null;
@@ -85,6 +88,7 @@ namespace NeonVault
         }
         public ArtifactItem RollExpeditionArtifact(System.Random random,bool boss=false)
         {
+            if(IsOverworld)return ArtifactCatalog.Create(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
             if(SelectedExpeditionStage==null)return ArtifactCatalog.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             bool focus=random.NextDouble()<.70;ArtifactItem item=null;
@@ -97,6 +101,7 @@ namespace NeonVault
         }
         public MeleeWeaponItem RollExpeditionMelee(System.Random random,bool boss=false)
         {
+            if(IsOverworld)return MeleeWeaponCatalog.Create(random,ExpeditionLootLevel(random),ExpeditionLootRarity(random,boss));
             if(SelectedExpeditionStage==null)return MeleeWeaponCatalog.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             bool focus=random.NextDouble()<.70;MeleeWeaponItem item=null;

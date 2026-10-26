@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +10,7 @@ namespace NeonVault
         public const KeyCode MeleeAttackKey=KeyCode.Mouse1;
         public enum Screen { Menu, Hub, Shop, DungeonSelect, Playing, Reward, Pause, Dead, Victory }
         public Screen screen;
-        public bool Active => screen==Screen.Playing&&!InventoryOpen;
+        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending;
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
         public Vector3 ScreenMovement(float horizontal,float vertical)
@@ -73,8 +73,8 @@ namespace NeonVault
             pixel=new Texture2D(1,1); pixel.SetPixel(0,0,Color.white); pixel.Apply();
             cam=new GameObject("Isometric camera").AddComponent<Camera>(); cam.orthographic=true; cam.orthographicSize=13.5f; cam.backgroundColor=Ink; cam.clearFlags=CameraClearFlags.SolidColor;
             cam.tag="MainCamera";
-            cam.transform.rotation=Quaternion.Euler(35.264f,45,0);cam.allowHDR=true;cam.depthTextureMode=DepthTextureMode.DepthNormals;cam.gameObject.AddComponent<VaultPost>();
-            QualitySettings.antiAliasing=4;QualitySettings.shadows=ShadowQuality.All;QualitySettings.shadowResolution=ShadowResolution.High;QualitySettings.shadowDistance=80;QualitySettings.pixelLightCount=4;
+            cam.transform.rotation=Quaternion.Euler(35.264f,45,0);cam.allowHDR=true;cam.depthTextureMode=DepthTextureMode.Depth|DepthTextureMode.DepthNormals;cam.gameObject.AddComponent<VaultPost>();
+            QualitySettings.antiAliasing=4;QualitySettings.shadows=ShadowQuality.All;QualitySettings.shadowResolution=ShadowResolution.High;QualitySettings.shadowDistance=145;QualitySettings.pixelLightCount=4;
             RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Trilight;RenderSettings.ambientSkyColor=new Color(.32f,.37f,.43f);RenderSettings.ambientEquatorColor=new Color(.25f,.27f,.23f);RenderSettings.ambientGroundColor=new Color(.13f,.11f,.085f);
             RenderSettings.fog=true;RenderSettings.fogColor=new Color(.11f,.12f,.095f);RenderSettings.fogMode=FogMode.Exponential;RenderSettings.fogDensity=.009f;
             var light=new GameObject("Ash-filtered sunlight / shadow casting").AddComponent<Light>();light.type=LightType.Directional;light.color=new Color(1,.95f,.84f);light.intensity=1.2f;light.shadows=LightShadows.Soft;light.shadowStrength=.78f;light.transform.rotation=Quaternion.Euler(48,-25,0);
@@ -82,7 +82,7 @@ namespace NeonVault
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
             audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=GunReport(true,true);pickupSound=Tone(620,.16f);
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
-            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
+            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
             ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);BuildRoom(false);
             if(Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0) gameObject.AddComponent<SmokeRun>();
@@ -108,9 +108,10 @@ namespace NeonVault
             }
             var clip=AudioClip.Create(electric?"Vacuum tube discharge":heavy?"Pump shotgun report":"Salvage carbine report",count,1,rate,false);clip.SetData(data,0);return clip;
         }
-        public void StartRun(int? fixedSeed=null)
+        public void StartRun(int? fixedSeed=null) {if(QueueWorldTransition(()=>StartRunImmediate(fixedSeed)))return;StartRunImmediate(fixedSeed);}
+        void StartRunImmediate(int? fixedSeed=null)
         {
-            ClearRunCheckpoint();shake=0;
+            IsOverworld=false;ClearRunCheckpoint();shake=0;
             ResetGameplayOverlays(); seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
             route.Clear(); var cell=Vector2Int.zero; route.Add(cell);
             for(int i=1;i<CurrentDungeon.AreaCount;i++)
@@ -139,8 +140,10 @@ namespace NeonVault
             var obj=GameObject.CreatePrimitive(primitive); obj.name=name; obj.transform.SetParent(parent??world,false); obj.transform.localPosition=position; obj.transform.localScale=scale;
             Destroy(obj.GetComponent<Collider>()); obj.GetComponent<Renderer>().sharedMaterial=Mat(color,glow); return obj;
         }
-        public void BuildRoom(bool populate)
+        public void BuildRoom(bool populate){if(populate&&QueueWorldTransition(()=>BuildRoomImmediate(populate)))return;BuildRoomImmediate(populate);}
+        void BuildRoomImmediate(bool populate)
         {
+            IsOverworld=false;
             if(world!=null) { world.gameObject.SetActive(false); Destroy(world.gameObject); }
             foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();
             world=new GameObject("Generated sector "+room).transform; satellites.Clear();
@@ -151,7 +154,7 @@ namespace NeonVault
             foreach(var rect in Layout.walls)art.Partition(rect);
             foreach(var p in Layout.covers)art.Cover(p);
             for(int i=0;i<Layout.chambers.Count;i++)art.Chamber(Layout.Center(Layout.chambers[i]),i);
-            art.Gate(Layout.Exit);
+            art.Gate(Layout.Exit);ImportedWorldAssets.DressInterior(world,Layout,false);
             player=art.Character(Layout.Entry,true);
             barrel=art.Weapon(player,gun==null?Cyan:gun.color);if(gun!=null)VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));RefreshWeaponAppearance();
             PlayerAppearance?.ApplyArmor(EquippedArmor);
@@ -165,13 +168,13 @@ namespace NeonVault
                     Vector3 p; int attempts=0;
                     do {var cell=Layout.chambers[rng.Next(Layout.chambers.Count)];p=Layout.Center(cell)+new Vector3((float)rng.NextDouble()*6-3,0,(float)rng.NextDouble()*4-2);attempts++;} while((Blocked(p,.8f)||!Layout.SpawnSafe(p))&&attempts<200);
                     if(Blocked(p,.8f)||!Layout.SpawnSafe(p)) p=FindEnemySpawn();
-                    SpawnFoe(p,CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)]);
+                    SpawnFoe(p,(SelectedStageId>=0&&SelectedStageId%5==2?10:CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)]));
                 }
                 SpawnRoomChest();
                 SpawnAmmoCratesForCurrentRoom();
                 ReconcileFloorCompletion();
             }
-            cam.orthographicSize=7.5f;UpdateCamera(true);
+            cam.orthographicSize=7.5f/CameraZoom;UpdateCamera(true);
         }
         Vector3 FindEnemySpawn()
         {
@@ -197,21 +200,30 @@ namespace NeonVault
         }
         void SpawnFoe(Vector3 position,int kind)
         {
+            if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
             var f=art.Character(position,false,kind).gameObject.AddComponent<Foe>();
             f.Init(this,kind,room);
             // Infected attack with their bodies; only the armed revenant carries a firearm.
-            if(kind==5){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
-            f.GetComponent<FaithfulEnemy3D>().Init(f);
+            if(kind==5||kind==10){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
+            f.GetComponent<FaithfulEnemy3D>().Init(f);ImportedEnemyVisual.TryAttach(f.gameObject,kind==3&&SelectedStageId>=0&&SelectedStageId%5==2?11:kind);
             Enemies.Add(f);
-            f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
+            if(IsOverworld)ConfigureOverworldFoe(f);
+            else f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
+            bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.055);
+            if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
         }
         public bool Blocked(Vector3 p,float radius)
         {
-            return Layout==null||Layout.Blocked(p,radius);
+            return Layout==null||Layout.Blocked(p,radius)||(IsOverworld&&WorldEntranceBuildings.Blocked(p,radius,WorldGeography));
         }
         public Vector3 ChaseDirection(Vector3 from)=>Layout.Chase(from,PlayerPosition);
-        public bool LineOfSight(Vector3 from,Vector3 to)=>Layout.ClearLine(from,to);
+        public bool LineOfSight(Vector3 from,Vector3 to)
+        {
+            if(!Layout.ClearLine(from,to))return false;
+            if(IsOverworld){int steps=Mathf.CeilToInt(Vector3.Distance(from,to));for(int i=1;i<=steps;i++)if(WorldEntranceBuildings.Blocked(Vector3.Lerp(from,to,(float)i/steps),.15f,WorldGeography))return false;}
+            return true;
+        }
         public Vector3 MoveWithinRoom(Vector3 p,Vector3 delta,float radius)
         {
             // Substeps keep a fast dash from tunnelling across a narrow wall.
@@ -227,25 +239,27 @@ namespace NeonVault
         }
         void Update()
         {
+            if(WorldBossConversationVisible)return;
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
             if(InventoryOpen){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))ToggleInventory();return;}
             if(MobileTouchControls.Enabled&&manufacturerRegistry)return;
             if(screen==Screen.Hub){UpdateHub();return;}
-            if((screen==Screen.Shop||screen==Screen.DungeonSelect)&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){screen=Screen.Hub;return;}
+            if(screen==Screen.DungeonSelect&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){CloseOverworldMap();return;}
+            if(screen==Screen.Shop&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){screen=Screen.Hub;return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))
             {
                 if(screen==Screen.Playing) { screen=Screen.Pause; Time.timeScale=0; }
                 else if(screen==Screen.Pause) { screen=Screen.Playing; Time.timeScale=1; }
             }
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
-            if(!Active)return;
+            if(worldTransitionPending||!Active)return;
             TickArtifacts(Time.deltaTime);
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
             if(Time.time-lastHurt>3&&HealthRegen>0)hp=Mathf.Min(maxHp,hp+HealthRegen*Time.deltaTime);
             runTime+=Time.deltaTime; toastTimer-=Time.deltaTime; fireTimer-=Time.deltaTime; invincible-=Time.deltaTime; dodgeCooldown-=Time.deltaTime;debtChainTimer-=Time.deltaTime;if(debtChainTimer<=0)debtChainCount=0;
-            Layout.Discover(PlayerPosition);navigationTimer-=Time.deltaTime;if(navigationTimer<=0){Layout.BuildDistanceField(PlayerPosition);navigationTimer=.25f;}
+            Layout.Discover(PlayerPosition,IsOverworld?1.5f:5f);navigationTimer-=Time.deltaTime;if(navigationTimer<=0){if(!IsOverworld||Layout.ToCell(PlayerPosition)!=lastNavigationCell){Layout.BuildDistanceField(PlayerPosition);lastNavigationCell=Layout.ToCell(PlayerPosition); }navigationTimer=IsOverworld?.75f:.25f;}
             if(VaultMobileInputBridge.Enabled)
             {
                 ApplyMobileAim(VaultMobileInputBridge.Aim);
@@ -280,15 +294,22 @@ namespace NeonVault
             else if(VaultMobileInputBridge.Firing&&fireTimer<=0)Fire();
             if(VaultMobileInputBridge.MeleePressed)AttackMelee();
             if(VaultMobileInputBridge.Pressed(MobileAction.Pickup,KeyCode.F)&&!OpenNearbyAmmoCrate()&&!OpenNearbyChest())PickupNearest();
-            if(ExpeditionExitOpen&&VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)&&Vector3.Distance(player.position,ExitPosition)<3)Advance();
+            if(IsOverworld)
+            {
+                TickOverworld();
+                if(screen!=Screen.Playing)return;
+                if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)&&HandleOverworldInteraction())return;
+            }
+            else if(ExpeditionExitOpen&&VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)&&Vector3.Distance(player.position,ExitPosition)<3)Advance();
             shake=Mathf.Max(0,shake-Time.deltaTime*4);
             UpdateCamera(false);
         }
+        Vector2Int lastNavigationCell=new Vector2Int(int.MinValue,int.MinValue);
         void UpdateCamera(bool instant)
         {
             Vector3 target=screen==Screen.Menu?new Vector3(0,.6f,0):new Vector3(Mathf.Clamp(player.position.x,-halfWidth+5,halfWidth-5),.6f,Mathf.Clamp(player.position.z+1.5f,-halfDepth+4,halfDepth-4));
             cameraFocus=instant?target:Vector3.Lerp(cameraFocus,target,1-Mathf.Exp(-Time.deltaTime*5));
-            cam.transform.position=cameraFocus-cam.transform.forward*35+UnityEngine.Random.insideUnitSphere*shake*.1f;
+            cam.transform.position=cameraFocus-cam.transform.forward*(IsOverworld?85:35)+UnityEngine.Random.insideUnitSphere*shake*.1f;
         }
         public void Fire()
         {
@@ -363,11 +384,13 @@ namespace NeonVault
         }
         public void FoeKilled(Foe f)
         {
+            if(IsOverworld)OnOverworldEnemyKilled(f);
             kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
-            ExpeditionEnemyKilled(f);
+            if(!IsOverworld)ExpeditionEnemyKilled(f);
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
-            if(!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
+            if(!IsOverworld&&!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
+            if(boss||f.elite)DropChampionReward(f,boss);
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
             var ammoType=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));if(TryRollAmmoDrop(boss,ammoType,out int ammoAmount))AddAmmoDrop(f.transform.position+Vector3.back*.65f,ammoType,ammoAmount);
             float gunDropChance=boss?(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceBoss : 1f/3f)
@@ -381,6 +404,7 @@ namespace NeonVault
             if(rng.NextDouble()<Mathf.Clamp01(armorChance))AddArmorDrop(RollExpeditionArmor(rng,boss),f.transform.position+Vector3.right*.8f);
             if(rng.NextDouble()<Mathf.Clamp01(moduleChance))AddArtifactDrop(RollExpeditionArtifact(rng,boss),f.transform.position+Vector3.left*.8f);
             if(rng.NextDouble()<Mathf.Clamp01(meleeChance))AddMeleeDrop(RollExpeditionMelee(rng,boss),f.transform.position+Vector3.forward*.8f);
+            if(IsOverworld)return;
             bool alive=false; foreach(var e in Enemies) if(e!=null&&!e.dead)alive=true;
             if(!alive)
             {
@@ -455,7 +479,7 @@ namespace NeonVault
         bool ExpeditionExitOpen=>cleared||(ExpeditionAllowsBypass&&(room<CurrentDungeon.AreaCount-1||MissionCompleted));
         public void Advance()
         {
-            if(screen!=Screen.Playing||!ExpeditionExitOpen)return;
+            if(IsOverworld||screen!=Screen.Playing||!ExpeditionExitOpen)return;
             if(room>=CurrentDungeon.AreaCount-1||(ExpeditionAllowsBypass&&MissionCompleted)){Finish(true);return;}
             choices=new[]{0,1,2,3,4,5,6};
             for(int i=choices.Length-1;i>0;i--) { int j=rng.Next(i+1); int a=choices[i];choices[i]=choices[j];choices[j]=a; }
@@ -472,10 +496,11 @@ namespace NeonVault
             screen=victory?Screen.Victory:Screen.Dead;
             ClearRunCheckpoint();shake=0;
             SaveInventory();
-            OnDungeonFinished(victory);
+            if(!IsOverworld)OnDungeonFinished(victory);
+            if(!smoke||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0)ReturnFromWorldDungeon(victory);
         }
         void Notify(string message,string japanese=null) { toast=message;toastJapanese=japanese??message;toastTimer=4; }
-        void OnDestroy() { foreach(var m in materials)if(m!=null)Destroy(m); if(pixel!=null)Destroy(pixel); }
+        void OnDestroy() { foreach(var m in materials)if(m!=null)Destroy(m); if(pixel!=null)Destroy(pixel);if(overworldAtlasTexture!=null)Destroy(overworldAtlasTexture); }
 
     }
 }

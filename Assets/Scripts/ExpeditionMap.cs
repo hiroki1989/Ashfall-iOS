@@ -91,8 +91,8 @@ namespace NeonVault
             return new ExpeditionStage { id=id,region=region,level=danger,legacyDungeonIndex=region==0?0:region<3?1:2,
                 englishName=loc+" / " + (variant+1).ToString("00"), japaneseName=locJa+"・"+(variant+1).ToString("00"),
                 englishLocation=regions[region]+" — "+loc,japaneseLocation=regionsJa[region]+" — "+locJa,
-                englishBiome=biomes[region][place],japaneseBiome=biomesJa[region][place],mission=(ExpeditionMission)mission,
-                englishTarget=target,japaneseTarget=targetJa,
+                englishBiome=id%5==2?"Raider-occupied depot":biomes[region][place],japaneseBiome=id%5==2?"レイダー占拠拠点":biomesJa[region][place],mission=(ExpeditionMission)mission,
+                englishTarget=id%5==2&&mission==1?"Raider commander":target,japaneseTarget=id%5==2&&mission==1?"レイダーの指揮官":targetJa,
                 englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[region] };
         }
         public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=Mathf.Clamp(region,0,4)*20;id<Mathf.Clamp(region,0,4)*20+20;id++)if(Get(id).mission==mission)count++;return count;}

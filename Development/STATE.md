@@ -1,3 +1,105 @@
+﻿## 2026-10-26 / 終了後のfat命中・影・通常transition検証
+変更: ImportedAssetReview、VaultLoading/OverworldScenery/VaultGame。
+検証: visual-review52通常Editor、--transition-reviewでsmoke保存保護を維持し実queue経路を有効化。fat kind1/2/6/7/9に対し近距離HP減少/範囲外不変10checks0fail。画面fixed-hud-shadowsでplayer/fat両影を目視、loading-uiで全画面背景/日本語表示確認、Hub↔worldのqueue完了result。初回49はQAがpublic hpへprivate reflectionを使いNullReference→QA修正済、50以降runtime例外なし。
+追加: loading全面nativeScreen描画で左右余白除去、WaitForEndOfFrameで生成前描画保証、worldstream Readyまでoverlay維持、pending中Active false、失敗時pending解除。BuildRoom(populate=true)もqueue化（次階）、falseはAwake/保存復元の同期契約維持。最後次階wrapperはcompileのみで実transition未確認。shadow145でPC画像復帰、iOS実機/長期連打・全セーブ復元・次階は未検証。UIはflat整備第一版、最新ゲーム相当の完成としない。画像/チェックD:/Unity/AssetIntegration/Review。
+
+## 2026-10-26 / 太った共有モデル命中・屋外影・ロードoverlay（Editor終了待ち）
+変更: WorldActors、VaultGame/HubWorld/Overworld/UI/OverworldUI、新VaultLoading.cs。
+原因: 添付fatはkind1/2/6/9等Mutant共用、前回kind7のみ修正では未対応。HeavyMelee kind1/2/6/7/9へ統一、近接2.9m/前方36damage/HP230基礎、後退・遠隔特殊攻撃へ進む前にreturn。予告radius2.9とhit一致。kind5銃兵維持。屋外camera85に対しshadowDistance80だった→145。
+UI: flatdarkに細いaccent/hoverと軽いshadow、屋外entrypromptを右下へ移し中央視界確保。Loading: BuildOverworld/Hub/StartRunをwrapper化、通常時overlay2frame描画してから同期heavy action、smoke/QAは従来同期。VaultLoading DrawをOnGUI共通入口へ。非同期化のcallsite/例外/連打/StartRun後処理はまだQA必要、screen transition安全性未完。
+検証: 最初のbattle/loading変更はruntimecompile成功。その後UI位置/予告radius変更は未実画像。ユーザーEditor3process起動中につき保存終了をasync依頼済み、追加Unity未起動。次: 終了回答後compile→実際fat近接hit・shadow・UI/loading通常条件を確認。完了としない。
+
+## 2026-10-26 / Editor終了後の地面・flatUI・戦闘検証、mini静止再生成停止
+変更: VaultOverworldUI（mini地形はorigin4m以上移動時のみ更新）、ImportedAssetReview（warmup120/計測300frame＋scripted移動300frame、combat反射検証）、ImportedWorldBatch（HiddenBuildingCountの更新interval外resetを修正しdoorちらつき防止）。
+検証: visual-review46で生成地面4素材/flatdarkUIを実画像確認。47静止P50=21.0977ms/P95=26.1921ms、combat-check BloaterHP393.3(補正後)/NoBullet=True/NoBlast=True/AgileSpeed5.4/Telegraph.42。48 scripted移動28.62964m P50=20.8361/P95=26.0438ms、正常resultSpawnRecords50989。前回P95>100msと条件/RNG差あり絶対改善保証なしだが今回短時間spike減少。iPhone Metal/長距離stream/群れ戦闘/全UI未検証。最後HiddenCount修正はcompile対象だが再Unity未実施。元CTI葉shaderkeyword重複・EditorUIElements stack出力あり、runtimeNullReference/CS/DistrictGroundshadererrorは検出なし。Assets/Art原本保持。画像/計測D:/Unity/AssetIntegration/Review、47比較はReview-fortyseventh。
+
+## 2026-10-26 / 俊敏変異体・近接Bloater・flat UI・生成地面（未検証）
+変更: WorldActors、FieldUIArt/VaultUI、DistrictGround.shader/ImportedWorldAssets、新Art/Environment/Ground/wasteland-materials-v1.png。
+結果: kind8 speed2.35→5.4/予備.7→.42、kind7基礎HP230/射撃GroundBlast撤去→2.9m前方近接36damage。UI発光plate/card撤去flatdarkpanel+細accent、画像icon維持。imagegenで2×2 materialatlas（asphalt/concrete/dirt/moss）生成してworldspace混合/道路へ接続、derivative凹凸を追加。元画像保持。
+検証: 戦闘/flatUI変更までruntimecompile成功、生成groundと最後予備変更は未compile/未画像。Unity3process起動中、保存終了をユーザーへasync依頼したため追加Editor起動していない。PC/iOS軽量化は従前未完了、P95spike残存。完了報告禁止。次: Editor終了回答→compile→UI/ground/敵攻撃速度を実画像/実走確認。
+
+## 2026-10-26 / 追加CPU負荷対策（カクつき未解消）
+変更: WorldActors/OverworldGeography/ImportedEnemyVisual/VaultGame/VaultOverworldUI。
+結果: 未警戒22m超敵は射線判定せずreturn、射線cache約.14〜.196秒/35m制限。precise collisionが常時9chunkを調べる処理を実際のradius+車余白に触れるchunkだけへ縮小。遠方25m超animation10Hz/近傍mobile30Hz、骨scale維持。同一屋外50mnavcellでdistancefield再構築省略。mini地形100×75→50×38（広域map1024²不変）。
+検証: runtimecompile成功、通常Editorvisual-review44/45正常完了、CS/NullReferenceなし。静止120frame44 P50=22.0749ms/P95=112.5671、45 P50=22.5045/P95=132.8157。ランダム敵数/Editor負荷差がありbefore比較の保証なし、依然spike残るため滑らかさ完成とはしない。移動/戦闘・境界衝突・iPhone Metal実機未検証。画像/計測D:/Unity/AssetIntegration/Review。次はProfilerでframe spikeの実スタック特定、移動戦闘の長い計測、GUI allocation/skin/native animation/GPU shadowの切分けが必要。
+
+## 2026-10-26 / ダークUI復帰・nine-slice・中ボス
+変更: FieldUIArt/VaultUI/OverworldUI/MobileUI、WorldActors/VaultGame/Overworld/RunSave、新VaultChampionLoot.cs、ImportedAssetReview。
+結果: field-kit-v2へ復帰、dark/ivory文字へ戻す。Panel/plateを9分割UV描画し角18px固定で縦横stretch抑制。Dungeon normal5.5%/world spawnrecord4.5%でelite、HP3.2倍/damage1.35倍/scale1.15。HP色normal赤/elite紫/boss橙、eliteは未負傷でもbar表示。既存通常ドロップに加えelite/boss品質装備1個保証（銃/防具/module/近接均等）。elite Rare/Epic/Legendary=55/37/8、boss20/55/25。既存初bossLegendary保証維持。world eliteフラグは固定recordで退避再出現維持、Dungeoncheckpointにelite保存・restore時再抽選/二重強化抑止。
+検証: 全runtimecompile成功、visual-review43通常Editor正常完了、HUD画像でdark復帰/枠歪み改善確認、champion-checkで両rewardfactory成功/eliteHP518.4/紫bar確認、CS/NullReference/TargetInvocation例外なし。自然spawn頻度・長時間戦闘balance・中断復元実走・iOS実機/全UIページ未確認。前回性能課題は未解決。画像/チェックD:/Unity/AssetIntegration/Review。
+
+## 2026-10-26 / 明るいFieldKitと負荷対策（性能未達）
+変更: imagegen field-kit-bright-v1.png、新UIatlas差替、VaultUI/OverworldUI、ImportedWorldBatch/OverworldScenery、VaultOverworld、VaultPost、ImportedAssetReview。
+結果: ivory/coral/mint画像button/card/icon、濃slate本文・濃orange見出し（WorldLabel）へ。街区一括生成→中心優先1chunk/frame、画面外instancebatch frustum cull、plane配列/bounds cache、遮蔽判定.12秒間隔、mobile環境shadow off/bloom1pass/active敵18(PC28)。mini更新Repaintのみ.75秒、最終追加で地図生成のgeo.Blocked（9chunk+trees+cars）から所属chunk建物のみへ変更。
+検証: runtime全C# compile成功、visual-review41通常Editor正常完了、hud-ui/atlas-ui反映。静止120frame P50=26.3985ms P95=112.5322msで依然カクつきあり、改善完了とはしない。最後のmini専用判定変更はcompileのみ、実測未再実施。before比較/移動戦闘負荷/iOS Metal/iPhone実機未検証。画面外建物影消失やstream境界popも要確認。画像D:/Unity/AssetIntegration/Review。新UIはPanel比率伸縮など磨き込み余地。
+
+## 2026-10-26 / FieldKit UI画像・地図・屋外群れ・チェスト・モンスター動作
+変更: imagegen生成field-kit-v1/v2とmap-paper-v1をAssets/Resources/Art/UI/FieldKitへ保存、新FieldUIArt、VaultUI/MobileTouchControls/OverworldUI、VaultOverworld/Geography/State、ImportedEnemyVisual、ImportedWorldAssets/HubWorld、ImportedAssetReview、ART_GUIDE。
+結果: 16セルUIatlas（12icon/2plate/stick/card）、基本panel/button/モバイル主要action画像へ接続。文字は描込なし、日英維持。地図1024²/river/major-road/district/park/parcel+生成paper、camp/tower画像marker。全体UI刷新第一版。群れ94%4〜7/単独6%、約51000固定spawnrecord（実体32上限）、同一mapload撃破復活なし。生成時Blocked全世界chunk走査撤去。Chest36→180、旧36ID維持、新144は廃屋裏路地/モール/公園spine。静的環境animation停止（Hub imported敵Animatorは保持）。
+敵: 体型別歩幅/腕/攻撃予備/大型slam差分、native小secondary、fallbackdeath膝崩れ→前倒れ。最終kind7写真で胴体床付近へ倒れるが足先高めのため全種自然接地の完成ではない。
+検証: runtime全C# compile成功。非表示batch36はUI screenshot不可のため通常Editor37〜39へ切替、39 atlas-ui/hud-ui/monster-deathを目視、result正常完了SpawnRecords51074、CS/NullReferenceなし。生成画像alpha維持。地図道路過密は2回減衰修正したが最新ゲーム級の地図品質完成にはまだ改善余地。UIplate縦横stretchあり、モバイル実タッチ/英語全ページ/商人inventory全UI、群れ戦闘balance・全180箱通行性・拠点箱演出の連続reload・全敵death・MetalFPS/fullbuildは未確認。全作業完了とはしない。画像D:/Unity/AssetIntegration/Review（最終39）、過程Review-thirtysixth〜eighth保持。
+
+## 2026-10-26 / 建物遮蔽・廃ビル損傷・深度輪郭・停止ズーム
+変更: ImportedWorldBatch/Assets、RuinedCityArchitecture、VaultGame/UI/MobileUI/HubWorld/Overworld、新VaultCameraSettings.cs、VaultPost.shader、ImportedAssetReview。
+結果: 建物instance単位boundsとownerIDを共有描画に記録。カメラ→player胸/画面内50m以内生存enemy胸rayが建物boundsを横切る場合、当該建物だけ描画skip。離れれば復帰、Collider/nav不変。Dungeon facade付属door rendererも連動。高層外壁panel欠損、上2階床欠落、窓残存率低下、錆垂れ部材追加。Post輪郭をDepthNormalsからCameraDepthTextureへ変更しinstanced深度不一致対策。停止画面PC/iOSに65〜145%zoom slider、PlayerPrefs保存・各world/dungeon/hub初期cameraへ反映。
+検証: runtime全C#コンパイル成功。visual-review35のocclusion-before/afterで手前1棟だけ非表示、HiddenBuildings=1を確認。道路線のモデル透過は比較画像で見られない。付属CTI葉shader重複keyword警告は既存。検証用配置の方向誤り/変数scopeコンパイルを修正して再試行済。停止sliderタッチ/各倍率実画面、敵単独遮蔽、隠し復帰の連続歩行、Metal実機性能は未検証。画像D:/Unity/AssetIntegration/Review。QA完了resultはログ確認を要する。元asset/セーブ不変（zoom設定のみ新規）。
+
+## 2026-10-26 / 高層廃ビル街・店舗・モール・公園
+変更: 新RuinedCityArchitecture.cs、OverworldGeography/Scenery、WorldEntranceBuildings、ImportedWorldBatch、VaultGame、ImportedAssetReview。
+結果: 共有prototype8種をUnity meshで生成（5〜8階構造露出ビル6種、3階モール、2階店舗）。欠けた最上階床/露出梁柱/窓抜け/錆部材/店舗庇、既存導入concrete/brick材質。25mでなく12.5m parcelに幅10.5〜10.9mへ拡大。250〜300mごとの地区で高層街/商店街/モール/工業倉庫を分散。街中PocketParkに十字園路/導入bench8席、森とは別の小公園を追加。通常Dungeon入口100件を12×8mの高層廃ビルまたはモール正面へ、Camp既存導入外観維持。既存閾値/blocked footprint維持。
+検証: Player条件全runtimeコンパイル成功、visual-review32正常完了。city-district/street/detailsおよび実Entrance0のdungeon-tower-entranceを目視。高層建物のcamera near clipping発見→屋外orthographic camera距離35→85（倍率不変）で切断改善。新mesh/materialはinstancingで共有、9chunk景観208ms、全体Build55162ms。全ての公園/商店/モールの個別QA・実際の全路地走破・入口操作・高層によるプレイヤー遮蔽対応・iOS Metal性能は未確認。建物デザインは第一版で精緻さ未達。画像D:/Unity/AssetIntegration/Review。Unity正常終了。
+
+## 2026-10-26 / 地面素材の実参照修正・自然な混合・廃屋瓦礫
+変更: DistrictGround.shader新規、ImportedWorldAssets/Batch、OverworldScenery/Geography、ImportedWorldAssetBaker/Review。既存素材の内部nameがStandardで名前検索が不成立だった不具合を修正し、Resources正確パス参照へ。road_propsアスファルト/Abandoned grass/Yughues BrokenRectangles/SaltFinishを追加bake。材質画像6枚を比較して選択。
+結果: 地面はひび割れ舗装＋土埃＋草をworld-space noiseで連続blend、normal/detail/macro陰影。四角い草地色パッチを撤去。道路は暗いアスファルト、segment端の共通tangentで隙間修正。廃屋角4箇所×6の導入瓦礫cluster追加、入口保護半径16→12mで空地抑制。旧四角瓦礫1000/chunkは描画異常を認め撤去し導入debrisへ統一。instanced Standardはbuiltin shader直接参照/opaque深度に統一。
+検証: ground-bake1/visual-review30正常終了、city-street/district/detailsを目視。道路継目解消、地面差替え、廃屋周囲の瓦礫を確認。景観9chunk生成206ms、全体Build59357ms（景観外初期ロード課題残存）。Shader DistrictGround/CS例外なし。元CTI葉shaderにはLOD keyword重複警告がある。iOS Metal/FPS/fullbuild未確認。画像D:/Unity/AssetIntegration/Review、素材比較ground-samples.png。高品質街並み全体の完成としない。
+
+## 2026-10-26 / 景観共有描画と導入道路用品・瓦礫追加
+変更: 新ImportedWorldBatch.cs、ImportedWorldAssets/OverworldScenery/ImportedAssetReview、ImportedWorldAssetBaker。street/debris curated prefab8個追加。road_propsのtraf_cone/brl_empty_old/brl_empty/blboard、Industrial RoadDivider、CinderBlock/pallet/barrelを使用。専用road面mesh素材は見つからず、曲線道路＋導入舗装材質を維持。
+結果: 静的建物/樹木/低木/車/道路用品をGameObject個別生成からmesh/material別GPU instancingへ移行。cacheはsource単位共有。近傍25→9chunkで密度維持、移動stream継続。低木260→400、street/debris候補240/chunkへ増量。道路面・入口を避ける。撮影時は明示DrawNowを使い手動camera.Renderでも欠落させない。
+検証: street-bake3正常終了、Player条件全runtimeコンパイル成功。visual-review26正常完了、city-street/district/details目視で建物/植栽/道路小物/瓦礫表示確認。計測EnvironmentGenerationMilliseconds=131、近傍9chunk、通常MeshRenderer559（instanced景観は含まない）。BuildOverworld全体は52235msであり初回ロード全体の高速化は未達、景観外の負荷が残る。例外/CSerror/timeoutなし。iOS実機FPS/Metal/fullbuild未検証。画像と計測D:/Unity/AssetIntegration/Review。Unity正常終了。
+
+## 2026-10-26 / 物量優先の街区増密
+変更: OverworldGeography/Scenery。建物候補を100m区画16→64（12.5m parcel、幅9.5–10.5m、隣接隙間2m以上）。樹木試行240→650/市街65→260、低木100→260、廃車試行10→140（間隔検査）、batched小瓦礫240→1000。入口保護・河川・道路・50mナビspine回避維持。
+検証: visual-review23でcity-district実画像を確認し、前回より建物/木/廃車が大幅増。C#コンパイル通過、単一Editor終了。全QAは240秒制限に達しchecks/result未出力（city-districtまで取得）なので全テスト成功扱い不可。近傍25区画の初期生成が重くなったため負荷最適化と実機性能は未完了。画像D:/Unity/AssetIntegration/Review/city-district.png。クラッシュなし、原本/セーブ変更なし。
+
+## 2026-10-26 / 街区密度・道路描画・敵縮尺の修正（継続）
+変更: OverworldGeography/Scenery、ImportedWorldAssets、ImportedEnemyVisual/Baker、ImportedAssetReview。
+結果: 100m生活道路＋300m幹線を共通の曲線関数で描画/配置判定。道路三角形の下向きを修正（上から不可視の原因）、歩道追加、道路UVと地面world座標UV、導入Yughues舗装/砂/苔材質を適用。25m parcelへ建物を配置、街中樹木/低木も追加。敵clipのscale trackを毎回復元し全種骨寸法で正規化、LOD消失を防止。全敵再Bake14正常終了。
+検証: visual-review22正常終了、54checks/0fail。city-street/city-districtで道路/歩道/建物/木、enemy8で縮小解消を実画像確認。ただし街区に空白が多いため、その後建物幅14–17m→19–21m、低木上限22cm→65cmへ追加修正。この最終2点の実画像検証は未実施。市街地の廃墟表現/密度の完成とはしない。iOS実機/フルパッケージ未検証。画像D:/Unity/AssetIntegration/Review。
+
+## 2026-10-26 / 景観・Raider保持・Ork初期姿勢の追加修正
+変更: ImportedWorldAssets.cs、ImportedEnemyVisual.cs、ImportedEnemyBaker.cs、ImportedAssetReview.cs。
+結果: dungeon/Hubの旧車両cover階層を導入箱/水槽/棚/樽へ実置換し重複除去。既存1.9m footprintへ均一縮尺と接地。閉領域内に最大6廃屋、entry/exit10m余白、bounds全閉セル確認。床/壁は同名shader衝突を避けbuiltin Standard直接参照。Raider銃は独立root+grip/support socket、掌中心IKと指屈曲、腕の届く低めの構えへ近づけた。
+Ork: 付属FBX clip探索を追加して実撮影したが、Leggs1のskin不整合で裸足/ブーツが分離するため装甲脚だけ非表示の暫定対応。idle takeで正しい立ち姿を初期化してから骨restを記録。歩行/攻撃はfallbackを使用、サイズは姿勢依存の高さでなく骨長合計へ変更。元アセットは不変。
+検証: enemy-bake13正常終了、visual-review20 Editor playmode正常終了。Review/checks.txt 48 checks/0 failures（12enemy資産、cover重複/footprint/接地）。dungeonで廃屋/箱反映、Raider3方向、Ork歩行で二重ブーツ解消と直立を目視確認。Player条件でruntime全C#コンパイル成功、git diff --check通過。これはWindowsパッケージbuildの成功ではない。
+未解決: 全景観品質の完成、Raider指先の細部、Ork脚装甲のskin修復と付属walk/attackの再採用、他敵native motion、WaterWorks URP対応、iOS/Metal実機/性能。新規IPAなし。レビュー画像D:/Unity/AssetIntegration/Review、試行画像はReview-fifteenth～nineteenth等に保持。UnityはQA終了後正常終了。
+## 2026-10-26 / 無料アセット統合・実画面確認（継続）
+変更: ImportedWorldAssetBaker/ImportedWorldAssets、ImportedEnemyBaker/ImportedEnemyVisual、OverworldScenery/OverworldGeography、VaultGame/VaultHubWorld/WorldActors/VaultRunSave/ExpeditionMap、ImportedRiverWater/ImportedRiver.shader、Packages/manifest、ImportedAssetReview/Runner。
+結果: 環境30Prefabと24材質、敵12種＋CrocボスNPCをResourcesへ生成。建物/樹木/草/車を屋外streamへ接続、建物footprintにサイズを合わせる。森の密度増。Hub外周へ廃屋/倉庫/柵/物資と接地用地面。stageId%5==2をInsurgent雑魚＋Crocボスへ接続。Crocは全装備・サングラスSkin1を実画像で確認。Raider checkpoint kind10許容、近距離射撃AI修正。独自builtin対応river波/浅瀬/反射色shaderを追加。
+検証: environment-bake4とenemy-bake7が正常終了。Unity Editor単一プロセスの実Playmodeでhub/overworld/dungeon/forest/river、敵0/3/4/7/8とRaiderを撮影。visual-review11でゾンビ/大型ゾンビの接地を目視。QAスポーン高さの誤りも修正。visual-review12でOrkのサイズ/中心ずれを発見、非表示装備を含むboundsが原因と特定。肩/足首の実骨格寸法から正規化へ変更。visual-review14が正常終了し、Orkが配置位置で接地した大型モデルとして表示されることを目視確認。新素材でのWindowsパッケージbuild/iOS実機は未実施。セーブはQA中書込抑止。
+未解決: 全体の景観再構築は途中（ダンジョンには旧外観が多い）。Raiderの銃把持/指は未完成。同じMutantモデルを複数enemyへ使っており個別デザイン一致未達。WaterWorksはURP非互換で利用していない（原本保持、依存csはD:/Unity/AssetIntegration/WaterWorksIncompatibleScriptsへ退避）。独自riverにはSSR/refractionなし。iOS/Metal/負荷・長時間移動未確認。画像はD:/Unity/AssetIntegration/ReviewおよびReview-eleventh/twelfth等へ保存。完了扱いにしない。
+## 2026-10-26 / 導入済み環境・敵アセット統合（途中）
+ユーザーが全素材Import済と回答。AssetsにCroc/WaterWorks/RetroStyle/Industrial/Mutant等確認。自前抽出Assets/ThirdParty/ImportedはユーザーImportとの重複GUID回避のためD:/Unity/AssetIntegration/ExtractedSourceへ退避（削除なし）。そこからユーザーAssetsに欠けていたnoncode原パス5074ファイルのみ追加、既存は上書きなし。WaterWorksのURP依存Water_Volume/Water_Settings cs+metaはD:/Unity/AssetIntegration/WaterWorksIncompatibleScriptsへ退避、builtinを維持（利用は未実装）。正常FatZombie同梱にInsurgentがありAssets/ArtStore3D/Insurgent (Urban)/Prefabへ配置。パッケージ不足再DLはこの同梱で前進可能。
+新規ImportedWorldAssets/ImportedWorldAssetBaker: Resources/ImportedWorld building/tree/car/propsを配置adapterへ登録、環境元Prefabをscript/physics除去+サイズ接地合わせでbakeするEditor menu追加。VaultGameダンジョン/Hubへprops接続。ImportedEnemyVisual/ImportedEnemyBaker: Resources/ImportedEnemies、0〜11モデル+nativeclip/骨animation fallback、新モデル成功時だけ旧renderer非表示。SpawnFoeからTryAttach接続、HubBossはCrocNPC優先。WorldActors kind10RAIDERを5相当射撃AIに追加、stageId%5==2の通常敵を10へ変更。Crocサングラス/全装備最適skinの目視選定は未実施。kind11戦闘敵の本体接続は未実施。
+検証: runtime全C# Unity参照Roslyn D:/Unity/AssetIntegration/runtime.rspでコンパイル成功。Editor scripts/bake/実画像/フルbuildは未実施。ユーザーにEditor全保存終了をasync依頼中、現3Unityprocess/空RAM約2.5GBで追加Unity起動はしない。新素材はResourcesのcuratedPrefab未生成につき実画面反映は未完成。次: Editor閉じた回答後、軽量単一Editorでimport errors修正→両Bake→素材/敵接地/材質/動作QA→本統合。WaterWorksはURP非互換につき別途水shader対応が必要。誤って全部完了と報告しない。
+
+## 2026-10-25 / iOS版のDドライブ作業方針
+ユーザーはこのiOS版をすべてDで作業することを指定。本体は既存の D:/Unity/Ashfall-iOS を継続し、C側の旧PCプロジェクトは移動/削除しない。AGENTSへD作業方針追加。OpenUnity.batへTEMP/TMP=D:/Unity/ProcessTemp/Ashfall-iOS、UPM_CACHE_ROOT=D:/Unity/SharedCaches/PackageCache、Editorログ=D:/Unity/Ashfall-iOS/Logs/Editor.logを設定。元batはDevelopment/MigrationBackupsへ保持。詳細Development/StorageLocations.md。
+Unity Asset Store-5.x (41ファイル/2169068090bytes) とLocal/Unity/Caches (3501ファイル/269215540bytes) はD:/Unity/SharedCachesへコピーし全ファイルSHA256/サイズ/数照合後、CパスをDへのjunctionに置換。Local/Unity/cache (41422ファイル/3542288509bytes) も全SHA256検証後junction切替完了。計44964ファイル/5980572139bytes(約5.57GiB)をCからDへ移行。Unity/Hubを閉じた旨のユーザー回答あり。強制終了なし。Windows全体のTEMP設定/セーブ/認証/会話/旧PC版は移動しない。
+環境・敵アセット組込は未着手のまま保留。今回ダウンロード済みcacheにCroc men/Insurgent Urban/複数Zombieを確認。次はD側cacheから選別して導入する。WaterWorksはURP用なので現在builtinとの互換性を検証し、単純Importで動作済みとしない。
+## 2026-10-25 / 10km四方への拡張・ロード単位の敵・建物入口
+対象 D:/Unity/Ashfall-iOS。OverworldGeographyを10000×10000m/50m粗ナビ200²へ変更。景観は100m区画・近傍5×5最大25区画を読み込み、地理cache49区画。100入口/7拠点/36チェストを分散。河川9橋と道路・森林・廃墟区画、距離km表示/1km縮尺、200mローカルミニマップ。拠点は自動訪問を廃止し3.5m以内で入口操作→既存Hub。WorldEntranceBuildingsで入口を4系統廃墟建物/拠点HQに変更、近傍のみ生成、壁衝突/射線を接続。無料Asset Store素材への差替えadapterは用意したが実素材は未取得。現状の建物/木/車はプロシージャル仮外観。
+屋外敵はマップ入場時に最大2048個の位置/種類/level±1を確定、近傍90m最大16体実体化・130m外でHP/位置を保持して退避。撃破は当該spawnをdefeatedとして同じ入場中に再生成しない。再入場時のみ配置再作成。FoeKilledから明示通知。FaithfulEnemy3Dの生成入力-.62mと接地root-.09mを考慮して屋外生成入力y=.71へ修正、足底0m。地形はほぼ0m平面。旧小マップsave v1は訪問/達成等維持し屋外座標のみ破棄し最後の拠点へ、次回v2保存。
+検証: Unity6000.6付属Roslynでruntime全C#コンパイル成功、git diff --check成功。既存Player描画データ+更新DLLの独立runtime QA-overworld-10km-final は217checks/0fail、日英/モバイル2532×1170・1600×1200。接地追加QA-overworld-ground は205checks/0fail(デスクトップ)、enemy-ground-contact-camera.pngをPMO目視し敵の下半身/足が地上に出ていることを確認。建物入口・10km地図画像も確認。QAテレポートがstream更新を呼ばず空画面になるテスト側問題を修正、通常移動はTick更新。フル統合配布build/iOS実機は未検証、IPA未生成。
+未完了: 無料Unity Asset Store 3Dアセット導入・画質改善。computer-useスキル読了したがCUA/Node両方「failed to write kernel assets (os error 3)」で起動不能、ログイン画面操作不可。無料候補Abandoned buildings(product62875/Aleksey Kozhemyakin)、同publisher Road Props/Boxes/Fence。購入・有料素材利用は一切なし。無料素材を取得/導入済みとは報告しない。新規屋外の移動実タッチ連続操作/Metal性能・長時間走破・disk再起動は未検証。
+
+## 2026-10-25 / 半オープンワールド探索へ移行
+対象 D:/Unity/Ashfall-iOS。約398×354mの固定連結街を実際に歩いて探索する方式へ変更。曲線道路・蛇行河川と3橋・住宅/工業/旧市街/公園森林、95廃墟建物・290木・28朽車・時計塔/給水塔/ガソリン設備等。地形と移動/AI/射線はSectorLayout共通、景観は55m区画材質バッチ。既存100ミッションを100実入口に割当て、遠隔入場を禁止。入口0は開始拠点から約20m。入場後の既存フロア/任務/装備報酬を維持。
+初回はボスのアジトで借金/爆弾首輪の会話。7拠点は既存の商人/返済/スキル/図鑑を維持し、訪問した拠点だけ屋外/拠点間FT可。ミッション成功は同じ入口へ、退却も入口へ報酬なし、死亡は最後の拠点へ戻り所持scrap整数半減(慰労scrap廃止)。屋外敵は近傍8体上限/プレイヤーlevel±1/最低1、屋外撃破でフロア制圧・任務誤加算なし。36装備チェストは個別開封からミッション成功3回で復活。独立Vault.Overworld.v1に訪問/位置/開封/帰還入口を保存、8秒と休止/終了時に位置保存。通常ミッションcheckpointも維持。
+新規 VaultOverworld/State/UI、OverworldGeography/Scenery/Review、SectorLayoutカスタムconstructorとGame/Hub/Progression/UI/Inventory/RunSave/Ammo/ExpeditionLootへ接続。日英対応、モバイルの地図と固有操作ボタンを分離、非均等safe canvasで回転markerが崩れる問題をscanline菱形へ修正。英語会話クリップとcampプロンプト胸被りを最終修正。
+検証: 全runtime C#をUnity6000.6付属Roslyn/Unity参照でコンパイル成功。地理自己検査で全143地点radius3.4m安全/9m以上分離/Connected。Unity Playerで旧描画データ+新DLL/初期化登録の独立runtime QAを実行しQA-overworld-release-20261025/result.txtが207 checks/0 failures、日英story/街/公園/橋/地図と2532x1170・1600x1200 mobile画面確認。独立UI QAで英語本文clipを発見し短縮済み。最終UI2点修正後QA-overworld-publish-20261025/result.txtも207checks/0fail。PMOが最終英語会話全文と1600x1200キャンプ案内の実画面を再確認し、文字切れ/胸被りの改善を確認した。saveはsmokeで書込抑止。通常のフル統合buildはRAM低下により自作memory guardで停止(クラッシュなし)、ScriptsOnlyも新script layoutでデータ検証不成立のため未成功。検証exe=D:/Unity/OverworldRuntimeQA/NeonVault.exe、正式配布物への転記はしていない。
+未検証: ディスク再起動復元/実タッチ連続操作/iOS Metal IL2CPP性能/最終フルパッケージ。IPA未生成。景観はプロシージャルな既存材質の初版で、Diablo同等の画質とはしない。旧PCプロジェクトのゲームソースは変更していない。
 ## 2026-10-24 / HP表示と瀕死演出
 変更: `VaultHealthUI.cs`でPC/iOS共通のHPパネルを実装。整数の現在値/最大値、刻み付きゲージ、残り25%以下の赤い警告色を表示。瀕死時は中央を透明に保った赤い周辺グラデーションを控えめに脈動させる。`VaultUI.cs`、`VaultMobileUI.cs`に接続。`HealthUIReview.cs`で満タン/26%/25%を日英撮影、`MobileInputReview.cs`に瀕死画面を追加。
 検証: `D:/Unity/AshfallArtValidation/health-ui-final-build.log` HERO_BUILD_OK。`health-ui-desktop-final/`でPC日英の満タン/26%/25%画像を確認。`health-ui-mobile/`でiPhone/iPad日英の通常・瀕死画面を確認し、273件失敗0。中央視界、照準、射撃ボタン、ミニマップを視認可能。

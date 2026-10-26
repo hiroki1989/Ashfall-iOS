@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -225,6 +225,8 @@ namespace NeonVault
         }
         void ActionIcon(Rect r,MobileAction action,Color c)
         {
+            int artIndex=action==MobileAction.Fire?0:action==MobileAction.Reload?1:action==MobileAction.Pickup||action==MobileAction.Interact?2:action==MobileAction.Melee?3:action==MobileAction.Inventory?4:action==MobileAction.Pause?11:-1;
+            if(artIndex>=0&&FieldUIArt.Icon(r,artIndex,Color.white))return;
             switch(action)
             {
                 case MobileAction.Fire:

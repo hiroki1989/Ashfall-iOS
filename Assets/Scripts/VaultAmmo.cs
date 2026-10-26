@@ -134,6 +134,7 @@ namespace NeonVault
         }
         bool OpenNearbyChest()
         {
+            if(IsOverworld)return OpenOverworldChest();
             Chest nearest=null;float distance=2.4f;foreach(var chest in chests)if(!chest.opened){float d=Vector3.Distance(PlayerPosition,chest.position);if(d<distance){distance=d;nearest=chest;}}
             if(nearest==null)return false;var roll=rng.Next(100);
             if(roll<22)

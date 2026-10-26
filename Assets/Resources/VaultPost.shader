@@ -7,6 +7,7 @@
         CGINCLUDE
         #include "UnityCG.cginc"
         sampler2D _MainTex,_Bloom,_CameraDepthNormalsTexture;
+        UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
         float4 _MainTex_TexelSize;
         float4 _Direction;
         half4 bright(v2f_img i):SV_Target {half3 c=tex2D(_MainTex,i.uv).rgb;return half4(max(c-.85,0),1);}
@@ -16,14 +17,14 @@
         {
             half3 c=tex2D(_MainTex,i.uv).rgb+tex2D(_Bloom,i.uv).rgb*.28;
             c=c/(1+c*.28);c=pow(max(c,0),.95);
-            float centerDepth;float3 centerNormal;DecodeDepthNormal(tex2D(_CameraDepthNormalsTexture,i.uv),centerDepth,centerNormal);
+            float centerDepth=Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv));
             float ink=0;
             if(centerDepth>.0001&&centerDepth<.999)
             {
                 for(int sample=0;sample<4;sample++)
                 {
                     float2 offset=sample==0?float2(1.15,0):sample==1?float2(-1.15,0):sample==2?float2(0,1.15):float2(0,-1.15);
-                    float depth;float3 normal;DecodeDepthNormal(tex2D(_CameraDepthNormalsTexture,i.uv+offset*_MainTex_TexelSize.xy),depth,normal);
+                    float depth=Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture,i.uv+offset*_MainTex_TexelSize.xy));
                     // Painted scans already contain ink. Facet-normal edges turn their
                     // fine surface into dark speckles; use geometric depth boundaries only.
                     float separation=smoothstep(.008,.05,abs(depth-centerDepth)/max(.004,centerDepth));

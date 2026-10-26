@@ -11,6 +11,8 @@ namespace NeonVault
         public const int Width=67, Depth=67;
         public readonly int Columns, Rows;
         public const float Cell=2.2f;
+        public readonly float CellSize=Cell;
+        readonly Func<Vector3,float,bool> preciseCollision;
         public readonly bool[,] open;
         public readonly List<Vector2Int> chambers=new List<Vector2Int>();
         public readonly List<Rect> walls=new List<Rect>();
@@ -112,6 +114,19 @@ namespace NeonVault
             BuildDistanceField(Entry);
             var exitCell=chambers[exitIndex];ExitPathCells=distances[exitCell.x,exitCell.y];
         }
+        // Explicit map entry point; the original procedural dungeon constructor is unchanged.
+        public SectorLayout(bool[,] map,Vector2Int entry,Vector2Int exit,float cellSize=Cell,Func<Vector3,float,bool> collision=null)
+        {
+            CellSize=cellSize;preciseCollision=collision;
+            Columns=map.GetLength(0);Rows=map.GetLength(1);open=(bool[,])map.Clone();
+            distances=new int[Columns,Rows];entryZone=new bool[Columns,Rows];
+            explored=new bool[Columns,Rows];visible=new bool[Columns,Rows];
+            if(!IsOpen(entry.x,entry.y))throw new ArgumentException("Entry must be walkable");
+            chambers.Add(entry);entryIndex=0;BuildDistanceField(Center(entry));
+            if(!IsOpen(exit.x,exit.y)||distances[exit.x,exit.y]<0){int far=0;exit=entry;for(int x=0;x<Columns;x++)for(int y=0;y<Rows;y++)if(distances[x,y]>far){far=distances[x,y];exit=new Vector2Int(x,y);}}
+            chambers.Add(exit);exitIndex=1;ExitPathCells=distances[exit.x,exit.y];
+            for(int x=0;x<Columns;x++)for(int y=0;y<Rows;y++)entryZone[x,y]=(Center(new Vector2Int(x,y))-Entry).sqrMagnitude<225;
+        }
         int LinkLength(Vector2Int link){var a=chambers[link.x];var b=chambers[link.y];return Math.Abs(a.x-b.x)+Math.Abs(a.y-b.y);}
         void BentCorridor(Vector2Int a,Vector2Int b,System.Random random)
         {
@@ -148,13 +163,13 @@ namespace NeonVault
         bool IsCover(int x,int y){foreach(var p in covers)if(ToCell(p)==new Vector2Int(x,y))return true;return false;}
         void Carve(int x,int y,int w,int d){for(int a=x;a<x+w;a++)for(int b=y;b<y+d;b++)if(a>0&&a<Columns-1&&b>0&&b<Rows-1)open[a,b]=true;}
         void Corridor(Vector2Int a,Vector2Int b){Carve(Math.Min(a.x,b.x)-1,Math.Min(a.y,b.y)-1,Math.Abs(a.x-b.x)+3,Math.Abs(a.y-b.y)+3);}
-        public Vector3 Center(Vector2Int c)=>new Vector3((c.x+.5f-Columns*.5f)*Cell,.65f,(c.y+.5f-Rows*.5f)*Cell);
-        public Vector2Int ToCell(Vector3 p)=>new Vector2Int(Mathf.FloorToInt(p.x/Cell+Columns*.5f),Mathf.FloorToInt(p.z/Cell+Rows*.5f));
+        public Vector3 Center(Vector2Int c)=>new Vector3((c.x+.5f-Columns*.5f)*CellSize,.65f,(c.y+.5f-Rows*.5f)*CellSize);
+        public Vector2Int ToCell(Vector3 p)=>new Vector2Int(Mathf.FloorToInt(p.x/CellSize+Columns*.5f),Mathf.FloorToInt(p.z/CellSize+Rows*.5f));
         public bool IsOpen(int x,int y)=>x>=0&&y>=0&&x<Columns&&y<Rows&&open[x,y];
-        public bool Blocked(Vector3 p,float radius){var a=ToCell(p-new Vector3(radius,0,radius));var b=ToCell(p+new Vector3(radius,0,radius));for(int x=a.x;x<=b.x;x++)for(int y=a.y;y<=b.y;y++)if(!IsOpen(x,y))return true;return false;}
+        public bool Blocked(Vector3 p,float radius){if(preciseCollision!=null)return preciseCollision(p,radius);var a=ToCell(p-new Vector3(radius,0,radius));var b=ToCell(p+new Vector3(radius,0,radius));for(int x=a.x;x<=b.x;x++)for(int y=a.y;y<=b.y;y++)if(!IsOpen(x,y))return true;return false;}
         public bool Connected(){BuildDistanceField(Entry);for(int x=0;x<Columns;x++)for(int y=0;y<Rows;y++)if(open[x,y]&&distances[x,y]<0)return false;return true;}
         public void BuildDistanceField(Vector3 target){for(int x=0;x<Columns;x++)for(int y=0;y<Rows;y++)distances[x,y]=-1;var c=ToCell(target);if(!IsOpen(c.x,c.y))return;var queue=new Queue<Vector2Int>();queue.Enqueue(c);distances[c.x,c.y]=0;while(queue.Count>0){var p=queue.Dequeue();foreach(var d in Directions){var n=p+d;if(IsOpen(n.x,n.y)&&distances[n.x,n.y]<0){distances[n.x,n.y]=distances[p.x,p.y]+1;queue.Enqueue(n);}}}}
-        public Vector3 Chase(Vector3 from,Vector3 target){var c=ToCell(from);if(!IsOpen(c.x,c.y))return Vector3.zero;int best=distances[c.x,c.y];Vector2Int next=c;foreach(var d in Directions){var n=c+d;if(IsOpen(n.x,n.y)&&distances[n.x,n.y]>=0&&(best<0||distances[n.x,n.y]<best)){next=n;best=distances[n.x,n.y];}}Vector3 goal=next==c?target:Center(next);goal.y=from.y;return(goal-from).normalized;}
+        public Vector3 Chase(Vector3 from,Vector3 target){var c=ToCell(from);if(!IsOpen(c.x,c.y))return Vector3.zero;int best=distances[c.x,c.y];Vector2Int next=c;foreach(var d in Directions){var n=c+d;if(IsOpen(n.x,n.y)&&distances[n.x,n.y]>=0&&(best<0||distances[n.x,n.y]<best)){next=n;best=distances[n.x,n.y];}}Vector3 goal=next==c?target:Center(next);goal.y=from.y;var heading=(goal-from).normalized;if(preciseCollision==null||!Blocked(from+heading*1.6f,.55f))return heading;foreach(float turn in new[]{45f,-45f,90f,-90f}){var alternate=Quaternion.Euler(0,turn,0)*heading;if(!Blocked(from+alternate*2.5f,.55f))return alternate;}return Vector3.zero;}
         public bool ClearLine(Vector3 a,Vector3 b,float radius=.15f){int steps=Mathf.CeilToInt(Vector3.Distance(a,b)/.5f);for(int i=1;i<=steps;i++)if(Blocked(Vector3.Lerp(a,b,(float)i/steps),radius))return false;return true;}
         public string Signature(){var s=new System.Text.StringBuilder();s.Append(Columns).Append('x').Append(Rows).Append(':').Append(entryIndex).Append(':').Append(exitIndex).Append(':');foreach(bool b in open)s.Append(b?'1':'0');return s.ToString();}
     }

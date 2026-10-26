@@ -1,4 +1,4 @@
-# Obsidian Sanctum / art revision
+﻿# Obsidian Sanctum / art revision
 
 組み込みimagegenを使用して新規生成したオリジナル画像です。プロジェクトにコピーし、UnityのResourcesから実際に読み込んでいます。キャラクター画像は元のアルファ透明度を保持しています。
 
@@ -163,3 +163,10 @@ Built-in imagegen skill used for arm-free torso ±X and isolated inner leg textu
 
 ## 2026-10-22 素体の固定UV修復
 素体はカメラ方向で全身写真を切り替えない。側面sourceは腕で隠れた胴・腰をimagegenで補完し、最終メッシュを正投影した図の寸法へ合わせて固定UVへ投影する。新source/生成記録はAssets/ArtSource/LowPolyProof/SideSurfaceRepair。側面を下垂腕付き写真で上書きすると腕の絵が胴に残るため禁止。手順は承認済みHunyuan元形状をCPUのBlenderで修復して再利用し、Hunyuan/AIテクスチャモデルのローカルGPU生成は行わない。頭は承認済みhead-rebuiltを素体/装備で共用し、マスクは別装備として扱う。頭部専用bake候補画像は原本として保存するが採用モデルの頭を置換しない。
+
+## 2026-10-26 FieldKit UI refresh
+Built-in imagegen: field-kit-v1/v2.png (4x4 atlas, rifle/reload/hand/knife/backpack/map/camp/tower/chest/skulls/med/cog, two button plates, stick pad, card frame); map-paper-v1.png subtle graphite cartographic paper. No localized text baked in. Originals retained. Runtime UV crop via FieldUIArt; alpha preserved. Source prompts in current task; imagery uses graphite, ivory, amber/teal, restrained wasteland ink. Assets/Resources/Art/UI/FieldKit.
+
+2026-10-26: built-in imagegen field-kit-bright-v1.png, same 4x4 16 asset contract, bright ivory enamel/coral/mint/slate, no text, transparent alpha preserved. Original C generated image copied Assets/Resources/Art/UI/FieldKit.
+
+2026-10-26 imagegen wasteland-materials-v1.png: 2x2 asphalt/concrete/dirt/moss basecolor atlas, orthographic flat, no objects/text, copied Assets/Resources/Art/Environment/Ground. Runtime DistrictGround quadrant samples + noise blend. Original retained.

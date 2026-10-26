@@ -6,8 +6,10 @@ namespace NeonVault
         public float runDamage,runFire,runVitality,runDash,runChain,runHarvest;
         readonly Vector3 merchantPosition=new Vector3(-7,.65f,2),archivistPosition=new Vector3(6,.65f,2),portalPosition=new Vector3(0,.65f,10);
         string hubDialogue="";
-        public void BuildHub()
+        public void BuildHub() {if(QueueWorldTransition(()=>BuildHubImmediate()))return;BuildHubImmediate();}
+        void BuildHubImmediate()
         {
+            IsOverworld=false;EnsureOverworldState();
             if(world!=null){world.gameObject.SetActive(false);Destroy(world.gameObject);}
             foreach(var material in materials)if(material!=null)Destroy(material);materials.Clear();Enemies.Clear();drops.Clear();meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();ClearArtifactDrops();satellites.Clear();
             world=new GameObject("LAST LIGHT / survivor safehouse").transform;
@@ -20,30 +22,35 @@ namespace NeonVault
             var merchant=art.Character(merchantPosition,true,1);merchant.name="Mara / Salvage Merchant";
             var archivist=art.Character(archivistPosition,true,9);archivist.name="Ione / Archivist";
             var collector=art.Character(debtCollectorPosition,true,4);collector.name="Briggs / Debt Collector";
-            art.Gate(portalPosition.z);art.Ring("Extraction pad",portalPosition-Vector3.up*.6f,1.8f,.12f,Cyan,true);
+            if(LastVisitedCamp==0){var boss=ImportedEnemyVisual.TryCreateBossNPC(world,new Vector3(-3,0,7))??art.Character(new Vector3(-3,.65f,7),true,8);boss.rotation=Quaternion.Euler(0,180,0);boss.name="Raider Boss / explosive collar contract";}
+            ImportedWorldAssets.DressInterior(world,Layout,true);art.Gate(portalPosition.z);art.Ring("Extraction pad",portalPosition-Vector3.up*.6f,1.8f,.12f,Cyan,true);
             player=art.Character(new Vector3(0,.65f,-3),true);barrel=art.Weapon(player,gun.color);VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));PlayerAppearance.ApplyArmor(EquippedArmor);
-            aim=Vector3.right;PlayerWeapon.Aim(aim);hubDialogue="";cam.orthographicSize=11;UpdateCamera(true);
+            foreach(var animation in world.GetComponentsInChildren<Animation>(true)){animation.Stop();animation.enabled=false;}foreach(var animator in world.GetComponentsInChildren<Animator>(true))if(!animator.GetComponentInParent<ImportedEnemyVisual>()){animator.Rebind();animator.Update(0);animator.enabled=false;}
+            aim=Vector3.right;PlayerWeapon.Aim(aim);hubDialogue="";cam.orthographicSize=11/CameraZoom;UpdateCamera(true);
         }
         void UpdateHub()
         {
+            toastTimer=Mathf.Max(0,toastTimer-Time.deltaTime);
             var move=ReadPlayerMovement();player.position=MoveWithinRoom(player.position,move*EffectiveMoveSpeed*Time.deltaTime,.45f);
             if(!VaultMobileInputBridge.Enabled&&move.sqrMagnitude>.01f){aim=move.normalized;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);}
             if(VaultMobileInputBridge.Enabled)ApplyMobileAim(VaultMobileInputBridge.Aim);
             if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)){
                 if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){debtPage=true;debtSkillTreePage=false;screen=Screen.Shop;}
                 else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){debtPage=false;debtSkillTreePage=false;shopSellingPage=false;pendingSaleKey=null;screen=Screen.Shop;}
-                else if(Vector3.Distance(PlayerPosition,portalPosition)<3)screen=Screen.DungeonSelect;
+                else if(Vector3.Distance(PlayerPosition,portalPosition)<3){ExitCampToOverworld();return;}
                 else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)hubDialogue=T("IONE: Equipment survives each expedition; field upgrades do not. Flank plated infected. Dodge acid and a locked needle shot, then strike during recovery. Never let the shamblers surround you.","イオネ：持ち帰った装備は残りますが、現地改造は周回ごとに失われます。装甲屍は側面から、酸液と針撃ちは予告を避けてから。徘徊屍に囲まれないように。");
             }
-            if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){screen=Screen.Menu;hubDialogue="";}
+            if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
+            if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);screen=Screen.Menu;hubDialogue="";}
             UpdateCamera(false);
         }
         void DrawHubWorldLabels()
         {
+            if(toastTimer>0){Panel(new Rect(270,130,880,90),Gold);Text(290,145,Toast,new GUIStyle(small){wordWrap=true},Gold,840);}
             DrawWorldLabel(merchantPosition+Vector3.up*2,T("MARA / MERCHANT [E]","マラ / 装備商人 [E]"),Gold);
             DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONE / ARCHIVIST [E]","イオネ / 記録官 [E]"),Cyan);
             DrawWorldLabel(debtCollectorPosition+Vector3.up*2,T("BRIGGS / DEBT COLLECTOR [E]","ブリッグス / 借金取り [E]"),new Color(1,.35f,.24f));
-            DrawWorldLabel(portalPosition+Vector3.up*2,T("EXPEDITION GATE [E]","出撃ゲート [E]"),Gold);
+            DrawWorldLabel(portalPosition+Vector3.up*2,T("EXIT TO ASHFALL [E]","アッシュフォールの街へ [E]"),Gold);
             if(!string.IsNullOrEmpty(hubDialogue)){Panel(new Rect(250,595,940,112),Cyan);Text(270,613,hubDialogue,new GUIStyle(small){wordWrap=true},Mist,900);if(Button(new Rect(1050,658,116,35),T("CLOSE","閉じる")))hubDialogue="";}
         }
         void DrawWorldLabel(Vector3 position,string value,Color color)

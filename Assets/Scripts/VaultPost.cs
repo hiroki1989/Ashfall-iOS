@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 namespace NeonVault
 {
     [RequireComponent(typeof(Camera))]
@@ -8,10 +8,10 @@ namespace NeonVault
         void OnRenderImage(RenderTexture source,RenderTexture destination)
         {
             if(effect==null)effect=new Material(Resources.Load<Shader>("VaultPost"));
-            var a=RenderTexture.GetTemporary(Mathf.Max(1,source.width/4),Mathf.Max(1,source.height/4),0,RenderTextureFormat.DefaultHDR);
-            var b=RenderTexture.GetTemporary(a.width,a.height,0,RenderTextureFormat.DefaultHDR);
+            var a=RenderTexture.GetTemporary(Mathf.Max(1,source.width/4),Mathf.Max(1,source.height/4),0,Application.isMobilePlatform?RenderTextureFormat.Default:RenderTextureFormat.DefaultHDR);
+            var b=RenderTexture.GetTemporary(a.width,a.height,0,Application.isMobilePlatform?RenderTextureFormat.Default:RenderTextureFormat.DefaultHDR);
             Graphics.Blit(source,a,effect,0);
-            for(int i=0;i<2;i++)
+            for(int i=0;i<(Application.isMobilePlatform?1:2);i++)
             {
                 effect.SetVector("_Direction",new Vector4((2+i)/(float)a.width,0,0,0));Graphics.Blit(a,b,effect,1);
                 effect.SetVector("_Direction",new Vector4(0,(2+i)/(float)a.height,0,0));Graphics.Blit(b,a,effect,1);
