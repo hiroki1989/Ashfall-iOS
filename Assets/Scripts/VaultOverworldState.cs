@@ -18,6 +18,12 @@ namespace NeonVault
         public bool SavedOutside { get; private set; }
         readonly bool[] visitedOverworldCamps = new bool[OverworldCampCount];
         readonly int[] overworldChestOpenedAt = new int[OverworldChestCount];
+        readonly HashSet<int> completedOverworldActivities = new HashSet<int>();
+        int activeOverworldClueId = -1;
+        Vector3 activeOverworldCluePosition;
+        public bool HasActiveOverworldClue { get { EnsureOverworldState(); return activeOverworldClueId >= 0; } }
+        public Vector3 ActiveOverworldCluePosition { get { EnsureOverworldState(); return activeOverworldCluePosition; } }
+        public int ActiveOverworldClueId { get { EnsureOverworldState(); return activeOverworldClueId; } }
         public IReadOnlyList<bool> VisitedOverworldCamps { get { EnsureOverworldState(); return Array.AsReadOnly(visitedOverworldCamps); } }
         public IReadOnlyList<int> OverworldChestOpenedAt { get { EnsureOverworldState(); return Array.AsReadOnly(overworldChestOpenedAt); } }
         bool overworldStateLoaded;
@@ -31,6 +37,10 @@ namespace NeonVault
             public Vector3 position;
             public bool[] camps;
             public int[] chestOpenedAt;
+            public int[] activities;
+            public bool hasActiveClue;
+            public int activeClueId;
+            public Vector3 activeCluePosition;
         }
 
         public void EnsureOverworldState()
@@ -57,6 +67,10 @@ namespace NeonVault
                         int opened = s.chestOpenedAt[i];
                         overworldChestOpenedAt[i] = opened >= 0 && opened <= OverworldMissionClears ? opened : -1;
                     }
+                if (s.activities != null)
+                    foreach (int id in s.activities) if (id >= 0) completedOverworldActivities.Add(id);
+                if (s.hasActiveClue && s.activeClueId >= 0 && completedOverworldActivities.Contains(s.activeClueId) && FiniteOverworldPosition(s.activeCluePosition))
+                { activeOverworldClueId = s.activeClueId; activeOverworldCluePosition = s.activeCluePosition; }
                 if (s.version == OverworldSaveVersion && FiniteOverworldPosition(s.position))
                 {
                     SavedOverworldPosition = s.position;
@@ -81,7 +95,10 @@ namespace NeonVault
                 version = OverworldSaveVersion, lastCamp = LastVisitedCamp,
                 missionClears = OverworldMissionClears, pendingStage = PendingWorldStage,
                 storySeen = WorldStorySeen, outside = SavedOutside, position = SavedOverworldPosition,
-                camps = visitedOverworldCamps, chestOpenedAt = overworldChestOpenedAt
+                camps = visitedOverworldCamps, chestOpenedAt = overworldChestOpenedAt,
+                activities = new List<int>(completedOverworldActivities).ToArray(),
+                hasActiveClue = activeOverworldClueId >= 0,
+                activeClueId = activeOverworldClueId, activeCluePosition = activeOverworldCluePosition
             };
             PlayerPrefs.SetString(OverworldSaveKey, JsonUtility.ToJson(s));
             PlayerPrefs.Save();
@@ -91,6 +108,32 @@ namespace NeonVault
         {
             EnsureOverworldState();
             return id >= 0 && id < OverworldCampCount && visitedOverworldCamps[id];
+        }
+
+        public bool IsOverworldActivityCompleted(int id)
+        { EnsureOverworldState(); return completedOverworldActivities.Contains(id); }
+
+        public bool CompleteOverworldActivity(int id)
+        {
+            EnsureOverworldState();
+            if (id < 0 || !completedOverworldActivities.Add(id)) return false;
+            SaveOverworldState(); return true;
+        }
+
+        public bool BeginOverworldClue(int id, Vector3 target)
+        {
+            EnsureOverworldState();
+            if (id < 0 || activeOverworldClueId >= 0 || !FiniteOverworldPosition(target) || !completedOverworldActivities.Add(id)) return false;
+            activeOverworldClueId = id; activeOverworldCluePosition = target;
+            SaveOverworldState(); return true;
+        }
+
+        public bool RecoverOverworldClue(int id)
+        {
+            EnsureOverworldState();
+            if (id < 0 || activeOverworldClueId != id) return false;
+            activeOverworldClueId = -1; activeOverworldCluePosition = Vector3.zero;
+            SaveOverworldState(); return true;
         }
 
         public void VisitOverworldCamp(int id)

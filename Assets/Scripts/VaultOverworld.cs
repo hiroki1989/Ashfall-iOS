@@ -56,6 +56,7 @@ namespace NeonVault
         public void OpenOverworldMap()
         {
             if(InventoryOpen||!WorldStorySeen||!(IsOverworld||screen==Screen.Hub))return;
+            if(selectedOverworldActivity!=null)CloseOverworldActivityChoice();
             if(IsOverworld)RememberOverworldPosition(PlayerPosition,true);
             worldAtlasFromHub=screen==Screen.Hub;screen=Screen.DungeonSelect;Time.timeScale=0;
         }
@@ -87,7 +88,7 @@ namespace NeonVault
         {
             if(world!=null){world.gameObject.SetActive(false);Destroy(world.gameObject);}
             foreach(var material in materials)if(material!=null)Destroy(material);
-            materials.Clear();Enemies.Clear();drops.Clear();meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();ClearArtifactDrops();satellites.Clear();obstacles.Clear();worldChestIds.Clear();worldEnemyLevels.Clear();worldEnemyInstances.Clear();worldEnemySpawns.Clear();worldEnemyDefeated=0;
+            materials.Clear();Enemies.Clear();drops.Clear();meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();ClearArtifactDrops();satellites.Clear();obstacles.Clear();worldChestIds.Clear();worldEnemyLevels.Clear();worldEnemyInstances.Clear();worldEnemySpawns.Clear();worldEnemyDefeated=0;nearbyOverworldActivities.Clear();CloseOverworldActivityChoice();
         }
         public void BuildOverworld(Vector3 position) {if(QueueWorldTransition(()=>BuildOverworldImmediate(position)))return;BuildOverworldImmediate(position);}
         void BuildOverworldImmediate(Vector3 position)
@@ -98,6 +99,7 @@ namespace NeonVault
             ClearRunUpgradeHistory();ResetArtifactCombat();RefreshPermanentStats();hp=Mathf.Clamp(hp,1,maxHp);
             reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0;invincible=2.5f;dodgeCooldown=0;meleeAttack?.ResetCooldown();
             world=new GameObject("ASHFALL / continuous overworld").transform;Layout=WorldGeography.Layout;
+            world.gameObject.AddComponent<OverworldActivityVisuals>().Initialize(this);
             halfWidth=Layout.Columns*Layout.CellSize*.5f;halfDepth=Layout.Rows*Layout.CellSize*.5f;
             rng=new System.Random(unchecked(Environment.TickCount^OverworldMissionClears));
             art=new VaultArt(world,materials,new System.Random(OverworldGeography.Seed));
@@ -106,7 +108,7 @@ namespace NeonVault
             gun=WeaponInSlot(ActiveWeaponSlot)??Weapons[0];ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Clamp(loaded,0,EffectiveMagazine):EffectiveMagazine;
             player=art.Character(position,true);barrel=art.Weapon(player,gun.color);RefreshWeaponAppearance();PlayerAppearance?.ApplyArmor(EquippedArmor);
             aim=Vector3.right;hasAimedPoint=false;PlayerWeapon.Aim(aim);CreateSatellites();
-            CreateWorldSites();CreateWorldChests();GenerateOverworldEnemies();StreamOverworldEnemies();
+            CreateWorldSites();CreateWorldChests();GenerateOverworldEnemies();StreamOverworldEnemies();RefreshOverworldActivities();
             screen=Screen.Playing;cam.orthographicSize=(MobileTouchControls.Enabled?10:11)/CameraZoom;
             Layout.BuildDistanceField(position);Layout.Discover(position);navigationTimer=.75f;worldSpawnTimer=.5f;worldSaveTimer=0;UpdateCamera(true);
             RememberOverworldPosition(position,true);
@@ -138,10 +140,11 @@ namespace NeonVault
         }
         void TickOverworld()
         {
+            if(selectedOverworldActivity!=null)Time.timeScale=0;
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             worldSaveTimer-=Time.deltaTime;if(worldSaveTimer<=0){worldSaveTimer=8;RememberOverworldPosition(PlayerPosition,true);SaveInventory();}
             worldSpawnTimer-=Time.deltaTime;if(worldSpawnTimer>0)return;worldSpawnTimer=.5f;
-            OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();
+            OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();RefreshOverworldActivities();
         }
         void GenerateOverworldEnemies()
         {
@@ -221,7 +224,7 @@ namespace NeonVault
             if(!IsOverworld)return false;
             int camp=NearbyWorldCamp;if(camp>=0)return EnterNearbyWorldCamp(camp);
             int entrance=NearbyWorldEntrance;if(entrance>=0)return EnterNearbyWorldDungeon(entrance);
-            return false;
+            return OpenNearbyOverworldActivity();
         }
         void ConfigureOverworldFoe(Foe foe)
         {

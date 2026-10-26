@@ -245,6 +245,11 @@ namespace NeonVault
             if(worldTransitionPending)return;
             if(WorldBossConversationVisible)return;
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
+            if(IsOverworld&&OverworldActivityChoiceOpen)
+            {
+                if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))OpenNearbyOverworldActivity();
+                return;
+            }
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
             if(InventoryOpen){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))ToggleInventory();return;}
             if(MobileTouchControls.Enabled&&manufacturerRegistry)return;

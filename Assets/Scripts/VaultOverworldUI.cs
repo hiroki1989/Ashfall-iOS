@@ -34,6 +34,27 @@ namespace NeonVault
             FieldUIArt.Plate(bounds,true);var style=new GUIStyle(centered){fontSize=MobileTouchControls.Enabled?24:20,wordWrap=true};
             style.normal.textColor=enabled?UiPaper:Mist;bool result=GUI.Button(bounds,value,style);GUI.enabled=previous;return result;
         }
+        Color WorldActivityColor(int type)=>type==0?Gold:type==1?Cyan:new Color(.73f,.55f,.92f);
+        void DrawOverworldActivityHUD(bool interactionAvailable)
+        {
+            if(OverworldActivityChoiceOpen)
+            {
+                Rect card=new Rect(365,185,710,520);Panel(card,Cyan);
+                WorldLabel(new Rect(390,205,570,65),OverworldActivityTitle,Gold,32);
+                if(WorldButton(new Rect(973,202,76,60),"×"))OpenNearbyOverworldActivity();
+                WorldLabel(new Rect(390,285,650,120),OverworldActivityDescription,UiPaper,25);
+                for(int choice=0;choice<OverworldActivityChoiceCount;choice++)
+                {
+                    int selected=choice;
+                    if(WorldButton(new Rect(390,425+choice*112,650,92),OverworldActivityChoiceLabel(choice)))ChooseOverworldActivity(selected);
+                }
+                return;
+            }
+            if(!interactionAvailable||NearbyOverworldActivity<0)return;
+            bool mobile=MobileTouchControls.Enabled;
+            Rect prompt=mobile?new Rect(440,325,570,60):new Rect(940,625,475,86);
+            if(WorldButton(prompt,OverworldActivityTitle+"\n"+T(mobile?"INVESTIGATE":"INVESTIGATE / E",mobile?"調べる":"調べる / E")))OpenNearbyOverworldActivity();
+        }
         void EnsureOverworldAtlas()
         {
             var geo=WorldGeography;if(geo==null||geo.Layout==null)return;
@@ -88,6 +109,7 @@ namespace NeonVault
                 if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),OverworldCampName(camp,VaultLanguage.Japanese)+"\n"+T("ENTER CAMP / E","拠点へ入る / E")))EnterNearbyWorldCamp(camp);
             }
             else if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(940,625,475,74),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,26);
+            DrawOverworldActivityHUD(entrance<0&&camp<0&&!NearbyAmmoCrate&&!NearbySupplyChest);
             if(toastTimer>0){Rect notice=mobile?new Rect(25,150,390,100):new Rect(435,160,570,72);Panel(notice,Gold);WorldLabel(new Rect(notice.x+12,notice.y+10,notice.width-24,notice.height-15),Toast,Gold,mobile?20:21);}
         }
         void DrawWorldCombatIndicators()
@@ -139,6 +161,12 @@ namespace NeonVault
                 var p=Local(WorldGeography.Camps[i]);if(!inside.Contains(p))continue;
                 Box(new Rect(p.x-6,p.y-6,12,12),new Color(.02f,.04f,.05f,.9f));
                 WorldMarker(p.x,p.y,4,IsCampVisited(i)?Cyan:UiPaper);
+            }
+            foreach(var site in NearbyOverworldActivitySites)
+            {
+                if(site.completed)continue;
+                var p=Local(site.position);
+                if(inside.Contains(p))WorldMarker(p.x,p.y,4,WorldActivityColor(site.type));
             }
             void LootDot(Vector3 position)
             {
@@ -239,10 +267,16 @@ namespace NeonVault
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;FieldUIArt.Icon(new Rect(p.x-18,p.y-18,36,36),6,IsCampVisited(i)?Color.white:Color.gray);
                 if(GUI.Button(new Rect(p.x-16,p.y-16,32,32),(i+1).ToString(),centered))overworldSelectedCamp=i;
             }
+            if(IsOverworld)foreach(var site in NearbyOverworldActivitySites)
+            {
+                if(site.completed)continue;
+                Vector2 p=WorldAtlasPoint(map,site.position);
+                if(map.Contains(p))WorldMarker(p.x,p.y,7,WorldActivityColor(site.type));
+            }
             if(IsOverworld){var p=WorldAtlasPoint(map,PlayerPosition);if(map.Contains(p)){WorldMarker(p.x,p.y,12,Color.white);Box(new Rect(p.x-2,p.y-2,4,4),Cyan);}}
             if(WorldButton(new Rect(744,112,78,55),"−"))SetWorldMapZoom(worldMapZoom/1.5f,map.center,map);
             if(WorldButton(new Rect(830,112,78,55),"+"))SetWorldMapZoom(worldMapZoom*1.5f,map.center,map);
-            WorldLabel(new Rect(35,756,890,42),T("Drag to move · wheel / ± to zoom · ◇ Dungeon · ■ Camp · ↑ North","ドラッグで移動・ホイール / ± で拡大・◇ ダンジョン・■ 拠点・↑ 北"),Mist,19);
+            WorldLabel(new Rect(35,756,890,42),T("Drag to move · wheel / ± to zoom · ◇ Dungeon · ■ Camp · colored dots: nearby activities · ↑ North","ドラッグで移動・ホイール / ± で拡大・◇ ダンジョン・■ 拠点・色点：近くの寄り道・↑ 北"),Mist,17);
             Panel(new Rect(950,100,460,650),Gold);
             if(overworldSelectedCamp>=0)
             {
