@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 50701beeb8fa18c46877dc60f1e884ff
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 251039
+  packageName: Warrior + Axe
+  packageVersion: 1.1.1
+  assetPath: Assets/ThirdParty/Imported/Fat_Zombie_Low_Poly/ArtStore3D/Warrior/Shader/Standard(TwoSide).shader
+  uploadId: 952470
