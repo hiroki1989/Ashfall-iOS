@@ -6,11 +6,7 @@ namespace NeonVault {
   static readonly Dictionary<int,GameObject> prototypes=new Dictionary<int,GameObject>();
   static Material[] palette;static Mesh cube;
   static void Prepare(){if(palette!=null)return;
-#if UNITY_EDITOR
-   var shader=UnityEditor.AssetDatabase.GetBuiltinExtraResource<Shader>("Standard.shader");
-#else
-   var shader=Resources.GetBuiltinResource<Material>("Default-Material.mat").shader;
-#endif
+   var shader=ImportedWorldAssets.BuiltinStandard();
    string[] names={"M_YFCM_BrushedWorn","M_YFCM_RevealingBricks","M_YFCM_Spalling",null,null};
    Color[] colors={new Color(.48f,.47f,.43f),new Color(.47f,.32f,.26f),new Color(.34f,.36f,.35f),new Color(.08f,.12f,.13f),new Color(.36f,.18f,.095f)};
    palette=new Material[5];for(int i=0;i<5;i++){palette[i]=new Material(shader);var source=names[i]==null?null:Resources.Load<Material>("ImportedWorld/Surfaces/"+names[i]);if(source)palette[i].CopyPropertiesFromMaterial(source);palette[i].shader=shader;palette[i].color=colors[i];palette[i].SetFloat("_Glossiness",i==3?.3f:.08f);palette[i].enableInstancing=true;}

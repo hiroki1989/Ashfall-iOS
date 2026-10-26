@@ -5,6 +5,7 @@ namespace NeonVault {
  public sealed class ImportedSurfaceLifetime:MonoBehaviour {public Material material;void OnDestroy(){if(material)Destroy(material);}}
  public static class ImportedWorldAssets {
   static readonly Dictionary<string,GameObject[]> groups=new Dictionary<string,GameObject[]>();
+  static Shader builtinStandard;
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] static void Register(){OverworldScenery.AssetAdapter=Place;WorldEntranceBuildings.AssetAdapter=Place;}
   public static bool Place(string category,Transform parent,Vector3 position,int seed){
    if(!groups.TryGetValue(category,out var prefabs)){prefabs=Resources.LoadAll<GameObject>("ImportedWorld/"+category);groups[category]=prefabs;}
@@ -64,14 +65,16 @@ namespace NeonVault {
    for(float x=b.min.x-.5f;x<=b.max.x+.5f;x+=.5f)for(float z=b.min.z-.5f;z<=b.max.z+.5f;z+=.5f)
     if(!layout.Blocked(new Vector3(x,0,z),0)){instance.SetActive(false);UnityEngine.Object.Destroy(instance);return;}
   }
-  static Shader BuiltinStandard(){
-#if UNITY_EDITOR
-   return UnityEditor.AssetDatabase.GetBuiltinExtraResource<Shader>("Standard.shader");
-#else
-   // Resolve through Unity's built-in material, not a name potentially shadowed
-   // by an imported shader declaring itself "Standard".
-   return Resources.GetBuiltinResource<Material>("Default-Material.mat").shader;
-#endif
+  public static Shader BuiltinStandard(){
+   if(builtinStandard)return builtinStandard;
+   // A primitive uses Unity's actual default shader in both Editor and Player.
+   // Default-Material.mat is not available through Resources in built Players.
+   var probe=GameObject.CreatePrimitive(PrimitiveType.Cube);
+   builtinStandard=probe.GetComponent<Renderer>().sharedMaterial.shader;
+   probe.SetActive(false);
+   if(Application.isPlaying)UnityEngine.Object.Destroy(probe);
+   else UnityEngine.Object.DestroyImmediate(probe);
+   return builtinStandard;
   }
   public static void ApplyOutdoorSurfaces(Material[] materials){
    string[] names={"M_YFPM_BrokenRectangles","M_grnd_grass","M_grnd_asph",null,"M_YFCM_RevealingBricks","M_YFCM_SaltFinish",null,"M_YFPM_BrokenRectangles"};

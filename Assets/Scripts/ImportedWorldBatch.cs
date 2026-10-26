@@ -25,11 +25,7 @@ namespace NeonVault {
     for(int sub=0;sub<filter.sharedMesh.subMeshCount&&sub<source.Length;sub++){
      if(!source[sub])continue;if(!materials.TryGetValue(source[sub],out var mat)){mat=new Material(source[sub]);
       if(mat.shader&&mat.shader.name=="Standard"){
-#if UNITY_EDITOR
-       mat.shader=UnityEditor.AssetDatabase.GetBuiltinExtraResource<Shader>("Standard.shader");
-#else
-       mat.shader=Resources.GetBuiltinResource<Material>("Default-Material.mat").shader;
-#endif
+       mat.shader=ImportedWorldAssets.BuiltinStandard();
        mat.SetFloat("_ZWrite",1);mat.SetFloat("_Mode",0);mat.SetFloat("_SrcBlend",1);mat.SetFloat("_DstBlend",0);mat.renderQueue=-1;mat.DisableKeyword("_ALPHABLEND_ON");mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
       }
       mat.enableInstancing=true;materials[source[sub]]=mat;}

@@ -1,3 +1,8 @@
+## 2026-10-26 / iOS 拠点遷移で背景だけ表示・操作不能
+原因: 拠点の ImportedWorldAssets.DressInterior→ApplySurfaces が、Playerで取得不可の Default-Material.mat を参照して NullReferenceException。プレイヤー生成・カメラ更新前に停止。Standalone Playerで material=null と primitive標準shader=Standard を再現。
+変更: 標準shaderをプリミティブの実マテリアルから一度だけ解決し、ImportedWorldAssets/Batch/RuinedCityArchitectureで共有。遷移中Updateを停止し、他の遷移失敗時は例外を記録してメニューへ戻す。
+検証: UNITY_EDITORなしで全runtimeコンパイル成功。Standalone Playerで同期拠点生成し player=(0,0.03,-3)、camera=(-20.21,20.81,-20.21)、shader=Standard を確認。git diff --check。実機iOSの新IPAは未生成・未検証。QA用StandaloneのDLL/初期化設定は元に復元。
+
 ## 2026-10-26 / iOS 起動直後に背景だけで停止する問題
 対象 D:/Unity/Ashfall-iOS。VaultGame.Awake でメニュー画面より先に BuildRoom(false) を同期実行し、ダンジョンの床/壁/装備・輸入素材まで生成していた。起動時はメニュー用画像だけを表示し、ダンジョン生成を新規出撃または保存再開時に遅延するよう変更。
 検証: Unity 6000.6.0f1 Editorで startup-menu-review の実画面を取得。screen=Menu、world=null、player=null、メニュー背景・文字・ボタン表示を確認。runtime C# 全体コンパイル成功、git diff --check 成功。実機iOS/新IPAは未検証。元のiPhoneの停止が完全に解消したかは次のビルドで確認が必要。

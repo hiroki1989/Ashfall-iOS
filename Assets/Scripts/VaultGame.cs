@@ -242,6 +242,7 @@ namespace NeonVault
         }
         void Update()
         {
+            if(worldTransitionPending)return;
             if(WorldBossConversationVisible)return;
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
