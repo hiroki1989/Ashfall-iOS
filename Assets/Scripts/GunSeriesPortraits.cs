@@ -17,7 +17,8 @@ namespace NeonVault {
    string path=series>=4?"Art/GunSeriesExpanded/"+ManufacturerCatalog.Id(maker)+"-"+classes[Mathf.Clamp(gunClass,0,5)]+"-series-v2":"Art/GunSeries/"+ManufacturerCatalog.Id(maker)+"-series-v1";
    if(cache.TryGetValue(path,out var s)&&s.image)return s;
    var image=Resources.Load<Texture2D>(path);if(!image)return null;
-   var json=Resources.Load<TextAsset>(path+"-bounds");Rect[] bounds=null;
+   // Portrait-only bounds isolate adjacent silhouettes without changing the 3D source metadata.
+   var json=Resources.Load<TextAsset>(path+"-portrait-bounds");if(!json)json=Resources.Load<TextAsset>(path+"-bounds");Rect[] bounds=null;
    if(json)try{bounds=DistinctEquipmentPortraits.ParseBounds(json.text,series>=4?8:24);}catch(System.Exception){}
    if(bounds==null)return null;
    s=new Sheet{image=image,bounds=bounds,table=JsonUtility.FromJson<Table>(json.text)};cache[path]=s;return s;
@@ -34,7 +35,7 @@ namespace NeonVault {
    GUI.color=Color.white;string key=r.maker+":"+r.gunClass+":"+r.series;
    if(!previews.TryGetValue(key,out var preview)||!preview){var shader=Resources.Load<Shader>("GunSeriesPreview");if(shader){if(!material)material=new Material(shader);material.SetVector("_Crop",new Vector4(uv.x,uv.y,uv.width,uv.height));var sourceCell=s.table?.cells!=null&&cell<s.table.cells.Length?s.table.cells[cell]:null;var hull=sourceCell?.hull;int count=hull==null?0:Mathf.Min(64,hull.Length);for(int i=0;i<count;i++)clip[i]=new Vector4(hull[i].x,hull[i].y,0,0);var exclusions=sourceCell?.exclusions;int holeCount=exclusions==null?0:Mathf.Min(32,exclusions.Length);for(int h=0;h<holeCount;h++){var e=exclusions[h];holes[h]=new Vector4(e.x,e.y,e.width,e.height);}material.SetInt("_ExcludeCount",holeCount);material.SetVectorArray("_ExcludeRects",holes);material.SetInt("_ClipCount",count);material.SetVectorArray("_ClipPoints",clip);preview=new RenderTexture(512,Mathf.Max(64,Mathf.RoundToInt(512/ratio)),0,RenderTextureFormat.ARGB32);preview.Create();var previous=RenderTexture.active;try{Graphics.Blit(s.image,preview,material);}finally{RenderTexture.active=previous;}previews[key]=preview;}}
    if(preview)GUI.DrawTexture(target,preview,ScaleMode.ScaleToFit,true);else GUI.DrawTextureWithTexCoords(target,s.image,uv,true);
-   ManufacturerBranding.Badge(new Rect(card.x+3,card.yMax-24,21,21),ManufacturerCatalog.Id(r.maker));GUI.color=old;return true;
+   ManufacturerBranding.PortraitBadge(card,ManufacturerCatalog.Id(r.maker));GUI.color=old;return true;
   }
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]static void Reset(){foreach(var rt in previews.Values)if(rt){rt.Release();Object.Destroy(rt);}previews.Clear();if(material)Object.Destroy(material);material=null;cache.Clear();}
  }

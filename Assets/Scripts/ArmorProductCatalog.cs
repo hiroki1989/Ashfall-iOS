@@ -46,12 +46,12 @@ namespace NeonVault
             var bits=id.Split('-');if(bits.Length==4&&bits[0]=="armor"&&System.Enum.TryParse(bits[1],true,out ArmorSlot slot)&&int.TryParse(bits[2],out int visual)&&int.TryParse(bits[3],out int design))return new ArmorProduct(slot,Mathf.Clamp(visual,0,4),Mathf.Max(0,design));return null;}
         public static string Name(ArmorProduct p,bool ja)
         {
-            var recipe=DistinctEquipmentDesigns.Find(p.id);if(recipe!=null)return ManufacturerCatalog.Name(p.manufacturerId,ja)+" / "+(ja?recipe.japanese:recipe.name);
+            var recipe=DistinctEquipmentDesigns.Find(p.id);if(recipe!=null)return ja?recipe.japanese:recipe.name;
             string[] en={"SALVAGER","BREACHER","RANGER","SENTINEL","TRAIL WARDEN"};
             string[] jp={"回収兵","突破兵","遊撃兵","守備兵","トレイルウォーデン"};
             string[] designEn={"Patrol","Ballistic","Marksman","Assault","Courier","Survivor","Gunner","Pathfinder","Medic","Bulwark"};
             string[] designJa={"巡回","防弾","狙撃","突撃","伝令","生存","銃手","先導","衛生","防塁"};
-            return ManufacturerCatalog.Name(p.manufacturerId,ja)+" / "+(ja?jp[p.visualVariant]+"・"+designJa[p.designVariant%10]+ProductGeneration.Name(p.designVariant,true):en[p.visualVariant]+" "+designEn[p.designVariant%10]+ProductGeneration.Name(p.designVariant,false))+" / "+Armory.SlotName(p.slot,ja);
+            return DistinctEquipmentDesigns.ProductName("armor",p.visualVariant*50+p.designVariant*5+(int)p.slot,ja);
         }
         public static string Description(ArmorItem item,bool ja)
         {

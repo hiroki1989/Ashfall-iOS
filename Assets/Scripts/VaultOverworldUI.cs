@@ -126,6 +126,7 @@ namespace NeonVault
         float worldMapZoom=2.4f;
         Vector2 worldMapCenter=new Vector2(.5f,.5f);
         bool worldMapDragging,worldMapInitialized;
+        int worldMapTouchId=-1;
         float worldMapVerticalScale=1;
         Vector2 worldMapLastPointer;
         float worldMapPinchDistance;
@@ -200,21 +201,23 @@ namespace NeonVault
         {
             bool mobile=MobileTouchControls.Enabled;DrawCriticalHealthVignette();
             DrawHealthPanel(new Rect(20,20,400,125),mobile);
-            Panel(new Rect(440,20,590,125),Cyan);
-            WorldLabel(new Rect(460,30,550,40),WorldGeography==null?T("WASTELAND","荒野"):WorldGeography.RegionName(PlayerPosition,VaultLanguage.Japanese),Gold,26);
-            WorldLabel(new Rect(460,78,550,52),T("LEVEL ","レベル ")+DebtLevel+"   /   "+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),UiPaper);
+            Box(new Rect(440,20,590,63),new Color(.025f,.04f,.05f,.55f));
+            Box(new Rect(440,20,2,63),new Color(Cyan.r,Cyan.g,Cyan.b,.65f));
+            WorldLabel(new Rect(456,24,550,28),WorldGeography==null?T("WASTELAND","荒野"):WorldGeography.RegionName(PlayerPosition,VaultLanguage.Japanese),Gold,21);
+            WorldLabel(new Rect(456,51,550,27),T("LEVEL ","レベル ")+DebtLevel+"   /   "+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),UiPaper,19);
             if(!mobile&&WorldButton(new Rect(1240,20,180,74),T("EQUIPMENT","装備")))ToggleInventory();
             DrawWorldLocalMap(new Rect(1165,165,250,180));
             if(gun!=null)
             {
-                DrawHeldWeaponHUD(mobile?new Rect(440,150,370,94):new Rect(1100,782,315,94));
+                DrawHeldWeaponHUD(mobile?new Rect(600,815,240,64):new Rect(1190,812,226,64));
             }
-            DrawWorldLootPreview();
+            if(!DrawActivityRewardPreview())DrawWorldLootPreview();
             DrawWorldCombatIndicators();
+            DrawOverworldRushHUD();
             int entrance=NearbyWorldEntrance,camp=NearbyWorldCamp;
             if(entrance>=0)
             {
-                var stage=ExpeditionMap.Get(entrance);bool unlocked=stage.level<=DebtLevel;
+                var stage=ExpeditionMap.Get(entrance,DebtLevel);bool unlocked=stage.level<=DebtLevel;
                 if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+(unlocked?T("ENTER / E","入場 / E"):T("LEVEL TOO LOW","レベル不足")),unlocked))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
@@ -250,12 +253,30 @@ namespace NeonVault
             int level=kind==0?drop.gun.level:kind==1?armor.item.level:kind==2?module.item.level:melee.item.level;
             int score=kind==0?GearScoring.Score(drop.gun):kind==1?GearScoring.Score(armor.item):kind==2?GearScoring.Score(module.item):MeleeWeaponCatalog.Score(melee.item);
             var color=Arsenal.Colors[Mathf.Clamp((int)rarity,0,Arsenal.Colors.Length-1)];
-            bool mobile=MobileTouchControls.Enabled;Rect card=mobile?new Rect(25,265,390,155):new Rect(435,570,570,155);Panel(card,color);
+            bool mobile=MobileTouchControls.Enabled;Rect card=mobile?new Rect(25,265,390,155):new Rect(25,190,390,155);Panel(card,color);
             Rect picture=new Rect(card.x+12,card.y+15,100,118);
-            if(kind==0)ItemPortraits.Draw(picture,drop.gun);else if(kind==1)ItemPortraits.Draw(picture,armor.item);else if(kind==2)ManufacturerBranding.ModulePortrait(picture,module.item);else DrawMeleeIcon(picture,melee.item.family);
+            if(kind==0)ItemPortraits.Draw(picture,drop.gun);else if(kind==1)ItemPortraits.Draw(picture,armor.item);else if(kind==2)ManufacturerBranding.ModulePortrait(picture,module.item);else ManufacturerPortraits.Melee(picture,melee.item);
             WorldLabel(new Rect(card.x+130,card.y+12,card.width-140,40),VaultLanguage.RarityName(rarity),color,mobile?22:27);
             WorldLabel(new Rect(card.x+130,card.y+54,card.width-140,42),T("LEVEL ","レベル ")+level+T("   SCORE ","   評価 ")+score,UiPaper,mobile?21:25);
             WorldLabel(new Rect(card.x+130,card.y+100,card.width-140,46),T("TAKE / F","拾得 / F"),Gold,22);
+        }
+        bool DrawActivityRewardPreview()
+        {
+            if(Time.unscaledTime>=activityRewardUntil)return false;
+            bool mobile=MobileTouchControls.Enabled;Rect card=mobile?new Rect(25,265,390,155):new Rect(25,190,390,155);
+            object item=(object)LastActivityRewardGun??LastActivityRewardArmor??(object)LastActivityRewardModule;
+            if(item==null&&LastActivityRewardScrap<=0)return false;
+            Rarity rarity=item is Gun g?g.rarity:item is ArmorItem a?a.rarity:item is ArtifactItem m?m.rarity:Rarity.Legendary;
+            Color color=Arsenal.Colors[(int)rarity];Panel(card,color);
+            if(item==null){WorldLabel(new Rect(card.x+15,card.y+15,card.width-30,50),T("SCRAP RECEIVED","スクラップ獲得"),Gold,23);WorldLabel(new Rect(card.x+15,card.y+72,card.width-30,60),LastActivityRewardScrap.ToString("N0"),UiPaper,30);return true;}
+            Rect picture=new Rect(card.x+10,card.y+16,100,120);string itemName;int level,score;
+            if(item is Gun gun){ItemPortraits.Draw(picture,gun);itemName=VaultLanguage.GunName(gun,false);level=gun.level;score=GearScoring.Score(gun);}
+            else if(item is ArmorItem armor){ItemPortraits.Draw(picture,armor);itemName=Armory.Name(armor,false);level=armor.level;score=GearScoring.Score(armor);}
+            else {var module=(ArtifactItem)item;ManufacturerBranding.ModulePortrait(picture,module);itemName=ArtifactCatalog.DisplayName(module,false);level=module.level;score=GearScoring.Score(module);}
+            WorldLabel(new Rect(card.x+120,card.y+8,card.width-130,37),itemName,UiPaper,20);
+            WorldLabel(new Rect(card.x+120,card.y+44,card.width-130,32),VaultLanguage.RarityName(rarity),color,20);
+            WorldLabel(new Rect(card.x+120,card.y+77,card.width-130,30),T("LEVEL ","レベル ")+level+T("  SCORE ","  評価 ")+score,UiPaper,18);
+            WorldLabel(new Rect(card.x+120,card.y+109,card.width-130,38),LastActivityRewardOnGround?T("ON GROUND / TAKE","足元に配置 / 拾得"):T("RECEIVED","獲得"),Gold,18);return true;
         }
         void DrawWorldLocalMap(Rect map)
         {
@@ -323,31 +344,48 @@ namespace NeonVault
             worldMapCenter.x=Mathf.Clamp(worldMapCenter.x,margin,1-margin);
             float verticalMargin=margin*650f/(900f*worldMapVerticalScale);worldMapCenter.y=Mathf.Clamp(worldMapCenter.y,verticalMargin,1-verticalMargin);
         }
+        void PanWorldMap(Vector2 delta,Rect map)
+        {
+            worldMapCenter.x-=delta.x/(map.width*worldMapZoom);
+            worldMapCenter.y+=delta.y/(map.width*worldMapZoom*worldMapVerticalScale);
+            ClampWorldMapCenter();
+        }
         void HandleWorldMapInput(Rect map)
         {
             var evt=Event.current;
-            if(MobileTouchControls.Enabled&&evt.type==EventType.Repaint)
+            if(MobileTouchControls.Enabled && Input.touchCount>0)
             {
-                if(Input.touchCount==2)
+                if(evt.type==EventType.Repaint)
                 {
-                    Vector2 a=MobileCanvasPoint(Input.GetTouch(0).position),b=MobileCanvasPoint(Input.GetTouch(1).position);
-                    float distance=Vector2.Distance(a,b);Vector2 midpoint=(a+b)*.5f;
-                    if(worldMapPinchDistance>0&&map.Contains(midpoint))SetWorldMapZoom(worldMapZoom*distance/worldMapPinchDistance,midpoint,map);
-                    worldMapPinchDistance=distance;worldMapDragging=false;
+                    if(Input.touchCount==2)
+                    {
+                        Vector2 a=MobileCanvasPoint(Input.GetTouch(0).position),b=MobileCanvasPoint(Input.GetTouch(1).position);
+                        float distance=Vector2.Distance(a,b);Vector2 midpoint=(a+b)*.5f;
+                        if(worldMapPinchDistance>0 && map.Contains(midpoint))
+                        {
+                            PanWorldMap(midpoint-worldMapLastPointer,map);
+                            SetWorldMapZoom(worldMapZoom*distance/worldMapPinchDistance,midpoint,map);
+                        }
+                        worldMapPinchDistance=distance;worldMapLastPointer=midpoint;worldMapTouchId=-1;worldMapDragging=false;
+                    }
+                    else if(Input.touchCount==1)
+                    {
+                        Touch touch=Input.GetTouch(0);Vector2 pointer=MobileCanvasPoint(touch.position);
+                        if(worldMapTouchId==touch.fingerId && worldMapPinchDistance==0)PanWorldMap(pointer-worldMapLastPointer,map);
+                        else if(map.Contains(pointer))worldMapTouchId=touch.fingerId;
+                        worldMapLastPointer=pointer;worldMapPinchDistance=0;
+                        if(touch.phase==TouchPhase.Ended||touch.phase==TouchPhase.Canceled)worldMapTouchId=-1;
+                    }
                 }
-                else worldMapPinchDistance=0;
+                return;
             }
+            worldMapPinchDistance=0;worldMapTouchId=-1;
             if(evt.type==EventType.ScrollWheel&&map.Contains(evt.mousePosition))
             {SetWorldMapZoom(worldMapZoom*Mathf.Pow(1.15f,-evt.delta.y),evt.mousePosition,map);evt.Use();}
             if(evt.type==EventType.MouseDown&&evt.button==0&&map.Contains(evt.mousePosition))
             {worldMapDragging=true;worldMapLastPointer=evt.mousePosition;}
             if(evt.type==EventType.MouseDrag&&worldMapDragging)
-            {
-                var delta=evt.mousePosition-worldMapLastPointer;
-                worldMapCenter.x-=delta.x/(map.width*worldMapZoom);
-                worldMapCenter.y+=delta.y/(map.width*worldMapZoom*worldMapVerticalScale);
-                ClampWorldMapCenter();worldMapLastPointer=evt.mousePosition;evt.Use();
-            }
+            {PanWorldMap(evt.mousePosition-worldMapLastPointer,map);worldMapLastPointer=evt.mousePosition;evt.Use();}
             if(evt.type==EventType.MouseUp)worldMapDragging=false;
         }
         public void DrawOverworldAtlas()
@@ -380,7 +418,7 @@ namespace NeonVault
             if(GUI.Button(new Rect(map.xMax-66,map.yMax-58,52,44),GUIContent.none,GUIStyle.none)){var pos=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];worldMapCenter=new Vector2(pos.x/10000f+.5f,pos.z/10000f+.5f);ClampWorldMapCenter();}
             for(int i=0;i<WorldGeography.Entrances.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i);bool selected=overworldSelectedCamp<0&&expeditionMapSelection==i;
+                Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i,DebtLevel);bool selected=overworldSelectedCamp<0&&expeditionMapSelection==i;
                 Color color=selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):stage.level<=DebtLevel?UiPaper:Mist;
                 if(selected)Box(new Rect(p.x-12,p.y-12,24,24),new Color(.02f,.04f,.06f,.9f));FieldUIArt.Icon(new Rect(p.x-(selected?18:13),p.y-(selected?18:13),selected?36:26,selected?36:26),7,color);
                 if(GUI.Button(new Rect(p.x-13,p.y-13,26,26),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;}
@@ -459,7 +497,7 @@ namespace NeonVault
         }
         void DrawWorldStageBriefing()
         {
-            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,99));bool eligible=stage.level<=DebtLevel;
+            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool eligible=stage.level<=DebtLevel;
             WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+stage.Name,Gold,29);
             WorldLabel(new Rect(975,220,410,75),stage.Location+" / "+stage.Biome,Mist,23);
             WorldLabel(new Rect(975,305,410,70),T("REQUIRED LEVEL ","必要レベル ")+stage.level+T(" / YOURS "," / 現在 ")+DebtLevel,eligible?Cyan:UiDanger,25);

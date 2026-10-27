@@ -15,7 +15,7 @@ namespace NeonVault.EditorTools
             report.AppendLine("construction_ms="+timer.ElapsedMilliseconds);
             void Check(bool ok,string label){if(!ok){failures++;report.AppendLine("FAIL "+label);}}
             foreach(var group in new[]{geo.Camps,geo.Entrances,geo.Chests})foreach(var site in group){sites++;Check(!geo.Blocked(site,.4f),"site "+sites+" "+site);}
-            Check(geo.Camps.Length==14&&geo.Entrances.Length==100&&geo.Chests.Length==500,"stable site array lengths");
+            Check(geo.Camps.Length==14&&geo.Entrances.Length==200&&geo.Chests.Length==500,"stable site array lengths");
             for(int bridge=-4;bridge<=4;bridge++)
             {
                 float z=bridge*1000,x=geo.RiverX(z),half=geo.RiverWidth(z)*.5f;

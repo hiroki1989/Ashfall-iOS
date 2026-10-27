@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace NeonVault
 {
@@ -127,7 +127,7 @@ namespace NeonVault
             Bounds local=LocalBounds(visual,head);
             if(local.size.y>.0001f)wrapper.transform.localScale=Vector3.one*(CharacterRigStandard.MaskHeight/local.size.y);
             local=LocalBounds(visual,head);
-            wrapper.transform.localPosition+=CharacterRigStandard.MaskCenter-local.center;
+            wrapper.transform.localPosition+=CharacterRigStandard.MaskCenter+Vector3.forward*.015f-local.center;
             return wrapper;
         }
         static Bounds LocalBounds(GameObject visual,Transform frame)

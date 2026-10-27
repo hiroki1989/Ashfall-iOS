@@ -32,7 +32,7 @@ namespace NeonVault {
    {"Clinker","Ashfall","Furnace","Firebrand"},
    {"Convoy","Warden","Bastion","Custodian"}};
   static readonly string[,] rootsJa={
-   {"鷹","燕","鶚","隼"},{"金床","鋲","鋳造炉","鉄槌"},
+   {"鷹","燕","みさご","隼"},{"金床","鋲","鋳造炉","鉄槌"},
    {"発電機","火花","活線","雷鳴"},{"茨","羊歯","柳","毒芹"},
    {"焼滓","降灰","溶鉱炉","火種"},{"輸送隊","守衛","防塁","番人"}};
   static readonly string[] variants={"Field","Short","Reinforced","Range"};

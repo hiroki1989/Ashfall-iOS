@@ -40,7 +40,9 @@ namespace NeonVault
                 return type == 0 ? VaultLanguage.T("Abandoned salvage", "廃車・店舗の物資") :
                     type == 1 ? VaultLanguage.T("Distress transmission", "無線救難信号") :
                     type == 2 ? VaultLanguage.T("Hidden supply clue", "隠し物資の手掛かり") :
-                    type == 3 ? VaultLanguage.T("Buried supply cache", "隠された物資箱") : "";
+                    type == 3 ? VaultLanguage.T("Buried supply cache", "隠された物資箱") :
+                    type == 4 ? VaultLanguage.T("Hostile surge", "敵襲") :
+                    type == 5 ? VaultLanguage.T("Challenge reward chest", "挑戦の報酬箱") : "";
             }
         }
         public string OverworldActivityDescription
@@ -48,18 +50,65 @@ namespace NeonVault
             get
             {
                 int type = selectedOverworldActivity != null ? selectedOverworldActivity.type : NearbyOverworldActivity;
-                return type == 0 ? VaultLanguage.T("A wreck and a shuttered shop still hold usable supplies. Search carefully or break open the locked case.", "廃車と閉店した店に物資が残る。慎重に探すか、鍵箱をこじ開けるか。") :
-                    type == 1 ? VaultLanguage.T("A survivor calls from a fading radio. Answer and send supplies, or trace the signal to its emergency cache.", "弱い無線から生存者の声。物資を送るか、発信源の緊急備蓄を探るか。") :
-                    type == 2 ? VaultLanguage.T("Marks on the pavement point to another location. Follow them to recover a cache, or sell the coordinates.", "路面の印は別の場所を示す。そこへ向かって物資を回収するか、座標を売るか。") :
-                    type == 3 ? VaultLanguage.T("The trail ends here. Open the buried cache.", "手掛かりの終点。埋められた物資を開けよう。") : "";
+                return type == 0 ? VaultLanguage.T("The salvage is guarded. Clear the ambush or hold the site against attackers to unlock a rare or better equipment chest.", "物資は敵に守られている。敵を倒すか地点を守り抜くと、レア以上の装備箱が解放される。") :
+                    type == 1 ? VaultLanguage.T("A survivor needs the area secured. Clear the attackers or defend the signal to unlock a rare or better equipment chest.", "生存者が周辺の安全確保を求めている。敵を倒すか信号を守ると、レア以上の装備箱が解放される。") :
+                    type == 2 ? VaultLanguage.T("Follow the marks to a guarded cache, or fight here to secure the coordinates. Both routes lead to a rare or better equipment chest.", "印を辿って守られた物資箱を目指すか、この場で戦い座標を確保する。どちらもレア以上の装備箱に通じる。") :
+                    type == 3 ? VaultLanguage.T("The cache is guarded. Defeat the attackers before time runs out to unlock it.", "物資箱は敵に守られている。制限時間内に敵を倒して解放しよう。") :
+                    type == 4 ? VaultLanguage.T("Survive the attacking enemies for 45 seconds to unlock a rare or better equipment chest. Leaving the area ends the challenge.", "45秒間、敵の攻撃を生き延びるとレア以上の装備箱が開きます。エリアを離れると挑戦終了。") :
+                    type == 5 ? VaultLanguage.T("Open the unlocked equipment chest.", "解放された装備箱を開けよう。") : "";
             }
         }
         public string OverworldActivityChoiceLabel(int choice)
         {
             int type = selectedOverworldActivity != null ? selectedOverworldActivity.type : NearbyOverworldActivity;
-            if (type == 0) return choice == 0 ? VaultLanguage.T("Search / ammo and scrap", "捜索 / 弾薬とスクラップ") : VaultLanguage.T("Force lock / more scrap, risk injury", "解錠を強行 / 大量のスクラップ、負傷の恐れ");
-            if (type == 1) return choice == 0 ? VaultLanguage.T("Send aid / spend one ammo pack for a reward", "救援 / 弾薬を渡して謝礼を受け取る") : VaultLanguage.T("Trace signal / find medical stores", "追跡 / 医療物資を発見");
-            return choice == 0 ? VaultLanguage.T("Follow marks / track the cache", "印を辿る / 物資の場所を追跡") : VaultLanguage.T("Sell coordinates / scrap", "座標を売る / スクラップ");
+            if (type == 4) return choice == 0 ? VaultLanguage.T("Start / survive 45 seconds", "開始 / 45秒間生き延びる") : VaultLanguage.T("Leave", "立ち去る");
+            if (type == 0 || type == 1) return choice == 0 ? VaultLanguage.T("Clear / defeat 6 enemies in 60 seconds", "殲滅 / 60秒以内に敵6体を倒す") : VaultLanguage.T("Defend / hold the site for 30 seconds", "防衛 / 地点を30秒間守る");
+            if (type == 3) return choice == 0 ? VaultLanguage.T("Clear / defeat 6 enemies in 60 seconds", "殲滅 / 60秒以内に敵6体を倒す") : VaultLanguage.T("Leave", "立ち去る");
+            return choice == 0 ? VaultLanguage.T("Follow marks / track the guarded cache", "印を辿る / 守られた物資箱を追跡") : VaultLanguage.T("Defend / secure the coordinates", "防衛 / 座標を確保する");
+        }
+        // Use a deterministic representative legendary gun at the player's level, so
+        // event scrap tracks the same economy as selling real equipment.
+        int ActivityScrap(int seed)
+        {
+            var random = new System.Random(seed);
+            return SaleValue(Arsenal.Legendary(0, random, DebtLevel));
+        }
+        public Gun LastActivityRewardGun { get; private set; }
+        public ArmorItem LastActivityRewardArmor { get; private set; }
+        public ArtifactItem LastActivityRewardModule { get; private set; }
+        public int LastActivityRewardScrap { get; private set; }
+        public bool LastActivityRewardOnGround { get; private set; }
+        float activityRewardUntil;
+        void GrantActivityGear(int seed, Vector3 position)
+        {
+            activityRewardUntil=Time.unscaledTime+8f;
+            LastActivityRewardGun=null; LastActivityRewardArmor=null; LastActivityRewardModule=null;
+            LastActivityRewardScrap=0; LastActivityRewardOnGround=false;
+            var random=new System.Random(seed);
+            int rarityRoll=random.Next(100);
+            var rarity=rarityRoll<65?Rarity.Rare:rarityRoll<90?Rarity.Epic:Rarity.Legendary;
+            switch(random.Next(3))
+            {
+                case 0:
+                    LastActivityRewardGun=Arsenal.CreateForDungeon(random, DungeonIndex, rarity, DebtLevel);
+                    if(!StoreWeapon(LastActivityRewardGun)){AddDrop(LastActivityRewardGun,position);LastActivityRewardOnGround=true;}
+                    break;
+                case 1:
+                    LastActivityRewardArmor=Armory.CreateForDungeon(random, DungeonIndex, rarity, DebtLevel);
+                    if(!StoreArmor(LastActivityRewardArmor)){AddArmorDrop(LastActivityRewardArmor,position);LastActivityRewardOnGround=true;}
+                    break;
+                default:
+                    LastActivityRewardModule=ArtifactCatalog.Create(random, DungeonIndex, rarity, DebtLevel);
+                    if(!StoreArtifact(LastActivityRewardModule)){AddArtifactDrop(LastActivityRewardModule,position);LastActivityRewardOnGround=true;}
+                    break;
+            }
+        }
+        void GrantActivityScrap(int seed)
+        {
+            activityRewardUntil=Time.unscaledTime+8f;
+            LastActivityRewardGun=null; LastActivityRewardArmor=null; LastActivityRewardModule=null;
+            LastActivityRewardOnGround=false; LastActivityRewardScrap=ActivityScrap(seed);
+            AwardCredits(LastActivityRewardScrap);
         }
         static int ActivityHash(int x, int z, int type)
         { unchecked { int h = (x + 50) * 73856093 ^ (z + 50) * 19349663 ^ (type + 1) * 83492791; return h & int.MaxValue; } }
@@ -111,10 +160,14 @@ namespace NeonVault
                         p = new Vector3(building.xMax + 2.3f, .65f, building.center.y);
                     }
                     if (WorldGeography.Blocked(p, .55f)) continue;
+                    if (ActivityHash(x, z, 11) % 5 == 0) type = 4;
+                    if (overworldRushSite != null && overworldRushSite.id == id) continue;
                     nearbyOverworldActivities.Add(new OverworldActivitySite { id = id, type = type, position = p, completed = IsOverworldActivityCompleted(id) });
             }
+            if (overworldRushRewardReady && overworldRushSite != null)
+                nearbyOverworldActivities.Add(new OverworldActivitySite { id = overworldRushSite.id, type = 5, position = overworldRushSite.position });
             // Keep the tracked destination on the atlas after fast travel or restart.
-            if (HasActiveOverworldClue)
+            if (HasActiveOverworldClue && (overworldRushSite == null || overworldRushSite.id != 30000 + ActiveOverworldClueId))
                 nearbyOverworldActivities.Add(new OverworldActivitySite { id = 30000 + ActiveOverworldClueId, type = 3, position = ActiveOverworldCluePosition });
         }
         public bool OpenNearbyOverworldActivity()
@@ -127,15 +180,16 @@ namespace NeonVault
                 if (!site.completed && d < best) { best = d; selectedOverworldActivity = site; }
             }
             if (selectedOverworldActivity == null) return false;
-            if (selectedOverworldActivity.type == 3)
+            if (selectedOverworldActivity.type == 5)
             {
-                int clueId = selectedOverworldActivity.id - 30000;
-                selectedOverworldActivity = null;
-                if (!RecoverOverworldClue(clueId)) return false;
-                var type = ActiveAmmoTypeAt(ActivityHash(clueId, clueId / 3, 4) % ActiveAmmoTypeCount);
-                AddAmmo(type, AmmoPackSize(type) * 2); AwardCredits(ScaleScrap(17000)); SaveInventory();
-                Notify("HIDDEN CACHE / supplies recovered", "隠し物資 / 弾薬とスクラップを回収");
-                RefreshOverworldActivities();
+                var rewardSite = selectedOverworldActivity; selectedOverworldActivity = null;
+                if (!CompleteOverworldActivity(rewardSite.id)) return false;
+                if (rewardSite.id >= 30000 && HasActiveOverworldClue && ActiveOverworldClueId == rewardSite.id - 30000)
+                    RecoverOverworldClue(ActiveOverworldClueId);
+                var visuals=world?world.GetComponent<OverworldActivityVisuals>():null;if(visuals)visuals.OpenReward(rewardSite.id);
+                GrantActivityGear(rewardSite.id, rewardSite.position + Vector3.right * 2);
+                overworldRushRewardReady = false; overworldRushSite = null; SaveInventory();
+                Notify("CHALLENGE CHEST / equipment recovered", "挑戦の報酬箱 / 装備を回収"); RefreshOverworldActivities();
             }
             else Time.timeScale = 0;
             return true;
@@ -147,6 +201,30 @@ namespace NeonVault
             var site = selectedOverworldActivity;
             if (!IsOverworld || site == null || choice < 0 || choice >= 2) return;
             if ((site.position - PlayerPosition).sqrMagnitude > 5f * 5f) { CloseOverworldActivityChoice(); return; }
+            if (site.type == 4)
+            {
+                CloseOverworldActivityChoice();
+                if (choice == 0) StartOverworldRush(site);
+                return;
+            }
+            if (site.type == 3)
+            {
+                CloseOverworldActivityChoice();
+                if (choice == 0) StartOverworldChallenge(site, 1);
+                return;
+            }
+            if (site.type == 2 && choice == 1)
+            {
+                CloseOverworldActivityChoice();
+                StartOverworldChallenge(site, 2);
+                return;
+            }
+            if (site.type == 0 || site.type == 1)
+            {
+                CloseOverworldActivityChoice();
+                StartOverworldChallenge(site, choice == 0 ? 1 : 2);
+                return;
+            }
             if (site.type == 1 && choice == 0 && gun != null)
             {
                 var ammoType = AmmoForGun(gun); int cost = Mathf.Min(AmmoPackSize(ammoType), AmmoReserve(ammoType));
@@ -166,18 +244,18 @@ namespace NeonVault
             int roll = ActivityHash(Mathf.FloorToInt(site.position.x), Mathf.FloorToInt(site.position.z), choice);
             if (site.type == 0)
             {
-                if (choice == 0) { var type = ActiveAmmoTypeAt(roll % ActiveAmmoTypeCount); AddAmmo(type, AmmoPackSize(type)); AwardCredits(ScaleScrap(9000)); Notify("SALVAGE / ammo and scrap recovered", "物資回収 / 弾薬とスクラップを入手"); }
-                else { if (roll % 4 == 0) hp = Mathf.Max(1, hp - maxHp * .12f); AwardCredits(ScaleScrap(26000)); Notify("LOCKED CASE / scrap recovered", "鍵箱 / スクラップを回収"); }
+                if (choice == 0) { var type = ActiveAmmoTypeAt(roll % ActiveAmmoTypeCount); AddAmmo(type, AmmoPackSize(type)); GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("SALVAGE / ammo and gear recovered", "物資回収 / 弾薬と装備を入手"); }
+                else { if (roll % 4 == 0) hp = Mathf.Max(1, hp - maxHp * .12f); GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("LOCKED CASE / gear recovered", "鍵箱 / 装備を回収"); }
             }
             else if (site.type == 1)
             {
-                if (choice == 0) { AwardCredits(ScaleScrap(30000)); Notify("RESCUE / survivor sent a reward", "救難 / 生存者から謝礼が届いた"); }
-                else { hp = Mathf.Min(maxHp, hp + maxHp * .22f); AddHealthPackDrop(site.position + Vector3.right * 2); Notify("SIGNAL TRACED / medical cache located", "無線追跡 / 医療物資を発見"); }
+                if (choice == 0) { GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("RESCUE / survivor sent a reward", "救難 / 生存者から謝礼が届いた"); }
+                else { hp = Mathf.Min(maxHp, hp + maxHp * .22f); AddHealthPackDrop(site.position + Vector3.right * 2); GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("SIGNAL TRACED / medical supplies and gear", "無線追跡 / 医療物資と装備を入手"); }
             }
             else
             {
                 if (choice == 0) { Notify("CLUE FOUND / follow the map marker to the cache", "手掛かり発見 / 地図の印を辿って物資を回収"); RefreshOverworldActivities(); }
-                else { AwardCredits(ScaleScrap(23000)); Notify("COORDINATES SOLD / scrap received", "座標売却 / スクラップを入手"); }
+                else { GrantActivityScrap(roll); Notify("COORDINATES SOLD / scrap received", "座標売却 / スクラップを入手"); }
             }
             SaveInventory();
         }

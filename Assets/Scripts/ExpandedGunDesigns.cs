@@ -3,7 +3,7 @@ namespace NeonVault {
  // Eight new mechanical series in each class. The four variants are tuned by GunSeriesDesigns.
  public static class ExpandedGunDesigns {
   static readonly string[] roots={"Vigil","Talon","Morrow","Drift","Rook","Nomad","Horizon","Specter"};
-  static readonly string[] rootsJa={"不寝番","鉤爪","暁","漂流","城鳥","遊牧","地平","幻影"};
+  static readonly string[] rootsJa={"不寝番","かぎ爪","暁","漂流","城鳥","遊牧","地平","幻影"};
   static readonly string[,] mechanisms={
    {"Split Receiver","Long Rail","Twin Port","Folding Stock","Heavy Gas","Free Float","Burst Cam","Siege Barrel"},
    {"Needle Slide","Twin Chamber","Pocket Drum","Long Slide","Counterweight","Open Bolt","Gas Seal","Magnum Frame"},

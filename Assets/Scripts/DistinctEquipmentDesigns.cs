@@ -24,12 +24,19 @@ namespace NeonVault {
     Name(r,kind);
     if(kind=="gun"&&newGunLegend){int edition=(i-GunSeriesDesigns.FirstNewLegendary)%10;r.name+=" / "+new[]{"Long Fuse","Wild Card","Iron Choir","Black Ledger","Copper Wake","Double Debt","Flash Lock","Ash Circuit","Grave Bell","Last Light"}[edition];r.japanese+="・"+new[]{"長導火","切札","鉄の聖歌","黒い帳簿","銅の航跡","二重債務","閃光錠","灰の回路","墓鐘","最後の灯"}[edition];}
     if(kind=="gun")GunSeriesDesigns.Configure(r);
+    if(!r.legendary) { r.name=ProductName(kind,i,false); r.japanese=ProductName(kind,i,true); }
     a[i]=r;
    }return a;
   }
+  public static string ProductName(string kind,int index,bool ja){
+   string[] first=ja?new[]{"アンバー","ブラック","コールド","ダスク","エンバー","フォックス","ゴースト","ホロウ","アイアン","ジェイド","ラスト","ミッドナイト","ノース","クイック","レッド","サイレント","ストーン","サンダー","ワイルド","ウィンター"}:new[]{"Amber","Black","Cold","Dusk","Ember","Fox","Ghost","Hollow","Iron","Jade","Last","Midnight","North","Quick","Red","Silent","Stone","Thunder","Wild","Winter"};
+   string[] second=ja?new[]{"アロー","ビーコン","ベル","バイト","ブレイク","コール","クロー","ドーン","ドリフト","エコー","フォール","フレイム","ゲイル","グラス","ヘイヴン","ハント","ジャッカル","ランタン","マーチ","モス","ニードル","オース","パス","クイル","レイン","ルーク","シェイド","シグナル","スパロウ","ストーム","トレイル","ヴェイル","ウェイク","ウォッチ","ウィスパー","ウルフ","レイス","ゼファー","クロウ","リッジ","リバー","シンダー","フロスト","グリット","ルーン","ヴァイパー","ウォード","ヤロウ"}:new[]{"Arrow","Beacon","Bell","Bite","Break","Call","Claw","Dawn","Drift","Echo","Fall","Flame","Gale","Glass","Haven","Hunt","Jackal","Lantern","March","Moth","Needle","Oath","Path","Quill","Rain","Rook","Shade","Signal","Sparrow","Storm","Trail","Veil","Wake","Watch","Whisper","Wolf","Wraith","Zephyr","Crow","Ridge","River","Cinder","Frost","Grit","Rune","Viper","Ward","Yarrow"};
+   int offset=kind=="armor"?173:kind=="module"?347:kind=="melee"?541:0; int n=index+offset;
+   return first[(n/second.Length)%first.Length]+(ja?"・":" ")+second[n%second.Length]+(n>=first.Length*second.Length?" "+(n/(first.Length*second.Length)+1):"");
+  }
   static void Name(EquipmentRecipe r,string kind){
    string[][] en={new[]{"Harrier","Swift","Kite","Peregrine","Merlin","Osprey"},new[]{"Anvil","Rivet","Foundry","Hammer","Crucible","Ironclad"},new[]{"Dynamo","Spark","Thunder","Cyclotron","Livewire","Lightning"},new[]{"Briar","Fern","Orchard","Mycelium","Willow","Hemlock"},new[]{"Clinker","Cinder","Ashfall","Furnace","Firebrand","Bonfire"},new[]{"Convoy","Warden","Bastion","Citadel","Custodian","Bulwark"}};
-   string[][] ja={new[]{"鷹","燕","鳶","隼","小隼","鶚"},new[]{"金床","鋲","鋳造炉","鉄槌","坩堝","鉄壁"},new[]{"発電機","火花","雷鳴","加速器","活線","稲妻"},new[]{"茨","羊歯","果樹園","菌糸","柳","毒芹"},new[]{"焼滓","残火","降灰","溶鉱炉","火種","篝火"},new[]{"輸送隊","守衛","防塁","城塞","番人","防壁"}};
+   string[][] ja={new[]{"鷹","燕","鳶","隼","小隼","みさご"},new[]{"金床","鋲","鋳造炉","鉄槌","るつぼ","鉄壁"},new[]{"発電機","火花","雷鳴","加速器","活線","稲妻"},new[]{"茨","羊歯","果樹園","菌糸","柳","毒芹"},new[]{"焼滓","残火","降灰","溶鉱炉","火種","かがり火"},new[]{"輸送隊","守衛","防塁","城塞","番人","防壁"}};
    string title=en[r.maker][r.body],jp=ja[r.maker][r.body];
    if(kind=="gun"){
     string[] purpose={"Longwatch","Doorbreaker","Doubletap","Tempest","Deadeye","Broadside"},purposeJa={"遠望","破門","双撃","疾風","必中","斉射"};

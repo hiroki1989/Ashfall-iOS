@@ -9,6 +9,7 @@ namespace NeonVault
     {
         VaultGame game;
         readonly Dictionary<int, GameObject> visible = new Dictionary<int, GameObject>();
+        readonly Dictionary<int,int> visibleTypes = new Dictionary<int,int>();
         readonly HashSet<int> wanted = new HashSet<int>();
         readonly List<int> expired = new List<int>();
         readonly GameObject[] source = new GameObject[3];
@@ -22,6 +23,13 @@ namespace NeonVault
             source[2] = Resources.Load<GameObject>("ImportedWorld/props/pbr_box_ammo");
         }
 
+        public void OpenReward(int id)
+        {
+            if(!visible.TryGetValue(id,out var chest)||!chest)return;
+            visible.Remove(id);visibleTypes.Remove(id);
+            EquipmentChestVisual.Open(chest);Destroy(chest,2f);
+        }
+
         void Update()
         {
             if (game == null || Time.unscaledTime < nextRefresh) return;
@@ -32,8 +40,23 @@ namespace NeonVault
             {
                 if (site.completed || (site.position - game.PlayerPosition).sqrMagnitude > 150f * 150f) continue;
                 wanted.Add(site.id);
-                if (visible.ContainsKey(site.id)) continue;
-                int kind = Mathf.Clamp(site.type, 0, 2);
+                if (visible.TryGetValue(site.id,out var existing))
+                {
+                    if (visibleTypes.TryGetValue(site.id,out int oldType) && oldType==site.type) continue;
+                    Destroy(existing); visible.Remove(site.id); visibleTypes.Remove(site.id);
+                }
+                visibleTypes[site.id]=site.type;
+                if (site.type == 5)
+                {
+                    var chest = new GameObject("Travel activity reward / " + site.id);
+                    chest.transform.SetParent(transform, false);
+                    chest.transform.position = new Vector3(site.position.x, 0, site.position.z);
+                    chest.transform.rotation = Quaternion.Euler(0, site.id % 4 * 90, 0);
+                    EquipmentChestVisual.Create(chest.transform);
+                    visible.Add(site.id, chest);
+                    continue;
+                }
+                int kind = site.type == 4 ? 1 : Mathf.Clamp(site.type, 0, 2);
                 GameObject marker = source[kind] != null
                     ? Instantiate(source[kind], transform)
                     : GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -64,7 +87,7 @@ namespace NeonVault
             }
             expired.Clear();
             foreach (var pair in visible) if (!wanted.Contains(pair.Key)) expired.Add(pair.Key);
-            foreach (int id in expired) { Destroy(visible[id]); visible.Remove(id); }
+            foreach (int id in expired) { Destroy(visible[id]); visible.Remove(id); visibleTypes.Remove(id); }
         }
     }
 }

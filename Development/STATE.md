@@ -1,3 +1,26 @@
+## 2026-10-28 / 屋外イベントの戦闘目標追加（実戦未検証）
+変更: 物資回収/救難で60秒以内に専用敵6体撃破、または60秒内に地点9m圏で累積30秒防衛の二択。既存45秒生存戦も維持。手掛かりは追跡先で撃破または現地防衛、即座の座標売却報酬を撤去。成功時レア以上の装備箱、失敗・圏外離脱は再挑戦可能。進捗と残り時間を日英HUDに表示。
+検証: runtime C# compile、git diff check成功。Unity headlessスクリプト取り込み・装備箱検査成功。全イベント開始〜失敗/成功〜報酬取得の実画面とiOS未検証。成功後の未開封箱はマップ離脱/再起動で消え再挑戦が必要。完了状態と装備保存が別々のため報酬取得中断時の損失可能性、満杯の地面dropが永続化されない点は未解決。前回の画像はみ出し等の未完項目は前項参照。未commit/push/IPA。
+
+## 2026-10-28 / 死亡演出・時間制限イベント
+変更: 屋外/ダンジョン死亡時に所持スクラップ半減・帰還先保存後、3秒YOU DIED表示、最後の拠点へ戻り損失額/残額通知。屋外イベントの約20%を45秒敵襲に変更、3秒ごと敵出現・最大6体・45m圏外は失敗。生存でレア以上確定装備箱、既存レア65/エピック25/レジェ10。満杯時は地面へ。時間HUD、箱visual交換/開封アニメ、シーン破棄時reset。
+検証: runtime Roslyn compileとdiff check成功。Unity headlessでスクリプト取り込み/装備箱の閉状態・蓋・位置サイズの既存検査成功。死亡から帰還の実画面・敵襲全45秒と報酬取得・iPhone実機未検証。処理中断した旧タスクの画像はみ出しなどは未完。満杯時の地面dropは再起動/マップ切替で保持未保証。未commit/push/IPA。
+
+## 2026-10-28 / オートエイム・マスク・強化（未完）
+変更: 射撃していなくても既存の命中精度/射角/視界条件で敵へ照準追従。初期マスクを頭ローカル前方0.015移動。モジュール取得通知の装備説明削除。周回強化の表示名を強化へ変更、候補7→13（火力/連射、最大HP/回復、回避/撃破回復、連鎖/連射、火力/回避、回復/弾薬補給の6複合）。既存の周回値/保存仕組みを利用しセーブ互換維持。
+検証: runtime全C# Roslyn compileとgit diff --check成功。Unity・実機検証未実施。前回画像はみ出し（Kestrel等）と防具の全点監査、敵の攻撃/動き動画、建物透過とevent報酬実戦確認は未完。担当agentが使用制限で中断したため未完。Unity起動せずPC負荷を回避。未commit/push/IPA。
+
+## 2026-10-27 / ロゴ・敵・イベント報酬・遮蔽（作業途中）
+変更: imagegen 6社の色・書体・マーク入りwordmark (maker-wordmark-v2-0..5)、共通PortraitBadgeで装備絵の左下へ拡大。メニュー説明・inventory副題を整理。ダンジョンloot/箱promptを全体マップと共通のHP下表示へ移動。屋外eventはレア65/エピック25/レジェ10装備を中心にし、座標売却は同Lvレジェ銃売却額相当。報酬8秒カードに名称/絵/レア/Lv/評価またはスクラップ額、所持枠満杯は地面に配置。
+敵: fat共通近接高HPの既存分岐を確認、ImportedEnemyVisualでfatの歩行に脚と逆位相の腕振り。他敵の硬直腕も改善。出現直前に地形・入口建物の衝突を検査し近隣の安全位置へ。遮蔽建物のinstanced/nonbatchedをopacity .16に変更し解除時material復元。
+画像点検: 5社120銃の表示専用boundsを透明成分から生成、3D bounds保持。旧矩形の重なりは通常銃12・拡張2・legend16・防具系16組（重なりは混入確定ではない）。Kestrel銃13/17は絵が連結し自動分離で隣接残存、手動マスク必要。他武器/防具全点の分離とUnity全件QA未完。全画像修正済みと報告しない。
+検証: runtime全C# compile、git diff --check成功。Unity mobile inventory/armor/melee/actualHUD component review正常終了、wordmarkと副題なしのinventory実画像 D:/Unity/QA-premium-ui/inventory-mobile.png。enemyの実行時攻撃と歩行動画、透過とevent報酬の実戦表示、iPhone実機未検証。所持枠満杯時の地面報酬は既存drop方式でマップ離脱/再起動後保存未確認。地形のスポーン判定は出現時補正、全部の実アセットのCollider網羅は未確認。IPA/commit/pushなし。
+
+## 2026-10-27 / HUD・200ダンジョン・装備名とメーカー
+変更: 弾HUD小型半透明で画面下へ、地区HUD半高半透明、HP表示更新。世界地図の1指drag/2指pan+pinchの座標追跡修正。外観切替ボタン撤去。6社の既存ID維持で短縮名・imagegen新emblem6枚、装備一覧名を英語固有名だけにしメーカー/銃種を詳細に表示。近接spriteの隣接画像混入を4画像へ分離。851Gkkttで表示不可の漢字をコード内文字列から言い換え（Pillow glyph比較、スクリプト文字列内残0）。他のデータ・動的テキストの全件保証なし。
+地理: 入口100→200、旧100 ID/座標維持。拠点0周囲1km四方に基礎Lv1入口4件。Lv=max(基礎,プレイヤーLv-3)を表示/入場/報酬/敵HP・攻撃へ反映。道路12454segment、建物試行と上限増。地図atlas4tiles再焼成。ボス会話後に退場し、再訪時表示しない。人間レイダーkind10はstageID%5==2のダンジョンに銃装備で出現。
+検証: runtime全C# compileとgit diff --check成功。Unity headless geography sites714/roofs689/fail0、aerial 4tiles成功119秒。Unity inventory/mobileで新名・新logo・切替撤去を実描画、armor/melee/HUD単体レビュー正常終了。最新の英語名と文字置換はruntime compile/文字監査のみ。地図dragはコード変更済み、実機タッチ未確認。HP/戦闘HUDは変更後の戦闘全景未撮影。iPhone実機/FPS未検証、IPA/commit/pushなし。PC負荷監視、セーブ/既存回復シーン保持。
+
 ## 2026-10-27 / 新フォント・装備チェスト・装備枠とHUD
 変更: 851Gkktt_005.ttfをResources/Fontsへ同梱、UI/heading/mobile/ダメージ数字へ適用（不足字は既存font fallback）。imagegen gun-class-icons-v1を新規作成、銃種別crop/aspect維持で戦闘・所持品・商人共用。戦闘heldHUDはicon+mag/reserveのみ（予備はmag除外）、reload線のみ。単独worldmapボタン撤去、miniクリック/停止map導線、dungeonは閲覧のみで元画面へ戻る。
 装備: score34/28→29/24、比較上赤/下青、近接は装備近接と全family比較。近接rarity0〜4特性（威力/速度/会心率/会心倍率）、旧saveはidから一度だけ補完、実combatへ反映。inventory中央余白にtab別装備絵/日英枠表示（頭廃止維持）。

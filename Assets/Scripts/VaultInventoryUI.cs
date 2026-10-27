@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 namespace NeonVault
@@ -8,7 +8,7 @@ namespace NeonVault
         Vector2 weaponScroll,armorScroll,moduleDescriptionScroll;
         bool meleeInventoryPage; Vector2 meleeScroll; Texture2D meleeIconAtlas;
         readonly Dictionary<int,int> runUpgradeCounts=new Dictionary<int,int>();
-        public void RecordRunUpgrade(int choice){if(choice>=0&&choice<7)runUpgradeCounts[choice]=runUpgradeCounts.TryGetValue(choice,out int count)?count+1:1;}
+        public void RecordRunUpgrade(int choice){if(choice>=0&&choice<13)runUpgradeCounts[choice]=runUpgradeCounts.TryGetValue(choice,out int count)?count+1:1;}
         void ClearRunUpgradeHistory()=>runUpgradeCounts.Clear();
         static List<TItem> EquippedFirst<TItem>(List<TItem> owned,Func<TItem,bool> isEquipped)
         {
@@ -176,7 +176,7 @@ namespace NeonVault
         }
         string RunBuffSummary()
         {
-            if(screen!=Screen.Playing&&screen!=Screen.Pause&&screen!=Screen.Reward)return T("RUN UPGRADES: none active","周回強化: 有効な効果なし");
+            if(screen!=Screen.Playing&&screen!=Screen.Pause&&screen!=Screen.Reward)return T("UPGRADES: none active","強化: 有効な効果なし");
             var parts=new List<string>();
             if(runDamage>.001f)parts.Add(T("DMG ","威力 ")+"+"+(runDamage*100).ToString("0")+"%");
             if(runFire>.001f)parts.Add(T("FIRE ","連射 ")+"+"+(runFire*100).ToString("0")+"%");
@@ -187,9 +187,9 @@ namespace NeonVault
             if(ArtifactShield>.01f)parts.Add(T("BARRIER ","障壁 ")+ArtifactShield.ToString("0.#"));
             if(ArtifactDamageMultiplier>1.001f)parts.Add(T("MOD DMG ","モジュール威力 ")+"×"+ArtifactDamageMultiplier.ToString("0.00"));
             if(reloadSurge>0)parts.Add(T("RELOAD ","装填強化 ")+reloadSurge.ToString("0.0")+T("s","秒"));
-            string[] augments={T("OVERCHARGE","過負荷"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復手順"),T("SHOCK BOOSTER","衝撃増幅"),T("TESLA BRIDGE","電弧連鎖"),T("BIO RECOVERY","生体回収")};
-            foreach(var kv in runUpgradeCounts)parts.Add(augments[kv.Key]+(kv.Value>1?" ×"+kv.Value:""));
-            return T("RUN UPGRADES: ","周回強化: ")+(parts.Count==0?T("none active","有効な効果なし"):string.Join("  ·  ",parts));
+            string[] augments={T("OVERCHARGE","過負荷"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復手順"),T("SHOCK BOOSTER","衝撃増幅"),T("TESLA BRIDGE","電弧連鎖"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
+            foreach(var kv in runUpgradeCounts)if(kv.Key>=0&&kv.Key<augments.Length)parts.Add(augments[kv.Key]+(kv.Value>1?" ×"+kv.Value:""));
+            return T("UPGRADES: ","強化: ")+(parts.Count==0?T("none active","有効な効果なし"):string.Join("  ·  ",parts));
         }
         void DrawRunBuffLine(float y)
         {

@@ -115,7 +115,7 @@ namespace NeonVault
             Check(!game.FastTravelToCamp(1), "Unvisited camp travel rejected");
             game.VisitOverworldCamp(1); Check(game.FastTravelToCamp(1) && game.screen == VaultGame.Screen.Hub && game.LastVisitedCamp == 1, "Visited camp fast travel enters camp hub"); yield return null;
             game.ExitCampToOverworld(); yield return null;
-            int stage = -1; for (int i = 0; i < 100; i++) if (ExpeditionMap.Get(i).level <= game.DebtLevel) { stage = i; break; }
+            int stage = -1; for (int i = 0; i < ExpeditionMap.StageCount; i++) if (ExpeditionMap.Get(i,game.DebtLevel).level <= game.DebtLevel) { stage = i; break; }
             Check(stage >= 0, "An eligible dungeon exists"); if (stage < 0) yield break;
             Move(geo.Camps[1]); Check(!game.EnterNearbyWorldDungeon(stage), "Remote dungeon entry rejected");
             Move(geo.Entrances[stage]); Check(game.EnterNearbyWorldDungeon(stage) && !game.IsOverworld && game.PendingWorldStage == stage, "Nearby eligible dungeon entered"); yield return null;

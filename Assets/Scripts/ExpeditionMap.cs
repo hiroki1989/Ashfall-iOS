@@ -23,16 +23,17 @@ namespace NeonVault
     /// <summary>Stable, content-only expedition catalog. Stage ids and rolls must not depend on runtime RNG.</summary>
     public static class ExpeditionMap
     {
-        public const int StageCount = 100;
+        public const int StageCount = 200;
         public static readonly Vector2 CityCanvasSize = new Vector2(1440, 1000);
         // A coprime permutation scatters stable stage IDs
         // across the city without changing progression, rewards, or claimed contracts.
         public static Vector2 CityPoint(int id)
         {
-            int slot = (Mathf.Clamp(id, 0, StageCount - 1) * 37 + 17) % StageCount;
+            id = Mathf.Clamp(id, 0, StageCount - 1);
+            int slot = ((id % 100) * 37 + 17) % 100;
             int column = slot % 10, row = slot / 10;
             return new Vector2(88 + column * 140 + Mathf.Sin(slot * 2.31f) * 12,
-                83 + row * 91 + Mathf.Cos(slot * 1.73f) * 10);
+                83 + row * 91 + Mathf.Cos(slot * 1.73f) * 10) + (id >= 100 ? new Vector2(30, 30) : Vector2.zero);
         }
         static readonly string[] regions = { "Ruinbelt", "Iron Veins", "Floodworks", "Green Fringe", "Red Expanse" };
         static readonly string[] regionsJa = { "崩壊都市帯", "鉄鉱脈", "氾濫工業地帯", "森林化郊外", "赤い荒野" };
@@ -58,7 +59,7 @@ namespace NeonVault
             new[]{"Radiation glassland","Scorched crater","Static dunes","Salt flats","Fallout basin"}
         };
         static readonly string[][] biomesJa = {
-            new[]{"崩壊した中心街","粉塵に沈む高層街","陥没地下鉄","ネオン廃墟","コンクリート峡谷"},
+            new[]{"崩壊した中心街","粉塵に沈む高層街","陥没地下鉄","ネオン廃きょ","コンクリート峡谷"},
             new[]{"露天掘り鉱区","有毒な鉱滓地","鉱石搬送路","燃え殻の坑道","埋没精錬所"},
             new[]{"浸水組立工場","汽水運河","水没タービン","腐食した造船所","泥に埋もれた水門"},
             new[]{"緑に呑まれた郊外","樹冠屋上","蔦のモール","根に割られた線路","湿地庭園"},
@@ -81,10 +82,10 @@ namespace NeonVault
         static readonly string[] missionEn = {"Defeat 18 hostiles","Defeat the alpha mutant","Recover 3 caches across 2 floors","Break the infestation: 8 kills and 2 caches","Open a cache on each of 2 floors","Salvage 5 caches across 3 floors"};
         static readonly string[] missionJa = {"敵を18体倒す","変異体の主を倒す","2フロア以上で物資を計3箱回収","感染網を断つ：敵8体と物資2箱","別々の2フロアで各1箱を開く","3フロア以上で物資を計5箱回収"};
         static readonly Color[] colors = {new Color(.31f,.63f,.55f),new Color(.84f,.43f,.23f),new Color(.23f,.62f,.72f),new Color(.48f,.68f,.35f),new Color(.86f,.28f,.20f)};
-        public static ExpeditionStage Get(int id)
+        public static ExpeditionStage Get(int id,int playerLevel=1)
         {
-            id=Mathf.Clamp(id,0,StageCount-1); int region=id/20, n=id%20, place=n/4, variant=n%4;
-            string loc=places[region][place], locJa=placesJa[region][place]; int danger=OverworldGeography.DungeonLevel(id);
+            id=Mathf.Clamp(id,0,StageCount-1); int region=(id%100)/20, n=id%20, place=n/4, variant=n%4+(id/100)*4;
+            string loc=places[region][place], locJa=placesJa[region][place]; int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-3);
             int mission=(id+region+place)%missionEn.Length;
             string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==3?"Infestation network":"Supply cache";
             string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==3?"感染網":"補給物資";
@@ -95,7 +96,7 @@ namespace NeonVault
                 englishTarget=id%5==2&&mission==1?"Raider commander":target,japaneseTarget=id%5==2&&mission==1?"レイダーの指揮官":targetJa,
                 englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[region] };
         }
-        public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=Mathf.Clamp(region,0,4)*20;id<Mathf.Clamp(region,0,4)*20+20;id++)if(Get(id).mission==mission)count++;return count;}
+        public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=0;id<StageCount;id++)if(Get(id).region==Mathf.Clamp(region,0,4)&&Get(id).mission==mission)count++;return count;}
         public static int RewardSeed(int stageId)=>unchecked(0x51A7D00D ^ (stageId+1)*7919);
         public static string MissionLabel(ExpeditionMission mission,bool japanese)=>japanese?missionJa[(int)mission]:missionEn[(int)mission];
         static string RewardLabel(int id,bool ja) { string[] en={"Credits cache","Unusual gear","Armor cache","Skill point"};string[] jp={"クレジット備蓄","異能装備","防具箱","スキルポイント"};int kind=new System.Random(RewardSeed(id)).Next(4);return (ja?jp:en)[kind]; }

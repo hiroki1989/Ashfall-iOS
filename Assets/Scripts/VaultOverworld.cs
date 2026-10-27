@@ -45,7 +45,7 @@ namespace NeonVault
             EnterHub();
         }
         public void CompleteWorldBossConversation()
-        {CompleteOverworldStory();MarkDebtIntroSeen();Notify("BOSS: Bring me a billion scrap. Briggs will collect.","ボス：10億スクラップ、稼いでこい。返済はブリッグスに渡せ。");}
+        {CompleteOverworldStory();MarkDebtIntroSeen();bossDeparting=departingRaiderBoss!=null;Notify("BOSS: Bring me a billion scrap. Briggs will collect.","ボス：10億スクラップ、稼いでこい。返済はブリッグスに渡せ。");}
         public void ExitCampToOverworld()
         {
             EnsureOverworldState();if(!WorldStorySeen)return;
@@ -82,12 +82,13 @@ namespace NeonVault
         public bool EnterNearbyWorldDungeon(int stage)
         {
             if(!IsOverworld||stage<0||stage>=ExpeditionMap.StageCount||(WorldGeography.Entrances[stage]-PlayerPosition).sqrMagnitude>3.5f*3.5f)return false;
-            if(ExpeditionMap.Get(stage).level>DebtLevel){Notify("LEVEL REQUIREMENT NOT MET","入場レベルが足りません");return false;}
+            if(ExpeditionMap.Get(stage,DebtLevel).level>DebtLevel){Notify("LEVEL REQUIREMENT NOT MET","入場レベルが足りません");return false;}
             SaveInventory();RememberOverworldPosition(WorldGeography.Entrances[stage]+Vector3.back*2,true);SetOverworldReturnStage(stage);
             return EnterExpeditionStage(stage);
         }
         void ClearWorldScene()
         {
+            ResetOverworldRush();
             if(world!=null){world.gameObject.SetActive(false);Destroy(world.gameObject);}
             foreach(var material in materials)if(material!=null)Destroy(material);
             materials.Clear();Enemies.Clear();drops.Clear();meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();ClearArtifactDrops();satellites.Clear();obstacles.Clear();worldChestIds.Clear();worldEnemyLevels.Clear();worldEnemyInstances.Clear();worldEnemySpawns.Clear();worldEnemyDefeated=0;nearbyOverworldActivities.Clear();CloseOverworldActivityChoice();
@@ -149,6 +150,7 @@ namespace NeonVault
         }
         void TickOverworld()
         {
+            TickOverworldRush();
             if(selectedOverworldActivity!=null)Time.timeScale=0;
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             worldSaveTimer-=Time.deltaTime;if(worldSaveTimer<=0){worldSaveTimer=8;RememberOverworldPosition(PlayerPosition,true);SaveInventory();}
@@ -214,6 +216,19 @@ namespace NeonVault
             foreach(var nearest in nearby)
             {
                 if(worldEnemyInstances.Count>=MaxActiveOverworldEnemies)break;
+                // Geography is generated lazily; validate the actual footprint only for
+                // nearby spawns so the initial world load does not build every chunk.
+                if(WorldGeography.Blocked(nearest.position,.8f)||WorldEntranceBuildings.Blocked(nearest.position,.8f,WorldGeography))
+                {
+                    Vector3 original=nearest.position; bool found=false;
+                    for(int ring=1;ring<=8&&!found;ring++)for(int direction=0;direction<8;direction++)
+                    {
+                        float angle=direction*Mathf.PI/4f;
+                        var candidate=original+new Vector3(Mathf.Cos(angle)*ring*2,0,Mathf.Sin(angle)*ring*2);
+                        if(!WorldGeography.Blocked(candidate,.8f)&&!WorldEntranceBuildings.Blocked(candidate,.8f,WorldGeography)){nearest.position=candidate;found=true;break;}
+                    }
+                    if(!found)continue;
+                }
                 spawningWorldEnemy=nearest;
                 try
                 {
@@ -245,7 +260,7 @@ namespace NeonVault
         void ReturnFromWorldDungeon(bool victory)
         {
             bool success=victory&&(SelectedExpeditionStage==null||MissionCompleted);int stage=PendingWorldStage;
-            if(!victory){ApplyOverworldDeathPenalty();RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);EnterHub();Notify("DEFEATED / Half your scrap was lost. Returned to last camp.","敗北 / 所持スクラップを半分失い、最後に訪れた拠点へ帰還しました。");return;}
+            if(!victory)return;
             if(success)RegisterOverworldMissionClear();
             string rewardEn=toast,rewardJa=toastJapanese;
             Vector3 p=stage>=0?WorldGeography.Entrances[stage]+Vector3.back*2:SavedOverworldPosition;
@@ -253,7 +268,7 @@ namespace NeonVault
             Notify(rewardEn+" / BACK AT ENTRANCE",rewardJa+" / ダンジョン入口へ帰還");
         }
         void SaveWorldLocationOnSuspend()
-        {if(IsOverworld&&player!=null){RememberOverworldPosition(PlayerPosition,true);SaveInventory();}}
+        {if(IsOverworld&&screen!=Screen.Dead&&player!=null){RememberOverworldPosition(PlayerPosition,true);SaveInventory();}}
         void OnApplicationPause(bool paused){if(paused)SaveWorldLocationOnSuspend();}
         void OnApplicationQuit(){SaveWorldLocationOnSuspend();}
     }

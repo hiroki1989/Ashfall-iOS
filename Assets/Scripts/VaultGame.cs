@@ -211,7 +211,12 @@ namespace NeonVault
             f.GetComponent<FaithfulEnemy3D>().Init(f);ImportedEnemyVisual.TryAttach(f.gameObject,kind==3&&SelectedStageId>=0&&SelectedStageId%5==2?11:kind);
             Enemies.Add(f);
             if(IsOverworld)ConfigureOverworldFoe(f);
-            else f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
+            else
+            {
+                int stageLevel=SelectedExpeditionStage?.level??1;
+                float levelHealth=1+(stageLevel-1)*.14f,levelDamage=1+(stageLevel-1)*.065f;
+                f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
+            }
             bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275);
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
@@ -240,8 +245,20 @@ namespace NeonVault
             next=p+new Vector3(0,0,delta.z); if(!Blocked(next,radius))p=next;
             return p;
         }
+        float deathReturnAt;
+        int deathScrapLost, deathScrapRemaining;
         void Update()
         {
+            if(screen==Screen.Dead)
+            {
+                if(Time.unscaledTime>=deathReturnAt)
+                {
+                    EnterHub();
+                    Notify("SCRAP LOST: "+deathScrapLost.ToString("N0")+" / REMAINING: "+deathScrapRemaining.ToString("N0"),
+                           "失ったスクラップ: "+deathScrapLost.ToString("N0")+" / 残り: "+deathScrapRemaining.ToString("N0"));
+                }
+                return;
+            }
             if(worldTransitionPending)return;
             if(WorldBossConversationVisible)return;
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
@@ -285,10 +302,8 @@ namespace NeonVault
                     player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
                 }
             }
-            // Keep the held firing pose on the assisted target between shots.
-            // Previously only Fire() snapped for one frame, so rapid camera
-            // updates visibly returned the weapon to the unassisted direction.
-            if(VaultMobileInputBridge.Firing&&reload<=0&&PlayerWeapon!=null)
+            // Track eligible targets continuously, including between shots and while reloading.
+            if(PlayerWeapon!=null)
                 aim=AutoAimDirection(PlayerWeapon.MuzzlePosition,aim,EffectiveAccuracy);
             player.rotation=Quaternion.LookRotation(aim);
             PlayerWeapon.Aim(aim);
@@ -476,7 +491,7 @@ namespace NeonVault
             float meleeDistance=melee==null?float.MaxValue:Vector3.Distance(PlayerPosition,melee.position);
             float moduleDistance=module==null?float.MaxValue:Vector3.Distance(PlayerPosition,module.position);
             if(module!=null&&moduleDistance<weaponDistance&&moduleDistance<armorDistance&&moduleDistance<meleeDistance)
-            {if(!StoreArtifact(module.item)){Notify("Artifact storage full. Discard unused artifacts in [I].","拡張モジュール枠が満杯です。[I]で整理してください。");return;}artifactDrops.Remove(module);Destroy(module.visual);Notify(ArtifactCatalog.DisplayName(module.item,false)+" collected. Equip in one of two slots [I].",ArtifactCatalog.DisplayName(module.item,true)+"を入手。2枠のいずれかに装備できます [I]");return;}
+            {if(!StoreArtifact(module.item)){Notify("Artifact storage full. Discard unused artifacts in [I].","拡張モジュール枠が満杯です。[I]で整理してください。");return;}artifactDrops.Remove(module);Destroy(module.visual);Notify(ArtifactCatalog.DisplayName(module.item,false)+" collected.",ArtifactCatalog.DisplayName(module.item,true)+"を入手");return;}
             if(melee!=null&&meleeDistance<weaponDistance&&meleeDistance<armorDistance)
             {if(!StoreMeleeWeapon(melee.item)){Notify("Melee storage full / discard items in [I]","近接武器の所持枠が満杯 / [I]で整理してください");return;}meleeDrops.Remove(melee);Destroy(melee.visual);string rarity=VaultLanguage.RarityName(melee.item.rarity);Notify(rarity+" MELEE: "+MeleeWeaponCatalog.English(melee.item.family)+" / SCORE "+MeleeWeaponCatalog.Score(melee.item),rarity+" 近接武器: "+MeleeWeaponCatalog.Japanese(melee.item.family)+" / 評価 "+MeleeWeaponCatalog.Score(melee.item));audioSource.PlayOneShot(pickupSound);return;}
             if(armor!=null&&armorDistance<weaponDistance)
@@ -490,14 +505,20 @@ namespace NeonVault
         {
             if(IsOverworld||screen!=Screen.Playing||!ExpeditionExitOpen)return;
             if(room>=CurrentDungeon.AreaCount-1||(ExpeditionAllowsBypass&&MissionCompleted)){Finish(true);return;}
-            choices=new[]{0,1,2,3,4,5,6};
+            choices=new[]{0,1,2,3,4,5,6,7,8,9,10,11,12};
             for(int i=choices.Length-1;i>0;i--) { int j=rng.Next(i+1); int a=choices[i];choices[i]=choices[j];choices[j]=a; }
             screen=Screen.Reward;
         }
         public void ChooseReward(int index)
         {
             if(screen!=Screen.Reward||index<0||index>=choices.Length)return;
-            switch(choices[index]) { case 0:damageBonus+=.25f;runDamage+=.25f;break;case 1:baseMaxHp+=30;runVitality+=30;RecalculateArmor();hp=Mathf.Min(maxHp,hp+35);break;case 2:fireBonus+=.22f;runFire+=.22f;break;case 3:hp=maxHp;break;case 4:runDash+=.35f;break;case 5:runChain+=.30f;break;case 6:runHarvest+=3;break; }
+            switch(choices[index]) { case 0:damageBonus+=.25f;runDamage+=.25f;break;case 1:baseMaxHp+=30;runVitality+=30;RecalculateArmor();hp=Mathf.Min(maxHp,hp+35);break;case 2:fireBonus+=.22f;runFire+=.22f;break;case 3:hp=maxHp;break;case 4:runDash+=.35f;break;case 5:runChain+=.30f;break;case 6:runHarvest+=3;break;
+            case 7:damageBonus+=.12f;runDamage+=.12f;fireBonus+=.10f;runFire+=.10f;break;
+            case 8:baseMaxHp+=20;runVitality+=20;RecalculateArmor();hp=Mathf.Min(maxHp,hp+45);break;
+            case 9:runDash+=.20f;runHarvest+=1;break;
+            case 10:runChain+=.20f;fireBonus+=.10f;runFire+=.10f;break;
+            case 11:damageBonus+=.15f;runDamage+=.15f;runDash+=.15f;break;
+            case 12:hp=Mathf.Min(maxHp,hp+maxHp*.5f);foreach(var type in new[]{AmmoType.Handgun,AmmoType.Shotgun,AmmoType.AssaultRifle,AmmoType.SniperRifle,AmmoType.LightMachineGun})AddAmmo(type,AmmoPackSize(type));break; }
             room++; ResetGameplayOverlays();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
         }
         void Finish(bool victory)
@@ -506,7 +527,16 @@ namespace NeonVault
             ClearRunCheckpoint();shake=0;
             SaveInventory();
             if(!IsOverworld)OnDungeonFinished(victory);
-            if(!smoke||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0)ReturnFromWorldDungeon(victory);
+            if(!victory)
+            {
+                int before=Math.Max(0,Credits);
+                ApplyOverworldDeathPenalty();
+                deathScrapRemaining=Credits;deathScrapLost=before-Credits;
+                RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);
+                Time.timeScale=1;deathReturnAt=Time.unscaledTime+3f;
+                return;
+            }
+            if(!smoke||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0)ReturnFromWorldDungeon(true);
         }
         void Notify(string message,string japanese=null) { toast=message;toastJapanese=japanese??message;toastTimer=4; }
         void OnDestroy() { foreach(var m in materials)if(m!=null)Destroy(m); if(pixel!=null)Destroy(pixel);if(overworldAtlasTexture!=null)Destroy(overworldAtlasTexture); }

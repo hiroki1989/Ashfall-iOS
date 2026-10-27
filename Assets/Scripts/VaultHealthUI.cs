@@ -5,7 +5,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         Texture2D criticalHealthVignette;
-        static readonly Color VitalPanel=new Color(.025f,.042f,.052f,.96f);
+        static readonly Color VitalPanel=new Color(.025f,.042f,.052f,.68f);
         static readonly Color VitalTrack=new Color(.12f,.16f,.17f);
         static readonly Color VitalRed=new Color(.93f,.19f,.16f);
 
@@ -47,9 +47,9 @@ namespace NeonVault
             Color accent=VitalColor;
             Box(bounds,VitalPanel);
             Box(new Rect(bounds.x,bounds.y,bounds.width,2),new Color(.51f,.64f,.66f,.65f));
-            Box(new Rect(bounds.x,bounds.y,5,bounds.height),accent);
-            Box(new Rect(bounds.x+bounds.width-25,bounds.y,25,5),accent);
-            Box(new Rect(bounds.x+bounds.width-5,bounds.y,5,28),accent);
+            Box(new Rect(bounds.x,bounds.y,3,bounds.height),accent);
+            Box(new Rect(bounds.x+bounds.width-48,bounds.y,48,2),accent);
+            Box(new Rect(bounds.x+bounds.width-2,bounds.y,2,20),accent);
             Box(new Rect(bounds.x+14,bounds.y+11,2,bounds.height-25),new Color(accent.r,accent.g,accent.b,.43f));
             if(mobile)
             {
@@ -78,7 +78,7 @@ namespace NeonVault
                 Box(new Rect(track.x,track.y,width,2),new Color(1,1,1,.34f));
                 if(width>6)Box(new Rect(track.x+width-4,track.y-2,4,track.height+4),Color.white);
             }
-            for(int i=1;i<8;i++)Box(new Rect(track.x+track.width*i/8f,track.y+2,2,track.height-4),new Color(.025f,.042f,.052f,.74f));
+            for(int i=1;i<8;i++)Box(new Rect(track.x+track.width*i/8f,track.y+2,1,track.height-4),new Color(.025f,.042f,.052f,.38f));
         }
     }
 }

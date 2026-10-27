@@ -190,3 +190,9 @@ Final pipeline:4 independent4096x4096 tiles covering10km square (effective8192²
 
 ## 2026-10-27 gun-class-icons-v1
 imagegen: transparent warm ivory side-profile handgun/pump shotgun/assault rifle/belt-fed heavy machine gun/scoped sniper rifle atlas. No text or UI labels. Source exec-155ffa4d-aec1-4aa7-bbdb-dec42b6ee2ee.png preserved. Nonuniform authored silhouettes sampled with dedicated UV crops and aspect fit; combat/inventory/merchant shared FieldUIArt.GunClassIcon.
+
+## 2026-10-27 manufacturer insignia
+imagegen six original engraved industrial marks without text; sheet exec-c1796232-8554-4cbd-b898-edf6f783c748.png. Six fixed cells exported as maker-emblem-v1-0 through 5.
+
+## Manufacturer wordmarks v2
+User explicitly requested trademark-style textual logos. Imagegen source exec-68fb755c-de33-4808-8d26-3192c8bdfade.png; six manufacturer emblems with letterforms and palettes saved as maker-wordmark-v2-0..5. This text is part of each brand logo; interface labels remain separate localized text.

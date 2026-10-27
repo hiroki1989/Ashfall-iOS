@@ -220,11 +220,10 @@ namespace NeonVault
 
         public static bool TryResolveMelee(MeleeWeaponFamily family,out string resourcePath,out Rect sampleUv)
         {
-            resourcePath="Art/MeleeWeaponIcons";float cell=1f/MeleeWeaponCatalog.FamilyCount;
             int sourceCell=MeleeAtlasCell((int)family);
-            float inset=cell-(cell/1.05f);float height=1f/1.05f;
-            sampleUv=new Rect(sourceCell*cell+inset*.5f,(1f-height)*.5f,cell-inset,height);
-            return Resources.Load<Texture2D>(resourcePath)!=null&&sourceCell>=0;
+            resourcePath="Art/MeleeWeaponIsolated"+sourceCell;
+            sampleUv=new Rect(0,0,1,1);
+            return sourceCell>=0&&Resources.Load<Texture2D>(resourcePath)!=null;
         }
 
         public static int MeleeAtlasCell(int family)=>family>=0&&family<MeleeWeaponCatalog.FamilyCount?new[]{0,0,1,2,3}[family]:-1;

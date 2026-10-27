@@ -9,10 +9,12 @@ namespace NeonVault {
   sealed class Group {public Mesh mesh;public Material material;public int sub;public readonly List<Matrix4x4> matrices=new List<Matrix4x4>();public readonly List<int> owners=new List<int>();}
   static readonly Dictionary<GameObject,Template> templates=new Dictionary<GameObject,Template>();
   static readonly Dictionary<Material,Material> materials=new Dictionary<Material,Material>();
+  static readonly Dictionary<Material,Material> fadedMaterials=new Dictionary<Material,Material>();
   readonly Dictionary<(Mesh,Material,int),Group> groups=new Dictionary<(Mesh,Material,int),Group>();
   readonly List<Bounds> buildingBounds=new List<Bounds>();readonly List<bool> hidden=new List<bool>();static VaultGame game;
   static int planeFrame=-1;static Camera planeCamera;static readonly Plane[] planes=new Plane[6];
   float nextOcclusion;bool visibleChunk=true;bool chunkBoundsReady;Bounds chunkBounds;
+  readonly Dictionary<MeshRenderer,Material[]> originalRendererMaterials=new Dictionary<MeshRenderer,Material[]>();bool rendererFade;
   readonly Matrix4x4[] scratch=new Matrix4x4[1023];
   static Template Get(GameObject prefab){
    if(templates.TryGetValue(prefab,out var t))return t;t=new Template();bool first=true;
@@ -44,6 +46,23 @@ namespace NeonVault {
   void LateUpdate(){DrawNow();}
   static bool ChunkVisible(Camera camera,Bounds bounds){if(planeFrame!=Time.frameCount||planeCamera!=camera){GeometryUtility.CalculateFrustumPlanes(camera,planes);planeFrame=Time.frameCount;planeCamera=camera;}return GeometryUtility.TestPlanesAABB(planes,bounds);}
   bool Hides(Bounds bounds,Vector3 point,Camera camera){var viewport=camera.WorldToViewportPoint(point);if(viewport.z<=0||viewport.x<0||viewport.x>1||viewport.y<0||viewport.y>1)return false;var ray=camera.ViewportPointToRay(viewport);return bounds.IntersectRay(ray,out float distance)&&distance<Vector3.Dot(point-ray.origin,ray.direction)-.4f;}
+  static Material Faded(Material source){
+   if(fadedMaterials.TryGetValue(source,out var result))return result;
+   result=new Material(source);result.shader=ImportedWorldAssets.BuiltinStandard();
+   if(result.HasProperty("_Color")){var color=result.color;color.a=.16f;result.color=color;}
+   result.SetFloat("_Mode",3);result.SetFloat("_SrcBlend",(float)BlendMode.One);result.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);result.SetFloat("_ZWrite",0);
+   result.DisableKeyword("_ALPHATEST_ON");result.DisableKeyword("_ALPHABLEND_ON");result.EnableKeyword("_ALPHAPREMULTIPLY_ON");result.renderQueue=3000;result.enableInstancing=true;
+   fadedMaterials[source]=result;return result;
+  }
+  void SetRendererFade(bool fade){
+   if(fade==rendererFade)return;rendererFade=fade;
+   if(fade){foreach(var renderer in GetComponentsInChildren<MeshRenderer>()){
+    if(!renderer)continue;var original=renderer.sharedMaterials;originalRendererMaterials[renderer]=original;
+    var faded=new Material[original.Length];for(int i=0;i<original.Length;i++)faded[i]=original[i]?Faded(original[i]):null;renderer.sharedMaterials=faded;
+   }}else RestoreRendererMaterials();
+  }
+  void RestoreRendererMaterials(){foreach(var entry in originalRendererMaterials)if(entry.Key)entry.Key.sharedMaterials=entry.Value;originalRendererMaterials.Clear();rendererFade=false;}
+  void OnDisable(){RestoreRendererMaterials();}
   public static bool OcclusionEnabled=true;
   public int HiddenBuildingCount {get;private set;}
   public void DrawNow(){
@@ -52,8 +71,8 @@ namespace NeonVault {
    if(Time.unscaledTime>=nextOcclusion){nextOcclusion=Time.unscaledTime+.12f;HiddenBuildingCount=0;
    for(int i=0;i<buildingBounds.Count;i++){bool hide=false;if(OcclusionEnabled&&camera&&game){hide=Hides(buildingBounds[i],game.PlayerPosition+Vector3.up*1.1f,camera);if(!hide)foreach(var enemy in game.Enemies){if(!enemy||enemy.dead||(enemy.transform.position-game.PlayerPosition).sqrMagnitude>2500)continue;if(Hides(buildingBounds[i],enemy.transform.position+Vector3.up*1.1f,camera)){hide=true;break;}}}hidden[i]=hide;if(hide)HiddenBuildingCount++;}
    }
-   if(gameObject.name.StartsWith("Dungeon building /"))foreach(var renderer in GetComponentsInChildren<MeshRenderer>())renderer.enabled=HiddenBuildingCount==0;
-   foreach(var group in groups.Values){int count=0;for(int index=0;index<group.matrices.Count;index++){int owner=group.owners[index];if(owner>=0&&hidden[owner])continue;scratch[count++]=group.matrices[index];if(count==1023){Graphics.DrawMeshInstanced(group.mesh,group.sub,group.material,scratch,count,null,Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);count=0;}}if(count>0)Graphics.DrawMeshInstanced(group.mesh,group.sub,group.material,scratch,count,null,Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);}
+   if(gameObject.name.StartsWith("Dungeon building /"))SetRendererFade(HiddenBuildingCount>0);
+   foreach(var group in groups.Values)for(int pass=0;pass<2;pass++){int count=0;for(int index=0;index<group.matrices.Count;index++){int owner=group.owners[index];bool fade=owner>=0&&hidden[owner];if(fade!=(pass==1))continue;scratch[count++]=group.matrices[index];if(count==1023){Graphics.DrawMeshInstanced(group.mesh,group.sub,fade?Faded(group.material):group.material,scratch,count,null,fade||Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);count=0;}}if(count>0)Graphics.DrawMeshInstanced(group.mesh,group.sub,pass==1?Faded(group.material):group.material,scratch,count,null,pass==1||Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);}
   }
  }
 }

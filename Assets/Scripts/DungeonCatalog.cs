@@ -9,7 +9,7 @@ namespace NeonVault {
  public static class DungeonCatalog {
   public static readonly DungeonProfile[] All={
    new DungeonProfile{index=0,minLevel=1,maxLevel=4,english="DEAD HIGHWAY",japanese="死の街道",themeEnglish="Shamblers, acid spitters and plated corpses. Evade swings and flank armor.",themeJapanese="徘徊屍・酸吐き・装甲屍。予告殴りをかわし、装甲の側面を突け。",backgroundSkin="Obsidian",palette=new Color(.24f,.66f,.58f),enemyRoster=new[]{0,1,4,8},healthScale=1.12f,damageScale=1.08f},
-   new DungeonProfile{index=1,minLevel=5,maxLevel=8,english="CINDER WORKS",japanese="灰燼工場",themeEnglish="Needle shots and bloater blasts. Break away from locked attack warnings.",themeJapanese="針撃ちと膨張屍の爆発。固定された攻撃予告から離脱せよ。",backgroundSkin="Ember",palette=new Color(1,.35f,.16f),enemyRoster=new[]{2,4,5,7},healthScale=2.35f,damageScale=1.5f},
+   new DungeonProfile{index=1,minLevel=5,maxLevel=8,english="CINDER WORKS",japanese="灰灰工場",themeEnglish="Needle shots and bloater blasts. Break away from locked attack warnings.",themeJapanese="針撃ちと膨張屍の爆発。固定された攻撃予告から離脱せよ。",backgroundSkin="Ember",palette=new Color(1,.35f,.16f),enemyRoster=new[]{2,4,5,7},healthScale=2.35f,damageScale=1.5f},
    new DungeonProfile{index=2,minLevel=9,maxLevel=12,english="HOT ZONE",japanese="汚染隔離区",themeEnglish="Radiation barrages and regenerating mutants. Prioritize flesh weavers.",themeJapanese="放射線弾幕と再生変異体。再生母体を優先して倒せ。",backgroundSkin="Astral",palette=new Color(.6f,.38f,1),enemyRoster=new[]{5,6,8,9},healthScale=4.2f,damageScale=2f}
   };
   public static DungeonProfile Get(int index)=>All[Mathf.Clamp(index,0,All.Length-1)];

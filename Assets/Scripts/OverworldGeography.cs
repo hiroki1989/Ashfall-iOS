@@ -20,7 +20,7 @@ namespace NeonVault
         public static int DungeonLevel(int id)
         {
             if(dungeonLevels==null)new OverworldGeography();
-            return dungeonLevels[Mathf.Clamp(id,0,99)];
+            return dungeonLevels[Mathf.Clamp(id,0,dungeonLevels.Length-1)];
         }
         readonly Dictionary<Vector2Int,ChunkData> cache=new Dictionary<Vector2Int,ChunkData>();
         readonly Queue<Vector2Int> cacheOrder=new Queue<Vector2Int>();
@@ -98,7 +98,7 @@ namespace NeonVault
             // Every bridge crossing occupies an entire coarse navigation row.
             for(int y=0;y<Rows;y++)if(Bridge((y+.5f)*50-HalfExtent))for(int x=0;x<Columns;x++)map[x,y]=true;
             Camps=new Vector3[14];for(int i=0;i<7;i++){float a=i*Mathf.PI*2/7+.28f;Camps[i]=SafeSite(new Vector3(Mathf.Cos(a)*3600,.65f,Mathf.Sin(a)*3400));}
-            Entrances=new Vector3[100];Entrances[0]=SafeSite(Camps[0]+new Vector3(-30,0,0));
+            Entrances=new Vector3[ExpeditionMap.StageCount];Entrances[0]=SafeSite(Camps[0]+new Vector3(-30,0,0));
             for(int i=1;i<100;i++)
             {Vector3 chosen=Vector3.zero;float best=-1;for(int trial=0;trial<40;trial++){var p=new Vector3(-4700+(float)random.NextDouble()*9400,.65f,-4700+(float)random.NextDouble()*9400);float near=float.MaxValue;foreach(var q in protectedSites)near=Mathf.Min(near,(p-q).sqrMagnitude);if(near>best){best=near;chosen=p;}}Entrances[i]=SafeSite(chosen);}
             Chests=new Vector3[500];for(int i=0;i<36;i++)Chests[i]=SafeSite(new Vector3(-4300+i%6*1700+(float)random.NextDouble()*250,.65f,-4300+i/6*1700+(float)random.NextDouble()*250));
@@ -123,13 +123,31 @@ namespace NeonVault
                 float jitterX=(float)random.NextDouble()*240-120,jitterZ=(float)random.NextDouble()*300-150;
                 Chests[i]=NewSite(new Vector3(-4650+column*490+jitterX,.65f,-4650+row*620+jitterZ));
             }
+            // Append only after every legacy random roll and site is fixed.
+            // Three additional starter sites are constrained to the 1 km square
+            // centred on the first camp; entrance zero is already within it.
+            for(int i=100;i<103;i++)
+                Entrances[i]=NewSite(Camps[0]+new Vector3((i-101)*180,0,220),false,Camps[0]);
+            var extraRandom=new System.Random(Seed^0x5A17);
+            for(int i=103;i<Entrances.Length;i++)
+            {
+                Vector3 chosen=Vector3.zero;float best=-1;
+                for(int trial=0;trial<40;trial++)
+                {
+                    var p=new Vector3(-4700+(float)extraRandom.NextDouble()*9400,.65f,-4700+(float)extraRandom.NextDouble()*9400);
+                    float near=float.MaxValue;foreach(var q in protectedSites)near=Mathf.Min(near,(p-q).sqrMagnitude);
+                    if(near>best){best=near;chosen=p;}
+                }
+                Entrances[i]=NewSite(chosen);
+            }
+            AddResidentialRoads();
             var levels=new int[Entrances.Length];
             for(int i=0;i<levels.Length;i++)
             {
                 float distance=Vector3.Distance(Camps[0],Entrances[i]);
                 // Nearby expeditions stay gentle; farther rings vary by one level.
                 int variation=i==0?0:(i*37%3)-1;
-                levels[i]=Mathf.Clamp(1+Mathf.FloorToInt(distance/850)+variation,1,10);
+                levels[i]=i>=100&&i<103?1:Mathf.Clamp(1+Mathf.FloorToInt(distance/850)+variation,1,10);
             }
             dungeonLevels=levels;
             var entry=new Vector2Int(Mathf.FloorToInt((Camps[0].x+HalfExtent)/50),Mathf.FloorToInt((Camps[0].z+HalfExtent)/50));
@@ -144,7 +162,7 @@ namespace NeonVault
             if(!siteBuckets.TryGetValue(key,out var bucket)){bucket=new List<Vector3>();siteBuckets.Add(key,bucket);}bucket.Add(p);
             return p;
         }
-        Vector3 NewSite(Vector3 desired,bool camp=false)
+        Vector3 NewSite(Vector3 desired,bool camp=false,Vector3? squareCenter=null)
         {
             // Bounded radial search reserves walkable land clear of roads and old entrances.
             for(int ring=0;ring<=60;ring++)for(int step=0;step<(ring==0?1:24);step++)
@@ -152,6 +170,7 @@ namespace NeonVault
                 float angle=step*Mathf.PI*2/24;
                 var p=desired+new Vector3(Mathf.Cos(angle)*ring*10,0,Mathf.Sin(angle)*ring*10);
                 if(Mathf.Abs(p.x)>4750||Mathf.Abs(p.z)>4750||River(p)||RoadClearance(p)<8||SiteProtected(p,20))continue;
+                if(squareCenter.HasValue&&(Mathf.Abs(p.x-squareCenter.Value.x)>500||Mathf.Abs(p.z-squareCenter.Value.z)>500))continue;
                 if(Mathf.Abs(p.x-RiverX(p.z))<RiverWidth(p.z)*.5f+35)continue;
                 if(camp&&!CampFootprintClear(p))continue;
                 return SafeSite(p);
@@ -184,7 +203,7 @@ namespace NeonVault
             float left=x*ChunkSize,bottom=z*ChunkSize;
             // Rejection packing makes buildings independent of the 100m streaming grid.
             // A two metre margin at chunk borders prevents neighbouring cache overlap.
-            for(int attempt=0;attempt<640&&data.Buildings.Count<28;attempt++)
+            for(int attempt=0;attempt<1000&&data.Buildings.Count<36;attempt++)
             {
                 var p=new Vector3(left+8+(float)rng.NextDouble()*84,0,bottom+8+(float)rng.NextDouble()*84);
                 int district=District(p);if(district==4||RoadDistance(p)>=200)continue;

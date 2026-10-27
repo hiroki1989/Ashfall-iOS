@@ -64,22 +64,22 @@ namespace NeonVault
         EqCard EqMake(object item)
         {
             var c=new EqCard{item=item,color=Mist};bool has=false;int score=0,reference=0,level=1;Rarity rarity=Rarity.Common;string maker=null;
-            if(item is Gun g){c.key="g:"+g.id;c.name=VaultLanguage.GunName(g);c.color=g.color;c.equipped=EquippedWeaponSlot(g)>=0;score=GearScoring.Score(g);reference=EqGunComparison(out has);level=g.level;rarity=g.rarity;maker=ManufacturerBranding.Maker(g);
+            if(item is Gun g){c.key="g:"+g.id;c.name=VaultLanguage.GunName(g,false);c.color=g.color;c.equipped=EquippedWeaponSlot(g)>=0;score=GearScoring.Score(g);reference=EqGunComparison(out has);level=g.level;rarity=g.rarity;maker=ManufacturerBranding.Maker(g);
                 string damage=T("DMG ","威力 ")+GunDamageMin(g).ToString("0.0")+"–"+GunDamageMax(g).ToString("0.0")+(g.pellets>1?" ×"+g.pellets:"");
                 c.description=T("TYPE ","銃種 ")+VaultLanguage.GunClassName(g)+"\n"+damage+T("   RATE ","   連射 ")+(1/Mathf.Max(.001f,g.interval)).ToString("0.0")+T("/s\nMAG ","/秒\n装弾 ")+g.magazine+T("   RELOAD ","   装填 ")+g.reloadSeconds.ToString("0.0")+T("s\nCRIT ","秒\n会心 ")+(GunCriticalChance(g)*100).ToString("0.#")+"%";
                 c.description=EqAppend(c.description,GearScoring.AffixSummary(g));
                 if(!string.IsNullOrEmpty(g.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(g,LegendaryCatalog.Description(g,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,T("ACCURACY ","命中 ")+Arsenal.Accuracy(g).ToString("0.#")+"%"+T("   SPEED ","   弾速 ")+g.speed.ToString("0.#"));
                 c.fullDescription=EqAppend(c.fullDescription,LegendaryDescription(g,VaultLanguage.GunDescription(g)));}
-            else if(item is ArmorItem a){c.key="a:"+a.id;c.name=Armory.Name(a);c.equipped=IsArmorEquipped(a);score=GearScoring.Score(a);reference=MobileArmorComparison(a,out has);level=a.level;rarity=a.rarity;maker=ManufacturerBranding.Maker(a);
+            else if(item is ArmorItem a){c.key="a:"+a.id;c.name=Armory.Name(a,false);c.equipped=IsArmorEquipped(a);score=GearScoring.Score(a);reference=MobileArmorComparison(a,out has);level=a.level;rarity=a.rarity;maker=ManufacturerBranding.Maker(a);
                 c.description=Armory.SlotName(a.slot)+"\n"+Armory.Stats(a).TrimEnd(' ','·');
                 if(!string.IsNullOrEmpty(a.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(a,LegendaryCatalog.Description(a,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,LegendaryDescription(a,Armory.Description(a)));}
-            else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=m.Name;c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
+            else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m,false);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
-                c.description=shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
-                c.fullDescription=LegendaryDescription(m,m.Description);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
-            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"–"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
+                c.description=T("TYPE Module","種別 モジュール")+"\n"+shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
+                c.fullDescription=T("TYPE Module","種別 モジュール")+"\n"+LegendaryDescription(m,m.Description);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
+            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=DistinctEquipmentDesigns.ProductName("melee",(int)w.family*MeleeWeaponCatalog.DesignsPerFamily+w.designVariant,false);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"–"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
             c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity)+"\n"+(!c.equipped&&has?EqComparison(score,reference):"");
             string comparison=!c.equipped&&has?EqComparison(score,reference):"";
             string header=ManufacturerCatalog.Name(maker,VaultLanguage.Japanese)+comparison;
@@ -134,7 +134,7 @@ namespace NeonVault
             FieldUIArt.Icon(new Rect(1080,28,44,44),5,EqAccent);
             Box(new Rect(28,103,1384,1),EqLine);
             EqText(new Rect(28,18,950,44),merchant?T("MARA / SALVAGE EXCHANGE","マラ / 回収品交換所"):T("ARSENAL / EQUIPMENT","武器庫 / 装備"),EqInk,new GUIStyle(eqCaption){fontSize=34});
-            EqText(new Rect(28,66,900,44),merchant?T("SCRAP ","所持スクラップ ")+Credits.ToString("N0"):T("Select an item to inspect and equip","所持品を選んで詳細確認・装備"),EqMuted);
+            if(merchant)EqText(new Rect(28,66,900,44),T("SCRAP ","所持スクラップ ")+Credits.ToString("N0"),EqMuted);
             if(EqButton(new Rect(1172,16,240,76),T("CLOSE / BACK","閉じて戻る"))){if(merchant){screen=Screen.Hub;pendingSaleKey=null;}else ToggleInventory();return true;}
             if(merchant)
             {
@@ -155,17 +155,6 @@ namespace NeonVault
             FieldUIArt.Plate(new Rect(940,top+9,466,769-top),false);
             Box(new Rect(950,620,446,1),EqLine);
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
-            if(equipmentHeroPreview!=null)
-            {
-                bool hasWardenSlot=equipmentHeroPreview.HasGeneratedWardenSlot;
-                string lookLabel=hasWardenSlot
-                    ?equipmentHeroPreview.IsShowingGeneratedWarden?T("LOOK: WARDEN / SWITCH","外観: ウォーデン / 切替"):T("LOOK: CURRENT / SWITCH","外観: 現行 / 切替")
-                    :T("LOOK: STANDARD","外観: 通常モデル");
-                Rect lookRect=new Rect(502,top+12,406,48);
-                if(hasWardenSlot)
-                {if(EqButton(lookRect,lookLabel))equipmentHeroPreview.ToggleGeneratedWarden();}
-                else {Box(lookRect,EqSurface);EqText(lookRect,lookLabel,EqMuted,centered);}
-            }
             DrawEquippedCategory(top);
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);

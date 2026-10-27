@@ -92,9 +92,7 @@ namespace NeonVault
         public static string Name(MeleeWeaponItem item)
         {
             if(item==null)return "";InferIdentity(item);
-            string en=ManufacturerCatalog.Name(item.manufacturerId,false)+" "+English(item.family)+" / "+Arsenal.DesignName(item.designVariant,false);
-            string ja=ManufacturerCatalog.Name(item.manufacturerId,true)+" "+Japanese(item.family)+" / "+Arsenal.DesignName(item.designVariant,true);
-            return VaultLanguage.T(en,ja);
+            return DistinctEquipmentDesigns.ProductName("melee",(int)item.family*DesignsPerFamily+item.designVariant,VaultLanguage.Japanese);
         }
         public static string Name(MeleeWeaponFamily family)=>VaultLanguage.T(English(family),Japanese(family));
         public static int LegendaryMode(MeleeWeaponItem item)=>item==null?-1:(Mathf.Clamp(item.designVariant,0,9)+2*(int)item.family)%4;

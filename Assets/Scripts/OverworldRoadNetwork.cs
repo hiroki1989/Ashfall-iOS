@@ -79,6 +79,29 @@ namespace NeonVault
                 previousWater=water;a=b;
             }
         }
+        // Additional short neighbourhood lanes respect all existing and new sites.
+        void AddResidentialRoads()
+        {
+            var centres=new[]{new Vector3(-2300,0,-3300),new Vector3(-1350,0,-2100),new Vector3(-1700,0,-650),new Vector3(-1350,0,1050),new Vector3(-2350,0,2300),new Vector3(-200,0,2400),new Vector3(1500,0,2500),new Vector3(3000,0,2600),new Vector3(3650,0,650),new Vector3(2300,0,-650),new Vector3(1400,0,-1950),new Vector3(3000,0,-2800),new Vector3(800,0,-3600),new Vector3(4200,0,-1400),new Vector3(700,0,400)};
+            for(int borough=0;borough<centres.Length;borough++)
+            {
+                float angle=borough*.73f+.21f;var u=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));var v=new Vector3(-u.z,0,u.x);
+                float rx=390+(borough*113%300),rz=300+(borough*79%270);
+                for(int lane=0;lane<4;lane++)
+                {
+                    float cross=(-.68f+lane*.42f)*rz;
+                    float extent=rx*Mathf.Sqrt(Mathf.Max(0,1-cross*cross/(rz*rz)))*.88f;
+                    Vector3 Point(float t)=>centres[borough]+u*(-extent+2*extent*t)+v*(cross+18*Mathf.Sin(t*Mathf.PI+borough));
+                    var a=Point(0);
+                    for(int i=1;i<=35;i++)
+                    {
+                        var b=Point(i/35f);var mid=(a+b)*.5f;
+                        if(Mathf.Abs(mid.x)<4920&&Mathf.Abs(mid.z)<4920&&!River(a)&&!River(mid)&&!River(b)&&!Park(mid)&&!SiteProtected(a,20)&&!SiteProtected(mid,20)&&!SiteProtected(b,20))RegisterRoad(a,b,7.5f);
+                        a=b;
+                    }
+                }
+            }
+        }
         void BuildRoadNetwork()
         {
             // Two riverbank boulevards, with distinct bank-following bends.

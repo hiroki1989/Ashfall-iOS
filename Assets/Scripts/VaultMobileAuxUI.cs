@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -15,7 +15,7 @@ namespace NeonVault
             Rect view=MobileCityView;Vector2 size=ExpeditionMap.CityCanvasSize*expeditionCityZoom;
             expeditionMapScroll=Vector2.Max(Vector2.zero,Vector2.Min(expeditionMapScroll,size-view.size));
             expeditionMapScroll=GUI.BeginScrollView(view,expeditionMapScroll,new Rect(0,0,size.x,size.y));DrawCityAtlas();GUI.EndScrollView();
-            var stage=ExpeditionMap.Get(expeditionMapSelection);bool unlocked=stage.level<=DebtLevel;
+            var stage=ExpeditionMap.Get(expeditionMapSelection,DebtLevel);bool unlocked=stage.level<=DebtLevel;
             MobileCopyAt(42,640,stage.Name+" / Lv "+stage.level+"  ("+T("YOU ","現在 ")+DebtLevel+")",unlocked?Cyan:Gold);
             MobileCopyAt(42,684,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese),Mist,1350);
             bool done=clearedExpeditionStages.Contains(stage.id);

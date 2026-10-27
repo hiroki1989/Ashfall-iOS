@@ -67,7 +67,7 @@ namespace NeonVault {
     int main=kind=="armor"?(revisedArmor?(r.slot==1?0:6)+r.body:r.slot*6+r.body):r.body,extra=(kind=="armor"?30:6)+r.attachment;
     float ratio=Ratio(s,main);var image=area;if(ratio>area.width/area.height){image.height=area.width/ratio;image.y=area.center.y-image.height*.5f;}else{image.width=area.height*ratio;image.x=area.center.x-image.width*.5f;}
     if(kind=="armor")Part(s,main,image);
-    if(revisedArmor){GUI.color=old;ManufacturerBranding.Badge(new Rect(card.x+3,card.yMax-Mathf.Min(25,card.height*.3f)-3,Mathf.Min(25,card.width*.3f),Mathf.Min(25,card.height*.3f)),ManufacturerCatalog.Id(r.maker));return true;}
+    if(revisedArmor){GUI.color=old;ManufacturerBranding.PortraitBadge(card,ManufacturerCatalog.Id(r.maker));return true;}
     var accessory=kind=="armor"?Load(r,"armor-accessories",5):s; if(accessory==null)accessory=s; else if(kind=="armor")extra=r.slot*6+r.attachment;
     float w=image.width*(kind=="armor"?(r.slot==0?.24f:r.slot==1?.48f:.33f):.48f),h=w/Ratio(accessory,extra);h=Mathf.Min(h,image.height*.55f);
     Vector2 mount=image.center;
@@ -84,7 +84,7 @@ namespace NeonVault {
      Part(s,main,image);
     }else Part(accessory,extra,new Rect(mount.x-w*.5f,mount.y-h*.5f,w,h));
    }
-   ManufacturerBranding.Badge(new Rect(card.x+3,card.yMax-Mathf.Min(25,card.height*.3f)-3,Mathf.Min(25,card.width*.3f),Mathf.Min(25,card.height*.3f)),ManufacturerCatalog.Id(r.maker));GUI.color=old;return true;
+   ManufacturerBranding.PortraitBadge(card,ManufacturerCatalog.Id(r.maker));GUI.color=old;return true;
   }
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]static void Reset(){sheets.Clear();warnings.Clear();}
  }

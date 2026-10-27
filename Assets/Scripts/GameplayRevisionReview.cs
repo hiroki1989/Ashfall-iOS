@@ -126,7 +126,7 @@ namespace NeonVault
                     Check(legendaryPrice==12340&&commonPrice==1234,"legendary sale multiplier is ten without changing other rarities");
                     SetField(game,"room",3);
                     Check(Mathf.Approximately(game.FloorCombatMultiplier,1.2f*1.2f*1.2f),"floor combat multiplier grows by 1.2 per room");
-                    Check(ExpeditionMap.StageCount==100&&ExpeditionMap.Get(80).region==4,"expedition catalog contains five 20-site regions");
+                    Check(ExpeditionMap.StageCount==200&&ExpeditionMap.Get(80).region==4&&ExpeditionMap.Get(180).region==4,"expedition catalog contains five 40-site regions");
                 }
             }
             finally { drawInventory=false; }

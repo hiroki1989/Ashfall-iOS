@@ -13,47 +13,23 @@ namespace NeonVault
         public static string Design(string id,bool ja)
         {
             string[] en={"Modern precision guns: blued steel, oiled walnut, olive canvas and compact mechanical sights. Small analogue range dials support accuracy and quick servicing.","Old military and industrial equipment: forged steel, riveted repair plates, oxblood leather and hydraulic recoil buffers. Heavy impact and protection trade speed for stability.","Modern firearms rebuilt with valve-era electrics: ceramic terminals, compact copper coils and amber vacuum tubes. Burst power and rapid fire demand larger batteries and cooling.","Medical and civil-defence equipment: olive fabric, rubber respirators, glass medicine reservoirs and pressure valves. Siphon and healing systems trade direct impact for sustain.","Reclaimed field equipment: worn timber, repaired steel, leather slings and small furnace chambers. Blast pressure and ammunition recovery use visible pipes and salvage mechanisms.","Security and supply equipment: dark navy ballistic canvas, practical plate carriers, reinforced boots and pale identification marks. Analogue capacitor packs power short protective barriers."};
-            string[] jp={"現代精密銃：黒染め鋼・油を含んだ木製銃床・オリーブ布・小型照準器。機械式測距ダイヤルが精度と整備性を支える。","旧軍・重工装備：鍛造鋼・鋲留め修理板・赤褐色の革・油圧緩衝器。重量と動作速度を代償に威力・防護を確保。","現代銃＋真空管時代の電装：碍子・小型銅コイル・琥珀色真空管。連射と瞬間出力を支える電池・冷却部を外観に反映。","医療・民間防衛装備：オリーブ布・ゴム製防毒面・薬液ガラス瓶・圧力弁。直接威力を抑え、吸命と回復で継戦。","再生野戦装備：傷んだ木材・補修鋼・革スリング・小型燃焼室。配管と再利用機構で爆圧・弾薬回収を支える。","警備・兵站装備：濃紺の防弾布・実用プレートキャリア・補強靴・淡い識別帯。アナログ蓄電装置で短時間の障壁を展開。"};
+            string[] jp={"現代精密銃：黒染め鋼・油を含んだ木製銃床・オリーブ布・小型照準器。機械式測距ダイヤルが精度と整備性を支える。","旧軍・重工装備：鍛造鋼・鋲留め修理板・赤褐色の革・油圧緩衝器。重量と動作速度を代償に威力・防護を確保。","現代銃＋真空管時代の電装：碍子・小型銅コイル・琥珀色真空管。連射と瞬間出力を支える電池・冷却部を外観に反映。","医療・民間防衛装備：オリーブ布・ゴム製防毒面・薬液ガラス瓶・圧力弁。直接威力を抑え、吸命と回復で継戦。","再生野戦装備：傷んだ木材・補修鋼・革スリング・小型燃焼室。配管と再利用機構で爆圧・弾薬回収を支える。","警備・兵たん装備：濃紺の防弾布・実用プレートキャリア・補強靴・淡い識別帯。アナログ蓄電装置で短時間の障壁を展開。"};
             return (ja?jp:en)[Mathf.Max(0,ManufacturerCatalog.Index(id))];
         }
         static float Segment(Vector2 p,Vector2 a,Vector2 b){Vector2 d=b-a;return Vector2.Distance(p,a+d*Mathf.Clamp01(Vector2.Dot(p-a,d)/d.sqrMagnitude));}
         static bool Line(Vector2 p,float ax,float ay,float bx,float by,float width=.027f)=>Segment(p,new Vector2(ax,ay),new Vector2(bx,by))<width;
         public static Texture2D Logo(string id)
         {
-            int index=Mathf.Max(0,ManufacturerCatalog.Index(id));if(logos[index]!=null)return logos[index];
-            const int size=160;var texture=new Texture2D(size,size,TextureFormat.RGBA32,true){name="Manufacturer emblem / "+id,filterMode=FilterMode.Trilinear};
-            var pixels=new Color[size*size];
-            for(int y=0;y<size;y++)for(int x=0;x<size;x++)
-            {
-                Vector2 p=new Vector2((x+.5f)/size,(y+.5f)/size);bool ink=false;float r=Vector2.Distance(p,Vector2.one*.5f);
-                switch(index)
-                {
-                    case 0: // Kestrel wing over a precise sight.
-                        ink=Line(p,.16f,.70f,.48f,.57f)||Line(p,.84f,.70f,.52f,.57f)||Line(p,.22f,.57f,.48f,.47f)||Line(p,.78f,.57f,.52f,.47f)||Line(p,.5f,.35f,.5f,.18f)||Mathf.Abs(r-.115f)<.023f;break;
-                    case 1: // Forging anvil and wake.
-                        ink=p.y>.48f&&p.y<.65f&&p.x>.17f&&p.x<.83f||p.x>.36f&&p.x<.64f&&p.y>.28f&&p.y<.51f||Line(p,.25f,.27f,.75f,.27f)||Line(p,.16f,.77f,.48f,.72f)||Line(p,.48f,.72f,.84f,.77f);break;
-                    case 2: // Six-sided electric housing with a lightning break.
-                        for(int s=0;s<6;s++){float a=s*Mathf.PI/3,b=(s+1)*Mathf.PI/3;ink|=Segment(p,Vector2.one*.5f+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*.34f,Vector2.one*.5f+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*.34f)<.022f;}
-                        ink|=Line(p,.58f,.77f,.40f,.49f,.036f)||Line(p,.40f,.49f,.60f,.51f,.036f)||Line(p,.60f,.51f,.43f,.23f,.036f);break;
-                    case 3: // Living double helix enclosed by leaf ribs.
-                        for(int s=0;s<20;s++){float a=s/20f,b=(s+1)/20f;ink|=Segment(p,new Vector2(.5f+Mathf.Sin(a*Mathf.PI*2)*.16f,.2f+a*.6f),new Vector2(.5f+Mathf.Sin(b*Mathf.PI*2)*.16f,.2f+b*.6f))<.023f;ink|=Segment(p,new Vector2(.5f-Mathf.Sin(a*Mathf.PI*2)*.16f,.2f+a*.6f),new Vector2(.5f-Mathf.Sin(b*Mathf.PI*2)*.16f,.2f+b*.6f))<.023f;}
-                        ink|=Line(p,.34f,.38f,.66f,.38f,.015f)||Line(p,.34f,.62f,.66f,.62f,.015f);break;
-                    case 4: // Open reclamation gear, furnace spark.
-                        ink=Mathf.Abs(r-.27f)<.048f&&!(p.x>.55f&&p.y>.55f);
-                        for(int s=0;s<7;s++){float a=s*Mathf.PI*2/7;ink|=Segment(p,Vector2.one*.5f+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*.25f,Vector2.one*.5f+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*.35f)<.039f;}
-                        ink|=Line(p,.48f,.35f,.58f,.55f,.035f)||Line(p,.58f,.55f,.47f,.53f,.035f)||Line(p,.47f,.53f,.57f,.76f,.035f);break;
-                    default: // Shield, supply chevrons.
-                        ink=Line(p,.22f,.79f,.78f,.79f)||Line(p,.22f,.79f,.27f,.39f)||Line(p,.78f,.79f,.73f,.39f)||Line(p,.27f,.39f,.5f,.19f)||Line(p,.73f,.39f,.5f,.19f)||Line(p,.35f,.62f,.5f,.52f)||Line(p,.65f,.62f,.5f,.52f)||Line(p,.35f,.48f,.5f,.38f)||Line(p,.65f,.48f,.5f,.38f);break;
-                }
-                pixels[y*size+x]=ink?Color.white:Color.clear;
-            }
-            texture.SetPixels(pixels);texture.Apply(true,false);logos[index]=texture;return texture;
+            int index=Mathf.Max(0,ManufacturerCatalog.Index(id));
+            return logos[index]?logos[index]:logos[index]=Resources.Load<Texture2D>("Art/Manufacturers/maker-wordmark-v2-"+index);
         }
         public static void Badge(Rect rect,string maker)
         {
             var old=GUI.color;GUI.color=new Color(.02f,.025f,.03f,.94f);GUI.DrawTexture(rect,Texture2D.whiteTexture);
-            GUI.color=ManufacturerCatalog.Color(maker);GUI.DrawTexture(new Rect(rect.x+2,rect.y+2,rect.width-4,rect.height-4),Logo(maker),ScaleMode.ScaleToFit,true);GUI.color=old;
+            GUI.color=Color.white;var logo=Logo(maker);if(logo)GUI.DrawTexture(new Rect(rect.x+2,rect.y+2,rect.width-4,rect.height-4),logo,ScaleMode.ScaleToFit,true);GUI.color=old;
         }
+        public static void PortraitBadge(Rect card,string maker)
+        {float width=Mathf.Min(card.width*.37f,70),height=width*.7f;Badge(new Rect(card.x+3,card.yMax-height-4,width,height),maker);}
         static Texture2D moduleIllustrations;
         public static bool ModuleIllustrationAvailable=>Resources.Load<Texture2D>("Art/Manufacturers/ModuleIllustrations-v1")!=null;
         public static void ModulePortrait(Rect r,ArtifactItem item)

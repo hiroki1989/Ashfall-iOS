@@ -27,7 +27,7 @@ namespace NeonVault
         {
             Box(new Rect(0, 0, 1440, 900), new Color(.018f, .027f, .032f));
             Text(42, 30, T("ASHFALL / CITY OPERATIONS", "アッシュフォール / 都市全域作戦図"), heading, Gold, 1300);
-            Text(45, 93, T("100 SITES / THREATS ARE SCATTERED THROUGHOUT THE CITY", "全100地点 / 各レベルの危険地点が市内全域に点在"), small, Mist, 960);
+            Text(45, 93, T("200 SITES / THREATS ARE SCATTERED THROUGHOUT THE CITY", "全200地点 / 各レベルの危険地点が市内全域に点在"), small, Mist, 960);
             Panel(new Rect(1020, 150, 375, 663), Cyan);
             Rect view = new Rect(42, 150, 952, 663);
             Event e = Event.current;
@@ -149,7 +149,7 @@ namespace NeonVault
         }
         void DrawCitySite(int id)
         {
-            ExpeditionStage stage = ExpeditionMap.Get(id);
+            ExpeditionStage stage = ExpeditionMap.Get(id,DebtLevel);
             Vector2 p = CityScale(ExpeditionMap.CityPoint(id));
             bool unlocked = stage.level <= DebtLevel, selected = id == expeditionMapSelection, done = clearedExpeditionStages.Contains(id);
             Color mark = selected ? Gold : done ? Cyan : unlocked ? new Color(.83f,.86f,.69f) : new Color(.43f,.47f,.47f);

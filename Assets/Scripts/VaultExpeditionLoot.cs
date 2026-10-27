@@ -114,7 +114,7 @@ namespace NeonVault
         }
         public string ExpeditionLootDescription(int stageId)
         {
-            var stage=ExpeditionMap.Get(stageId);
+            var stage=ExpeditionMap.Get(stageId,DebtLevel);
             int focus=(stage.region+stage.id%20+(int)stage.mission)%4;
             string[] en={"handguns","shotguns","assault rifles","sniper rifles"};
             string[] ja={"ハンドガン","ショットガン","アサルトライフル","スナイパーライフル"};

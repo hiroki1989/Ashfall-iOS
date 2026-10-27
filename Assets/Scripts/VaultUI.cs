@@ -95,6 +95,7 @@ namespace NeonVault
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
             if(worldTransitionPending){DrawWorldLoading();return;}
+            if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(MobileTouchControls.Enabled)
             {
                 if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
@@ -124,6 +125,12 @@ namespace NeonVault
             }
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
+        void DrawDeathScreen()
+        {
+            Box(new Rect(0,0,1440,900),new Color(.008f,.008f,.01f,.94f));
+            var title=new GUIStyle(heading){fontSize=80,alignment=TextAnchor.MiddleCenter};
+            Text(170,330,T("YOU DIED","死亡"),title,new Color(.78f,.16f,.14f),1100);
+        }
         void DrawMobileLanguageButton()
         { if(MobileButton(new Rect(1190,12,220,94),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke); }
         void DrawMobileDebtIntro()
@@ -148,24 +155,14 @@ namespace NeonVault
             if(menuArt!=null)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
             for(int i=0;i<40;i++)Box(new Rect(i*24,0,25,900),new Color(.008f,.016f,.022f,.96f*Mathf.Pow(1-i/40f,.65f)));
             Box(new Rect(0,0,1440,78),new Color(.012f,.02f,.025f,.65f));
-            Text(48,27,"A F   /   THE WORLD AFTER THE FLASH",small,Gold);
             Line(new Vector2(64,139),new Vector2(505,139),Gold*.6f);Diamond(64,139,6,Gold);
-            Text(64,164,T("SURVIVAL PROTOCOL // 07","生存プロトコル // 07"),small,Cyan);
-            Text(60,204,"ASHFALL",title,Gold);Text(66,300,T("AFTER THE LAST LIGHT","最後の灯が消えた世界で"),heading,Color.white,800);
-            Text(66,375,T("SCAVENGE. SURVIVE. RETURN.","拾え。生き延びろ。帰ってこい。"),label);
-            Text(66,423,T("Outfit your survivor. Salvage experimental weapons.\nFace infected hordes across three contaminated zones.","避難拠点で装備を整え、実験兵器を回収。\n3つの汚染区域で、感染者の群れと変異体を突破せよ。"),small,Mist,560);
+            Text(60,204,"ASHFALL",title,Gold);
             if(Button(new Rect(66,483,440,60),T("CONTINUE / ASHFALL","アッシュフォールへ"),true))ContinueOverworldGame();
             if(Button(new Rect(66,552,440,54),T("ARSENAL / EQUIPMENT","武器庫 / 装備")))ToggleInventory();
             if(HasSavedRun&&Button(new Rect(66,616,440,54),T("CONTINUE SAVED EXPEDITION","保存した探索を再開"),true))ResumeSavedRun();
             Line(new Vector2(67,686),new Vector2(506,686),new Color(.4f,.5f,.5f,.5f));
-            Text(67,700,MobileTouchControls.Enabled?T("LEFT STICK MOVE / RIGHT STICK AIM / HOLD FIRE","左スティック移動 / 右スティック照準 / 射撃ボタンを押す"):T("WASD  MOVE  /  MOUSE  AIM + FIRE  /  SPACE  DASH","WASD 移動  /  マウス 照準・射撃  /  SPACE ダッシュ"),small,Mist);
-            Text(67,727,MobileTouchControls.Enabled?T("RELOAD / MELEE / TAKE / USE / GEAR / PAUSE BUTTONS","装填 / 近接 / 拾得 / 調べる / 装備 / 停止ボタン"):T("R RELOAD / RMB MELEE / F PICKUP / E EXIT / I EQUIPMENT / ESC PAUSE","R 装填 / 右クリック近接 / F 拾得 / E 出口 / I 装備 / ESC 停止"),small,Mist);
             Panel(new Rect(960,644,408,162),Gold);
-            Text(982,660,T("THE CONTAMINATED FRONTIER","汚染されたフロンティア"),small,Gold);
-            Text(982,696,T("SAFEHOUSE / 3 HOT ZONES","避難拠点 / 3つの汚染区域"),label);
-            Text(982,738,T("Infected hordes. Radiation mutants.\nTwelve retro-future weapon designs.","感染者の群れ。放射能変異体。\n12系統のレトロフューチャー兵器。"),small,Mist,365);
             Box(new Rect(0,834,1440,66),new Color(.012f,.022f,.027f,.94f));
-            Text(48,852,toastTimer>0?Toast:T("QUARTER VIEW / WASTELAND SURVIVAL","クオータービュー / 荒野のサバイバル"),small,toastTimer>0?Gold:Mist);
             Text(1200,852,"ASHFALL  /  0.7",tiny,Gold,220);toastTimer-=Time.unscaledDeltaTime;
         }
         void DrawOverlay()
@@ -175,8 +172,8 @@ namespace NeonVault
             {
                 Text(162,195,T("CHOOSE YOUR AUGMENT","強化を選択"),heading,Gold);
                 Text(165,260,T("Take one field upgrade into zone "+(room+2)+".","現地改造をひとつ選び、区域 "+(room+2)+" へ。"),label,Mist);
-                string[] names={T("OVERCHARGE","オーバーチャージ"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復プロトコル"),T("SHOCK BOOSTER","衝撃ブースター"),T("TESLA BRIDGE","テスラ導線"),T("BIO RECOVERY","生体回収")};
-                string[] desc={T("Run damage +25%","周回の威力 +25%"),T("Run max HP +30 / heal 35","周回HP +30 / HP35回復"),T("Run fire rate +22%","周回の連射 +22%"),T("Restore all HP","HPを全回復"),T("Dash cooldown bonus +35% / dash pulse","回避待機短縮 +35% / ダッシュ波動"),T("Hits chain 30% damage to a nearby target","命中で近くの敵へ威力30%の連鎖"),T("Heal 3 HP per kill this run","周回中の撃破ごとにHP3回復")};
+                string[] names={T("OVERCHARGE","オーバーチャージ"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復プロトコル"),T("SHOCK BOOSTER","衝撃ブースター"),T("TESLA BRIDGE","テスラ導線"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
+                string[] desc={T("Run damage +25%","周回の威力 +25%"),T("Run max HP +30 / heal 35","周回HP +30 / HP35回復"),T("Run fire rate +22%","周回の連射 +22%"),T("Restore all HP","HPを全回復"),T("Dash cooldown bonus +35% / dash pulse","回避待機短縮 +35% / ダッシュ波動"),T("Hits chain 30% damage to a nearby target","命中で近くの敵へ威力30%の連鎖"),T("Heal 3 HP per kill this run","撃破ごとにHP3回復"),T("Damage +12% / fire rate +10%","威力 +12% / 連射 +10%"),T("Max HP +20 / heal 45","最大HP +20 / HP45回復"),T("Dash cooldown +20% / heal 1 per kill","回避短縮 +20% / 撃破時HP1回復"),T("Chain damage +20% / fire rate +10%","連鎖 +20% / 連射 +10%"),T("Damage +15% / dash cooldown +15%","威力 +15% / 回避短縮 +15%"),T("Heal 50% and replenish ammunition","HP50%回復 / 全弾薬を補給")};
                 for(int i=0;i<3;i++)
                 {
                     int c=choices[i];Rect r=new Rect(165+i*375,345,350,306);Panel(r,c==1?Cyan:Gold);
@@ -201,9 +198,10 @@ namespace NeonVault
         }
         void DrawHeldWeaponHUD(Rect r)
         {
-            if(gun==null)return;Panel(r,new Color(.32f,.34f,.35f));
-            FieldUIArt.GunClassIcon(new Rect(r.x+8,r.y+6,90,r.height-12),gun,UiPaper);
-            Text(r.x+104,r.y+27,ammo+"/"+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=32},UiPaper,r.width-112);
+            if(gun==null)return;Box(r,new Color(.025f,.04f,.05f,.55f));
+            Box(new Rect(r.x,r.y,2,r.height),new Color(.62f,.72f,.72f,.55f));
+            FieldUIArt.GunClassIcon(new Rect(r.x+7,r.y+5,58,r.height-10),gun,UiPaper);
+            Text(r.x+71,r.y+12,ammo+"/"+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=25},UiPaper,r.width-78);
             if(reload>0)Box(new Rect(r.x+8,r.yMax-7,(r.width-16)*Mathf.Clamp01(1-reload/Mathf.Max(.01f,EffectiveReload)),2),Gold);
         }
         void DrawHUD()
@@ -221,25 +219,14 @@ namespace NeonVault
             Panel(new Rect(414,798,197,78),dodgeCooldown<=0?Cyan:Gold*.4f);
             Diamond(436,836,7,dodgeCooldown<=0?Cyan:Mist);
             Text(455,809,T("SPACE / DASH","SPACE / 回避"),tiny,Mist,150);Text(455,836,dodgeCooldown<=0?T("READY","使用可能"):dodgeCooldown.ToString("0.0")+T("s","秒"),small,Cyan,150);
-            DrawHeldWeaponHUD(new Rect(1110,782,306,94));
+            DrawHeldWeaponHUD(new Rect(1190,812,226,64));
             DrawMap();
             if(screen!=Screen.Playing || InventoryOpen)return;
             float s=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             float mx=(Input.mousePosition.x-(UnityEngine.Screen.width-1440*s)/2)/s,my=(UnityEngine.Screen.height-Input.mousePosition.y-(UnityEngine.Screen.height-900*s)/2)/s;if(MobileTouchControls.Enabled){Vector3 mobileAim=VaultMobileInputBridge.ToWorldMovement(MobileTouchControls.Aim).normalized;Vector3 screenAim=cam.WorldToScreenPoint(PlayerPosition+mobileAim*6+Vector3.up*.9f);Vector2 canvasAim=MobileCanvasPoint(new Vector2(screenAim.x,screenAim.y));mx=canvasAim.x;my=canvasAim.y;}
             if(smoke&&AimUiReviewPoint.HasValue){mx=AimUiReviewPoint.Value.x;my=AimUiReviewPoint.Value.y;}
-            Drop drop=NearDrop();
-            ArmorDrop armorDrop=NearArmor();MeleeDrop meleeDrop=NearMeleeDrop();ArtifactDrop moduleDrop=NearArtifact();
-            float gunD=drop==null?float.MaxValue:Vector3.Distance(PlayerPosition,drop.position),armorD=armorDrop==null?float.MaxValue:Vector3.Distance(PlayerPosition,armorDrop.position),meleeD=meleeDrop==null?float.MaxValue:Vector3.Distance(PlayerPosition,meleeDrop.position),moduleD=moduleDrop==null?float.MaxValue:Vector3.Distance(PlayerPosition,moduleDrop.position);
-            bool showGun=drop!=null&&gunD<=armorD&&gunD<=meleeD&&gunD<=moduleD;
-            bool showArmor=armorDrop!=null&&armorD<gunD&&armorD<=meleeD&&armorD<=moduleD;
-            bool showMelee=meleeDrop!=null&&meleeD<gunD&&meleeD<armorD&&meleeD<=moduleD;
-            bool showModule=moduleDrop!=null&&moduleD<gunD&&moduleD<armorD&&moduleD<meleeD;
-            if(showGun)DrawCompactLootCard(drop.gun,drop.gun.rarity,drop.gun.level,GearScoring.Score(drop.gun));
-            if(showArmor)DrawCompactLootCard(armorDrop.item,armorDrop.item.rarity,armorDrop.item.level,GearScoring.Score(armorDrop.item));
-            if(showModule)DrawCompactLootCard(moduleDrop.item,moduleDrop.item.rarity,moduleDrop.item.level,GearScoring.Score(moduleDrop.item));
-            if(showMelee)DrawCompactLootCard(meleeDrop.item,meleeDrop.item.rarity,meleeDrop.item.level,MeleeWeaponCatalog.Score(meleeDrop.item));
-            if(NearbyAmmoCrate||NearbySupplyChest)
-            {bool crate=NearbyAmmoCrate;Panel(new Rect(410,474,620,58),crate?new Color(.92f,.45f,.18f):Gold);Text(428,482,crate?T(MobileTouchControls.Enabled?"TAP OPEN AMMO CRATE":"[F] OPEN AMMO CRATE",MobileTouchControls.Enabled?"タップで弾薬箱を開ける":"[F] 弾薬箱を開ける"):T(MobileTouchControls.Enabled?"TAP OPEN SUPPLY CACHE":"[F] OPEN SUPPLY CACHE",MobileTouchControls.Enabled?"タップで物資箱を開ける":"[F] 物資箱を開ける"),small,Color.white,580);Text(428,509,crate?AmmoLabel(NearbyAmmoCrateType)+T(" · FULL PACK"," · 1パック"):T("Contains salvage, ammunition, or equipment","回収品・弾薬・装備のいずれか"),tiny,Mist,580);}
+            DrawWorldLootPreview();
+            if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,355,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);
             if(ExpeditionExitOpen)
             {Vector3 p=cam.WorldToScreenPoint(ExitPosition+Vector3.up*2);if(p.z>0){float x=(p.x-(UnityEngine.Screen.width-1440*s)/2)/s,y=(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*s)/2)/s;Text(Mathf.Clamp(x-80,20,1260),Mathf.Clamp(y,170,680),T("[E] DESCEND","[E] 次のエリアへ"),small,Gold,190);}}
             foreach(var f in Enemies)if(f!=null&&!f.dead&&(f.kind==3||f.elite||f.hp<f.maxHp-.01f)&&Layout.IsVisible(f.transform.position))
@@ -284,7 +271,7 @@ namespace NeonVault
         }
         void DrawExpeditionBriefing()
         {
-            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1));bool unlocked=stage.level<=DebtLevel;bool cleared=clearedExpeditionStages.Contains(stage.id);
+            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool unlocked=stage.level<=DebtLevel;bool cleared=clearedExpeditionStages.Contains(stage.id);
             Text(1042,174,T("FIELD DOSSIER / ","現地記録 / ")+stage.Name,label,Gold,330);
             Text(1042,219,stage.Location,new GUIStyle(small){wordWrap=true},stage.regionColor,330);
             Line(new Vector2(1042,270),new Vector2(1374,270),new Color(.55f,.72f,.72f,.38f));

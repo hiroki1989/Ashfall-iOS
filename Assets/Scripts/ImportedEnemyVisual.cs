@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -112,7 +112,7 @@ namespace NeonVault
         void Animate(float dt,float speed)
         {
             int kind=owner?owner.kind:11;
-            bool heavy=kind==3||kind==7||kind==8||kind==9;
+            bool heavy=kind==3||kind==8||(owner&&owner.HeavyMelee);
             phase+=dt*Mathf.Max(1,speed*(heavy?1.85f:kind==4?3.6f:2.8f));
             string next=deathTime>=0?"death":attackTime>0?"attack":speed>.12f?"walk":"idle";
             if(state!=next){state=next;stateTime=0;}stateTime+=dt;
@@ -152,10 +152,10 @@ namespace NeonVault
                     upperDirection=new Vector3(limb.side*.16f,-.94f,.22f+stride*.23f+strike*1.4f);
                     lowerDirection=new Vector3(-limb.side*.08f,-.73f,.48f-stride*.12f+strike*1.25f);
                     // Different silhouettes: dangling corpse, low pouncer, broad heavy, and guarded caster.
-                    if(kind==0){upperDirection=new Vector3(limb.side*.19f,-.95f,.3f+stride*.12f+strike);lowerDirection=new Vector3(0,-.72f,.58f+strike*.7f);}
+                    if(kind==0){upperDirection=new Vector3(limb.side*.19f,-.95f,.3f-stride*.25f+strike);lowerDirection=new Vector3(0,-.72f,.58f-stride*.14f+strike*.7f);}
                     else if(kind==4){upperDirection=new Vector3(limb.side*.36f,-.62f,.6f-stride*.25f+strike);lowerDirection=new Vector3(limb.side*.15f,-.45f,.85f);}
-                    else if(heavy){upperDirection=new Vector3(limb.side*.4f,-.94f,.12f+stride*.13f+strike*.95f-prepare*.35f);lowerDirection=new Vector3(-limb.side*.12f,-.8f,.4f+strike*.85f);}
-                    else if(kind==1||kind==5||kind==6){upperDirection=new Vector3(limb.side*.24f,-.82f,.38f+strike*.35f);lowerDirection=new Vector3(-limb.side*.1f,-.25f,.95f+prepare*.2f);}
+                    else if(heavy){upperDirection=new Vector3(limb.side*.32f,-.94f,.12f-stride*.35f+strike*.95f-prepare*.35f);lowerDirection=new Vector3(-limb.side*.12f,-.8f,.4f-stride*.20f+strike*.85f);}
+                    else if(kind==5||kind==10){upperDirection=new Vector3(limb.side*.24f,-.82f,.38f+strike*.35f);lowerDirection=new Vector3(-limb.side*.1f,-.25f,.95f+prepare*.2f);}
                     if(kind==3&&owner&&owner.BossAttackStyle==1){upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.3f,.8f,.4f),prepare);lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(0,.6f,.8f),prepare);}
                     if(kind==3&&owner&&owner.BossAttackStyle==2){upperDirection=new Vector3(limb.side*(.45f+prepare*.6f),-.25f,.4f+strike);lowerDirection=new Vector3(-limb.side*.65f*strike,-.2f,.9f);}
                     upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.5f,-.75f,.25f),dying);
@@ -199,7 +199,7 @@ namespace NeonVault
         {
             // Native clips retain their authored gait and death. Add only small whole-body weight shifts.
             if(deathTime>=0)return;
-            bool heavy=kind==3||kind==7||kind==8||kind==9;
+            bool heavy=kind==3||kind==8||(owner&&owner.HeavyMelee);
             float moving=Mathf.Clamp01(speed/1.5f),stride=Mathf.Sin(phase);
             float anticipation=owner&&owner.IsTelegraphing?1:0;
             float strike=attackTime>0?Mathf.Sin((1-attackTime/.5f)*Mathf.PI):0;
