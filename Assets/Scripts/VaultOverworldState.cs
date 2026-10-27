@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,8 +6,8 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public const int OverworldCampCount = 7;
-        public const int OverworldChestCount = 180;
+        public const int OverworldCampCount = 14;
+        public const int OverworldChestCount = 500;
         const string OverworldSaveKey = "Vault.Overworld.v1";
         const int OverworldSaveVersion = 2;
         public int LastVisitedCamp { get; private set; }

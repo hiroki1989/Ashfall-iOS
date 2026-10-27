@@ -17,7 +17,7 @@ namespace NeonVault
         public void Initialize(VaultGame owner)
         {
             game = owner;
-            source[0] = Resources.Load<GameObject>("ImportedWorld/props/pbr_box_supply");
+            source[0] = Resources.Load<GameObject>("ImportedWorld/props/pbr_box_ammo");
             source[1] = Resources.Load<GameObject>("ImportedWorld/props/rack");
             source[2] = Resources.Load<GameObject>("ImportedWorld/props/pbr_box_ammo");
         }

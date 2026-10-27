@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -61,7 +61,7 @@ namespace NeonVault
         {Line(new Vector2(x,y-size),new Vector2(x+size,y),color);Line(new Vector2(x+size,y),new Vector2(x,y+size),color);Line(new Vector2(x,y+size),new Vector2(x-size,y),color);Line(new Vector2(x-size,y),new Vector2(x,y-size),color);}
         void Panel(Rect r,Color accent)
         {
-            if(FieldUIArt.Icon(r,15,Color.white))return;
+            if(FieldUIArt.Plate(r,false))return;
             Box(new Rect(r.x,r.y+3,r.width,r.height),new Color(0,0,0,.14f));
             Box(r,new Color(.055f,.075f,.095f,.94f));
             Box(new Rect(r.x,r.y,3,r.height),new Color(accent.r,accent.g,accent.b,.65f));
@@ -71,12 +71,10 @@ namespace NeonVault
         {
             bool hover=r.Contains(Event.current.mousePosition);
             Color accent=primary?Gold:Cyan;
-            Panel(r,accent);
-            Box(new Rect(r.x+2,r.y+3,r.width-4,r.height-5),hover?new Color(.20f,.27f,.31f):new Color(.11f,.15f,.18f));
-            Box(new Rect(r.x+16,r.yMax-3,r.width-32,2),new Color(accent.r,accent.g,accent.b,.65f));
+            FieldUIArt.Plate(r,primary||hover);
             var style=new GUIStyle(button){fontStyle=FontStyle.Bold};
             style.normal.textColor=primary?Ink:UiPaper;style.hover.textColor=primary?Ink:UiPaper;style.active.textColor=primary?Ink:UiPaper;
-            FieldUIArt.Plate(r,primary);style.normal.textColor=UiPaper;style.hover.textColor=Color.white;style.active.textColor=Color.white;
+            style.normal.textColor=UiPaper;style.hover.textColor=Color.white;style.active.textColor=Color.white;
             bool clicked=GUI.Button(r,value,style);
             Text(r.xMax-31,r.center.y-15,"›",new GUIStyle(label){fontSize=25},primary?Ink:accent,26);
             return clicked;
@@ -197,8 +195,16 @@ namespace NeonVault
             else
             {if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(390,343,660,93));else Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}
             if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
+            if(screen==Screen.Pause&&Button(new Rect(390,700,660,42),T("WORLD MAP","全体地図")))OpenOverworldMap();
             if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","武器庫 / 装備 [I]")))ToggleInventory();
             if(screen==Screen.Pause && Button(new Rect(390,654,660,48),T("SAVE EXPEDITION & RETURN TO MENU","探索を保存してメニューへ")))SaveRunAndReturnToMenu();
+        }
+        void DrawHeldWeaponHUD(Rect r)
+        {
+            if(gun==null)return;Panel(r,new Color(.32f,.34f,.35f));
+            FieldUIArt.GunClassIcon(new Rect(r.x+8,r.y+6,90,r.height-12),gun,UiPaper);
+            Text(r.x+104,r.y+27,ammo+"/"+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=32},UiPaper,r.width-112);
+            if(reload>0)Box(new Rect(r.x+8,r.yMax-7,(r.width-16)*Mathf.Clamp01(1-reload/Mathf.Max(.01f,EffectiveReload)),2),Gold);
         }
         void DrawHUD()
         {
@@ -215,16 +221,7 @@ namespace NeonVault
             Panel(new Rect(414,798,197,78),dodgeCooldown<=0?Cyan:Gold*.4f);
             Diamond(436,836,7,dodgeCooldown<=0?Cyan:Mist);
             Text(455,809,T("SPACE / DASH","SPACE / 回避"),tiny,Mist,150);Text(455,836,dodgeCooldown<=0?T("READY","使用可能"):dodgeCooldown.ToString("0.0")+T("s","秒"),small,Cyan,150);
-            Panel(new Rect(981,676,435,200),gun.color);
-            Text(1001,685,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+T("  WHEEL / SWITCH  ·  I / EQUIPMENT","  ホイール / 銃切替  ·  I / 装備"),tiny,Mist,395);
-            Text(1001,710,GunNumbers(gun,false).Replace(T("  RATE ","  連射 "),T("\nRATE ","\n連射 ")).Replace(T("  RELOAD ","  装填 "),T("\nRELOAD ","\n装填 ")),tiny,Gold,395);
-            Text(1081,766,VaultLanguage.RarityName(gun.rarity),tiny,gun.color,320);
-            ItemPortraits.Draw(new Rect(1001,775,68,68),gun);Text(1081,788,VaultLanguage.GunName(gun),small,Color.white,320);
-            Text(1081,811,LegendaryDescription(gun,VaultLanguage.GunDescription(gun)),new GUIStyle(tiny){wordWrap=true},Mist,320);
-            Text(1001,846,reload>0?T("RELOADING…","リロード中…"):T("[R] RELOAD","[R] リロード"),small,Gold,230);
-            AmmoType activeAmmo=VaultGame.AmmoForGun(gun);
-            Text(1260,833,reload>0?T("RELOADING","装填中"):ammo.ToString("00")+" / "+EffectiveMagazine+"  ·  "+AmmoReserve(activeAmmo)+" "+T("reserve","予備"),tiny,gun.color,145);
-            if(reload>0)Box(new Rect(982,873,433*Mathf.Clamp01(1-reload/Mathf.Max(.01f,EffectiveReload)),3),Gold);
+            DrawHeldWeaponHUD(new Rect(1110,782,306,94));
             DrawMap();
             if(screen!=Screen.Playing || InventoryOpen)return;
             float s=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
@@ -308,6 +305,7 @@ namespace NeonVault
         void DrawMap()
         {
             Layout.Discover(PlayerPosition);
+            if(GUI.Button(new Rect(1190,80,226,271),GUIContent.none,GUIStyle.none))OpenOverworldMap();
             Panel(new Rect(1190,80,226,271),Cyan*.7f);Text(1206,90,T("HOT ZONE / TACTICAL","汚染区域 / 戦術マップ"),tiny,Gold,210);
             float tile=Mathf.Min(190f/Layout.Columns,195f/Layout.Rows);Vector2 origin=new Vector2(1214,117);
             for(int x=0;x<Layout.Columns;x++)for(int z=0;z<Layout.Rows;z++)if(Layout.open[x,z]&&Layout.IsExplored(x,z))Box(new Rect(origin.x+x*tile,origin.y+(Layout.Rows-1-z)*tile,tile-.7f,tile-.7f),Layout.IsVisible(x,z)?new Color(.28f,.44f,.46f):new Color(.13f,.20f,.22f));

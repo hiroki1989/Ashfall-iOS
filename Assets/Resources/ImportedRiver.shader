@@ -9,8 +9,10 @@ Shader "NeonVault/ImportedRiver"
         _HasNormal("Wave normal available",Float)=0
         _WorldScale("World repeats per metre",Float)=0.14
         _Flow("World flow",Vector)=(0.018,-0.06,0,0)
-        _RiverShape("Centre, amplitude A, amplitude B, half width",Vector)=(325,180,65,30)
-        _RiverFrequency("Centre frequencies",Vector)=(0.0008,0.0021,0,0)
+        _RiverShape("Centre, amplitude A, amplitude B, half width",Vector)=(420,430,140,110)
+        _RiverFrequency("Centre frequencies and phases",Vector)=(0.00067,0.00161,0,0.7)
+        _RiverWidth("Half width and amplitudes",Vector)=(110,15,5,0)
+        _RiverWidthFrequency("Width frequencies and phases",Vector)=(0.00091,0.0023,1.2,0)
     }
     SubShader
     {
@@ -29,7 +31,7 @@ Shader "NeonVault/ImportedRiver"
             // Built-in/mobile approximation. WaterWorks SSR, scene refraction,
             // URP renderer features and depth textures are deliberately not used.
             sampler2D _BumpMap;
-            float4 _Color, _ShallowColor, _FoamColor, _Flow, _RiverShape, _RiverFrequency;
+            float4 _Color, _ShallowColor, _FoamColor, _Flow, _RiverShape, _RiverFrequency,_RiverWidth,_RiverWidthFrequency;
             float _HasNormal, _WorldScale;
             struct appdata { float4 vertex:POSITION; };
             struct v2f { float4 vertex:SV_POSITION; float3 world:TEXCOORD0; UNITY_FOG_COORDS(1) };
@@ -56,9 +58,11 @@ Shader "NeonVault/ImportedRiver"
                 float3 normal=normalize(float3(ripple.x,1,ripple.y));
                 float3 view=normalize(_WorldSpaceCameraPos.xyz-i.world);
                 float fresnel=pow(1-saturate(dot(normal,view)),4);
-                float centre=_RiverShape.x+_RiverShape.y*sin(i.world.z*_RiverFrequency.x)
-                    +_RiverShape.z*sin(i.world.z*_RiverFrequency.y);
-                float shoreDistance=max(0,_RiverShape.w-abs(i.world.x-centre));
+                float centre=_RiverShape.x+_RiverShape.y*sin(i.world.z*_RiverFrequency.x+_RiverFrequency.z)
+                    +_RiverShape.z*sin(i.world.z*_RiverFrequency.y+_RiverFrequency.w);
+                float halfWidth=_RiverWidth.x+_RiverWidth.y*sin(i.world.z*_RiverWidthFrequency.x+_RiverWidthFrequency.z)
+                    +_RiverWidth.z*sin(i.world.z*_RiverWidthFrequency.y+_RiverWidthFrequency.w);
+                float shoreDistance=max(0,halfWidth-abs(i.world.x-centre));
                 float shore=1-smoothstep(.1,3.8,shoreDistance);
                 float crest=sin(a)*sin(b)*.5+.5;
                 float foam=shore*smoothstep(.48,.8,crest)*.46;

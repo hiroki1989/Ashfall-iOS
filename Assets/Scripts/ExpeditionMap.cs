@@ -25,7 +25,7 @@ namespace NeonVault
     {
         public const int StageCount = 100;
         public static readonly Vector2 CityCanvasSize = new Vector2(1440, 1000);
-        // A coprime permutation scatters stable stage IDs (and their saved threat levels)
+        // A coprime permutation scatters stable stage IDs
         // across the city without changing progression, rewards, or claimed contracts.
         public static Vector2 CityPoint(int id)
         {
@@ -84,7 +84,7 @@ namespace NeonVault
         public static ExpeditionStage Get(int id)
         {
             id=Mathf.Clamp(id,0,StageCount-1); int region=id/20, n=id%20, place=n/4, variant=n%4;
-            string loc=places[region][place], locJa=placesJa[region][place]; int danger=1+id/10;
+            string loc=places[region][place], locJa=placesJa[region][place]; int danger=OverworldGeography.DungeonLevel(id);
             int mission=(id+region+place)%missionEn.Length;
             string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==3?"Infestation network":"Supply cache";
             string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==3?"感染網":"補給物資";

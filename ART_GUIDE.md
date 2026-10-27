@@ -1,4 +1,4 @@
-﻿# Obsidian Sanctum / art revision
+# Obsidian Sanctum / art revision
 
 組み込みimagegenを使用して新規生成したオリジナル画像です。プロジェクトにコピーし、UnityのResourcesから実際に読み込んでいます。キャラクター画像は元のアルファ透明度を保持しています。
 
@@ -170,3 +170,23 @@ Built-in imagegen: field-kit-v1/v2.png (4x4 atlas, rifle/reload/hand/knife/backp
 2026-10-26: built-in imagegen field-kit-bright-v1.png, same 4x4 16 asset contract, bright ivory enamel/coral/mint/slate, no text, transparent alpha preserved. Original C generated image copied Assets/Resources/Art/UI/FieldKit.
 
 2026-10-26 imagegen wasteland-materials-v1.png: 2x2 asphalt/concrete/dirt/moss basecolor atlas, orthographic flat, no objects/text, copied Assets/Resources/Art/Environment/Ground. Runtime DistrictGround quadrant samples + noise blend. Original retained.
+
+## 2026-10-27 / Premium field-terminal UI assets
+Built-in imagegen. Sources retained in Codex generated_images. New resources: Assets/Resources/Art/UI/FieldKit/premium-panel-v1.png, premium-icons-v1.png, premium-map-surface-v1.png.
+Panel prompt: one edge-to-edge matte charcoal field-terminal panel, quiet center, restrained copper perimeter and tiny chamfered corners, no text/icons; authored border kept by nine-slice rendering.
+Icon prompt: transparent 4x4 equal-cell warm ivory atlas: fire cartridges/reload/hand/knife; backpack/map/camp/dungeon; health/radio/cache/clue; settings/armor/rifle/module. No text or surrounding tiles. Preserve alpha.
+Map prompt: flat dark charcoal archival paper with fine linen fibers, quiet 5% tonal variation, no roads/labels/geography. Actual geography is rendered from OverworldGeography; new texture supplies surface only.
+Implementation: shared FieldUIArt now uses dedicated nine-slice panels and aspect-preserved icons. Equipment screen uses charcoal, offwhite and copper, illustrated cards and live hero portrait. Map uses staged actual building footprint layer and higher-resolution local cartography. Source generation tool: built-in image_gen (not CLI).
+
+Premium panel v2 (2026-10-27): imagegen production 9-slice square charcoal matte panel. Near-uniform graphite, extremely thin warm gray perimeter, subtle grain, no ornament/glow/bevel/text/icons. Border confined to outer 24px. Source exec-296e946f-932d-4171-9d88-4db591239a3e.png. Runtime FieldUIArt uses v2; v1 retained.
+
+## Premium panel v3 / 2026-10-27
+imagegen generated normal and selected assets: premium-panel-v3.png (exec-b1929ffc-12ca-429b-a19c-7505de582961) and premium-panel-selected-v3.png (exec-38a9afb5-14da-4507-8af0-1e3787a29a28). Prompt: single full-canvas orthographic square production UI, charcoal diagonal gradient with upper-left reflected illumination fading to near black lower right, fine matte texture, extremely thin 6px-inset rounded perimeter line, subtle inner shadow. No text/icons/ornaments/bevel/neon/scifi corners. Normal graphite blue-gray, selected warm rusty copper border and broad restrained amber inner gradient. Border details confined to outer20px for nine-slice. Runtime uses 2.2% source corners, 8-unit destination border, 62% normal / 68% selected tint to restrain brightness. No UI text baked in; scores rendered as live bold text over item artwork.
+
+## Aerial city cartography / 2026-10-27
+New imagegen aerial-surfaces-v1.png, source exec-df4b1d78-d797-4899-8f7f-477945a2e420. Prompt: exact2x2 square material swatches, top-left weathered roof/concrete, top-right asphalt, bottom-left muted natural canopy/grass, bottom-right desaturated river ripples. Perfectly overhead photographic material microtexture, no labels/text/icons/roads silhouettes/large objects, no baked map positions. CPU readable512px source grain sampled by AerialCityMapBaker. The actual map is baked from OverworldGeography shared roads/river/building footprints/cars/trees, with parapets/ridges/service boxes/canopy shading and shadows at4096 resolution. UI text/markers are live overlays; navigation geography is never inferred from generated artwork. Bake through Editor, no GPU scene capture/model generation. Runtime uses compressed imported PNG for low cost zoom/pan.
+Aerial roof atlas v1: imagegen exec-bd9968d0-a080-40e0-bef5-6af5d1b1e84d, exact4x4 straight-down roof materials: weathered industrial HVAC/skylights, tan apartment parapets/staircases, residential corrugated/slate, damaged office roofs/exposed rooms. No text/roads/trees/labels/perspective. Applied only within exact generated building rectangles. Bake upgraded8192 RGB24 CPU encode with no full GPU upload; CPU arrays released before PNG encode, runtime iPhone ASTC6x6. Terrain first then shared-world roof/trees shadows prevents chunk-edge erasure.
+Final pipeline:4 independent4096x4096 tiles covering10km square (effective8192²), baked sequentially in headless Editor. Sources CPU-readable1024; tiles non-readable/compressed, iOS ASTC6x6. Aerial import branch in VaultArtImporter prevents generic2048 downsize/uncompressed override; ProjectBuilder preserves this profile. Roof styles are illustrative materials inside exact footprints, not a literal full-world GPU photograph. High-detail tiles rendered over coarse overview with UV intersection to prevent seams. Fullmap and minimap share the tiles. World road graph, river centre/variable-width, buildings and trees drive the bake; labels/icons stay live UI.
+
+## 2026-10-27 gun-class-icons-v1
+imagegen: transparent warm ivory side-profile handgun/pump shotgun/assault rifle/belt-fed heavy machine gun/scoped sniper rifle atlas. No text or UI labels. Source exec-155ffa4d-aec1-4aa7-bbdb-dec42b6ee2ee.png preserved. Nonuniform authored silhouettes sampled with dedicated UV crops and aspect fit; combat/inventory/merchant shared FieldUIArt.GunClassIcon.

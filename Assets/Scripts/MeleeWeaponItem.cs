@@ -15,6 +15,7 @@ namespace NeonVault
         public bool uniqueEffect;
         public int level = 1;
         public int damage = 18;
+        public GearAffix[] affixes;
         public float interval = .7f, range = 1.2f, arcDegrees = 85f;
         public Color color=>Arsenal.Colors[Mathf.Clamp((int)rarity,0,Arsenal.Colors.Length-1)];
     }
@@ -25,7 +26,7 @@ namespace NeonVault
         public static int CatalogCount=>FamilyCount*DesignsPerFamily;
         public static void InferIdentity(MeleeWeaponItem item)
         {
-            if(item==null)return;item.designVariant=Mathf.Clamp(item.designVariant,0,9);
+            if(item==null)return;EnsureAffixes(item);item.designVariant=Mathf.Clamp(item.designVariant,0,9);
             if(ManufacturerCatalog.Index(item.manufacturerId)<0)item.manufacturerId=ManufacturerCatalog.ForDesign((int)item.family,item.designVariant);
             if(string.IsNullOrEmpty(item.catalogId))item.catalogId="melee-"+((int)item.family).ToString("00")+"-"+item.designVariant.ToString("00");
         }
@@ -37,9 +38,9 @@ namespace NeonVault
 
         public static MeleeWeaponItem Create(System.Random random,int level,Rarity rarity)
         {
-            random=random??new System.Random();return Catalog(random.Next(CatalogCount),rarity,level);
+            random=random??new System.Random();return Catalog(random.Next(CatalogCount),rarity,level,random);
         }
-        public static MeleeWeaponItem Catalog(int index,Rarity rarity=Rarity.Common,int level=1)
+        public static MeleeWeaponItem Catalog(int index,Rarity rarity=Rarity.Common,int level=1,System.Random random=null)
         {
             index=Mathf.Clamp(index,0,CatalogCount-1);level=Mathf.Max(1,level);rarity=(Rarity)Mathf.Clamp((int)rarity,0,4);
             int i=index%FamilyCount,design=index/FamilyCount;
@@ -59,7 +60,32 @@ namespace NeonVault
                 case 5:d*=.94f;t*=.94f;a*=1.08f;break;
             }
             float scale=1+.16f*((int)rarity+level-1);
-            return new MeleeWeaponItem{id=Guid.NewGuid().ToString("N"),catalogId="melee-"+i.ToString("00")+"-"+design.ToString("00"),manufacturerId=maker,designVariant=design,family=(MeleeWeaponFamily)i,rarity=rarity,uniqueEffect=rarity==Rarity.Legendary,level=level,damage=Mathf.Max(1,Mathf.RoundToInt(d*scale)),interval=t/(1+.025f*(int)rarity),range=r+.025f*(level-1),arcDegrees=Mathf.Clamp(a,30,170)};
+            var item=new MeleeWeaponItem{id=Guid.NewGuid().ToString("N"),catalogId="melee-"+i.ToString("00")+"-"+design.ToString("00"),manufacturerId=maker,designVariant=design,family=(MeleeWeaponFamily)i,rarity=rarity,uniqueEffect=rarity==Rarity.Legendary,level=level,damage=Mathf.Max(1,Mathf.RoundToInt(d*scale)),interval=t/(1+.025f*(int)rarity),range=r+.025f*(level-1),arcDegrees=Mathf.Clamp(a,30,170)};
+            RollAffixes(item,random??new System.Random(index*397+level*17+(int)rarity));return item;
+        }
+        // Null is the pre-affix save format. Generate once from stable identity;
+        // serialized damage/interval already include these bonuses thereafter.
+        public static void EnsureAffixes(MeleeWeaponItem item)
+        {
+            if(item==null||item.affixes!=null)return;
+            int seed=23;string identity=item.id??item.catalogId??"melee";
+            unchecked{foreach(char c in identity)seed=seed*31+c;}
+            RollAffixes(item,new System.Random(seed));
+        }
+        static void RollAffixes(MeleeWeaponItem item,System.Random random)
+        {
+            string[] types={"damage","fireRate","critChance","critDamage"};
+            float[] low={.025f,.025f,.01f,.04f},high={.06f,.06f,.025f,.10f};
+            int count=Mathf.Clamp((int)item.rarity,0,4);
+            item.affixes=new GearAffix[count];var used=new System.Collections.Generic.HashSet<int>();
+            float scale=1+.16f*((int)item.rarity+Mathf.Max(1,item.level)-1);
+            for(int i=0;i<count;i++)
+            {
+                int pick;do{pick=random.Next(types.Length);}while(!used.Add(pick));
+                var x=new GearAffix{type=types[pick],value=Arsenal.Range(random,low[pick],high[pick])*scale};item.affixes[i]=x;
+                if(x.type=="damage")item.damage=Mathf.Max(1,Mathf.RoundToInt(item.damage*(1+x.value)));
+                else if(x.type=="fireRate")item.interval/=1+x.value;
+            }
         }
         public static MeleeWeaponItem RollForDungeon(System.Random random,int dungeon,bool boss=false)
         {random=random??new System.Random();return Create(random,DungeonCatalog.ItemLevel(random,dungeon),DungeonCatalog.RollRarity(random,boss));}
@@ -93,6 +119,6 @@ namespace NeonVault
         }
         public static string English(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"Shiv":family==MeleeWeaponFamily.Cleaver?"Cleaver":family==MeleeWeaponFamily.Machete?"Machete":family==MeleeWeaponFamily.Hatchet?"Hatchet":"Field Knife";
         public static string Japanese(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"シヴ":family==MeleeWeaponFamily.Cleaver?"ブッチャーナイフ":family==MeleeWeaponFamily.Machete?"マチェット":family==MeleeWeaponFamily.Hatchet?"ハチェット":"フィールドナイフ";
-        public static int Score(MeleeWeaponItem item)=>item==null?0:Mathf.Max(1,Mathf.RoundToInt((Mathf.Log(1+item.damage/Mathf.Max(.05f,item.interval))*12+Mathf.Log(1+item.range)*4+item.arcDegrees*.06f+item.level*2)*10));
+        public static int Score(MeleeWeaponItem item){EnsureAffixes(item);return item==null?0:Mathf.Max(1,Mathf.RoundToInt((Mathf.Log(1+item.damage/Mathf.Max(.05f,item.interval))*12+Mathf.Log(1+item.range)*4+item.arcDegrees*.06f+item.level*2+(int)item.rarity*5+GearScoring.AffixTotal(item.affixes,"critChance")*200+GearScoring.AffixTotal(item.affixes,"critDamage")*20)*10));}
     }
 }

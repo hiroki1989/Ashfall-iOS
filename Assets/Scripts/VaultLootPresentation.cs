@@ -67,13 +67,8 @@ namespace NeonVault
 
             if(kind==LootPresentationKind.Chest)
             {
-                Color amber=new Color(1f,.48f,.08f), brass=new Color(.93f,.68f,.19f);
-                art.Part("SUPPLY CHEST / reinforced body",PrimitiveType.Cube,Vector3.zero,new Vector3(sx,sy*.72f,sz),new Color(.16f,.21f,.19f),root.transform);
-                art.Part("SUPPLY CHEST / armored lid",PrimitiveType.Cube,new Vector3(0,sy*.38f,0),new Vector3(sx*1.05f,sy*.24f,sz*1.04f),new Color(.27f,.32f,.28f),root.transform);
-                for(int side=-1;side<=1;side+=2)
-                    art.Part("SUPPLY CHEST / hazard rail",PrimitiveType.Cube,new Vector3(side*sx*.39f,sy*.06f,0),new Vector3(.09f,sy*.82f,sz*1.02f),side<0?amber:brass,root.transform,true);
-                art.Part("SUPPLY CHEST / illuminated latch",PrimitiveType.Cube,new Vector3(0,sy*.10f,sz*.52f),new Vector3(sx*.28f,sy*.20f,.06f),amber,root.transform,true);
-                art.Part("SUPPLY CHEST / beacon",PrimitiveType.Cylinder,new Vector3(0,sy*.68f,0),new Vector3(.20f,.045f,.20f),new Color(.30f,1f,.86f),root.transform,true);
+                EquipmentChestVisual.Create(root.transform);
+                return root;
             }
 
             if (kind == LootPresentationKind.HealthPack)

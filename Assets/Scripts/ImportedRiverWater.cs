@@ -21,9 +21,10 @@ namespace NeonVault
                 if(normal!=null)water.SetTexture("_BumpMap",normal);
                 water.SetFloat("_WorldScale",.14f);
                 water.SetVector("_Flow",new Vector4(.018f,-.06f,0,0));
-                // Matches OverworldGeography.RiverX and its 30m half-width.
-                water.SetVector("_RiverShape",new Vector4(325,180,65,30));
-                water.SetVector("_RiverFrequency",new Vector4(.0008f,.0021f,0,0));
+                water.SetVector("_RiverShape",OverworldGeography.RiverShapeParameters);
+                water.SetVector("_RiverFrequency",OverworldGeography.RiverFrequencyParameters);
+                water.SetVector("_RiverWidth",OverworldGeography.RiverWidthParameters);
+                water.SetVector("_RiverWidthFrequency",OverworldGeography.RiverWidthFrequencyParameters);
             }
             owned?.Add(water);
             return water;

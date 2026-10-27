@@ -94,7 +94,7 @@ namespace NeonVault
             game.CompleteWorldBossConversation(); Check(game.WorldStorySeen && !game.WorldBossConversationVisible, "Conversation completes once");
             game.ExitCampToOverworld(); yield return null; Check(game.IsOverworld, "Camp exit starts continuous outdoors");
             var geo = game.WorldGeography;
-            Check(geo.Camps.Length == 7 && geo.Entrances.Length == 100 && geo.Chests.Length == 36, "7 camps / 100 entrances / 36 chests");
+            Check(geo.Camps.Length == 14 && geo.Entrances.Length == 100 && geo.Chests.Length == 500, "14 camps / 100 entrances / 500 chests");
             Check(geo.Layout.Columns*geo.Layout.CellSize==10000 && geo.Layout.Rows*geo.Layout.CellSize==10000,"10km by 10km physical dimensions");
             Check(game.OverworldEnemySpawnCount>1800,"Load-time population generated across world");
             Check(geo.Layout.Connected(), "All open geography cells connected");

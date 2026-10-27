@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -48,14 +48,11 @@ namespace NeonVault
             DrawCriticalHealthVignette();
             DrawHealthPanel(new Rect(20,20,420,125),true);
             Text(46,106,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=19,wordWrap=false,clipping=TextClipping.Clip},Mist,370);
-            Box(new Rect(456,20,574,125),new Color(.035f,.055f,.075f,.86f));
-            Box(new Rect(456,20,3,125),gun.color);
-            Text(476,29,(ActiveWeaponSlot+1)+" / "+WeaponSlotCount+"  "+VaultLanguage.GunName(gun),new GUIStyle(label){fontSize=20,wordWrap=true},Mist,530);
-            Text(476,83,reload>0?T("RELOADING ","装填中 ")+Mathf.CeilToInt(reload*10)/10f:ammo+" / "+EffectiveMagazine+T("   RESERVE ","   予備 ")+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=30},UiPaper,530);
+            DrawHeldWeaponHUD(new Rect(456,20,370,104));
             int alive=0;foreach(var enemy in Enemies)if(enemy&&!enemy.dead)alive++;
             Text(38,154,ExpeditionExitOpen?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},ExpeditionExitOpen?Gold:Mist,740);
             if(toastTimer>0)Text(360,210,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,670);
-            Rect mapRect=new Rect(1165,165,250,150);Box(mapRect,new Color(.035f,.055f,.075f,.74f));
+            Rect mapRect=new Rect(1165,165,250,150);if(GUI.Button(mapRect,GUIContent.none,GUIStyle.none))OpenOverworldMap();Box(mapRect,new Color(.035f,.055f,.075f,.74f));
             if(Layout!=null)
             {
                 float tile=Mathf.Min(220f/Layout.Columns,122f/Layout.Rows);Vector2 origin=new Vector2(1180,179);
@@ -99,6 +96,7 @@ namespace NeonVault
             DrawCameraZoom(300,225,840,true);
             if(MobileButton(new Rect(300,320,840,120),T("RESUME","探索を再開"))){screen=Screen.Playing;Time.timeScale=1;}
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
+            if(MobileButton(new Rect(300,755,840,100),T("WORLD MAP","全体地図")))OpenOverworldMap();
             if(MobileButton(new Rect(300,610,405,120),T("SAVE & MENU","保存してメニューへ")))SaveRunAndReturnToMenu();
             if(MobileButton(new Rect(735,610,405,120),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
         }

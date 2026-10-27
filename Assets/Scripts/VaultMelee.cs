@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -19,6 +19,7 @@ namespace NeonVault
 
         public bool TryAttack(MeleeWeaponItem weapon,Vector3 direction,Vector3 origin,Transform parent)
         {
+            MeleeWeaponCatalog.EnsureAffixes(weapon);
             if(game==null||!game.Active||weapon==null||weapon.damage<=0||weapon.interval<=0||cooldown>0)return false;
             direction.y=0;if(direction.sqrMagnitude<.0001f)direction=Vector3.forward;direction.Normalize();
             cooldown=Mathf.Max(.08f,weapon.interval);
@@ -39,8 +40,8 @@ namespace NeonVault
                 if(!game.LineOfSight(origin+Vector3.up*.7f,foe.transform.position+Vector3.up*.7f))continue;
                 Vector3 point=foe.transform.position-direction*(targetRadius*.45f)+Vector3.up*.8f;
                 float damage=Random.Range(game.EffectiveMeleeDamageMin(weapon),game.EffectiveMeleeDamageMax(weapon));
-                bool critical=Random.value<game.MeleeCriticalChance;
-                if(critical)damage*=game.MeleeCriticalMultiplier;
+                bool critical=Random.value<Mathf.Clamp(game.MeleeCriticalChance+GearScoring.AffixTotal(weapon.affixes,"critChance"),0,.75f);
+                if(critical)damage*=game.MeleeCriticalMultiplier+GearScoring.AffixTotal(weapon.affixes,"critDamage");
                 Color numberColor=critical?new Color(1,.9f,.12f):(game.ArtifactDamageMultiplier>1.0001f||game.ArtifactAffixBonus("damage")>0)?new Color(1,.22f,.16f):Color.white;
                 if(!foe.Hit(damage,point,numberColor,100))continue;
                 game.RunHit(foe,damage,point);

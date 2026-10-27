@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -180,7 +180,7 @@ namespace NeonVault
                     textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true, fontStyle = FontStyle.Bold };
                     textStyle.normal.textColor = new Color(1f,.97f,.83f);
                 }
-                Font bundledFont = Resources.Load<Font>("Fonts/GenShinGothic-P-Regular");
+                Font bundledFont = Resources.Load<Font>("Fonts/851Gkktt-005");
                 if(bundledFont==null)bundledFont=Resources.Load<Font>("Fonts/NotoSansJP");
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
@@ -211,9 +211,9 @@ namespace NeonVault
             float alpha = Mathf.Clamp(Opacity, .2f, 1);
             Rect shadow = r; shadow.y += r.height * .065f;
             GUI.color = new Color(0,0,0,alpha*.7f); GUI.DrawTexture(shadow, disc);
-            GUI.color = primary?new Color(1f,.84f,.43f,.96f):new Color(.77f,.83f,.83f,alpha*.85f); GUI.DrawTexture(r,disc);
+            GUI.color = primary?new Color(.72f,.49f,.31f,.96f):new Color(.77f,.83f,.83f,alpha*.85f); GUI.DrawTexture(r,disc);
             Rect inner = new Rect(r.x + 2,r.y + (down ? 4 : 1),r.width - 4,r.height - 5);
-            GUI.color = primary?(down?new Color(1f,.94f,.69f,.98f):new Color(1f,.76f,.28f,.93f)):(down?new Color(.26f,.43f,.46f,.85f):new Color(.07f,.10f,.14f,Mathf.Min(.7f,alpha*1.3f)));
+            GUI.color = primary?(down?new Color(.76f,.54f,.34f,.98f):new Color(.48f,.31f,.21f,.93f)):(down?new Color(.26f,.43f,.46f,.85f):new Color(.07f,.10f,.14f,Mathf.Min(.7f,alpha*1.3f)));
             GUI.DrawTexture(inner,disc);
         }
         // Vector icons stay crisp at phone/tablet resolutions and need no bitmap atlas.
@@ -225,7 +225,7 @@ namespace NeonVault
         }
         void ActionIcon(Rect r,MobileAction action,Color c)
         {
-            int artIndex=action==MobileAction.Fire?0:action==MobileAction.Reload?1:action==MobileAction.Pickup||action==MobileAction.Interact?2:action==MobileAction.Melee?3:action==MobileAction.Inventory?4:action==MobileAction.Pause?11:-1;
+            int artIndex=action==MobileAction.Fire?0:action==MobileAction.Reload?1:action==MobileAction.Pickup||action==MobileAction.Interact?2:action==MobileAction.Melee?3:action==MobileAction.Inventory?4:action==MobileAction.Pause?12:-1;
             if(artIndex>=0&&FieldUIArt.Icon(r,artIndex,Color.white))return;
             switch(action)
             {

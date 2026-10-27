@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -48,12 +48,12 @@ namespace NeonVault
             // Exact curved ribbons are clipped into each 100m batch, not rasterized into nav cells.
             for(float a=x*100;a<(x+1)*100;a+=20)for(float b=z*100;b<(z+1)*100;b+=20)
             {var p=new Vector3(a+10,-.12f,b+10);Box(p,new Vector3(20,.2f,20),geography.Park(p)?1:0);}
-            void Ribbon(Func<float,Vector3> center,float from,float to,float width,int mat,float level)
+            void Ribbon(Func<float,Vector3> center,float from,float to,float width,int mat,float level,Func<float,float> variableWidth=null)
             {
                 for(float t=from;t<to;t+=5)
                 {
-                    var a=center(t);var b=center(t+5);var middle=(a+b)*.5f;if(mat==2&&geography.River(middle)&&!geography.Bridge(middle.z))continue;
-                    var sideA=Vector3.Cross(Vector3.up,(center(t+.1f)-center(t-.1f)).normalized)*width*.5f;var sideB=Vector3.Cross(Vector3.up,(center(t+5.1f)-center(t+4.9f)).normalized)*width*.5f;var polygon=new List<Vector3>{a-sideA,b-sideB,b+sideB,a+sideA};
+                    var a=center(t);var b=center(Mathf.Min(to,t+5));var middle=(a+b)*.5f;if(mat!=3&&geography.River(middle)&&!geography.Bridge(middle.z))continue;
+                    var axis=mat==3?Vector3.right:Vector3.Cross(Vector3.up,(b-a).normalized);var sideA=axis*(variableWidth!=null?variableWidth(t):width)*.5f;var sideB=axis*(variableWidth!=null?variableWidth(t+5):width)*.5f;var polygon=new List<Vector3>{a-sideA,b-sideB,b+sideB,a+sideA};
                     for(int edge=0;edge<4&&polygon.Count>0;edge++)
                     {
                         var input=polygon;polygon=new List<Vector3>();float boundary=edge==0?x*100:edge==1?(x+1)*100:edge==2?z*100:(z+1)*100;
@@ -66,12 +66,15 @@ namespace NeonVault
                     var uv=new Vector2[vertices.Length];for(int i=0;i<uv.Length;i++)uv[i]=new Vector2(vertices[i].x/4,vertices[i].z/4);var mesh=new Mesh{vertices=vertices,triangles=triangles,uv=uv};mesh.RecalculateNormals();mesh.RecalculateBounds();life.Meshes.Add(mesh);batches[mat].Add(new CombineInstance{mesh=mesh,transform=Matrix4x4.identity});
                 }
             }
-            Ribbon(t=>new Vector3(geography.RiverX(t),0,t),z*100-10,(z+1)*100+10,60,3,-.009f);
-            for(int street=Mathf.FloorToInt(x*100/100f)-1;street<=Mathf.CeilToInt((x+1)*100/100f)+1;street++)
-            {int lane=street;if(!geography.StreetSegmentOpen(lane,z,true))continue;Ribbon(t=>new Vector3(geography.StreetX(lane,t),0,t),z*100-15,(z+1)*100+15,geography.StreetWidth(lane)+3,7,-.005f);Ribbon(t=>new Vector3(geography.StreetX(lane,t),0,t),z*100-15,(z+1)*100+15,geography.StreetWidth(lane),2,0);}
-            for(int street=Mathf.FloorToInt(z*100/100f)-1;street<=Mathf.CeilToInt((z+1)*100/100f)+1;street++)
-            {int lane=street;if(!geography.StreetSegmentOpen(lane,x,false))continue;Ribbon(t=>new Vector3(t,0,geography.StreetZ(lane,t)),x*100-15,(x+1)*100+15,geography.StreetWidth(lane)+3,7,-.004f);Ribbon(t=>new Vector3(t,0,geography.StreetZ(lane,t)),x*100-15,(x+1)*100+15,geography.StreetWidth(lane),2,.001f);}
-            for(int bridge=-4;bridge<=4;bridge++){float from=Mathf.Max(z*100,bridge*1000-45),to=Mathf.Min((z+1)*100,bridge*1000+45);if(to>from)Ribbon(t=>new Vector3(geography.RiverX(t),0,t),from,to,60,7,.002f);}            var data=geography.GetChunk(x,z);int index=0;
+            Ribbon(t=>new Vector3(geography.RiverX(t),0,t),z*100-10,(z+1)*100+10,132,3,-.009f,geography.RiverWidth);
+            // Draw the same finite road graph used by placement and map sampling.
+            foreach(var road in geography.GetRoadSegmentsForChunk(x,z))
+            {
+                var a=road.A;var b=road.B;float length=Vector3.Distance(a,b);
+                Ribbon(t=>Vector3.Lerp(a,b,t/length),0,length,road.Width+3,7,road.BridgeDeck?.004f:-.005f);
+                Ribbon(t=>Vector3.Lerp(a,b,t/length),0,length,road.BridgeDeck?25:road.Width,2,road.BridgeDeck?.009f:0);
+            }
+            var data=geography.GetChunk(x,z);int index=0;
             foreach(var rect in data.Buildings)
             {
                 Vector3 p=new Vector3(rect.center.x,0,rect.center.y);int seed=unchecked(x*1973+z*9277+index++*101);float h=4.5f+Mathf.Abs(seed%4)*1.7f;

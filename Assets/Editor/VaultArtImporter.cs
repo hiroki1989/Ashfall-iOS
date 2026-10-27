@@ -20,6 +20,19 @@ namespace NeonVault.Editor
         {
             if(!assetPath.StartsWith("Assets/Resources/Art/"))return;
             var importer=(TextureImporter)assetImporter;
+            if(assetPath.StartsWith("Assets/Resources/Art/UI/FieldKit/aerial-"))
+            {
+                bool source=assetPath.Contains("aerial-surfaces-")||assetPath.Contains("aerial-roofs-");
+                importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;
+                importer.npotScale=TextureImporterNPOTScale.None;importer.maxTextureSize=source?1024:4096;
+                importer.isReadable=source;importer.mipmapEnabled=false;importer.alphaIsTransparency=false;
+                importer.wrapMode=UnityEngine.TextureWrapMode.Clamp;importer.filterMode=UnityEngine.FilterMode.Bilinear;
+                importer.textureCompression=source?TextureImporterCompression.Uncompressed:TextureImporterCompression.CompressedHQ;
+                var mobile=importer.GetPlatformTextureSettings("iPhone");mobile.name="iPhone";mobile.overridden=true;
+                mobile.maxTextureSize=source?1024:4096;mobile.format=TextureImporterFormat.ASTC_6x6;
+                importer.SetPlatformTextureSettings(mobile);
+                return;
+            }
             if(assetPath.StartsWith("Assets/Resources/Art/GeneratedWarden/"))
             {
                 importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;

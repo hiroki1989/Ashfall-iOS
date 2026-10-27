@@ -16,6 +16,7 @@ namespace NeonVault
         public static string AffixSummary(Gun g)=>Summary(g==null?null:g.affixes);
         public static string AffixSummary(ArmorItem a)=>Summary(a==null?null:a.affixes);
         public static string AffixSummary(ArtifactItem a)=>Summary(a==null?null:a.affixes);
+        public static string AffixSummary(MeleeWeaponItem a){MeleeWeaponCatalog.EnsureAffixes(a);return Summary(a==null?null:a.affixes);}
         static string Summary(GearAffix[] affixes){if(affixes==null||affixes.Length==0)return "";bool ja=VaultLanguage.Japanese;var values=new List<string>();foreach(var a in affixes){if(a==null)continue;int i=System.Array.IndexOf(Types,a.type);if(i<0)continue;string label=VaultLanguage.T(English[i],Japanese[i]);bool pct=i==0||i==2||i==3||i==4||i==5||i==6||i==8||i==9||i==10;string amount=(pct?a.value*100:a.value).ToString(pct?"0.#":"0.0");values.Add(label+" +"+amount+(pct?"%":i==7?(ja?" HP/秒":" HP/s"):""));}return values.Count==0?"":VaultLanguage.T("AFFIXES: ","追加特性: ")+string.Join(" · ",values);}
     }
 }

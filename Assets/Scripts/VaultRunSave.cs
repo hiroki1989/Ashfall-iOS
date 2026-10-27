@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -85,7 +85,7 @@ namespace NeonVault
             foreach(var d in save.modules)if(d.item!=null)AddArtifactDrop(d.item,d.position);
             foreach(var d in save.melee)if(d.item!=null)AddMeleeDrop(d.item,d.position);
             foreach(var d in save.supplies){if(d.healthPack)AddHealthPackDrop(d.position);else if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,NormalizeAmmoType((AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1)),d.ammoAmount);}
-            foreach(var c in save.chests){var obj=CreateLootPresentation("SUPPLY CHEST / [F] OPEN",c.position,new Vector3(1.4f,.88f,1.25f),new Color(1f,.53f,.12f),LootPresentationKind.Chest);chests.Add(new Chest{position=c.position,visual=obj});}
+            foreach(var c in save.chests){Vector3 p=c.position;p.y=0;var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);chests.Add(new Chest{position=p,visual=obj});}
             foreach(var c in save.ammoCrates){var type=NormalizeAmmoType((AmmoType)Mathf.Clamp(c.type,0,AmmoTypeCount-1));var obj=CreateLootPresentation(AmmoPickupName(type,c.amount),c.position,new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,c.amount);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,type=type,amount=c.amount,visual=obj});}
             ReconcileFloorCompletion();Layout.BuildDistanceField(PlayerPosition);Layout.Discover(PlayerPosition);
             UpdateCamera(true);PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();Notify("EXPEDITION RESTORED / Checkpoint consumed","探索を再開 / 保存データを復元しました");return true;

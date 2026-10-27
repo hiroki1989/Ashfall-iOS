@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace NeonVault
@@ -17,7 +17,7 @@ namespace NeonVault
             if(!EquipmentMenuVisible||eqUpgradePage||!string.IsNullOrEmpty(pendingSaleKey))return 0;
             float top=InventoryOpen?122:196,gridTop=top+86;
             if(new Rect(36,gridTop+8,432,766-gridTop).Contains(point))return 1;
-            if(new Rect(950,top+112,446,448-top).Contains(point))return 2;
+            if(new Rect(950,top+248,446,312-top).Contains(point))return 2;
             if(new Rect(494,top+8,422,(InventoryOpen?526:452)-45).Contains(point))return 3;
             return 0;
         }
@@ -25,7 +25,7 @@ namespace NeonVault
         {
             float top=InventoryOpen?122:196;
             if(region==1)eqGridScroll.y=Mathf.Clamp(eqGridScroll.y-delta.y,0,Mathf.Max(0,eqGridExtent-(680-top)));
-            if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(448-top)));
+            if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(312-top)));
             if(region==3&&equipmentHeroPreview)equipmentHeroPreview.Angle=Mathf.Repeat(equipmentHeroPreview.Angle-delta.x*.55f+155,360)-155;
         }
         sealed class EqCard
@@ -35,20 +35,20 @@ namespace NeonVault
         }
         void EqText(Rect r,string value,Color color,GUIStyle style=null)
         {GUI.color=color;GUI.Label(r,value,style??eqCopy);GUI.color=Color.white;}
-        static readonly Color EqCanvas=new Color(.91f,.925f,.93f);
-        static readonly Color EqSurface=new Color(.975f,.972f,.956f);
-        static readonly Color EqInk=new Color(.08f,.12f,.15f);
-        static readonly Color EqMuted=new Color(.20f,.26f,.29f);
-        static readonly Color EqLine=new Color(.73f,.78f,.79f);
-        static readonly Color EqAccent=new Color(.16f,.37f,.38f);
+        static readonly Color EqCanvas=new Color(.075f,.080f,.083f);
+        static readonly Color EqSurface=new Color(.115f,.121f,.125f);
+        static readonly Color EqInk=new Color(.93f,.90f,.84f);
+        static readonly Color EqMuted=new Color(.65f,.65f,.62f);
+        static readonly Color EqLine=new Color(.25f,.26f,.26f);
+        static readonly Color EqAccent=new Color(.77f,.49f,.30f);
         bool EqButton(Rect r,string caption,bool selected=false,bool enabled=true)
         {
             bool hover=enabled&&r.Contains(Event.current.mousePosition);
-            Box(r,selected?EqAccent:hover?new Color(.83f,.88f,.87f):EqSurface);
-            Box(new Rect(r.x,r.yMax-1,r.width,1),selected?EqAccent:EqLine);
-            if(selected)Box(new Rect(r.x+12,r.y+12,3,r.height-24),new Color(.77f,.84f,.65f));
+            Box(r,selected?new Color(.29f,.22f,.17f):hover?new Color(.19f,.19f,.18f):EqSurface);
+            FieldUIArt.Plate(r,selected);
+
             var style=new GUIStyle(eqButtonStyle){fontStyle=FontStyle.Bold,fontSize=r.width<150?Mathf.Min(eqButtonStyle.fontSize,20):eqButtonStyle.fontSize};
-            style.normal.textColor=!enabled?new Color(.57f,.61f,.61f):selected?EqSurface:EqInk;
+            style.normal.textColor=!enabled?new Color(.42f,.43f,.42f):EqInk;
             style.hover.textColor=style.normal.textColor;style.active.textColor=style.normal.textColor;
             bool previous=GUI.enabled;GUI.enabled=previous&&enabled;
             bool clicked=GUI.Button(r,caption,style);GUI.enabled=previous;return clicked;
@@ -56,9 +56,9 @@ namespace NeonVault
         bool EqNavigation(Rect r,string caption,bool selected)
         {
             bool hover=r.Contains(Event.current.mousePosition);
-            if(hover)Box(r,new Color(.86f,.89f,.89f));
+            if(hover)Box(r,new Color(.16f,.17f,.17f));
             Box(new Rect(r.x,r.yMax-2,r.width,selected?3:1),selected?EqAccent:EqLine);
-            EqText(new Rect(r.x+4,r.y+4,r.width-8,r.height-8),caption,selected?EqInk:EqMuted,eqButtonStyle);
+            EqText(new Rect(r.x+4,r.y+4,r.width-8,r.height-8),caption,selected?EqAccent:EqMuted,eqButtonStyle);
             return GUI.Button(r,GUIContent.none,GUIStyle.none);
         }
         EqCard EqMake(object item)
@@ -79,17 +79,37 @@ namespace NeonVault
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
                 c.description=shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
                 c.fullDescription=LegendaryDescription(m,m.Description);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
-            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"–"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.fullDescription=c.description;}
-            c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity)+"\n"+T("SCORE ","評価 ")+score+(!c.equipped&&has?(score>reference?" ▲"+(score-reference):score<reference?" ▼"+(reference-score):" ＝"):"");
-            string comparison=!c.equipped&&has?(score>reference?" ▲"+(score-reference):score<reference?" ▼"+(reference-score):" ＝"):"";
-            string header=ManufacturerCatalog.Name(maker,VaultLanguage.Japanese)+"  ·  "+T("SCORE ","評価 ")+score+comparison;
+            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"–"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
+            c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity)+"\n"+(!c.equipped&&has?EqComparison(score,reference):"");
+            string comparison=!c.equipped&&has?EqComparison(score,reference):"";
+            string header=ManufacturerCatalog.Name(maker,VaultLanguage.Japanese)+comparison;
             c.description=EqAppend(header,c.description);c.fullDescription=EqAppend(header,c.fullDescription);return c;
         }
+        static string EqComparison(int score,int reference)=>score>reference?" <color=#FF5B50>▲"+(score-reference)+"</color>":score<reference?" <color=#65AAFF>▼"+(reference-score)+"</color>":" ＝";
         static string EqAppend(string source,string extra)=>string.IsNullOrWhiteSpace(extra)?source:source+"\n"+extra;
         int EqGunComparison(out bool found)
         {int lowest=int.MaxValue;for(int i=0;i<AvailableWeaponSlotCount;i++){var equipped=WeaponInSlot(i);if(equipped!=null)lowest=Mathf.Min(lowest,GearScoring.Score(equipped));}found=lowest!=int.MaxValue;return found?lowest:0;}
         void EqPortrait(Rect r,object item)
-        {if(item is Gun g)ItemPortraits.Draw(r,g);else if(item is ArmorItem a)ItemPortraits.Draw(r,a);else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(r,m);else if(item is MeleeWeaponItem w)ManufacturerPortraits.Melee(r,w);}
+        {
+            int score=0;
+            if(item is Gun g){ItemPortraits.Draw(r,g);score=GearScoring.Score(g);
+                float size=Mathf.Clamp(Mathf.Min(r.width,r.height)*.23f,20,30);
+                var icon=new Rect(r.x+5,r.y+5,size,size);Box(icon,new Color(.04f,.045f,.05f,.88f));
+                FieldUIArt.GunClassIcon(new Rect(icon.x+2,icon.y+2,size-4,size-4),g,EqInk);}
+            else if(item is ArmorItem a){ItemPortraits.Draw(r,a);score=GearScoring.Score(a);}
+            else if(item is ArtifactItem m){ManufacturerBranding.ModulePortrait(r,m);score=GearScoring.Score(m);}
+            else if(item is MeleeWeaponItem w){ManufacturerPortraits.Melee(r,w);score=MeleeWeaponCatalog.Score(w);}
+            else return;
+            var style=new GUIStyle(eqCopy){font=englishHeadingFont?englishHeadingFont:font,fontStyle=FontStyle.Bold,
+                fontSize=r.width>200?29:24,alignment=TextAnchor.LowerRight,wordWrap=false};
+            string value=score.ToString("N0");
+            while(style.fontSize>16&&style.CalcSize(new GUIContent(value)).x>r.width-18)style.fontSize--;
+            float width=Mathf.Min(r.width-8,style.CalcSize(new GUIContent(value)).x+14);
+            var badge=new Rect(r.xMax-width-5,r.yMax-style.fontSize-13,width,style.fontSize+9);
+
+            EqText(new Rect(badge.x+1,badge.y+1,badge.width-5,badge.height-2),value,new Color(0,0,0,.9f),style);
+            EqText(new Rect(badge.x,badge.y,badge.width-5,badge.height-2),value,EqInk,style);
+        }
         List<EqCard> EqCards(bool merchant)
         {
             var cards=new List<EqCard>();
@@ -111,6 +131,7 @@ namespace NeonVault
             bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey);
             Box(new Rect(0,0,1440,900),EqCanvas);
             Box(new Rect(28,12,44,3),EqAccent);
+            FieldUIArt.Icon(new Rect(1080,28,44,44),5,EqAccent);
             Box(new Rect(28,103,1384,1),EqLine);
             EqText(new Rect(28,18,950,44),merchant?T("MARA / SALVAGE EXCHANGE","マラ / 回収品交換所"):T("ARSENAL / EQUIPMENT","武器庫 / 装備"),EqInk,new GUIStyle(eqCaption){fontSize=34});
             EqText(new Rect(28,66,900,44),merchant?T("SCRAP ","所持スクラップ ")+Credits.ToString("N0"):T("Select an item to inspect and equip","所持品を選んで詳細確認・装備"),EqMuted);
@@ -131,7 +152,7 @@ namespace NeonVault
             float gridTop=top+86;
             Box(new Rect(482,top,1,778-top),EqLine);
             Box(new Rect(926,top,1,778-top),EqLine);
-            Box(new Rect(940,top+9,466,104),EqSurface);
+            FieldUIArt.Plate(new Rect(940,top+9,466,769-top),false);
             Box(new Rect(950,620,446,1),EqLine);
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
             if(equipmentHeroPreview!=null)
@@ -145,32 +166,52 @@ namespace NeonVault
                 {if(EqButton(lookRect,lookLabel))equipmentHeroPreview.ToggleGeneratedWarden();}
                 else {Box(lookRect,EqSurface);EqText(lookRect,lookLabel,EqMuted,centered);}
             }
-            Box(new Rect(502,652,406,126),EqInk);
+            DrawEquippedCategory(top);
+            FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
-            EqText(new Rect(532,660,364,114),T("CURRENT LOADOUT\n","現在の装備\n")+"HP "+maxHp.ToString("0")+T("  MOVE ","  移動 ")+EffectiveMoveSpeed.ToString("0.0")+T("\nDAMAGE REDUCTION ","\n被ダメージ軽減 ")+(DamageReduction*100).ToString("0")+"%",EqSurface);
+            EqText(new Rect(532,660,364,114),T("CURRENT LOADOUT\n","現在の装備\n")+"HP "+maxHp.ToString("0")+T("  MOVE ","  移動 ")+EffectiveMoveSpeed.ToString("0.0")+T("\nDAMAGE REDUCTION ","\n被ダメージ軽減 ")+(DamageReduction*100).ToString("0")+"%",EqInk);
             var cards=EqCards(merchant);var selected=cards.Find(c=>c.key==eqSelectedKey);if(selected==null&&cards.Count>0){selected=cards[0];eqSelectedKey=selected.key;eqDetailScroll=Vector2.zero;}
             float gridHeight=766-gridTop;
-            eqGridExtent=Mathf.Max(gridHeight,cards.Count*200);
+            eqGridExtent=Mathf.Max(gridHeight,cards.Count*180);
             eqGridScroll=GUI.BeginScrollView(new Rect(36,gridTop+8,432,gridHeight),eqGridScroll,new Rect(0,0,410,eqGridExtent));
             var cardText=new GUIStyle(eqCopy){fontSize=20};
             for(int i=0;i<cards.Count;i++)
             {
-                var c=cards[i];Rect r=new Rect(0,i*200,408,190);bool chosen=c.key==eqSelectedKey;
-                Box(r,chosen?EqSurface:new Color(.94f,.949f,.946f));
-                Box(new Rect(r.x,r.yMax-1,r.width,1),EqLine);
-                if(chosen)Box(new Rect(r.x,r.y+12,3,r.height-24),EqAccent);
-                Box(new Rect(r.x+12,r.y+12,138,138),new Color(.84f,.87f,.87f));
-                EqPortrait(new Rect(r.x+16,r.y+16,130,130),c.item);
-                Box(new Rect(r.x+16,r.y+160,32,3),c.color);
-                EqText(new Rect(r.x+162,r.y+12,236,96),(c.equipped?"✓ ":"")+c.name,EqInk,cardText);
-                EqText(new Rect(r.x+162,r.y+112,236,76),c.summary,EqMuted,cardText);
+                // IMGUI clips pixels, but does not skip loading offscreen portraits.
+                // Only submit visible rows so a full collection cannot load hundreds
+                // of large artwork textures on opening this screen.
+                if(i*180+170<eqGridScroll.y||i*180>eqGridScroll.y+gridHeight)continue;
+                var c=cards[i];Rect r=new Rect(0,i*180,408,170);bool chosen=c.key==eqSelectedKey;
+                FieldUIArt.Plate(r,chosen);
+                EqPortrait(new Rect(r.x+16,r.y+16,122,122),c.item);
+                Box(new Rect(r.x+16,r.y+150,32,3),c.color);
+                EqText(new Rect(r.x+154,r.y+12,244,80),(c.equipped?"✓ ":"")+c.name,EqInk,cardText);
+                EqText(new Rect(r.x+154,r.y+98,244,68),c.summary,EqMuted,cardText);
                 if(GUI.Button(r,GUIContent.none,GUIStyle.none)){eqSelectedKey=c.key;eqShowFullDetails=false;eqDetailScroll=Vector2.zero;}
             }
             GUI.EndScrollView();if(cards.Count==0)EqText(new Rect(48,gridTop+30,400,180),T("No items in this category","このカテゴリにはアイテムがありません"),EqMuted);
-            if(selected!=null){EqText(new Rect(952,top+20,440,94),selected.name,EqInk,eqCaption);Box(new Rect(952,top+104,64,3),selected.color);float detailH=448-top;string eqDetail=eqShowFullDetails?selected.fullDescription:selected.description;float height=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;eqDetailExtent=Mathf.Max(detailH,height);eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+112,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));EqText(new Rect(2,4,410,height),eqDetail,EqInk);GUI.EndScrollView();if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}EqActions(selected,merchant);}
-            for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:48);string shortLabel=AmmoLabel(type);string caption=shortLabel+" "+AmmoReserve(type)+"/"+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");if(EqButton(r,caption))BuyAmmo(type,1);}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?18:16});}}
-            if(!merchant)EqText(new Rect(28,848,1384,50),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?24:18});
+            if(selected!=null){EqText(new Rect(952,top+20,440,94),selected.name,EqInk,eqCaption);Box(new Rect(952,top+104,64,3),selected.color);EqPortrait(new Rect(978,top+116,390,124),selected.item);float detailH=312-top;string eqDetail=eqShowFullDetails?selected.fullDescription:selected.description;float height=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;eqDetailExtent=Mathf.Max(detailH,height);eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));EqText(new Rect(2,4,410,height),eqDetail,EqInk);GUI.EndScrollView();if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}EqActions(selected,merchant);}
+            for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");if(EqButton(r,caption))BuyAmmo(type,1);}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
+            if(!merchant)EqText(new Rect(28,864,1384,32),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=18});
             GUI.enabled=eqPreviousEnabled;if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();return true;
+        }
+        void DrawEquippedCategory(float top)
+        {
+            // Keep the character's central silhouette clear; portraits use the
+            // unused margins and always follow the selected equipment tab.
+            var items=new List<object>();var labels=new List<string>();
+            if(eqCategory==0)for(int i=0;i<Mathf.Min(2,AvailableWeaponSlotCount);i++){items.Add(WeaponInSlot(i));labels.Add(T("SLOT ","銃枠 ")+(i+1));}
+            else if(eqCategory==1)for(int i=1;i<EquippedArmor.Length;i++){items.Add(EquippedArmor[i]);labels.Add(Armory.SlotName((ArmorSlot)i));}
+            else if(eqCategory==2)for(int i=0;i<EquippedArtifacts.Length;i++){items.Add(EquippedArtifacts[i]);labels.Add(T("MODULE ","モジュール ")+(i+1));}
+            else {items.Add(EquippedMeleeWeapon);labels.Add(T("MELEE","近接武器"));}
+            for(int i=0;i<items.Count;i++)
+            {
+                float x=i%2==0?502:814,y=top+82+(i/2)*134;
+                var r=new Rect(x,y,94,122);Box(r,new Color(.08f,.085f,.09f,.92f));
+                EqText(new Rect(x+2,y+2,90,34),labels[i],EqMuted,new GUIStyle(eqCopy){fontSize=14,alignment=TextAnchor.UpperCenter});
+                if(items[i]!=null)EqPortrait(new Rect(x+3,y+36,88,82),items[i]);
+                else EqText(new Rect(x+3,y+44,88,60),T("EMPTY","未装備"),EqMuted,new GUIStyle(eqCopy){fontSize=14,alignment=TextAnchor.MiddleCenter});
+            }
         }
         void DrawEquipmentCapacityShop()
         {

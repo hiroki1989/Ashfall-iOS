@@ -1,3 +1,31 @@
+## 2026-10-27 / 新フォント・装備チェスト・装備枠とHUD
+変更: 851Gkktt_005.ttfをResources/Fontsへ同梱、UI/heading/mobile/ダメージ数字へ適用（不足字は既存font fallback）。imagegen gun-class-icons-v1を新規作成、銃種別crop/aspect維持で戦闘・所持品・商人共用。戦闘heldHUDはicon+mag/reserveのみ（予備はmag除外）、reload線のみ。単独worldmapボタン撤去、miniクリック/停止map導線、dungeonは閲覧のみで元画面へ戻る。
+装備: score34/28→29/24、比較上赤/下青、近接は装備近接と全family比較。近接rarity0〜4特性（威力/速度/会心率/会心倍率）、旧saveはidから一度だけ補完、実combatへ反映。inventory中央余白にtab別装備絵/日英枠表示（頭廃止維持）。
+Chest: orange pbr_box_supplyを専用化しdecorから除外、spawn Animator停止/閉pose、取得時opening半clip一回/scale保持。world500地点・player±1・3mission達成復活、モデル180m生成/220m破棄。dungeon各通常階50%/最終階出口側必ず1、既存dungeon lootlevel。銃/防具/module抽選、通常rarity表の上位3重み各1.05倍（+5ポイントではない）。
+World: camps7→14旧地点順保持、追加site道路/川回避、camp10 facade侵入を10m移動で解消。他site不変。建物attempt640/cap28・8〜22m、標本432→676棟。最初camp距離+variationで入口Lv1〜10。site100m bucket/cache49保持。地図bottom14button2段font16。aerial4tiles再bake97.1s（最後camp10の10m修正のみ焼込後、markerは現地理を参照）。
+検証: runtime全C# Roslyn成功。Unity6000.6 EquipmentChestReviewで閉pose/蓋hinge/接地/1.8m/位置scale/500count成功。geography614sites/676roof侵入0・cache49。new-equipment-verified.logで新font実適用・atlas・近接0〜4affix/再適用なし、銃/防具/近接/actualHUD単体実描画撮影、正常終了・NullReference/CS errorなし。画像 D:/Unity/QA-premium-ui/inventory-mobile.png / new-equipment-armor.png / new-equipment-melee.png / new-equipment-hud.png。HUDは世界なし部品QA、実戦全体画面ではない。
+経過/制限: 初回headlessはUPM起動失敗→再起動成功。最初HUD QAは実体のないHubを更新しNullReference→検証側停止を修正して再走・解消。メモリguard700MB/自分PIDのみ、PCクラッシュなし。実機iPhone/長時間歩行FPS・胸全開封取得のプレイ全経路は未確認。未commit/push/IPA。版18維持。既存recovery/原画像/save削除なし。
+
+## 2026-10-27 / 全体地理を有限道路へ・航空写真風atlas
+変更: OverworldGeography/Scenery、新OverworldRoadNetwork。10km維持、河幅220±40m、河岸道/斜め幹線/15地区loop・radial・住宅道、10595有限segmentを100m bucket化し描画/衝突/配置共有。全9橋端点と主要道断端を河岸へ接続。周期park撤去し2公園+境界forest、都市建物増加/寸法可変、nav50m歩行spine/49cache/9stream保持。川shaderも地理と共通Vector4設定へ同期。全287sitesのID順/配列長維持、旧保存座標Blocked時は既存拠点fallback。
+Art/UI: imagegen aerial-surfaces-v1/roofs-v1、Editor AerialCityMapBakerで地理の同一footprint/trees/carsをCPUで屋根素材・樹冠/落影へ焼込。coarse4096+detail4096x4（実効8192）。フル地図/mini共通、圧縮tile、拡大/drag/pinch/現在地復帰/legend、モバイルaxis伸縮補正、起動viewは現在地/拠点選択時その位置へ。VaultArtImporterの汎用2048縮小・readable=falseがsource/atlasを潰す問題をaerial専用分岐で修正、ProjectBuilderが上書きしないよう保持。新QA Editor helpers4種とmeta。画像内UI文字なし、日英。
+検証: 更新地理QA construction47ms/959road samples中606斜め、287sites/橋通路/432roofサンプル侵入0・cache49・failures0。headless bake8で4tiles完了96.4s。Unity aerial-verified-uiでTILES4x4096/zoom anchor誤差0/axis補正1.111111、日本語/英語実撮影正常終了。scenery3でproduction stream9街区・河岸/橋・water shaderを単独実描画撮影、完了/例外/Shader errorなし。runtimecompile成功（roads.rsp）。D:/Unity/QA-premium-ui/map-aerial-final-ja.png / final-en.png / real-city-scenery.png / real-city-river.png。
+制限/経過: 初期4k版は品質不足→道路有限graph化/高解像tile/素材専用import修正。GUI bake3/4とplayer+enemy入りworld-reviewはmemory guard700MB未満で自分のUnityのみ停止、PCクラッシュなし。最終headless bakeとUI/単独sceneryは正常終了。iPhone実機/全world長距離歩行・戦闘・フルplayer環境のFPS未確認。描画は実地理に基づく航空写真風イラストで、添付コンセプトのphotoreal品質と同一と過大報告しない。屋根材はfootprint内の表現で各imported prefabの文字通りの俯瞰撮影ではない。recovery原本保持、未commit/push/IPA、版18維持。他UIの全ページ刷新は継続未完。
+## 2026-10-27 / 添付準拠のpanel陰影・右下score
+変更: imagegenでpremium-panel-v3/selected-v3を新規制作、対角charcoal gradient/薄いwarm-gray輪郭/selected copper内側陰影。FieldUIArtの9sliceをsource2.2%/output8へ調整、通常62%/選択68%で輝度抑制。装備全カードを画像panel化、詳細は全高panel、current loadoutにも共通素材。EqPortraitで銃/防具/module/近接のscoreをillustration右下へbold offwhite+shadow描画（画像焼込なし）、一覧summary/本文のscore重複削除・比較差分保持。大桁scoreは枠内へfont縮小。配置は維持。共通パネル経由で他UIもv3素材採用。
+検証: runtime全C# compile成功。Unity6000.6 Editor8日本語mobile/Editor9英語mobileで撮影し正常終了INVENTORY_REVIEW_COMPLETED、CS/NullReference/ArgumentExceptionなし。実画像でnormal/selected gradient・細い枠、一覧/詳細の右下710/653を目視。初回score枠を除去しshade/角を再調整した最終版 D:/Unity/QA-premium-ui/inventory-panels-final-en.png。メモリguard維持・PCクラッシュなし。最後の大桁font fitはcompile確認のみ。既存3Dモデルの品質は本件の変更外。未commit/push/IPA、iPhone実機未確認。
+## 2026-10-27 / premium UI 実画面確認・モバイル英語修正
+変更: 地図建物の輪郭を内側へ縮めて隣棟融合を解消。屋根の暗い階調/端部、zoom連動透明度、主要道は実road判定内に制限し、公園の偽主要道削減。装備の弾薬footerを弾種/所持数2行・余白確保（英語の最後の弾薬数が切れる不具合）。検証は地図/装備を別プロセスで読みメモリ削減、smokeでセーブ保護。
+検証: editor4でinventory-ja実撮影（後半はmemory guard停止）、editor5/6で地図実撮影し正常終了REVIEW_COMPLETED、editor7で--mobile-controls --premium-english装備撮影し正常終了INVENTORY_REVIEW_COMPLETED。PCクラッシュなし。最新runtime全C# compile/diff check成功。D:/Unity/QA-premium-ui/map-ja-20261027.png、inventory-mobile-en-20261027.png（footer2行修正前）。最新地図の屋根/道路判別改善を目視。装備の明色文字・選択画像・detail scroll表示確認。復旧シーン原本保持。
+未解決: 承認conceptの衛星画像相当には未達（実地形が碁盤状であるため地図も規則的）。中央人物は既存model品質/姿勢の影響が残りconceptと同等ではない。他画面の個別レイアウト刷新/実機iPhoneタッチ/商人全ページ/zoom pan gestureの自動操作は未確認。footer最終変更はcompile確認、実画像再撮影は次回。未commit/push/IPA。完成品質と過大報告しない。
+## 2026-10-27 / premium UI 続行・実画面検証はRAM待ち
+変更: panel-v2を新規imagegen生成/採用（v1保持、控えめなcharcoal hairline）。装備詳細に大きな選択アイテム画像、スクロール領域/タッチ判定調整。一覧は画面外portraitをロードしない。地図建物atlasは表示範囲中心優先queue/重複防止、2ms/16chunk、dirty64px tileと0.2s upload。PremiumUIReviewはEmptySceneで検証、Awakeからsmoke保存保護。ART_GUIDE追記。
+検証: 最新runtime全C# Roslyn compile成功。Editor3は復旧ダイアログKeep Backupsで Assets/_Recovery/0 (2).unity等を保持。Unity import/compileを通過したが空きRAM700MB未満で自分のPID44980だけguard停止。画像は前回の古いもののまま、最新の画面検証は未完。QA-premium-ui/editor3.log。git diff checkのSTATE末尾空行修正。
+未解決: ユーザーへ不要アプリ終了をasync質問中。最新inventory/map画像を必ず撮り確認。衛星地図風の完成度/全UI刷新/実機iOSは未完成。未commit/push。復旧シーンは削除しない。次回Unity起動は復旧ダイアログ再発しうる。
+## 2026-10-27 / 承認UIコンセプトの実装途中
+変更: FieldUIArt、VaultUI、VaultEquipmentScreen、EquipmentHeroPreview、MobileTouchControls、VaultOverworldUI、PremiumUIReview。新規imagegenアセット3枚（premium-panel-v1 / premium-icons-v1 / premium-map-surface-v1）、ART_GUIDEにprompt仕様。共通パネルは9-sliceで縁を保持、16アイコンを縦横比維持で表示。装備画面をcharcoal/copper/offwhite、3D背景を同色。地図は実建物footprintを段階描画、local200x150化。
+検証: Unity Editor取り込み/コンパイル成功。最初の撮影のinventoryは序章に遮られ不成立、map画像は撮影したが承認コンセプトの品質には未到達。検証導線修正後の再撮影はメモリguard(650MB未満)で自分のUnity PID47044を停止。PCクラッシュなし。D:/Unity/QA-premium-ui/editor2.log、memory.txt。
+未完了: inventory実画像最終確認、地図の建物完成描画検証、iPhone操作/読みやすさ、他UIの画面別レイアウト刷新。新パネルはやや装飾が強く承認画像との再比較が必要。コード/素材実装途中、品質完成と報告しない。未commit/未push/IPAなし。
 ## 2026-10-26 / 地図・武器分類・報酬UI・導入演出（版18）
 変更: 広域地図を現在地中心のズーム/ドラッグ/ホイール/ピンチ式へ、道路を共有曲線と間欠的な住宅街道路にしミニマップへ拠点印を追加。床色をダンジョン/拠点で暗くし、中ボス抽選と装備4種の通常/ボスドロップ率を半減（Inspector設定と代替値）。アサルト/ヘビーマシンガン弾薬・スキル分離、名称と並び更新。初回ボス会話7場面、クリア画面に実際に獲得した銃/防具の絵と概要、返済額スライダー、拠点全回復、HPゲージ変更。ProjectSettingsとiOS builderの版/ビルド18。
 検証: UNITY_EDITORなしのランタイム全体コンパイル、Unity 6000.6.0f1 Editor取り込み/スクリプトコンパイル、実描画で拠点床色確認。Editor QAの近接命中10/10、UI/encounter review完了ログ。地図GUIの自動撮影はbatchmodeで画像未保存のため実画面視認・実機タッチは未検証。iOS IPAは未生成。QA中Unityの空きRAMが約1.2GBまで下がったため結果確認後停止し、PCクラッシュを回避。
@@ -852,4 +880,3 @@ Modly/Shap-E試作は見た目が受け入れ水準に達せず不採用。既�
 結果: 最終Windows統合ビルド `D:/Unity/ashfall-silhouette-edge2-build.log` は `HERO_BUILD_OK`。可視ウィンドウでの装備QA `D:/Unity/QA-ashfall-guns-silhouette-edge2-visible/result.txt` は39,819件失敗0。原画/3D並列画像でケストレル拳銃とアサルトライフル、ヴォルトアーク軽機関銃を目視し、3D側の浮遊台座・重複銃と上面の明るい筋の解消を確認。`-batchmode` 撮影161件はGUIが描かれず黒画像になったため無効な視覚検証として扱った。
 検証: 修正後のWindows統合ビルド、可視画面QA、代表銃の画像目視、Python/JSON構文、`git diff --check`通過。
 未解決: 原画自体に複数銃や台座が描かれた品はインベントリ画と3Dの構図差が残る。側面以外は専用原画ではなく、薄い押し出し立体に留まる。レジェンダリー90品は既存の専用モデル。iOS実機表示・長時間性能は未検証。
-

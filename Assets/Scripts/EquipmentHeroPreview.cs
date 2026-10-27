@@ -145,12 +145,12 @@ namespace NeonVault
             armor=DetailedHeroArsenal3D.ApplyArmor(hero,GeneratedEquipmentAssetCatalog.WithoutHeadArmor(game.EquippedArmor));
             var cameraObject=new GameObject("Equipment portrait camera");cameraObject.transform.SetParent(stage.transform,false);
             view=cameraObject.AddComponent<Camera>();view.enabled=false;view.orthographic=true;view.orthographicSize=1.10f;view.nearClipPlane=.05f;view.farClipPlane=20;
-            view.clearFlags=CameraClearFlags.SolidColor;view.backgroundColor=new Color(.91f,.925f,.93f);view.cullingMask=1<<Layer;
+            view.clearFlags=CameraClearFlags.SolidColor;view.backgroundColor=new Color(.075f,.080f,.083f);view.cullingMask=1<<Layer;
             view.transform.localPosition=new Vector3(0,1.85f,4.5f);view.transform.LookAt(stage.transform.position+Vector3.up*.94f);
             image=new RenderTexture(768,1024,24){name="Equipment live portrait",antiAliasing=4};image.Create();view.targetTexture=image;
             foreach(var camera in Camera.allCameras)if(camera!=view)camera.cullingMask&=~(1<<Layer);
             AddLight("Portrait warm key",new Vector3(35,-35,0),new Color(1,.91f,.78f),1.1f);
-            AddLight("Portrait cool rim",new Vector3(15,145,0),new Color(.53f,.75f,1),.8f);
+            AddLight("Portrait cool rim",new Vector3(15,145,0),new Color(.82f,.87f,.88f),.8f);
         }
         void EnsureGeneratedWarden(VaultGame game)
         {

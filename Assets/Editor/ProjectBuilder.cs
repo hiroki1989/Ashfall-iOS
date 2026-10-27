@@ -28,6 +28,7 @@ namespace NeonVault.Editor
             foreach(string path in AssetDatabase.FindAssets("t:Texture2D",new[]{"Assets/Resources/Art"}))
             {
                 string file=AssetDatabase.GUIDToAssetPath(path);var importer=(TextureImporter)AssetImporter.GetAtPath(file);
+                if(file.StartsWith("Assets/Resources/Art/UI/FieldKit/aerial-")){importer.SaveAndReimport();continue;}
                 importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;importer.maxTextureSize=2048;importer.textureCompression=TextureImporterCompression.Uncompressed;
                 importer.isReadable=file.Contains("/LayeredPlayer/")||file.Contains("/LayeredEnemies/")||file.Contains("Directions")||file.Contains("Props")||file.Contains("WeaponAtlas")||file.Contains("32Walk")||file.Contains("ItemPortrait")||file.Contains("KeyEquipment")||file.Contains("Yaw")||file.Contains("Shooting32");importer.alphaIsTransparency=true;
                 bool tiled=file.Contains("Floor")||file.Contains("ArmorSurface")||file.Contains("WastelandSurface")||file.Contains("WastelandLeather")||file.Contains("WastelandCloth");

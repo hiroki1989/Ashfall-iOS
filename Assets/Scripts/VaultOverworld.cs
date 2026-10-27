@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -53,15 +53,17 @@ namespace NeonVault
             BuildOverworld(exit);
             Notify("ASHFALL / Travel on foot to a dungeon entrance. Camps are safe.","アッシュフォール / ダンジョン入口へ歩いて向かおう。拠点は安全地帯です。");
         }
+        bool worldAtlasFromDungeon;Screen worldAtlasReturnScreen;
         public void OpenOverworldMap()
         {
-            if(InventoryOpen||!WorldStorySeen||!(IsOverworld||screen==Screen.Hub))return;
+            if(InventoryOpen||!WorldStorySeen||!(IsOverworld||screen==Screen.Hub||screen==Screen.Playing||screen==Screen.Pause))return;
+            worldAtlasFromDungeon=!IsOverworld&&screen!=Screen.Hub;worldAtlasReturnScreen=screen;
             if(selectedOverworldActivity!=null)CloseOverworldActivityChoice();
             if(IsOverworld)RememberOverworldPosition(PlayerPosition,true);
             worldAtlasFromHub=screen==Screen.Hub;screen=Screen.DungeonSelect;Time.timeScale=0;
         }
         public void CloseOverworldMap()
-        {screen=worldAtlasFromHub?Screen.Hub:Screen.Playing;Time.timeScale=1;}
+        {screen=worldAtlasFromDungeon?worldAtlasReturnScreen:worldAtlasFromHub?Screen.Hub:Screen.Playing;Time.timeScale=screen==Screen.Pause?0:1;}
         public void WithdrawFromExploration()
         {
             if(IsOverworld){screen=Screen.Playing;Time.timeScale=1;OpenOverworldMap();return;}
@@ -121,7 +123,19 @@ namespace NeonVault
         void CreateWorldChests()
         {
             for(int i=0;i<WorldGeography.Chests.Length;i++)if(IsOverworldChestAvailable(i))
-            {Vector3 p=WorldGeography.Chests[i];p.y=.3f;var obj=CreateLootPresentation("WASTELAND EQUIPMENT CACHE",p,new Vector3(1.4f,.88f,1.25f),Gold,LootPresentationKind.Chest);var chest=new Chest{position=p,visual=obj};chests.Add(chest);worldChestIds.Add(chest,i);}
+            {Vector3 p=WorldGeography.Chests[i];p.y=0;var chest=new Chest{position=p};chests.Add(chest);worldChestIds.Add(chest,i);}
+            StreamWorldChests();
+        }
+        void StreamWorldChests()
+        {
+            // Keep all persistent site IDs, but load imported meshes only nearby.
+            foreach(var chest in chests)
+            {
+                float distance=(chest.position-PlayerPosition).sqrMagnitude;
+                if(chest.visual&&distance>220f*220f){Destroy(chest.visual);chest.visual=null;}
+                else if(!chest.visual&&!chest.opened&&distance<180f*180f)
+                    chest.visual=CreateLootPresentation("WASTELAND EQUIPMENT CHEST",chest.position,new Vector3(1.8f,.88f,1),Gold,LootPresentationKind.Chest);
+            }
         }
         bool OpenOverworldChest()
         {
@@ -129,13 +143,8 @@ namespace NeonVault
             foreach(var chest in chests)if(!chest.opened){float d=Vector3.Distance(PlayerPosition,chest.position);if(d<best){best=d;nearest=chest;}}
             if(nearest==null||!worldChestIds.TryGetValue(nearest,out int id))return false;
             if(!MarkOverworldChestOpened(id))return false;
-            int level=Mathf.Max(1,DebtLevel+rng.Next(-1,2));Rarity rarity=ExpeditionLootRarity(rng,false);
-            int roll=rng.Next(4);Vector3 p=nearest.position;
-            if(roll==0)AddDrop(Arsenal.CreateForDungeon(rng,DungeonIndex,rarity,level),p);
-            else if(roll==1)AddArmorDrop(Armory.CreateForDungeon(rng,DungeonIndex,rarity,level),p);
-            else if(roll==2)AddArtifactDrop(ArtifactCatalog.Create(rng,DungeonIndex,rarity,level),p);
-            else AddMeleeDrop(MeleeWeaponCatalog.Create(rng,level,rarity),p);
-            nearest.opened=true;Destroy(nearest.visual);SaveInventory();
+            DropEquipmentChestReward(nearest.position,Mathf.Max(1,DebtLevel+rng.Next(-1,2)));
+            nearest.opened=true;EquipmentChestVisual.Open(nearest.visual);SaveInventory();
             Notify("EQUIPMENT CACHE / Restocks after three mission clears","装備チェスト / ミッションを3回達成すると復活します");return true;
         }
         void TickOverworld()
@@ -144,7 +153,7 @@ namespace NeonVault
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             worldSaveTimer-=Time.deltaTime;if(worldSaveTimer<=0){worldSaveTimer=8;RememberOverworldPosition(PlayerPosition,true);SaveInventory();}
             worldSpawnTimer-=Time.deltaTime;if(worldSpawnTimer>0)return;worldSpawnTimer=.5f;
-            OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();RefreshOverworldActivities();
+            OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();StreamWorldChests();RefreshOverworldActivities();
         }
         void GenerateOverworldEnemies()
         {

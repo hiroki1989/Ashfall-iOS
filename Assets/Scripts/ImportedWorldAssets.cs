@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace NeonVault {
@@ -8,7 +8,7 @@ namespace NeonVault {
   static Shader builtinStandard;
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] static void Register(){OverworldScenery.AssetAdapter=Place;WorldEntranceBuildings.AssetAdapter=Place;}
   public static bool Place(string category,Transform parent,Vector3 position,int seed){
-   if(!groups.TryGetValue(category,out var prefabs)){prefabs=Resources.LoadAll<GameObject>("ImportedWorld/"+category);groups[category]=prefabs;}
+   if(!groups.TryGetValue(category,out var prefabs)){prefabs=Array.FindAll(Resources.LoadAll<GameObject>("ImportedWorld/"+category),p=>!EquipmentChestVisual.IsReserved(p));groups[category]=prefabs;}
    if(prefabs.Length==0)return false;
    var source=prefabs[(seed&int.MaxValue)%prefabs.Length];
    if(parent.name.StartsWith("Stream /")){ImportedWorldBatch.Add(parent,source,position,Quaternion.Euler(0,category=="building"||category=="car"?0:seed%4*90,0),Vector3.one);return true;}
@@ -52,7 +52,7 @@ namespace NeonVault {
     PlaceBlockedBackdrop(root,layout,"props","SM_fence_stand_small",new Vector3(18,0,-10+i*3.4f),90);
    }
    for(int i=0;i<5;i++){
-    PlaceBlockedBackdrop(root,layout,"props",i%2==0?"pbr_box_supply":"barrel_open",new Vector3(-15-i%2*1.6f,0,-10+i*2),i*90);
+    PlaceBlockedBackdrop(root,layout,"props",i%2==0?"WaterTank":"barrel_open",new Vector3(-15-i%2*1.6f,0,-10+i*2),i*90);
     PlaceBlockedBackdrop(root,layout,"props",i%2==0?"pallet":"OxygenTank",new Vector3(15+i%2*1.6f,0,-9+i*2),i*90);
    }
   }
@@ -107,7 +107,7 @@ namespace NeonVault {
    // Replace the whole legacy hierarchy, rather than layering a prop over its truck.
    int index=0;foreach(var legacy in root.GetComponentsInChildren<Transform>()){
     if(legacy.name!="Wrecked utility vehicle")continue;
-    string[] names={"pbr_box_supply","WaterTank","rack","pbr_box_ammo","barrel_open"};
+    string[] names={"WaterTank","rack","pbr_box_ammo","barrel_open"};
     var source=Resources.Load<GameObject>("ImportedWorld/props/"+names[index++%names.Length]);if(!source)continue;
     var placed=UnityEngine.Object.Instantiate(source,legacy.parent,false);placed.name="Imported cover / "+source.name;
     placed.transform.localPosition=legacy.localPosition;placed.transform.localRotation=Quaternion.identity;

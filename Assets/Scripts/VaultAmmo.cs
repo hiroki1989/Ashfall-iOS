@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -125,31 +125,45 @@ namespace NeonVault
         }
         void SpawnRoomChest()
         {
-            if(room!=chestRoomForRun||Layout.chambers.Count<3)return;
-            chestRoomForRun=-1;
-            int cell=rng.Next(Layout.chambers.Count);for(int i=0;i<Layout.chambers.Count;i++){var c=Layout.chambers[(cell+i)%Layout.chambers.Count];Vector3 p=Layout.Center(c);if(c==Layout.chambers[Layout.EntryChamberIndex]||c==Layout.chambers[Layout.ExitChamberIndex]||Vector3.Distance(p,Layout.Entry)<12||Blocked(p,.7f))continue;
-                var obj=CreateLootPresentation("SUPPLY CHEST / [F] OPEN",new Vector3(p.x,.3f,p.z),new Vector3(1.4f,.88f,1.25f),new Color(1f,.53f,.12f),LootPresentationKind.Chest);chests.Add(new Chest{position=obj.transform.position,visual=obj});return;}
+            bool final=room==CurrentDungeon.AreaCount-1;
+            if(!final&&rng.NextDouble()>=.5)return;
+            Vector3 p=Layout.Exit;
+            if(final)
+            {
+                // Prefer a clear spot beside extraction, never a sealed chamber.
+                bool found=false;
+                for(int ring=0;ring<5&&!found;ring++)for(int i=0;i<16;i++)
+                {
+                    float angle=i*Mathf.PI/8;
+                    Vector3 candidate=Layout.Exit+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*(2.6f+ring*1.2f);
+                    if(Blocked(candidate,.85f))continue;p=candidate;found=true;break;
+                }
+            }
+            else
+            {
+                int cell=Layout.chambers.Count>0?rng.Next(Layout.chambers.Count):0;bool found=false;
+                for(int i=0;i<Layout.chambers.Count;i++)
+                {
+                    var c=Layout.chambers[(cell+i)%Layout.chambers.Count];Vector3 candidate=Layout.Center(c);
+                    if(c==Layout.chambers[Layout.EntryChamberIndex]||Blocked(candidate,.85f))continue;
+                    p=candidate;found=true;break;
+                }
+                if(!found)p=Layout.Exit;
+            }
+            p.y=0;
+            var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);
+            chests.Add(new Chest{position=p,visual=obj});
         }
         bool OpenNearbyChest()
         {
             if(IsOverworld)return OpenOverworldChest();
-            Chest nearest=null;float distance=2.4f;foreach(var chest in chests)if(!chest.opened){float d=Vector3.Distance(PlayerPosition,chest.position);if(d<distance){distance=d;nearest=chest;}}
-            if(nearest==null)return false;var roll=rng.Next(100);
-            if(roll<22)
-            {
-                var item=RollExpeditionGun(rng);if(StoreWeapon(item)){Notify("CACHE: "+VaultLanguage.GunName(item),"物資箱: "+VaultLanguage.GunName(item));Destroy(nearest.visual);}else{Notify("CACHE: weapon storage full","物資箱: 銃の所持枠が満杯");return true;}
-            }
-            else if(roll<42)
-            {
-                var item=RollExpeditionArmor(rng);if(StoreArmor(item)){Notify("CACHE: "+Armory.Name(item),"物資箱: "+Armory.Name(item));Destroy(nearest.visual);}else{Notify("CACHE: armor storage full","物資箱: 防具の所持枠が満杯");return true;}
-            }
-            else if(roll<57)
-            {
-                var item=RollExpeditionArtifact(rng);if(StoreArtifact(item)){Notify("CACHE: "+item.Name,"物資箱: "+item.Name);Destroy(nearest.visual);}else{Notify("CACHE: module storage full","物資箱: モジュールの所持枠が満杯");return true;}
-            }
-            else if(roll<77){int amount=ScaleScrap(35000+DungeonIndex*15000+rng.Next(25001));AwardCredits(amount);Destroy(nearest.visual);Notify("CACHE: SCRAP +"+amount,"物資箱: スクラップ +"+amount);}
-            else {var type=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));int amount=AmmoPackSize(type);AddAmmo(type,amount);Destroy(nearest.visual);Notify("CACHE: "+AmmoLabel(type)+" +"+amount,"物資箱: "+AmmoLabel(type)+" +"+amount);}
-            ExpeditionSupplyRecovered();nearest.opened=true;return true;
+            Chest nearest=null;float distance=2.4f;
+            foreach(var chest in chests)if(!chest.opened){float d=Vector3.Distance(PlayerPosition,chest.position);if(d<distance){distance=d;nearest=chest;}}
+            if(nearest==null)return false;
+            DropEquipmentChestReward(nearest.position,ExpeditionLootLevel(rng));
+            nearest.opened=true;EquipmentChestVisual.Open(nearest.visual);
+            ExpeditionSupplyRecovered();SaveInventory();
+            Notify("EQUIPMENT CHEST / Equipment recovered","装備チェスト / 装備を回収しました");return true;
         }
     }
 }

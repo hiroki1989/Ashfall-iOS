@@ -67,7 +67,7 @@ namespace NeonVault
                     if(save!=null){trailWardenGrantVersion=save.trailWardenGrantVersion;trailWardenDelivered=save.trailWardenDelivered;WeaponCapacityTier=Mathf.Clamp(save.weaponCapacityTier,0,10);ArmorCapacityTier=Mathf.Clamp(save.armorCapacityTier,0,10);MeleeCapacityTier=Mathf.Clamp(save.meleeCapacityTier,0,10);for(int i=0;i<AmmoTypeCount;i++)ammoCapacityTiers[i]=save.ammoCapacityTiers!=null&&i<save.ammoCapacityTiers.Length?Mathf.Clamp(save.ammoCapacityTiers[i],0,10):Mathf.Clamp(save.ammoCapacityTier,0,10);}
                     if(save?.weapons!=null)foreach(var item in save.weapons)if(item!=null&&item.damage>0&&item.interval>0&&(Weapons.Count<WeaponCapacity||save.trailWardenGrantVersion>0)){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");Weapons.Add(item);}
                     if(save?.armor!=null)foreach(var item in save.armor)if(item!=null&&(int)item.slot>=0&&(int)item.slot<5&&(item.slot==ArmorSlot.Head||ActiveArmorCount<ArmorCapacity||save.trailWardenGrantVersion>0)){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");ArmorInventory.Add(item);}
-                    if(save?.meleeWeapons!=null)foreach(var item in save.meleeWeapons)if(item!=null&&item.damage>0&&item.interval>0&&MeleeWeaponInventory.Count<MeleeWeaponCapacity){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");if(!MeleeWeaponInventory.Exists(m=>m.id==item.id))MeleeWeaponInventory.Add(item);}
+                    if(save?.meleeWeapons!=null)foreach(var item in save.meleeWeapons)if(item!=null&&item.damage>0&&item.interval>0&&MeleeWeaponInventory.Count<MeleeWeaponCapacity){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");MeleeWeaponCatalog.EnsureAffixes(item);if(!MeleeWeaponInventory.Exists(m=>m.id==item.id))MeleeWeaponInventory.Add(item);}
                     if(save!=null&&!string.IsNullOrEmpty(save.equippedMelee))EquippedMeleeWeapon=MeleeWeaponInventory.Find(m=>m.id==save.equippedMelee);
                     if(save?.equipped!=null){hasSavedArmorSlots=true;for(int i=1;i<Math.Min(5,save.equipped.Length);i++)EquippedArmor[i]=string.IsNullOrEmpty(save.equipped[i])?null:ArmorInventory.Find(a=>a.id==save.equipped[i]&&(int)a.slot==i);}
                     if(save?.ammoReserves!=null){LoadAmmoReserves(save.ammoReserves);loadedAmmoReserves=true;}
@@ -207,7 +207,7 @@ namespace NeonVault
             if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");
             if(MeleeWeaponInventory.Exists(m=>m.id==item.id))return true;
             if(MeleeWeaponInventory.Count>=MeleeWeaponCapacity)return false;
-            MeleeWeaponInventory.Add(item);
+            MeleeWeaponCatalog.EnsureAffixes(item);MeleeWeaponInventory.Add(item);
             SaveInventory();return true;
         }
         public void EquipMeleeWeapon(MeleeWeaponItem item)

@@ -1,26 +1,139 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace NeonVault
 {
     public partial class VaultGame
     {
         Texture2D overworldAtlasTexture;
+        bool aerialAtlas;
+        readonly Texture2D[] aerialDetailTiles=new Texture2D[4];
+        bool aerialTilesLoaded;
+        void DrawAerialSurvey(Rect bounds,Rect uv)
+        {
+            GUI.DrawTextureWithTexCoords(bounds,overworldAtlasTexture,uv);
+            if(!aerialAtlas)return;
+            if(!aerialTilesLoaded)
+            {
+                aerialTilesLoaded=true;
+                for(int i=0;i<4;i++)aerialDetailTiles[i]=Resources.Load<Texture2D>("Art/UI/FieldKit/aerial-city-detail-"+i);
+            }
+            for(int i=0;i<4;i++)
+            {
+                if(!aerialDetailTiles[i])continue;
+                var tile=new Rect(i%2*.5f,i/2*.5f,.5f,.5f);
+                float x0=Mathf.Max(uv.xMin,tile.xMin),x1=Mathf.Min(uv.xMax,tile.xMax);
+                float y0=Mathf.Max(uv.yMin,tile.yMin),y1=Mathf.Min(uv.yMax,tile.yMax);
+                if(x1<=x0||y1<=y0)continue;
+                var target=new Rect(bounds.x+(x0-uv.x)*bounds.width/uv.width,
+                    bounds.y+(uv.yMax-y1)*bounds.height/uv.height,
+                    (x1-x0)*bounds.width/uv.width,(y1-y0)*bounds.height/uv.height);
+                GUI.DrawTextureWithTexCoords(target,aerialDetailTiles[i],new Rect((x0-tile.x)*2,(y0-tile.y)*2,(x1-x0)*2,(y1-y0)*2));
+            }
+        }
+        Texture2D worldBuildingAtlas;
+        Color32[] worldBuildingPixels;
+        readonly bool[] worldBuildingChunksReady=new bool[10000];
+        readonly System.Collections.Generic.List<int> worldBuildingQueue=new System.Collections.Generic.List<int>(10000);
+        int worldBuildingQueueIndex;
+        RectInt worldBuildingVisibleChunks;
+        bool worldBuildingViewReady,worldBuildingDirty;
+        readonly bool[] worldBuildingDirtyTiles=new bool[32*32];
+        float worldBuildingNextUpload;
+        readonly Color32[] worldBuildingUploadPixels=new Color32[64*64];
+        OverworldGeography buildingAtlasGeography;
+        void DrawWorldBuildingAtlas(Rect bounds,Rect uv)
+        {
+            if(aerialAtlas)return;
+            const int size=2048;
+            if(buildingAtlasGeography==null)buildingAtlasGeography=new OverworldGeography();
+            if(worldBuildingAtlas==null)
+            {
+                worldBuildingAtlas=new Texture2D(size,size,TextureFormat.RGBA32,false){name="Surveyed building footprints",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+                worldBuildingPixels=new Color32[size*size];worldBuildingAtlas.SetPixels32(worldBuildingPixels);worldBuildingAtlas.Apply(false,false);
+            }
+            if(Event.current.type==EventType.Repaint)
+            {
+                int x0=Mathf.Clamp(Mathf.FloorToInt(uv.xMin*100),0,99),x1=Mathf.Clamp(Mathf.CeilToInt(uv.xMax*100)-1,0,99);
+                int z0=Mathf.Clamp(Mathf.FloorToInt(uv.yMin*100),0,99),z1=Mathf.Clamp(Mathf.CeilToInt(uv.yMax*100)-1,0,99);
+                var visible=new RectInt(x0,z0,x1-x0+1,z1-z0+1);
+                if(!worldBuildingViewReady||visible!=worldBuildingVisibleChunks)
+                {
+                    worldBuildingVisibleChunks=visible;worldBuildingViewReady=true;
+                    worldBuildingQueue.Clear();worldBuildingQueueIndex=0;
+                    int cx=(x0+x1)/2,cz=(z0+z1)/2;
+                    int radius=Mathf.Max(Mathf.Max(cx-x0,x1-cx),Mathf.Max(cz-z0,z1-cz));
+                    // Center-out rings make the current view readable first. Never survey outside it.
+                    void QueueChunk(int x,int z)
+                    {
+                        if(x<x0||x>x1||z<z0||z>z1)return;
+                        int index=z*100+x;if(!worldBuildingChunksReady[index])worldBuildingQueue.Add(index);
+                    }
+                    QueueChunk(cx,cz);
+                    for(int r=1;r<=radius;r++)
+                    {
+                        for(int x=cx-r;x<=cx+r;x++){QueueChunk(x,cz-r);QueueChunk(x,cz+r);}
+                        for(int z=cz-r+1;z<cz+r;z++){QueueChunk(cx-r,z);QueueChunk(cx+r,z);}
+                    }
+                }
+                var timer=System.Diagnostics.Stopwatch.StartNew();int count=0;
+                // Chunk work is atomic; cap both elapsed generation time and chunks per repaint.
+                while(worldBuildingQueueIndex<worldBuildingQueue.Count&&count<16&&timer.Elapsed.TotalMilliseconds<2)
+                {
+                    int k=worldBuildingQueue[worldBuildingQueueIndex++];
+                    if(worldBuildingChunksReady[k])continue;
+                    int x=k%100-50,z=k/100-50;count++;
+                    foreach(var building in buildingAtlasGeography.GetChunk(x,z).Buildings)
+                    {
+                        int left=Mathf.Clamp(Mathf.CeilToInt((building.xMin+5001)*size/10000),0,size-1),right=Mathf.Clamp(Mathf.FloorToInt((building.xMax+4999)*size/10000),0,size-1);
+                        int bottom=Mathf.Clamp(Mathf.CeilToInt((building.yMin+5001)*size/10000),0,size-1),top=Mathf.Clamp(Mathf.FloorToInt((building.yMax+4999)*size/10000),0,size-1);
+                                                if(right<left||top<bottom)continue;
+                        int tone=54+Mathf.Abs((left*73+bottom*31)%19);
+                        for(int py=bottom;py<=top;py++)for(int px=left;px<=right;px++)
+                        {
+                            bool rim=px==left||py==top;
+                            int shade=rim?tone+16:tone;
+                            worldBuildingPixels[py*size+px]=new Color32((byte)(shade+7),(byte)(shade+6),(byte)shade,220);
+                        }
+                        worldBuildingDirty=true;
+                        for(int tileZ=bottom/64;tileZ<=top/64;tileZ++)for(int tileX=left/64;tileX<=right/64;tileX++)worldBuildingDirtyTiles[tileZ*32+tileX]=true;
+                    }
+                    worldBuildingChunksReady[k]=true;
+                }
+                if(worldBuildingDirty&&Time.unscaledTime>=worldBuildingNextUpload)
+                {
+                    // Reuse one small tile buffer: no full-atlas CPU copy or growing rectangle allocations.
+                    for(int tile=0;tile<worldBuildingDirtyTiles.Length;tile++)
+                    {
+                        if(!worldBuildingDirtyTiles[tile])continue;
+                        int left=(tile%32)*64,bottom=(tile/32)*64;
+                        for(int row=0;row<64;row++)System.Array.Copy(worldBuildingPixels,(bottom+row)*size+left,worldBuildingUploadPixels,row*64,64);
+                        worldBuildingAtlas.SetPixels32(left,bottom,64,64,worldBuildingUploadPixels);
+                        worldBuildingDirtyTiles[tile]=false;
+                    }
+                    // Apply may still transfer the full texture on some backends, so throttle it.
+                    worldBuildingAtlas.Apply(false,false);worldBuildingDirty=false;worldBuildingNextUpload=Time.unscaledTime+.2f;
+                }
+            }
+            var atlasTint=GUI.color;GUI.color=new Color(1,1,1,Mathf.InverseLerp(1,3,worldMapZoom)*.85f);
+            GUI.DrawTextureWithTexCoords(bounds,worldBuildingAtlas,uv);GUI.color=atlasTint;
+        }
         SectorLayout overworldAtlasSource;
         Texture2D worldLocalTexture;
         Vector2 worldLocalOrigin=new Vector2(float.PositiveInfinity,float.PositiveInfinity);
         float worldLocalRefresh;
-        readonly Color[] worldLocalPixels=new Color[50*38];
+        readonly Color[] worldLocalPixels=new Color[200*150];
         int overworldSelectedCamp=-1;
         float worldMapZoom=2.4f;
         Vector2 worldMapCenter=new Vector2(.5f,.5f);
         bool worldMapDragging,worldMapInitialized;
+        float worldMapVerticalScale=1;
         Vector2 worldMapLastPointer;
         float worldMapPinchDistance;
         public static string OverworldCampName(int index,bool japanese)
         {
-            string[] en={"Boss Hideout","Iron Rest","Canal Refuge","Green Shelter","Ash Post","North Watch","Wayfarer Camp"};
-            string[] ja={"ボスのアジト","鉄の休息所","運河の避難所","緑陰のシェルター","灰の前哨地","北の監視所","旅人の野営地"};
-            return (japanese?ja:en)[Mathf.Clamp(index,0,6)];
+            string[] en={"Boss Hideout","Iron Rest","Canal Refuge","Green Shelter","Ash Post","North Watch","Wayfarer Camp","Rail Refuge","Foundry Rest","Lake Watch","Pine Shelter","Old Mill","South Haven","Ridge Camp"};
+            string[] ja={"ボスのアジト","鉄の休息所","運河の避難所","緑陰のシェルター","灰の前哨地","北の監視所","旅人の野営地","鉄路の避難所","鋳造所の休息所","湖の監視所","松林のシェルター","古い製粉所","南の安息所","尾根の野営地"};
+            return (japanese?ja:en)[Mathf.Clamp(index,0,13)];
         }
         GUIStyle WorldCopy(int size=22)=>new GUIStyle(label){fontSize=size,wordWrap=true,clipping=TextClipping.Clip};
         void WorldLabel(Rect bounds,string value,Color color,int size=22)
@@ -31,7 +144,7 @@ namespace NeonVault
         bool WorldButton(Rect bounds,string value,bool enabled=true)
         {
             bool previous=GUI.enabled;GUI.enabled=previous&&enabled;Panel(bounds,enabled?Cyan:Mist);if(enabled&&bounds.Contains(Event.current.mousePosition))Box(new Rect(bounds.x+4,bounds.y+3,bounds.width-8,bounds.height-6),new Color(.17f,.24f,.28f,.7f));
-            FieldUIArt.Plate(bounds,true);var style=new GUIStyle(centered){fontSize=MobileTouchControls.Enabled?24:20,wordWrap=true};
+            FieldUIArt.Plate(bounds,false);var style=new GUIStyle(centered){fontSize=bounds.height<50?16:MobileTouchControls.Enabled?24:20,wordWrap=bounds.height>=50};
             style.normal.textColor=enabled?UiPaper:Mist;bool result=GUI.Button(bounds,value,style);GUI.enabled=previous;return result;
         }
         Color WorldActivityColor(int type)=>type==0?Gold:type==1?Cyan:new Color(.73f,.55f,.92f);
@@ -59,15 +172,18 @@ namespace NeonVault
         {
             var geo=WorldGeography;if(geo==null||geo.Layout==null)return;
             var layout=geo.Layout;if(overworldAtlasTexture!=null&&overworldAtlasSource==layout)return;
-            if(overworldAtlasTexture!=null)Destroy(overworldAtlasTexture);
+            if(overworldAtlasTexture!=null&&!aerialAtlas)Destroy(overworldAtlasTexture);
+            var aerial=Resources.Load<Texture2D>("Art/UI/FieldKit/aerial-city-v1");
+            if(aerial){overworldAtlasTexture=aerial;overworldAtlasSource=layout;aerialAtlas=true;return;}
+            aerialAtlas=false;
             overworldAtlasSource=layout;const int resolution=1024;
             overworldAtlasTexture=new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){name="Ashfall surveyed city atlas",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
             var colors=new Color[resolution*resolution];
             for(int y=0;y<resolution;y++)for(int x=0;x<resolution;x++){
                 var p=new Vector3((x+.5f-resolution*.5f)*10000/resolution,0,(y+.5f-resolution*.5f)*10000/resolution);
                 bool river=geo.River(p)&&!geo.Bridge(p.z);float road=geo.RoadClearance(p);bool park=geo.Park(p);
-                int sx=Mathf.RoundToInt(p.x/100),sz=Mathf.RoundToInt(p.z/100);bool arterial=(sx%3==0&&Mathf.Abs(p.x-geo.StreetX(sx,p.z))<9)||(sz%3==0&&Mathf.Abs(p.z-geo.StreetZ(sz,p.x))<9);
-                Color color=river?new Color(.13f,.39f,.47f):arterial?new Color(.68f,.68f,.59f):road<0?new Color(.47f,.50f,.46f):road<2?new Color(.28f,.34f,.33f):park?new Color(.22f,.39f,.27f):new Color(.18f,.24f,.26f);
+                int sx=Mathf.RoundToInt(p.x/100),sz=Mathf.RoundToInt(p.z/100);bool arterial=road<0&&((sx%3==0&&Mathf.Abs(p.x-geo.StreetX(sx,p.z))<9)||(sz%3==0&&Mathf.Abs(p.z-geo.StreetZ(sz,p.x))<9));
+                Color color=river?new Color(.10f,.23f,.27f):arterial?new Color(.52f,.49f,.40f):road<0?new Color(.31f,.32f,.29f):road<2?new Color(.28f,.34f,.33f):park?new Color(.18f,.27f,.21f):new Color(.12f,.16f,.17f);
                 if(!river&&road>3&&!park){float district=Mathf.PerlinNoise(p.x*.0018f+11,p.z*.0018f+7);color=Color.Lerp(color,new Color(.28f,.30f,.29f),district*.3f);}
                 float noise=Mathf.PerlinNoise(p.x*.003f+100,p.z*.003f+100);color*=.88f+.18f*noise;
                 colors[y*resolution+x]=color;
@@ -78,7 +194,7 @@ namespace NeonVault
         {
             var l=WorldGeography.Layout;
             float u=position.x/(l.Columns*l.CellSize)+.5f,v=position.z/(l.Rows*l.CellSize)+.5f;
-            return new Vector2(map.center.x+(u-worldMapCenter.x)*map.width*worldMapZoom,map.center.y-(v-worldMapCenter.y)*map.height*worldMapZoom);
+            return new Vector2(map.center.x+(u-worldMapCenter.x)*map.width*worldMapZoom,map.center.y-(v-worldMapCenter.y)*map.width*worldMapZoom*worldMapVerticalScale);
         }
         public void DrawOverworldHUD()
         {
@@ -87,14 +203,11 @@ namespace NeonVault
             Panel(new Rect(440,20,590,125),Cyan);
             WorldLabel(new Rect(460,30,550,40),WorldGeography==null?T("WASTELAND","荒野"):WorldGeography.RegionName(PlayerPosition,VaultLanguage.Japanese),Gold,26);
             WorldLabel(new Rect(460,78,550,52),T("LEVEL ","レベル ")+DebtLevel+"   /   "+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),UiPaper);
-            if(WorldButton(mobile?new Rect(440,255,180,64):new Rect(1050,20,175,74),T("MAP","全体地図")))OpenOverworldMap();
             if(!mobile&&WorldButton(new Rect(1240,20,180,74),T("EQUIPMENT","装備")))ToggleInventory();
             DrawWorldLocalMap(new Rect(1165,165,250,180));
             if(gun!=null)
             {
-                Rect r=mobile?new Rect(440,150,590,94):new Rect(1000,760,415,115);Panel(r,gun.color);
-                WorldLabel(new Rect(r.x+16,r.y+8,r.width-32,40),VaultLanguage.GunName(gun),gun.color,mobile?23:20);
-                WorldLabel(new Rect(r.x+16,r.y+48,r.width-32,48),reload>0?T("RELOADING…","装填中…"):ammo+" / "+EffectiveMagazine+T("   RESERVE ","   予備 ")+AmmoReserve(AmmoForGun(gun)),UiPaper,26);
+                DrawHeldWeaponHUD(mobile?new Rect(440,150,370,94):new Rect(1100,782,315,94));
             }
             DrawWorldLootPreview();
             DrawWorldCombatIndicators();
@@ -146,27 +259,29 @@ namespace NeonVault
         }
         void DrawWorldLocalMap(Rect map)
         {
+            if(GUI.Button(map,GUIContent.none,GUIStyle.none))OpenOverworldMap();
             EnsureOverworldAtlas();if(overworldAtlasTexture==null)return;
             Panel(map,Cyan);Rect inside=new Rect(map.x+10,map.y+30,map.width-20,map.height-40);
             var l=WorldGeography.Layout;float u=PlayerPosition.x/(l.Columns*l.CellSize)+.5f,v=PlayerPosition.z/(l.Rows*l.CellSize)+.5f;
             float uw=Mathf.Min(1,200f/(l.CellSize*l.Columns)),vh=Mathf.Min(1,150f/(l.CellSize*l.Rows));float left=Mathf.Clamp(u-uw*.5f,0,1-uw),bottom=Mathf.Clamp(v-vh*.5f,0,1-vh);
             Vector2 localOrigin=new Vector2(left*l.Columns*l.CellSize-l.Columns*l.CellSize*.5f,bottom*l.Rows*l.CellSize-l.Rows*l.CellSize*.5f);
-            UpdateWorldLocalTexture(localOrigin);GUI.DrawTexture(inside,worldLocalTexture);
+            if(aerialAtlas)DrawAerialSurvey(inside,new Rect(left,bottom,uw,vh));
+            else {UpdateWorldLocalTexture(localOrigin);GUI.DrawTexture(inside,worldLocalTexture);}
             WorldLabel(new Rect(map.x+10,map.y+3,map.width-20,27),T("LOCAL / 200 m / NORTH ↑","周辺 / 200m / 北 ↑"),Mist,17);
             Vector2 Local(Vector3 p)=>new Vector2(inside.x+(p.x/(l.Columns*l.CellSize)+.5f-left)/uw*inside.width,inside.yMax-(p.z/(l.Rows*l.CellSize)+.5f-bottom)/vh*inside.height);
             foreach(var enemy in Enemies)if(enemy!=null&&!enemy.dead){var p=Local(enemy.transform.position);if(inside.Contains(p))Box(new Rect(p.x-2,p.y-2,4,4),UiDanger);}
-            for(int i=0;i<WorldGeography.Entrances.Length;i++){var p=Local(WorldGeography.Entrances[i]);if(inside.Contains(p))WorldMarker(p.x,p.y,3,Gold);}
+            for(int i=0;i<WorldGeography.Entrances.Length;i++){var p=Local(WorldGeography.Entrances[i]);if(inside.Contains(p))FieldUIArt.Icon(new Rect(p.x-8,p.y-8,16,16),7,Gold);}
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
                 var p=Local(WorldGeography.Camps[i]);if(!inside.Contains(p))continue;
                 Box(new Rect(p.x-6,p.y-6,12,12),new Color(.02f,.04f,.05f,.9f));
-                WorldMarker(p.x,p.y,4,IsCampVisited(i)?Cyan:UiPaper);
+                FieldUIArt.Icon(new Rect(p.x-9,p.y-9,18,18),6,IsCampVisited(i)?UiPaper:Mist);
             }
             foreach(var site in NearbyOverworldActivitySites)
             {
                 if(site.completed)continue;
                 var p=Local(site.position);
-                if(inside.Contains(p))WorldMarker(p.x,p.y,4,WorldActivityColor(site.type));
+                if(inside.Contains(p))FieldUIArt.Icon(new Rect(p.x-9,p.y-9,18,18),site.type==1?9:site.type==2?11:10,WorldActivityColor(site.type));
             }
             void LootDot(Vector3 position)
             {
@@ -182,13 +297,13 @@ namespace NeonVault
         }
         void UpdateWorldLocalTexture(Vector2 origin)
         {
-            if(worldLocalTexture==null)worldLocalTexture=new Texture2D(50,38,TextureFormat.RGBA32,false){name="200m local geography",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+            if(worldLocalTexture==null)worldLocalTexture=new Texture2D(200,150,TextureFormat.RGBA32,false){name="200m local geography",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
             if(Event.current.type!=EventType.Repaint)return;if((origin-worldLocalOrigin).sqrMagnitude<16)return;if(Time.unscaledTime<worldLocalRefresh)return;
             worldLocalRefresh=Time.unscaledTime+.75f;worldLocalOrigin=origin;var geo=WorldGeography;
-            for(int z=0;z<38;z++)for(int x=0;x<50;x++)
+            for(int z=0;z<150;z++)for(int x=0;x<200;x++)
             {
-                var p=new Vector3(origin.x+x*4+2,0,origin.y+z*4+2);
-                worldLocalPixels[z*50+x]=geo.River(p)&&!geo.Bridge(p.z)?new Color(.12f,.32f,.42f):LocalMapBuilding(geo,p)?new Color(.09f,.13f,.16f):geo.RoadClearance(p)<0?new Color(.51f,.46f,.35f):geo.Park(p)?new Color(.21f,.34f,.25f):new Color(.32f,.33f,.29f);
+                var p=new Vector3(origin.x+x+.5f,0,origin.y+z+.5f);
+                worldLocalPixels[z*200+x]=geo.River(p)&&!geo.Bridge(p.z)?new Color(.12f,.23f,.26f):LocalMapBuilding(geo,p)?new Color(.38f,.36f,.31f):geo.RoadClearance(p)<0?new Color(.62f,.58f,.48f):geo.Park(p)?new Color(.22f,.29f,.23f):new Color(.16f,.19f,.19f);
             }
             worldLocalTexture.SetPixels(worldLocalPixels);worldLocalTexture.Apply(false,false);
         }
@@ -197,16 +312,16 @@ namespace NeonVault
         {
             float next=Mathf.Clamp(zoom,1f,8f);if(Mathf.Approximately(next,worldMapZoom))return;
             float u=worldMapCenter.x+(anchor.x-map.center.x)/(map.width*worldMapZoom);
-            float v=worldMapCenter.y-(anchor.y-map.center.y)/(map.height*worldMapZoom);
+            float v=worldMapCenter.y-(anchor.y-map.center.y)/(map.width*worldMapZoom*worldMapVerticalScale);
             worldMapCenter.x=u-(anchor.x-map.center.x)/(map.width*next);
-            worldMapCenter.y=v+(anchor.y-map.center.y)/(map.height*next);
+            worldMapCenter.y=v+(anchor.y-map.center.y)/(map.width*next*worldMapVerticalScale);
             worldMapZoom=next;ClampWorldMapCenter();
         }
         void ClampWorldMapCenter()
         {
             float margin=.5f/worldMapZoom;
             worldMapCenter.x=Mathf.Clamp(worldMapCenter.x,margin,1-margin);
-            worldMapCenter.y=Mathf.Clamp(worldMapCenter.y,margin,1-margin);
+            float verticalMargin=margin*650f/(900f*worldMapVerticalScale);worldMapCenter.y=Mathf.Clamp(worldMapCenter.y,verticalMargin,1-verticalMargin);
         }
         void HandleWorldMapInput(Rect map)
         {
@@ -230,7 +345,7 @@ namespace NeonVault
             {
                 var delta=evt.mousePosition-worldMapLastPointer;
                 worldMapCenter.x-=delta.x/(map.width*worldMapZoom);
-                worldMapCenter.y+=delta.y/(map.height*worldMapZoom);
+                worldMapCenter.y+=delta.y/(map.width*worldMapZoom*worldMapVerticalScale);
                 ClampWorldMapCenter();worldMapLastPointer=evt.mousePosition;evt.Use();
             }
             if(evt.type==EventType.MouseUp)worldMapDragging=false;
@@ -238,10 +353,13 @@ namespace NeonVault
         public void DrawOverworldAtlas()
         {
             EnsureOverworldAtlas();Box(new Rect(0,0,1440,900),new Color(.025f,.045f,.06f,.98f));
-            WorldLabel(new Rect(30,20,1090,55),T("THE WASTELAND / FIELD ATLAS","荒野 / 広域地図"),Gold,36);
+            WorldLabel(new Rect(30,20,1090,55),T("THE WASTELAND / FIELD ATLAS","荒野 / 広域地図"),UiPaper,32);
             if(WorldButton(new Rect(1195,16,215,66),T("BACK","戻る")))CloseOverworldMap();
             if(overworldAtlasTexture==null)return;
             Rect map=new Rect(30,100,900,650);
+            // The mobile canvas fills a device's safe area nonuniformly. Compensate
+            // here so the surveyed city keeps equal physical scale on both axes.
+            worldMapVerticalScale=Mathf.Abs(GUI.matrix.m00/Mathf.Max(.001f,GUI.matrix.m11));
             if(!worldMapInitialized)
             {
                 Vector3 origin=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];
@@ -250,33 +368,39 @@ namespace NeonVault
             }
             HandleWorldMapInput(map);
             float visible=1f/worldMapZoom;
-            Rect uv=new Rect(worldMapCenter.x-visible*.5f,worldMapCenter.y-visible*.5f,visible,visible);
-            GUI.DrawTextureWithTexCoords(map,overworldAtlasTexture,uv);
+            float verticalVisible=visible*map.height/(map.width*worldMapVerticalScale);
+            Rect uv=new Rect(worldMapCenter.x-visible*.5f,worldMapCenter.y-verticalVisible*.5f,visible,verticalVisible);
+            DrawAerialSurvey(map,uv);
+            DrawWorldBuildingAtlas(map,uv);
+            if(!aerialAtlas)FieldUIArt.MapSurface(map);
             DrawAtlasDistrictLabels(map);
             WorldLabel(new Rect(50,110,650,35),T("ASHFALL  /  CITY SURVEY","アッシュフォール / 都市調査図"),UiPaper,20);
             DrawWorldMapScale(map);
+            FieldUIArt.Icon(new Rect(map.xMax-61,map.yMax-54,42,34),5,UiPaper);
+            if(GUI.Button(new Rect(map.xMax-66,map.yMax-58,52,44),GUIContent.none,GUIStyle.none)){var pos=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];worldMapCenter=new Vector2(pos.x/10000f+.5f,pos.z/10000f+.5f);ClampWorldMapCenter();}
             for(int i=0;i<WorldGeography.Entrances.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i);bool selected=overworldSelectedCamp<0&&expeditionMapSelection==i;
-                Color color=clearedExpeditionStages.Contains(i)?Cyan:stage.level<=DebtLevel?Gold:Mist;
-                if(selected)Box(new Rect(p.x-12,p.y-12,24,24),new Color(.02f,.04f,.06f,.9f));FieldUIArt.Icon(new Rect(p.x-(selected?16:11),p.y-(selected?16:11),selected?32:22,selected?32:22),7,color);
+                Color color=selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):stage.level<=DebtLevel?UiPaper:Mist;
+                if(selected)Box(new Rect(p.x-12,p.y-12,24,24),new Color(.02f,.04f,.06f,.9f));FieldUIArt.Icon(new Rect(p.x-(selected?18:13),p.y-(selected?18:13),selected?36:26,selected?36:26),7,color);
                 if(GUI.Button(new Rect(p.x-13,p.y-13,26,26),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;}
             }
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;FieldUIArt.Icon(new Rect(p.x-18,p.y-18,36,36),6,IsCampVisited(i)?Color.white:Color.gray);
-                if(GUI.Button(new Rect(p.x-16,p.y-16,32,32),(i+1).ToString(),centered))overworldSelectedCamp=i;
+                if(GUI.Button(new Rect(p.x-18,p.y-18,36,36),GUIContent.none,GUIStyle.none))overworldSelectedCamp=i;
             }
             if(IsOverworld)foreach(var site in NearbyOverworldActivitySites)
             {
                 if(site.completed)continue;
                 Vector2 p=WorldAtlasPoint(map,site.position);
-                if(map.Contains(p))WorldMarker(p.x,p.y,7,WorldActivityColor(site.type));
+                if(map.Contains(p))FieldUIArt.Icon(new Rect(p.x-14,p.y-14,28,28),site.type==1?9:site.type==2?11:10,WorldActivityColor(site.type));
             }
             if(IsOverworld){var p=WorldAtlasPoint(map,PlayerPosition);if(map.Contains(p)){WorldMarker(p.x,p.y,12,Color.white);Box(new Rect(p.x-2,p.y-2,4,4),Cyan);}}
             if(WorldButton(new Rect(744,112,78,55),"−"))SetWorldMapZoom(worldMapZoom/1.5f,map.center,map);
             if(WorldButton(new Rect(830,112,78,55),"+"))SetWorldMapZoom(worldMapZoom*1.5f,map.center,map);
-            WorldLabel(new Rect(35,756,890,42),T("Drag to move · wheel / ± to zoom · ◇ Dungeon · ■ Camp · colored dots: nearby activities · ↑ North","ドラッグで移動・ホイール / ± で拡大・◇ ダンジョン・■ 拠点・色点：近くの寄り道・↑ 北"),Mist,17);
+            DrawAerialMapLegend(map);
+            WorldLabel(new Rect(35,756,890,42),T("Drag to pan  ·  Pinch / ± to zoom  ·  Map icon: recenter  ·  North ↑","ドラッグで移動・ピンチ / ± で拡大・地図アイコンで現在地へ・北 ↑"),Mist,17);
             Panel(new Rect(950,100,460,650),Gold);
             if(overworldSelectedCamp>=0)
             {
@@ -286,9 +410,26 @@ namespace NeonVault
                 if(WorldButton(new Rect(975,620,410,100),T("FAST TRAVEL","ファストトラベル"),travel))FastTravelToCamp(camp);
             }
             else DrawWorldStageBriefing();
-            for(int i=0;i<7;i++)if(WorldButton(new Rect(30+i*198,812,188,70),(i+1)+" / "+OverworldCampName(i,VaultLanguage.Japanese),IsCampVisited(i)))overworldSelectedCamp=i;
+            for(int i=0;i<WorldGeography.Camps.Length;i++)if(WorldButton(new Rect(30+(i%7)*198,784+(i/7)*52,188,46),(i+1)+" / "+OverworldCampName(i,VaultLanguage.Japanese),IsCampVisited(i)))
+            {
+                overworldSelectedCamp=i;
+                Vector3 camp=WorldGeography.Camps[i];worldMapCenter=new Vector2(camp.x/10000f+.5f,camp.z/10000f+.5f);ClampWorldMapCenter();
+            }
         }
 
+        void DrawAerialMapLegend(Rect map)
+        {
+            Rect legend=new Rect(map.xMax-172,map.y+88,156,152);
+            FieldUIArt.Plate(legend,false);
+            int[] icons={6,7,11};
+            string[] names={T("Camp","拠点"),T("Dungeon","ダンジョン"),T("Discovery","発見")};
+            for(int i=0;i<3;i++)
+            {
+                float y=legend.y+15+i*43;
+                FieldUIArt.Icon(new Rect(legend.x+12,y,28,28),icons[i],i==2?new Color(.91f,.54f,.28f):UiPaper);
+                WorldLabel(new Rect(legend.x+47,y+3,104,32),names[i],UiPaper,18);
+            }
+        }
         string WorldDistanceLabel(Vector3 destination)
         {
             Vector3 origin=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];
@@ -297,9 +438,9 @@ namespace NeonVault
         }
         void DrawAtlasDistrictLabels(Rect map)
         {
-            Vector2[] sites={new Vector2(-3200,-2500),new Vector2(-1000,400),new Vector2(1050,-700),new Vector2(2700,1600),new Vector2(-2600,3100),new Vector2(800,3600)};
-            string[] en={"SOUTH MARKET","OLD CITY","CANAL WARD","INDUSTRIAL BELT","WEST COMMON","NORTH WOODS"};
-            string[] ja={"南部市場","旧市街","運河地区","工業地帯","西の広場","北の森"};
+            Vector2[] sites={new Vector2(-1350,-2100),new Vector2(-1700,-650),new Vector2(-700,-500),new Vector2(700,400),new Vector2(3650,650),new Vector2(2900,2800)};
+            string[] en={"SOUTH MARKET","OLD CITY","RIVERFRONT PARK","CIVIC QUARTER","EAST MARKET","NORTH COMMON"};
+            string[] ja={"南部市場","旧市街","河岸公園","市庁舎地区","東部市場","北の公園"};
             for(int i=0;i<sites.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,new Vector3(sites[i].x,0,sites[i].y));
