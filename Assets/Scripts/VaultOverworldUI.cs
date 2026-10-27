@@ -209,7 +209,7 @@ namespace NeonVault
             DrawWorldLocalMap(new Rect(1165,165,250,180));
             if(gun!=null)
             {
-                DrawHeldWeaponHUD(mobile?new Rect(600,815,240,64):new Rect(1190,812,226,64));
+                DrawHeldWeaponHUD(mobile?new Rect(350,797,280,80):new Rect(1190,812,226,64));
             }
             if(!DrawActivityRewardPreview())DrawWorldLootPreview();
             DrawWorldCombatIndicators();
@@ -217,8 +217,8 @@ namespace NeonVault
             int entrance=NearbyWorldEntrance,camp=NearbyWorldCamp;
             if(entrance>=0)
             {
-                var stage=ExpeditionMap.Get(entrance,DebtLevel);bool unlocked=stage.level<=DebtLevel;
-                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+(unlocked?T("ENTER / E","入場 / E"):T("LEVEL TOO LOW","レベル不足")),unlocked))EnterNearbyWorldDungeon(entrance);
+                var stage=ExpeditionMap.Get(entrance,DebtLevel);
+                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+T("ENTER / E","入場 / E")))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
             {
@@ -234,7 +234,7 @@ namespace NeonVault
             {
                 var p=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.6f);if(p.z<=0)continue;
                 Vector2 at=MobileTouchControls.Enabled?MobileCanvasPoint(p):new Vector2((p.x-(UnityEngine.Screen.width-1440*Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f))*.5f)/Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f),(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f))*.5f)/Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f));
-                WorldLabel(new Rect(at.x-35,at.y-27,100,26),"Lv."+GetOverworldEnemyLevel(foe),UiPaper,17);
+                WorldLabel(new Rect(at.x-82,at.y-31,164,25),EnemyHealthLabel(foe),UiPaper,17);
                 Box(new Rect(at.x-28,at.y,56,5),Ink);Box(new Rect(at.x-28,at.y,56*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);
             }
             if(!Active)return;
@@ -270,9 +270,9 @@ namespace NeonVault
             Color color=Arsenal.Colors[(int)rarity];Panel(card,color);
             if(item==null){WorldLabel(new Rect(card.x+15,card.y+15,card.width-30,50),T("SCRAP RECEIVED","スクラップ獲得"),Gold,23);WorldLabel(new Rect(card.x+15,card.y+72,card.width-30,60),LastActivityRewardScrap.ToString("N0"),UiPaper,30);return true;}
             Rect picture=new Rect(card.x+10,card.y+16,100,120);string itemName;int level,score;
-            if(item is Gun gun){ItemPortraits.Draw(picture,gun);itemName=VaultLanguage.GunName(gun,false);level=gun.level;score=GearScoring.Score(gun);}
-            else if(item is ArmorItem armor){ItemPortraits.Draw(picture,armor);itemName=Armory.Name(armor,false);level=armor.level;score=GearScoring.Score(armor);}
-            else {var module=(ArtifactItem)item;ManufacturerBranding.ModulePortrait(picture,module);itemName=ArtifactCatalog.DisplayName(module,false);level=module.level;score=GearScoring.Score(module);}
+            if(item is Gun gun){ItemPortraits.Draw(picture,gun);itemName=VaultLanguage.GunName(gun);level=gun.level;score=GearScoring.Score(gun);}
+            else if(item is ArmorItem armor){ItemPortraits.Draw(picture,armor);itemName=Armory.Name(armor);level=armor.level;score=GearScoring.Score(armor);}
+            else {var module=(ArtifactItem)item;ManufacturerBranding.ModulePortrait(picture,module);itemName=ArtifactCatalog.DisplayName(module);level=module.level;score=GearScoring.Score(module);}
             WorldLabel(new Rect(card.x+120,card.y+8,card.width-130,37),itemName,UiPaper,20);
             WorldLabel(new Rect(card.x+120,card.y+44,card.width-130,32),VaultLanguage.RarityName(rarity),color,20);
             WorldLabel(new Rect(card.x+120,card.y+77,card.width-130,30),T("LEVEL ","レベル ")+level+T("  SCORE ","  評価 ")+score,UiPaper,18);
@@ -315,6 +315,34 @@ namespace NeonVault
             foreach(var d in artifactDrops)if(d.item.rarity==Rarity.Legendary)LootDot(d.position);
             foreach(var d in meleeDrops)if(d.item.rarity==Rarity.Legendary)LootDot(d.position);
             var player=Local(PlayerPosition);WorldMarker(player.x,player.y,5,Cyan);
+            if(OverworldWaypointKind!=0)
+            {
+                Vector3 target=OverworldWaypointPosition;
+                Vector2 targetOnMap=Local(target), direction=targetOnMap-player;
+                if(direction.sqrMagnitude>100f)
+                {
+                    Vector2 arrow=targetOnMap;
+                    Rect safe=new Rect(inside.x+15,inside.y+15,inside.width-30,inside.height-30);
+                    if(!safe.Contains(arrow))
+                    {
+                        float fraction=1f;
+                        if(direction.x>0)fraction=Mathf.Min(fraction,(safe.xMax-player.x)/direction.x);
+                        if(direction.x<0)fraction=Mathf.Min(fraction,(safe.xMin-player.x)/direction.x);
+                        if(direction.y>0)fraction=Mathf.Min(fraction,(safe.yMax-player.y)/direction.y);
+                        if(direction.y<0)fraction=Mathf.Min(fraction,(safe.yMin-player.y)/direction.y);
+                        arrow=player+direction*Mathf.Clamp01(fraction);
+                    }
+                    DrawWaypointArrow(arrow,direction.normalized);
+                }
+            }
+        }
+        void DrawWaypointArrow(Vector2 center,Vector2 direction)
+        {
+            Vector2 side=new Vector2(-direction.y,direction.x);
+            Vector2 tip=center+direction*12f,back=center-direction*7f;
+            Line(tip,back+side*7f,Gold,3);Line(tip,back-side*7f,Gold,3);
+            Line(back+side*7f,back-side*7f,Gold,3);
+            Box(new Rect(center.x-2,center.y-2,4,4),Gold);
         }
         void UpdateWorldLocalTexture(Vector2 origin)
         {
@@ -419,13 +447,15 @@ namespace NeonVault
             for(int i=0;i<WorldGeography.Entrances.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i,DebtLevel);bool selected=overworldSelectedCamp<0&&expeditionMapSelection==i;
-                Color color=selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):stage.level<=DebtLevel?UiPaper:Mist;
+                Color color=OverworldWaypointKind==2&&OverworldWaypointId==i?Gold:selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):IsOverworldDungeonDiscovered(i)?UiPaper:Mist;
                 if(selected)Box(new Rect(p.x-12,p.y-12,24,24),new Color(.02f,.04f,.06f,.9f));FieldUIArt.Icon(new Rect(p.x-(selected?18:13),p.y-(selected?18:13),selected?36:26,selected?36:26),7,color);
+                if(OverworldWaypointKind==2&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+12,p.y-22,26,28),"▲",Gold,19);
                 if(GUI.Button(new Rect(p.x-13,p.y-13,26,26),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;}
             }
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;FieldUIArt.Icon(new Rect(p.x-18,p.y-18,36,36),6,IsCampVisited(i)?Color.white:Color.gray);
+                if(OverworldWaypointKind==1&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+15,p.y-24,28,28),"▲",Gold,20);
                 if(GUI.Button(new Rect(p.x-18,p.y-18,36,36),GUIContent.none,GUIStyle.none))overworldSelectedCamp=i;
             }
             if(IsOverworld)foreach(var site in NearbyOverworldActivitySites)
@@ -445,6 +475,8 @@ namespace NeonVault
                 int camp=overworldSelectedCamp;bool visited=IsCampVisited(camp);bool travel=visited&&CanWorldFastTravel;
                 WorldLabel(new Rect(975,125,410,100),OverworldCampName(camp,VaultLanguage.Japanese),Gold,32);
                 WorldLabel(new Rect(975,250,410,210),visited?T("Discovered refuge. Travel here to rest and trade. Fast travel is unavailable inside dungeons.","発見済みの避難所。休息と取引のために移動できます。ダンジョン内からは移動できません。"):T("Undiscovered. Reach this camp on foot to unlock fast travel.","未訪問。歩いて到達するとファストトラベルが解放されます。"),Mist,26);
+                bool tracking=OverworldWaypointKind==1&&OverworldWaypointId==camp;
+                if(WorldButton(new Rect(975,500,410,75),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:1,camp);
                 if(WorldButton(new Rect(975,620,410,100),T("FAST TRAVEL","ファストトラベル"),travel))FastTravelToCamp(camp);
             }
             else DrawWorldStageBriefing();
@@ -497,15 +529,17 @@ namespace NeonVault
         }
         void DrawWorldStageBriefing()
         {
-            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool eligible=stage.level<=DebtLevel;
-            WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+stage.Name,Gold,29);
-            WorldLabel(new Rect(975,220,410,75),stage.Location+" / "+stage.Biome,Mist,23);
-            WorldLabel(new Rect(975,305,410,70),T("REQUIRED LEVEL ","必要レベル ")+stage.level+T(" / YOURS "," / 現在 ")+DebtLevel,eligible?Cyan:UiDanger,25);
-            WorldLabel(new Rect(975,375,410,105),ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese),UiPaper,26);
-            WorldLabel(new Rect(975,490,410,80),ExpeditionRewardDescription(stage.id),Gold,22);
+            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id);
+            WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,29);
+            WorldLabel(new Rect(975,220,410,75),discovered?stage.Location+" / "+stage.Biome:"?",Mist,23);
+            WorldLabel(new Rect(975,305,410,70),T("LEVEL ","レベル ")+(discovered?stage.level.ToString():"?"),Cyan,25);
+            WorldLabel(new Rect(975,375,410,105),discovered?ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese):"?",UiPaper,26);
+            WorldLabel(new Rect(975,490,410,80),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,22);
             WorldLabel(new Rect(975,575,410,40),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,21);
-            bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id&&eligible;
-            if(WorldButton(new Rect(975,620,410,100),nearby?T("ENTER DUNGEON","ダンジョンに入る"):eligible?T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"):T("LEVEL TOO LOW","レベル不足"),nearby))EnterNearbyWorldDungeon(stage.id);
+            bool tracking=OverworldWaypointKind==2&&OverworldWaypointId==stage.id;
+            if(WorldButton(new Rect(975,615,410,60),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:2,stage.id);
+            bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id;
+            if(WorldButton(new Rect(975,685,410,55),nearby?T("ENTER DUNGEON","ダンジョンに入る"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
         }
         public void DrawWorldBossConversation()
         {

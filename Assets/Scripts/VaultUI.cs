@@ -234,9 +234,14 @@ namespace NeonVault
                 Vector3 p=cam.WorldToScreenPoint(f.transform.position+Vector3.up*(f.kind==3?4.6f:2.4f));if(p.z<=0)continue;
                 float x=(p.x-(UnityEngine.Screen.width-1440*s)/2)/s,y=(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*s)/2)/s;
                 Box(new Rect(x-28,y,56,4),PanelInk);Box(new Rect(x-28,y,56*Mathf.Clamp01(f.hp/f.maxHp),4),f.HealthBarColor);
-                Text(x-60,y-18,Foe.Name(f.kind),tiny,f.kind==8?Cyan:Mist,160);
+                WorldLabel(new Rect(x-82,y-27,164,25),EnemyHealthLabel(f),f.kind==8?Cyan:UiPaper,17);
             }
             DrawCrosshair(mx,my);
+        }
+        string EnemyHealthLabel(Foe foe)
+        {
+            int level=IsOverworld?GetOverworldEnemyLevel(foe):SelectedExpeditionStage!=null?SelectedExpeditionStage.level:CurrentDungeon.minLevel;
+            return "Lv."+Mathf.Max(1,level)+" "+Foe.Name(foe.kind);
         }
         void DrawCompactLootCard(object item,Rarity rarity,int level,int score)
         {
@@ -271,7 +276,7 @@ namespace NeonVault
         }
         void DrawExpeditionBriefing()
         {
-            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool unlocked=stage.level<=DebtLevel;bool cleared=clearedExpeditionStages.Contains(stage.id);
+            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool unlocked=true;bool cleared=clearedExpeditionStages.Contains(stage.id);
             Text(1042,174,T("FIELD DOSSIER / ","現地記録 / ")+stage.Name,label,Gold,330);
             Text(1042,219,stage.Location,new GUIStyle(small){wordWrap=true},stage.regionColor,330);
             Line(new Vector2(1042,270),new Vector2(1374,270),new Color(.55f,.72f,.72f,.38f));

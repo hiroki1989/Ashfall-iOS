@@ -15,16 +15,16 @@ namespace NeonVault
             Rect view=MobileCityView;Vector2 size=ExpeditionMap.CityCanvasSize*expeditionCityZoom;
             expeditionMapScroll=Vector2.Max(Vector2.zero,Vector2.Min(expeditionMapScroll,size-view.size));
             expeditionMapScroll=GUI.BeginScrollView(view,expeditionMapScroll,new Rect(0,0,size.x,size.y));DrawCityAtlas();GUI.EndScrollView();
-            var stage=ExpeditionMap.Get(expeditionMapSelection,DebtLevel);bool unlocked=stage.level<=DebtLevel;
-            MobileCopyAt(42,640,stage.Name+" / Lv "+stage.level+"  ("+T("YOU ","現在 ")+DebtLevel+")",unlocked?Cyan:Gold);
-            MobileCopyAt(42,684,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese),Mist,1350);
+            var stage=ExpeditionMap.Get(expeditionMapSelection,DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id);
+            MobileCopyAt(42,640,(discovered?stage.Name:"?")+" / Lv "+(discovered?stage.level.ToString():"?"),Cyan);
+            MobileCopyAt(42,684,discovered?ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese):"?",Mist,1350);
             bool done=clearedExpeditionStages.Contains(stage.id);
-            MobileCopyAt(42,727,(done?T("CLEARED · REPLAY ","クリア済 · 再攻略 "):T("FIRST CLEAR ","初回 "))+ExpeditionRewardDescription(stage.id)+(done?"":" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id)),Cyan,1350);
+            MobileCopyAt(42,727,discovered?(done?T("CLEARED · REPLAY ","クリア済 · 再攻略 "):T("FIRST CLEAR ","初回 "))+ExpeditionRewardDescription(stage.id)+(done?"":" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id)):"?",Cyan,1350);
             if(MobileButton(new Rect(40,780,270,110),T("BACK","拠点へ"))){mobileMapEntered=false;screen=Screen.Hub;}
             if(MobileButton(new Rect(330,780,125,110),"−"))SetCityZoom(expeditionCityZoom/1.2f,view.size*.5f);
             if(MobileButton(new Rect(475,780,125,110),"+"))SetCityZoom(expeditionCityZoom*1.2f,view.size*.5f);
             if(MobileButton(new Rect(625,780,260,110),T("FIND SITE","選択地点へ")))expeditionMapScroll=ExpeditionMap.CityPoint(expeditionMapSelection)*expeditionCityZoom-view.size*.5f;
-            if(MobileButton(new Rect(910,780,490,110),unlocked?T("DEPLOY","出撃"):T("LEVEL LOCKED","レベル不足"))&&unlocked){mobileMapEntered=false;EnterExpeditionStage(stage.id);}
+            if(MobileButton(new Rect(910,780,490,110),T("DEPLOY","出撃"))){mobileMapEntered=false;EnterExpeditionStage(stage.id);}
         }
         void DrawMobileManufacturer()
         {

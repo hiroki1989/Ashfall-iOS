@@ -16,6 +16,8 @@ namespace NeonVault {
    int maker=expanded?LegendaryCatalog.MakerFromCatalogIndex(index):index/5;
    int artCell=expanded?LegendaryCatalog.VariantFromCatalogIndex(index)-5:(armor?5:0)+index%5;
    string path=expanded?"Art/BespokeLegendariesExpanded/"+ManufacturerCatalog.Id(maker)+"-legendaries-v2":"Art/BespokeLegendaries/"+ManufacturerCatalog.Id(maker)+"-legendaries-v1";
+   string portrait=path+"-portrait-v2";
+   if(Resources.Load<Texture2D>(portrait))path=portrait;
    if(!textures.TryGetValue(path,out var t)||!t){t=Resources.Load<Texture2D>(path);if(!t)return false;textures[path]=t;}
    if(!bounds.TryGetValue(path,out var cells)){
     var json=Resources.Load<TextAsset>(path+"-bounds");cells=json?DistinctEquipmentPortraits.ParseBounds(json.text,10):null;

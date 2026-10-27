@@ -82,7 +82,7 @@ namespace NeonVault
         public bool EnterNearbyWorldDungeon(int stage)
         {
             if(!IsOverworld||stage<0||stage>=ExpeditionMap.StageCount||(WorldGeography.Entrances[stage]-PlayerPosition).sqrMagnitude>3.5f*3.5f)return false;
-            if(ExpeditionMap.Get(stage,DebtLevel).level>DebtLevel){Notify("LEVEL REQUIREMENT NOT MET","入場レベルが足りません");return false;}
+            DiscoverOverworldDungeon(stage);
             SaveInventory();RememberOverworldPosition(WorldGeography.Entrances[stage]+Vector3.back*2,true);SetOverworldReturnStage(stage);
             return EnterExpeditionStage(stage);
         }
@@ -155,6 +155,7 @@ namespace NeonVault
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             worldSaveTimer-=Time.deltaTime;if(worldSaveTimer<=0){worldSaveTimer=8;RememberOverworldPosition(PlayerPosition,true);SaveInventory();}
             worldSpawnTimer-=Time.deltaTime;if(worldSpawnTimer>0)return;worldSpawnTimer=.5f;
+            int nearbyDungeon=NearbyWorldEntrance;if(nearbyDungeon>=0)DiscoverOverworldDungeon(nearbyDungeon);
             OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();StreamWorldChests();RefreshOverworldActivities();
         }
         void GenerateOverworldEnemies()
@@ -233,7 +234,7 @@ namespace NeonVault
                 try
                 {
                     SpawnFoe(nearest.position,nearest.kind);
-                    var foe=Enemies[Enemies.Count-1];nearest.active=foe;worldEnemyInstances.Add(foe,nearest);
+                    var foe=Enemies[Enemies.Count-1];nearest.position=foe.transform.position;nearest.position.y=.65f;nearest.active=foe;worldEnemyInstances.Add(foe,nearest);
                     if(nearest.hp>=0)foe.hp=Mathf.Clamp(nearest.hp,.001f,foe.maxHp);
                 }
                 finally{spawningWorldEnemy=null;}

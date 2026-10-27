@@ -18,6 +18,10 @@ namespace NeonVault
         Limb rifleRight,rifleLeft;
         sealed class Finger { public Transform bone; public Quaternion rest; public Vector3 axis; public float curl; }
         readonly List<Finger> fingers=new List<Finger>();
+        readonly List<Material> variantMaterials=new List<Material>();
+        bool handgun;
+        Transform handgunMuzzle;
+        public Vector3 MuzzlePosition => handgunMuzzle ? handgunMuzzle.position : raiderRifle ? raiderRifle.position+raiderRifle.forward*(handgun?.19f:.72f) : transform.position+Vector3.up*1.2f;
         Foe owner; Transform actor; Vector3 previous, modelPosition; Quaternion modelRotation;
         sealed class Limb
         {
@@ -27,6 +31,7 @@ namespace NeonVault
         }
         readonly List<Limb> limbs=new List<Limb>();
         float phase, stateTime, attackTime, deathTime=-1; bool wasCharging; string state="";
+        public void NotifyShot(){if(deathTime<0)attackTime=.5f;}
         public static bool TryAttach(GameObject actor,int kind)
         {
             if(!actor)return false;
@@ -63,6 +68,13 @@ namespace NeonVault
             foreach(var skin in GetComponentsInChildren<SkinnedMeshRenderer>()){skin.updateWhenOffscreen=true;skin.localBounds=new Bounds(Vector3.zero,Vector3.one*10);}
             if(idleClip&&!idleClip.humanMotion){idleClip.SampleAnimation(model.gameObject,0);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;}
             CacheLimbs();
+            if(owner&&owner.RaiderBoss)BuildRaiderBossRifle();
+            if(owner&&owner.kind==10)
+            {
+                handgun=!owner.UseAssaultRifle;
+                ApplyRaiderDesign();
+                if(handgun&&raiderRifle)BuildRaiderHandgun();
+            }
             if(raiderRifle)
             {
                 rifleRight=limbs.Find(l=>l.arm&&l.side>0);rifleLeft=limbs.Find(l=>l.arm&&l.side<0);
@@ -123,14 +135,14 @@ namespace NeonVault
                 float normalized=stateTime/Mathf.Max(.01f,clip.length);
                 if(state=="death"||state=="attack")normalized=Mathf.Min(normalized,.999f);
                 nativeAnimator.Play(state,0,normalized);nativeAnimator.Update(0);RestoreScales();
-                model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);return;
+                model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);PoseFirearm(speed);return;
             }
             if(nativeAnimator)nativeAnimator.enabled=false;
             // Generic clips preserve authored bone paths.
             if(clip&&!clip.humanMotion)
             {
                 float time=state=="death"||state=="attack"?Mathf.Min(stateTime,Mathf.Max(0,clip.length-.001f)):Mathf.Repeat(stateTime,Mathf.Max(.01f,clip.length));
-                clip.SampleAnimation(model.gameObject,time);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);return;
+                clip.SampleAnimation(model.gameObject,time);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);PoseFirearm(speed);return;
             }
             model.localPosition=modelPosition;
             model.localRotation=modelRotation;
@@ -155,7 +167,7 @@ namespace NeonVault
                     if(kind==0){upperDirection=new Vector3(limb.side*.19f,-.95f,.3f-stride*.25f+strike);lowerDirection=new Vector3(0,-.72f,.58f-stride*.14f+strike*.7f);}
                     else if(kind==4){upperDirection=new Vector3(limb.side*.36f,-.62f,.6f-stride*.25f+strike);lowerDirection=new Vector3(limb.side*.15f,-.45f,.85f);}
                     else if(heavy){upperDirection=new Vector3(limb.side*.32f,-.94f,.12f-stride*.35f+strike*.95f-prepare*.35f);lowerDirection=new Vector3(-limb.side*.12f,-.8f,.4f-stride*.20f+strike*.85f);}
-                    else if(kind==5||kind==10){upperDirection=new Vector3(limb.side*.24f,-.82f,.38f+strike*.35f);lowerDirection=new Vector3(-limb.side*.1f,-.25f,.95f+prepare*.2f);}
+                    else if(kind==5||kind==10||owner&&owner.RaiderBoss&&owner.BossAttackStyle==3){upperDirection=new Vector3(limb.side*.24f,-.82f,.38f+strike*.35f);lowerDirection=new Vector3(-limb.side*.1f,-.25f,.95f+prepare*.2f);}
                     if(kind==3&&owner&&owner.BossAttackStyle==1){upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.3f,.8f,.4f),prepare);lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(0,.6f,.8f),prepare);}
                     if(kind==3&&owner&&owner.BossAttackStyle==2){upperDirection=new Vector3(limb.side*(.45f+prepare*.6f),-.25f,.4f+strike);lowerDirection=new Vector3(-limb.side*.65f*strike,-.2f,.9f);}
                     upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.5f,-.75f,.25f),dying);
@@ -176,24 +188,135 @@ namespace NeonVault
                 if(limb.arm&&limb.end&&limb.tip)
                     Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(0,-.8f,.5f)));
             }
+            PoseFirearm(speed);
+            ApplySecondaryMotion(speed,kind);
+            if(deathTime>=0)ApplyFallbackCollapse(heavy,kind);
+        }
+        void PoseFirearm(float speed)
+        {
+            if(owner&&owner.RaiderBoss&&raiderRifle)
+            {
+                bool firing=owner.BossAttackStyle==3&&(owner.IsTelegraphing||attackTime>0);
+                raiderRifle.gameObject.SetActive(firing);
+                if(!firing)return;
+            }
             if(raiderRifle&&deathTime<0)
             {
                 if(rifleRight!=null&&rifleLeft!=null)
                 {
+                    // The weapon stays on its own root; wrist IK follows its two real contacts.
+                    // Telegraphing settles the shoulder, while each shot kicks the muzzle briefly.
+                    float aiming=owner&&owner.IsTelegraphing?1:0;
+                    float recoil=attackTime>0?Mathf.Sin((1-attackTime/.5f)*Mathf.PI):0;
+                    float moving=Mathf.Clamp01(speed/2f);
                     float shoulders=(rifleRight.upper.position.y+rifleLeft.upper.position.y)*.5f;
-                    Vector3 grip=actor.position+actor.right*.12f+actor.forward*.12f;
-                    grip.y=shoulders-.23f;
-                    raiderRifle.rotation=Quaternion.LookRotation((actor.forward-actor.up*.12f).normalized,actor.up);
+                    Vector3 grip=actor.position+actor.right*(handgun?.19f:.12f)+actor.forward*(handgun?.29f:.12f)-(handgun?actor.forward*.07f:actor.forward*.045f)*recoil;
+                    grip.y=shoulders-(handgun?.12f:.23f)+.055f*aiming-.025f*moving;
+                    raiderRifle.rotation=Quaternion.LookRotation((actor.forward+actor.up*(.025f*aiming+(handgun?.28f:.16f)*recoil-.12f*moving)).normalized,actor.up);
                     raiderRifle.position=grip;
                     if(rifleGripSocket)raiderRifle.position+=grip-rifleGripSocket.position;
                     Vector3 support=rifleSupportSocket?rifleSupportSocket.position:grip+actor.forward*.30f+actor.up*.06f;
                     HoldRifleHand(rifleRight,grip,false);
-                    HoldRifleHand(rifleLeft,support,true);
+                    if(!handgun)HoldRifleHand(rifleLeft,support,true);
                     foreach(var finger in fingers)finger.bone.localRotation=finger.rest*Quaternion.AngleAxis(finger.curl,finger.axis);
                 }
             }
-            ApplySecondaryMotion(speed,kind);
-            if(deathTime>=0)ApplyFallbackCollapse(heavy,kind);
+        }
+        void ApplyRaiderDesign()
+        {
+            // The supplied Urban Insurgent is the only licensed source design in this project.
+            // Three battlefield loadouts vary cloth/armor without modifying the source material.
+            int seed=Mathf.Abs(Mathf.RoundToInt(actor.position.x*17+actor.position.z*31));
+            int design=seed%3;
+            Color[] cloth={new Color(.85f,.87f,.82f),new Color(.64f,.78f,.67f),new Color(.76f,.68f,.58f)};
+            Color tint=cloth[design];
+            foreach(var renderer in model.GetComponentsInChildren<Renderer>(true))
+            {
+                if(raiderRifle&&renderer.transform.IsChildOf(raiderRifle))continue;
+                var mats=renderer.sharedMaterials;
+                for(int i=0;i<mats.Length;i++)if(mats[i])
+                {
+                    var copy=new Material(mats[i]);copy.name=mats[i].name+" / raider loadout "+design;
+                    copy.color=Color.Lerp(mats[i].color,tint,design==0?.08f:.42f);
+                    variantMaterials.Add(copy);mats[i]=copy;
+                }
+                renderer.sharedMaterials=mats;
+            }
+            BuildRaiderLoadout(design);
+        }
+        void BuildRaiderLoadout(int design)
+        {
+            // Distinct silhouettes using the shipped character as a common rig: scout cap,
+            // armored assault helmet, or heavy breacher pack. Parts are purely visual.
+            Material cloth=AccessoryMaterial("Raider canvas",design==0?new Color(.28f,.31f,.25f):design==1?new Color(.20f,.27f,.22f):new Color(.36f,.29f,.20f));
+            Material armor=AccessoryMaterial("Raider plates",design==2?new Color(.22f,.21f,.18f):new Color(.18f,.22f,.23f));
+            if(design==0)
+            {
+                Accessory("Soft patrol cap",PrimitiveType.Sphere,new Vector3(0,1.87f,0),new Vector3(.36f,.12f,.35f),cloth);
+                Accessory("Cap brim",PrimitiveType.Cube,new Vector3(0,1.83f,.17f),new Vector3(.34f,.035f,.21f),cloth);
+                Accessory("Scout chest harness",PrimitiveType.Cube,new Vector3(0,1.30f,.18f),new Vector3(.31f,.42f,.07f),cloth);
+                Accessory("Scout side satchel",PrimitiveType.Cube,new Vector3(-.31f,.96f,-.08f),new Vector3(.23f,.31f,.17f),cloth);
+            }
+            else if(design==1)
+            {
+                Accessory("Armored helmet",PrimitiveType.Sphere,new Vector3(0,1.91f,0),new Vector3(.39f,.25f,.39f),armor);
+                Accessory("Helmet brow",PrimitiveType.Cube,new Vector3(0,1.81f,.19f),new Vector3(.39f,.08f,.13f),armor);
+                Accessory("Assault chest plate",PrimitiveType.Cube,new Vector3(0,1.34f,.19f),new Vector3(.48f,.49f,.10f),armor);
+                Accessory("Assault left shoulder",PrimitiveType.Sphere,new Vector3(-.31f,1.49f,0),new Vector3(.25f,.17f,.30f),armor);
+                Accessory("Assault right shoulder",PrimitiveType.Sphere,new Vector3(.31f,1.49f,0),new Vector3(.25f,.17f,.30f),armor);
+            }
+            else
+            {
+                Accessory("Breacher hood",PrimitiveType.Sphere,new Vector3(0,1.83f,-.04f),new Vector3(.42f,.36f,.39f),cloth);
+                Accessory("Breacher face plate",PrimitiveType.Cube,new Vector3(0,1.76f,.19f),new Vector3(.33f,.21f,.075f),armor);
+                Accessory("Heavy chest rig",PrimitiveType.Cube,new Vector3(0,1.32f,.22f),new Vector3(.53f,.54f,.14f),armor);
+                Accessory("Radio backpack",PrimitiveType.Cube,new Vector3(0,1.25f,-.26f),new Vector3(.58f,.69f,.24f),cloth);
+                Accessory("Radio aerial",PrimitiveType.Cylinder,new Vector3(.22f,1.75f,-.29f),new Vector3(.025f,.38f,.025f),armor);
+                Accessory("Breacher left shoulder",PrimitiveType.Sphere,new Vector3(-.33f,1.51f,-.01f),new Vector3(.29f,.23f,.34f),armor);
+                Accessory("Breacher right shoulder",PrimitiveType.Sphere,new Vector3(.33f,1.51f,-.01f),new Vector3(.29f,.23f,.34f),armor);
+            }
+        }
+        Material AccessoryMaterial(string name,Color color)
+        {
+            var shader=Shader.Find("Standard");
+            var material=new Material(shader){name=name,color=color};
+            material.SetFloat("_Glossiness",.12f);
+            variantMaterials.Add(material);
+            return material;
+        }
+        void Accessory(string name,PrimitiveType shape,Vector3 position,Vector3 size,Material material)
+        {
+            var part=GameObject.CreatePrimitive(shape);part.name=name;
+            part.transform.SetParent(transform,false);part.transform.localPosition=position;
+            part.transform.localScale=size;
+            var collider=part.GetComponent<Collider>();if(collider){collider.enabled=false;Destroy(collider);}
+            part.GetComponent<Renderer>().sharedMaterial=material;
+        }
+        void BuildRaiderHandgun()
+        {
+            // Reuse the game's modeled sidearm and its authored trigger/muzzle sockets.
+            var rifle=raiderRifle;
+            Material steel=null;
+            foreach(var renderer in rifle.GetComponentsInChildren<Renderer>(true))
+                if(renderer.sharedMaterial){steel=renderer.sharedMaterial;break;}
+            if(!steel)return;
+            rifle.gameObject.SetActive(false);
+            var sockets=DetailedHeroEquipment3D.BuildPistol(transform,key=>steel);
+            raiderRifle=sockets.root;rifleGripSocket=sockets.trigger;rifleSupportSocket=sockets.support;handgunMuzzle=sockets.muzzle;
+        }
+        void BuildRaiderBossRifle()
+        {
+            // The imported boss has no authored weapon. Use modeled geometry with real
+            // trigger, support and muzzle sockets so animation and projectiles agree.
+            Material steel=AccessoryMaterial("Boss rifle steel",new Color(.27f,.31f,.33f));
+            Material wood=AccessoryMaterial("Boss rifle stock",new Color(.24f,.18f,.13f));
+            var sockets=DetailedHeroEquipment3D.BuildRifle(transform,key=>key=="Wood"?wood:steel);
+            raiderRifle=sockets.root;rifleGripSocket=sockets.trigger;
+            rifleSupportSocket=sockets.support;handgunMuzzle=sockets.muzzle;
+        }
+        void OnDestroy()
+        {
+            foreach(var material in variantMaterials)if(material)Destroy(material);
         }
         void ApplySecondaryMotion(float speed,int kind)
         {

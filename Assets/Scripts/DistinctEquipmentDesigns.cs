@@ -22,7 +22,7 @@ namespace NeonVault {
     var r=new EquipmentRecipe{index=i,maker=maker,family=family,slot=kind=="armor"?family:0,body=body,barrel=barrel,stock=stock,attachment=attachment,legendary=legend||(kind=="module"&&family>=4),id="distinct."+kind+"."+i.ToString("000")};
     if(kind=="gun"&&legend){int variant=newGunLegend?5+(i-GunSeriesDesigns.FirstNewLegendary)%10:i%5;r.family=new[]{2,15,13,6,1}[variant%5];r.barrel=(maker+variant)%6;r.stock=5;}
     Name(r,kind);
-    if(kind=="gun"&&newGunLegend){int edition=(i-GunSeriesDesigns.FirstNewLegendary)%10;r.name+=" / "+new[]{"Long Fuse","Wild Card","Iron Choir","Black Ledger","Copper Wake","Double Debt","Flash Lock","Ash Circuit","Grave Bell","Last Light"}[edition];r.japanese+="・"+new[]{"長導火","切札","鉄の聖歌","黒い帳簿","銅の航跡","二重債務","閃光錠","灰の回路","墓鐘","最後の灯"}[edition];}
+    if(kind=="gun"&&newGunLegend){int edition=(i-GunSeriesDesigns.FirstNewLegendary)%10;r.name+=" / "+new[]{"Long Fuse","Wild Card","Iron Choir","Black Ledger","Copper Wake","Double Debt","Flash Lock","Ash Circuit","Grave Bell","Last Light"}[edition];r.japanese+="・"+new[]{"ロング・フューズ","ワイルド・カード","アイアン・クワイア","ブラック・レジャー","カッパー・ウェイク","ダブル・デット","フラッシュ・ロック","アッシュ・サーキット","グレイヴ・ベル","ラスト・ライト"}[edition];}
     if(kind=="gun")GunSeriesDesigns.Configure(r);
     if(!r.legendary) { r.name=ProductName(kind,i,false); r.japanese=ProductName(kind,i,true); }
     a[i]=r;
@@ -36,20 +36,20 @@ namespace NeonVault {
   }
   static void Name(EquipmentRecipe r,string kind){
    string[][] en={new[]{"Harrier","Swift","Kite","Peregrine","Merlin","Osprey"},new[]{"Anvil","Rivet","Foundry","Hammer","Crucible","Ironclad"},new[]{"Dynamo","Spark","Thunder","Cyclotron","Livewire","Lightning"},new[]{"Briar","Fern","Orchard","Mycelium","Willow","Hemlock"},new[]{"Clinker","Cinder","Ashfall","Furnace","Firebrand","Bonfire"},new[]{"Convoy","Warden","Bastion","Citadel","Custodian","Bulwark"}};
-   string[][] ja={new[]{"鷹","燕","鳶","隼","小隼","みさご"},new[]{"金床","鋲","鋳造炉","鉄槌","るつぼ","鉄壁"},new[]{"発電機","火花","雷鳴","加速器","活線","稲妻"},new[]{"茨","羊歯","果樹園","菌糸","柳","毒芹"},new[]{"焼滓","残火","降灰","溶鉱炉","火種","かがり火"},new[]{"輸送隊","守衛","防塁","城塞","番人","防壁"}};
+   string[][] ja={new[]{"ハリアー","スウィフト","カイト","ペレグリン","マーリン","オスプレイ"},new[]{"アンヴィル","リベット","ファウンドリー","ハンマー","クルーシブル","アイアンクラッド"},new[]{"ダイナモ","スパーク","サンダー","サイクロトロン","ライブワイヤー","ライトニング"},new[]{"ブライア","ファーン","オーチャード","マイセリウム","ウィロー","ヘムロック"},new[]{"クリンカー","シンダー","アッシュフォール","ファーネス","ファイアブランド","ボンファイア"},new[]{"コンボイ","ウォーデン","バスティオン","シタデル","カストディアン","ブルワーク"}};
    string title=en[r.maker][r.body],jp=ja[r.maker][r.body];
    if(kind=="gun"){
-    string[] purpose={"Longwatch","Doorbreaker","Doubletap","Tempest","Deadeye","Broadside"},purposeJa={"遠望","破門","双撃","疾風","必中","斉射"};
-    string[] role={"Patrol","Ranger","Raider","Sentinel","Siege","Escort"},roleJa={"哨戒銃","遊撃銃","強襲銃","監視銃","攻城銃","護衛銃"};
-    r.name=purpose[r.barrel]+" "+title+" "+role[r.stock];r.japanese=purposeJa[r.barrel]+"の"+jp+"・"+roleJa[r.stock];
+    string[] purpose={"Longwatch","Doorbreaker","Doubletap","Tempest","Deadeye","Broadside"},purposeJa={"ロングウォッチ","ドアブレイカー","ダブルタップ","テンペスト","デッドアイ","ブロードサイド"};
+    string[] role={"Patrol","Ranger","Raider","Sentinel","Siege","Escort"},roleJa={"パトロール","レンジャー","レイダー","センチネル","シージ","エスコート"};
+    r.name=purpose[r.barrel]+" "+title+" "+role[r.stock];r.japanese=purposeJa[r.barrel]+"・"+jp+"・"+roleJa[r.stock];
    }else if(kind=="armor"){
-    string[] role={"Pathfinder","Breacher","Sharpshooter","Assault","Courier","Survivor"},roleJa={"先導兵用","突破兵用","狙撃兵用","突撃兵用","伝令兵用","生存者用"};
-    string[] slot={"Helm","Cuirass","Gauntlets","Greaves","Boots"},slotJa={"兜","胸鎧","腕甲","脚鎧","装甲靴"};
-    r.name=title+" "+role[r.attachment]+" "+slot[r.slot];r.japanese=jp+"の"+slotJa[r.slot]+"・"+roleJa[r.attachment];
+    string[] role={"Pathfinder","Breacher","Sharpshooter","Assault","Courier","Survivor"},roleJa={"パスファインダー","ブリーチャー","シャープシューター","アサルト","クーリエ","サバイバー"};
+    string[] slot={"Helm","Cuirass","Gauntlets","Greaves","Boots"},slotJa={"ヘルム","キュイラス","ガントレット","グリーブ","ブーツ"};
+    r.name=title+" "+role[r.attachment]+" "+slot[r.slot];r.japanese=jp+"・"+roleJa[r.attachment]+"・"+slotJa[r.slot];
    }else{
-    string[] core={"Reserve","Surge","Echo","Exchange","Shelter","Overload"},coreJa={"予備槽","衝撃炉","反復器","交換炉","避難核","過負荷炉"};
-    string[] purpose={"Shield","Pulse","Reload","Conversion","Highway","Furnace","Isotope"},purposeJa={"障壁","波動","装填","変換","街道","炉心","同位体"};
-    r.name=title+" "+purpose[r.family]+" "+core[r.attachment];r.japanese=jp+"の"+purposeJa[r.family]+coreJa[r.attachment];
+    string[] core={"Reserve","Surge","Echo","Exchange","Shelter","Overload"},coreJa={"リザーブ","サージ","エコー","エクスチェンジ","シェルター","オーバーロード"};
+    string[] purpose={"Shield","Pulse","Reload","Conversion","Highway","Furnace","Isotope"},purposeJa={"シールド","パルス","リロード","コンバージョン","ハイウェイ","ファーネス","アイソトープ"};
+    r.name=title+" "+purpose[r.family]+" "+core[r.attachment];r.japanese=jp+"・"+purposeJa[r.family]+"・"+coreJa[r.attachment];
    }
   }
   public static EquipmentRecipe Find(string id){if(string.IsNullOrEmpty(id))return null;return lookup.TryGetValue(id,out var r)?r:null;}

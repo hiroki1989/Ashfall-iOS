@@ -44,7 +44,7 @@ namespace NeonVault
             DrawCriticalHealthVignette();
             DrawHealthPanel(new Rect(20,20,420,125),true);
             Text(46,106,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=19,wordWrap=false,clipping=TextClipping.Clip},Mist,370);
-            DrawHeldWeaponHUD(new Rect(600,815,240,64));
+            DrawHeldWeaponHUD(new Rect(350,797,280,80));
             int alive=0;foreach(var enemy in Enemies)if(enemy&&!enemy.dead)alive++;
             Text(38,154,ExpeditionExitOpen?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},ExpeditionExitOpen?Gold:Mist,740);
             if(toastTimer>0)Text(360,210,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,670);
@@ -63,7 +63,7 @@ namespace NeonVault
                 DrawWorldLootPreview();
                 if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&(foe.elite||foe.kind==3||foe.hp<foe.maxHp)&&Layout.IsVisible(foe.transform.position))
-                {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);}
+                {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);WorldLabel(new Rect(at.x-82,at.y-31,164,25),EnemyHealthLabel(foe),UiPaper,17);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);}
             }
         }
         void DrawMobilePause()

@@ -40,7 +40,7 @@ namespace NeonVault
         {
             float rate=1/Mathf.Max(.001f,item.interval);
             float reloadTime=item.reloadSeconds;
-            return T("SCORE ","評価 ")+GearScoring.Score(item)+T("  BASE · Lv ","  基礎値 · Lv ")+item.level+T("  DMG ","  威力 ")+GunDamageMin(item).ToString("0.0")+"–"+GunDamageMax(item).ToString("0.0")+T(" × "," × ")+item.pellets+
+            return T("SCORE ","評価 ")+GearScoring.Score(item)+T("  BASE · Lv ","  基礎値 · Lv ")+item.level+T("  DMG ","  威力 ")+GunDamageMin(item).ToString("0.0")+"-"+GunDamageMax(item).ToString("0.0")+T(" × "," × ")+item.pellets+
                 T("  RATE ","  連射 ")+rate.ToString("0.0")+T("/s  MAG ","/秒  弾数 ")+item.magazine+T("  RELOAD ","  装填 ")+reloadTime.ToString("0.00")+T("s  SPEED ","秒  弾速 ")+item.speed.ToString("0.0")+T("  ACCURACY ","  命中精度 ")+Arsenal.Accuracy(item).ToString("0.0")+"%"+T("  CRIT ","  会心 ")+(GunCriticalChance(item)*100).ToString("0.#")+"% ×"+GunCriticalMultiplier(item).ToString("0.00")+"\n"+GearScoring.AffixSummary(item);
         }
         void InventoryCopy(float x,float y,string value,GUIStyle style,Color color,float width)
@@ -210,7 +210,7 @@ namespace NeonVault
         }
         internal void DrawMeleeIcon(Rect rect,MeleeWeaponFamily family)
         {
-            if(meleeIconAtlas==null)meleeIconAtlas=Resources.Load<Texture2D>("Art/MeleeWeaponIcons");
+            if(meleeIconAtlas==null)meleeIconAtlas=Resources.Load<Texture2D>("Art/MeleeWeaponIcons-portrait-v2")??Resources.Load<Texture2D>("Art/MeleeWeaponIcons");
             if(meleeIconAtlas!=null){float width=.2f;GUI.DrawTextureWithTexCoords(rect,meleeIconAtlas,new Rect((int)family*width,0,width,1),true);return;}
             Box(rect,new Color(.08f,.12f,.15f));Diamond(rect.center.x,rect.center.y,Mathf.Min(rect.width,rect.height)*.36f,Gold);
             Text(rect.center.x-11,rect.center.y-12,((int)family+1).ToString(),tiny,Color.white,26);

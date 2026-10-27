@@ -92,7 +92,7 @@ namespace NeonVault
             buttons[(int)MobileAction.Dodge] = new Rect(bx, fireY - 2*(gap+b), b, b);
             buttons[(int)MobileAction.Melee] = new Rect(AimRect.x, y-gap-b, b, b);
             buttons[(int)MobileAction.SwitchWeapon] = new Rect(SafeRect.x + pad, y - gap - b, b, b);
-            buttons[(int)MobileAction.Interact] = new Rect(SafeRect.center.x - b / 2, SafeRect.yMax - pad - b, b, b);
+            buttons[(int)MobileAction.Interact] = new Rect(SafeRect.center.x + b * .35f, SafeRect.yMax - pad - b, b, b);
             buttons[(int)MobileAction.Inventory] = new Rect(SafeRect.xMax - pad - 2 * b - gap, SafeRect.y + pad, b, b);
             buttons[(int)MobileAction.Pause] = new Rect(SafeRect.xMax - pad - b, SafeRect.y + pad, b, b);
             // Large, separate hold target at the natural outer-right thumb position.

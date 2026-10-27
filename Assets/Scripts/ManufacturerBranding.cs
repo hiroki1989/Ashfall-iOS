@@ -5,6 +5,7 @@ namespace NeonVault
     public static class ManufacturerBranding
     {
         static readonly Texture2D[] logos=new Texture2D[6];
+        public static bool PortraitBadgeEnabled=true;
         public static string Maker(Gun g){ManufacturerCatalog.InferGunIdentity(g);return g.manufacturerId;}
         public static string Maker(ArmorItem a)=>ManufacturerCatalog.Index(a.manufacturerId)>=0?a.manufacturerId:ManufacturerCatalog.Id(a.visualVariant+(int)a.slot);
         public static string Maker(ArtifactItem a)=>ManufacturerCatalog.Index(a.manufacturerId)>=0?a.manufacturerId:ManufacturerCatalog.Id((int)a.effect+a.dungeon);
@@ -29,7 +30,7 @@ namespace NeonVault
             GUI.color=Color.white;var logo=Logo(maker);if(logo)GUI.DrawTexture(new Rect(rect.x+2,rect.y+2,rect.width-4,rect.height-4),logo,ScaleMode.ScaleToFit,true);GUI.color=old;
         }
         public static void PortraitBadge(Rect card,string maker)
-        {float width=Mathf.Min(card.width*.37f,70),height=width*.7f;Badge(new Rect(card.x+3,card.yMax-height-4,width,height),maker);}
+        {if(!PortraitBadgeEnabled)return;float width=Mathf.Min(card.width*.37f,70),height=width*.7f;Badge(new Rect(card.x+3,card.yMax-height-4,width,height),maker);}
         static Texture2D moduleIllustrations;
         public static bool ModuleIllustrationAvailable=>Resources.Load<Texture2D>("Art/Manufacturers/ModuleIllustrations-v1")!=null;
         public static void ModulePortrait(Rect r,ArtifactItem item)
@@ -47,7 +48,7 @@ namespace NeonVault
             GUI.color=Color.white;GUI.DrawTextureWithTexCoords(image,moduleIllustrations,uv,true);
             int generation=ProductGeneration.Generation(item.designVariant);
             for(int n=0;n<generation;n++){GUI.color=ManufacturerCatalog.Color(Maker(item));GUI.DrawTexture(new Rect(r.x+r.width*.76f,r.y+5+n*r.height*.065f,r.width*(n%2==0?.14f:.09f),Mathf.Max(1,r.height*.018f)),Texture2D.whiteTexture);}
-            Badge(new Rect(r.x+3,r.yMax-Mathf.Min(25,r.height*.3f)-3,Mathf.Min(25,r.width*.3f),Mathf.Min(25,r.height*.3f)),Maker(item));
+            if(PortraitBadgeEnabled)Badge(new Rect(r.x+3,r.yMax-Mathf.Min(25,r.height*.3f)-3,Mathf.Min(25,r.width*.3f),Mathf.Min(25,r.height*.3f)),Maker(item));
             GUI.color=Arsenal.Colors[(int)item.rarity];GUI.DrawTexture(new Rect(r.x,r.yMax-3,r.width,3),Texture2D.whiteTexture);GUI.color=old;
         }
         static void ModulePortraitFallback(Rect r,ArtifactItem item)
@@ -62,7 +63,7 @@ namespace NeonVault
                 GUI.DrawTexture(new Rect(x,r.y+r.height*.11f,r.width*.035f,r.height*.78f),Texture2D.whiteTexture);
                 GUI.color=wire;GUI.DrawTexture(new Rect(x-r.width*.014f,r.y+r.height*(.29f+(i%2)*.23f),r.width*.07f,r.height*.10f),Texture2D.whiteTexture);
             }
-            Badge(new Rect(r.x+r.width*.34f,r.y+r.height*.31f,r.width*.32f,r.height*.32f),maker);
+            if(PortraitBadgeEnabled)Badge(new Rect(r.x+r.width*.34f,r.y+r.height*.31f,r.width*.32f,r.height*.32f),maker);
             GUI.color=Arsenal.Colors[(int)item.rarity];GUI.DrawTexture(new Rect(r.x,r.yMax-3,r.width,3),Texture2D.whiteTexture);GUI.color=old;
         }
     }

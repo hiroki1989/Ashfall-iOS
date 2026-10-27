@@ -203,12 +203,15 @@ namespace NeonVault
         }
         void SpawnFoe(Vector3 position,int kind)
         {
+            position=SeparateEnemySpawn(position,kind);
             if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
             var f=art.Character(position,false,kind).gameObject.AddComponent<Foe>();
             f.Init(this,kind,room);
+            bool raiderBoss=kind==3&&SelectedStageId>=0&&SelectedStageId%5==2;
+            f.SetRaiderBoss(raiderBoss);
             // Infected attack with their bodies; only the armed revenant carries a firearm.
             if(kind==5||kind==10){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
-            f.GetComponent<FaithfulEnemy3D>().Init(f);ImportedEnemyVisual.TryAttach(f.gameObject,kind==3&&SelectedStageId>=0&&SelectedStageId%5==2?11:kind);
+            f.GetComponent<FaithfulEnemy3D>().Init(f);ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);
             Enemies.Add(f);
             if(IsOverworld)ConfigureOverworldFoe(f);
             else
@@ -220,6 +223,26 @@ namespace NeonVault
             bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275);
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
+        }
+        Vector3 SeparateEnemySpawn(Vector3 origin,int kind)
+        {
+            float radius=kind==3?1.45f:.78f;
+            for(int ring=0;ring<=12;ring++)for(int step=0;step<(ring==0?1:16);step++)
+            {
+                float angle=step*Mathf.PI/8f;
+                Vector3 candidate=origin+(ring==0?Vector3.zero:new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*ring*1.15f);
+                if(Blocked(candidate,.8f)||!IsOverworld&&!Layout.SpawnSafe(candidate))continue;
+                bool free=true;
+                foreach(var other in Enemies)
+                {
+                    if(other==null||other.dead)continue;
+                    Vector3 delta=candidate-other.transform.position;delta.y=0;
+                    float separation=radius+other.SeparationRadius+.2f;
+                    if(delta.sqrMagnitude<separation*separation){free=false;break;}
+                }
+                if(free)return candidate;
+            }
+            return origin;
         }
         public bool Blocked(Vector3 p,float radius)
         {

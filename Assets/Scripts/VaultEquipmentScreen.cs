@@ -8,7 +8,7 @@ namespace NeonVault
         int eqCategory;
         string eqSelectedKey;
         bool eqLastMerchant,eqLastSelling,eqShowFullDetails,eqUpgradePage;
-        Vector2 eqGridScroll,eqDetailScroll;
+        Vector2 eqGridScroll,eqDetailScroll,eqLoadoutScroll;
         GUIStyle eqCopy,eqCaption,eqButtonStyle;
         float eqGridExtent,eqDetailExtent;
         public bool EquipmentMenuVisible=>InventoryOpen||(screen==Screen.Shop&&!debtPage);
@@ -18,6 +18,7 @@ namespace NeonVault
             float top=InventoryOpen?122:196,gridTop=top+86;
             if(new Rect(36,gridTop+8,432,766-gridTop).Contains(point))return 1;
             if(new Rect(950,top+248,446,312-top).Contains(point))return 2;
+            if(new Rect(502,652,406,126).Contains(point))return 4;
             if(new Rect(494,top+8,422,(InventoryOpen?526:452)-45).Contains(point))return 3;
             return 0;
         }
@@ -27,10 +28,11 @@ namespace NeonVault
             if(region==1)eqGridScroll.y=Mathf.Clamp(eqGridScroll.y-delta.y,0,Mathf.Max(0,eqGridExtent-(680-top)));
             if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(312-top)));
             if(region==3&&equipmentHeroPreview)equipmentHeroPreview.Angle=Mathf.Repeat(equipmentHeroPreview.Angle-delta.x*.55f+155,360)-155;
+            if(region==4)eqLoadoutScroll.y=Mathf.Max(0,eqLoadoutScroll.y-delta.y);
         }
         sealed class EqCard
         {
-            public string key,name,description,fullDescription,summary; public Color color; public bool equipped;
+            public string key,name,description,fullDescription,summary,maker; public Color color; public bool equipped;
             public object item; public int offer=-1; public SaleEntry sale;
         }
         void EqText(Rect r,string value,Color color,GUIStyle style=null)
@@ -47,7 +49,7 @@ namespace NeonVault
             Box(r,selected?new Color(.29f,.22f,.17f):hover?new Color(.19f,.19f,.18f):EqSurface);
             FieldUIArt.Plate(r,selected);
 
-            var style=new GUIStyle(eqButtonStyle){fontStyle=FontStyle.Bold,fontSize=r.width<150?Mathf.Min(eqButtonStyle.fontSize,20):eqButtonStyle.fontSize};
+            var style=new GUIStyle(eqButtonStyle){fontStyle=FontStyle.Normal,fontSize=r.width<150?Mathf.Min(eqButtonStyle.fontSize,23):eqButtonStyle.fontSize};
             style.normal.textColor=!enabled?new Color(.42f,.43f,.42f):EqInk;
             style.hover.textColor=style.normal.textColor;style.active.textColor=style.normal.textColor;
             bool previous=GUI.enabled;GUI.enabled=previous&&enabled;
@@ -64,33 +66,35 @@ namespace NeonVault
         EqCard EqMake(object item)
         {
             var c=new EqCard{item=item,color=Mist};bool has=false;int score=0,reference=0,level=1;Rarity rarity=Rarity.Common;string maker=null;
-            if(item is Gun g){c.key="g:"+g.id;c.name=VaultLanguage.GunName(g,false);c.color=g.color;c.equipped=EquippedWeaponSlot(g)>=0;score=GearScoring.Score(g);reference=EqGunComparison(out has);level=g.level;rarity=g.rarity;maker=ManufacturerBranding.Maker(g);
-                string damage=T("DMG ","威力 ")+GunDamageMin(g).ToString("0.0")+"–"+GunDamageMax(g).ToString("0.0")+(g.pellets>1?" ×"+g.pellets:"");
+            if(item is Gun g){c.key="g:"+g.id;c.name=VaultLanguage.GunName(g);c.color=g.color;c.equipped=EquippedWeaponSlot(g)>=0;score=GearScoring.Score(g);reference=EqGunComparison(out has);level=g.level;rarity=g.rarity;maker=ManufacturerBranding.Maker(g);
+                string damage=T("DMG ","威力 ")+GunDamageMin(g).ToString("0.0")+"-"+GunDamageMax(g).ToString("0.0")+(g.pellets>1?" ×"+g.pellets:"");
                 c.description=T("TYPE ","銃種 ")+VaultLanguage.GunClassName(g)+"\n"+damage+T("   RATE ","   連射 ")+(1/Mathf.Max(.001f,g.interval)).ToString("0.0")+T("/s\nMAG ","/秒\n装弾 ")+g.magazine+T("   RELOAD ","   装填 ")+g.reloadSeconds.ToString("0.0")+T("s\nCRIT ","秒\n会心 ")+(GunCriticalChance(g)*100).ToString("0.#")+"%";
                 c.description=EqAppend(c.description,GearScoring.AffixSummary(g));
                 if(!string.IsNullOrEmpty(g.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(g,LegendaryCatalog.Description(g,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,T("ACCURACY ","命中 ")+Arsenal.Accuracy(g).ToString("0.#")+"%"+T("   SPEED ","   弾速 ")+g.speed.ToString("0.#"));
                 c.fullDescription=EqAppend(c.fullDescription,LegendaryDescription(g,VaultLanguage.GunDescription(g)));}
-            else if(item is ArmorItem a){c.key="a:"+a.id;c.name=Armory.Name(a,false);c.equipped=IsArmorEquipped(a);score=GearScoring.Score(a);reference=MobileArmorComparison(a,out has);level=a.level;rarity=a.rarity;maker=ManufacturerBranding.Maker(a);
+            else if(item is ArmorItem a){c.key="a:"+a.id;c.name=Armory.Name(a);c.equipped=IsArmorEquipped(a);score=GearScoring.Score(a);reference=MobileArmorComparison(a,out has);level=a.level;rarity=a.rarity;maker=ManufacturerBranding.Maker(a);
                 c.description=Armory.SlotName(a.slot)+"\n"+Armory.Stats(a).TrimEnd(' ','·');
                 if(!string.IsNullOrEmpty(a.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(a,LegendaryCatalog.Description(a,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,LegendaryDescription(a,Armory.Description(a)));}
-            else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m,false);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
+            else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
                 c.description=T("TYPE Module","種別 モジュール")+"\n"+shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
                 c.fullDescription=T("TYPE Module","種別 モジュール")+"\n"+LegendaryDescription(m,m.Description);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
-            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=DistinctEquipmentDesigns.ProductName("melee",(int)w.family*MeleeWeaponCatalog.DesignsPerFamily+w.designVariant,false);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"–"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
+            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"-"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
             c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity)+"\n"+(!c.equipped&&has?EqComparison(score,reference):"");
             string comparison=!c.equipped&&has?EqComparison(score,reference):"";
             string header=ManufacturerCatalog.Name(maker,VaultLanguage.Japanese)+comparison;
-            c.description=EqAppend(header,c.description);c.fullDescription=EqAppend(header,c.fullDescription);return c;
+            c.maker=maker;c.description=EqAppend(header,c.description);c.fullDescription=EqAppend(header,c.fullDescription);return c;
         }
         static string EqComparison(int score,int reference)=>score>reference?" <color=#FF5B50>▲"+(score-reference)+"</color>":score<reference?" <color=#65AAFF>▼"+(reference-score)+"</color>":" ＝";
         static string EqAppend(string source,string extra)=>string.IsNullOrWhiteSpace(extra)?source:source+"\n"+extra;
         int EqGunComparison(out bool found)
         {int lowest=int.MaxValue;for(int i=0;i<AvailableWeaponSlotCount;i++){var equipped=WeaponInSlot(i);if(equipped!=null)lowest=Mathf.Min(lowest,GearScoring.Score(equipped));}found=lowest!=int.MaxValue;return found?lowest:0;}
-        void EqPortrait(Rect r,object item)
+        void EqPortrait(Rect r,object item,bool detailed=false)
         {
+            bool previousBadge=ManufacturerBranding.PortraitBadgeEnabled;
+            ManufacturerBranding.PortraitBadgeEnabled=!detailed;
             int score=0;
             if(item is Gun g){ItemPortraits.Draw(r,g);score=GearScoring.Score(g);
                 float size=Mathf.Clamp(Mathf.Min(r.width,r.height)*.23f,20,30);
@@ -99,8 +103,9 @@ namespace NeonVault
             else if(item is ArmorItem a){ItemPortraits.Draw(r,a);score=GearScoring.Score(a);}
             else if(item is ArtifactItem m){ManufacturerBranding.ModulePortrait(r,m);score=GearScoring.Score(m);}
             else if(item is MeleeWeaponItem w){ManufacturerPortraits.Melee(r,w);score=MeleeWeaponCatalog.Score(w);}
-            else return;
-            var style=new GUIStyle(eqCopy){font=englishHeadingFont?englishHeadingFont:font,fontStyle=FontStyle.Bold,
+            else {ManufacturerBranding.PortraitBadgeEnabled=previousBadge;return;}
+            ManufacturerBranding.PortraitBadgeEnabled=previousBadge;
+            var style=new GUIStyle(eqCopy){font=this.font,fontStyle=FontStyle.Normal,
                 fontSize=r.width>200?29:24,alignment=TextAnchor.LowerRight,wordWrap=false};
             string value=score.ToString("N0");
             while(style.fontSize>16&&style.CalcSize(new GUIContent(value)).x>r.width-18)style.fontSize--;
@@ -125,8 +130,8 @@ namespace NeonVault
         bool DrawEquipmentScreen(bool merchant)
         {
             if(merchant&&debtPage)return false;
-            int copyFontSize=MobileTouchControls.Enabled?24:20;
-            eqCopy=new GUIStyle(label){fontSize=copyFontSize,wordWrap=true,clipping=TextClipping.Clip,richText=true};eqCaption=new GUIStyle(eqCopy){font=englishHeadingFont==null?this.font:englishHeadingFont,fontSize=MobileTouchControls.Enabled?26:23,fontStyle=FontStyle.Bold};eqButtonStyle=new GUIStyle(centered){fontSize=copyFontSize,wordWrap=true,clipping=TextClipping.Clip};eqButtonStyle.normal.textColor=Color.white;eqButtonStyle.hover.textColor=Color.white;eqButtonStyle.active.textColor=Color.white;
+            int copyFontSize=MobileTouchControls.Enabled?28:23;
+            eqCopy=new GUIStyle(label){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip,richText=true};eqCaption=new GUIStyle(eqCopy){font=this.font,fontSize=MobileTouchControls.Enabled?30:27,fontStyle=FontStyle.Normal};eqButtonStyle=new GUIStyle(centered){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};eqButtonStyle.normal.textColor=Color.white;eqButtonStyle.hover.textColor=Color.white;eqButtonStyle.active.textColor=Color.white;
             if(eqLastMerchant!=merchant||eqLastSelling!=shopSellingPage){eqSelectedKey=null;eqShowFullDetails=false;eqGridScroll=eqDetailScroll=Vector2.zero;eqLastMerchant=merchant;eqLastSelling=shopSellingPage;if(!merchant)eqUpgradePage=false;}
             bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey);
             Box(new Rect(0,0,1440,900),EqCanvas);
@@ -146,7 +151,7 @@ namespace NeonVault
             }
             float top=merchant?196:122;
             string[] tabs={T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
-            var previousTabStyle=eqButtonStyle;eqButtonStyle=new GUIStyle(eqButtonStyle){fontSize=20,wordWrap=false};
+            var previousTabStyle=eqButtonStyle;eqButtonStyle=new GUIStyle(eqButtonStyle){fontSize=23,wordWrap=false};
             for(int i=0;i<4;i++)if(EqNavigation(new Rect(28+i*112,top,106,74),tabs[i],eqCategory==i)){eqCategory=i;saleCategory=i;eqSelectedKey=null;eqShowFullDetails=false;pendingSaleKey=null;eqGridScroll=eqDetailScroll=Vector2.zero;}
             eqButtonStyle=previousTabStyle;
             float gridTop=top+86;
@@ -158,31 +163,64 @@ namespace NeonVault
             DrawEquippedCategory(top);
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
-            EqText(new Rect(532,660,364,114),T("CURRENT LOADOUT\n","現在の装備\n")+"HP "+maxHp.ToString("0")+T("  MOVE ","  移動 ")+EffectiveMoveSpeed.ToString("0.0")+T("\nDAMAGE REDUCTION ","\n被ダメージ軽減 ")+(DamageReduction*100).ToString("0")+"%",EqInk);
+            DrawEquippedTotals();
             var cards=EqCards(merchant);var selected=cards.Find(c=>c.key==eqSelectedKey);if(selected==null&&cards.Count>0){selected=cards[0];eqSelectedKey=selected.key;eqDetailScroll=Vector2.zero;}
             float gridHeight=766-gridTop;
-            eqGridExtent=Mathf.Max(gridHeight,cards.Count*180);
+            const float rowStep=220;
+            eqGridExtent=Mathf.Max(gridHeight,cards.Count*rowStep);
             eqGridScroll=GUI.BeginScrollView(new Rect(36,gridTop+8,432,gridHeight),eqGridScroll,new Rect(0,0,410,eqGridExtent));
-            var cardText=new GUIStyle(eqCopy){fontSize=20};
+            var cardText=new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?27:24};
             for(int i=0;i<cards.Count;i++)
             {
                 // IMGUI clips pixels, but does not skip loading offscreen portraits.
                 // Only submit visible rows so a full collection cannot load hundreds
                 // of large artwork textures on opening this screen.
-                if(i*180+170<eqGridScroll.y||i*180>eqGridScroll.y+gridHeight)continue;
-                var c=cards[i];Rect r=new Rect(0,i*180,408,170);bool chosen=c.key==eqSelectedKey;
+                if(i*rowStep+210<eqGridScroll.y||i*rowStep>eqGridScroll.y+gridHeight)continue;
+                var c=cards[i];Rect r=new Rect(0,i*rowStep,408,210);bool chosen=c.key==eqSelectedKey;
                 FieldUIArt.Plate(r,chosen);
                 EqPortrait(new Rect(r.x+16,r.y+16,122,122),c.item);
                 Box(new Rect(r.x+16,r.y+150,32,3),c.color);
-                EqText(new Rect(r.x+154,r.y+12,244,80),(c.equipped?"✓ ":"")+c.name,EqInk,cardText);
-                EqText(new Rect(r.x+154,r.y+98,244,68),c.summary,EqMuted,cardText);
+                EqText(new Rect(r.x+154,r.y+12,244,118),(c.equipped?"✓ ":"")+c.name,EqInk,cardText);
+                EqText(new Rect(r.x+154,r.y+142,244,58),c.summary,EqMuted,cardText);
                 if(GUI.Button(r,GUIContent.none,GUIStyle.none)){eqSelectedKey=c.key;eqShowFullDetails=false;eqDetailScroll=Vector2.zero;}
             }
             GUI.EndScrollView();if(cards.Count==0)EqText(new Rect(48,gridTop+30,400,180),T("No items in this category","このカテゴリにはアイテムがありません"),EqMuted);
-            if(selected!=null){EqText(new Rect(952,top+20,440,94),selected.name,EqInk,eqCaption);Box(new Rect(952,top+104,64,3),selected.color);EqPortrait(new Rect(978,top+116,390,124),selected.item);float detailH=312-top;string eqDetail=eqShowFullDetails?selected.fullDescription:selected.description;float height=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;eqDetailExtent=Mathf.Max(detailH,height);eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));EqText(new Rect(2,4,410,height),eqDetail,EqInk);GUI.EndScrollView();if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}EqActions(selected,merchant);}
+            if(selected!=null)
+            {
+                EqText(new Rect(952,top+20,440,94),selected.name,EqInk,eqCaption);
+                Box(new Rect(952,top+104,64,3),selected.color);
+                EqPortrait(new Rect(978,top+116,390,124),selected.item,true);
+                float detailH=312-top;
+                string eqDetail=eqShowFullDetails?selected.fullDescription:selected.description;
+                float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
+                const float logoHeight=64;
+                eqDetailExtent=Mathf.Max(detailH,textHeight+logoHeight+16);
+                eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));
+                EqText(new Rect(2,4,410,textHeight),eqDetail,EqInk);
+                if(!string.IsNullOrEmpty(selected.maker))ManufacturerBranding.Badge(new Rect(6,textHeight+6,208,logoHeight),selected.maker);
+                GUI.EndScrollView();
+                if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}
+                EqActions(selected,merchant);
+            }
             for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");if(EqButton(r,caption))BuyAmmo(type,1);}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
             if(!merchant)EqText(new Rect(28,864,1384,32),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=18});
             GUI.enabled=eqPreviousEnabled;if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();return true;
+        }
+        void DrawEquippedTotals()
+        {
+            var lines=new List<string>{T("CURRENT LOADOUT","現在の装備"),"HP "+maxHp.ToString("0")+T(" / MOVE "," / 移動 ")+EffectiveMoveSpeed.ToString("0.0"),T("DAMAGE REDUCTION ","被ダメージ軽減 ")+(DamageReduction*100).ToString("0")+"%"};
+            float health=EquippedWeaponAffixBonus("health")+ArtifactAffixBonus("health");
+            float damage=ArtifactAffixBonus("damage"),fire=ArtifactAffixBonus("fireRate"),reload=ArtifactAffixBonus("reload"),accuracy=ArtifactAffixBonus("accuracy");
+            float move=EquippedWeaponAffixBonus("moveSpeed")+ArtifactAffixBonus("moveSpeed"),mitigation=EquippedWeaponAffixBonus("mitigation")+ArtifactAffixBonus("mitigation"),regen=EquippedWeaponAffixBonus("regen")+ArtifactAffixBonus("regen");
+            float dodge=0,ammoBonus=ArtifactAffixBonus("ammo"),critChance=ArtifactAffixBonus("critChance"),critDamage=ArtifactAffixBonus("critDamage");
+            foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))
+            {health+=armor.maxHealth;damage+=armor.damageBonus;fire+=armor.fireBonus;reload+=armor.reloadBonus;accuracy+=armor.accuracyBonus;move+=armor.moveBonus;mitigation+=armor.damageReduction;regen+=armor.regenBonus;dodge+=armor.dodgeBonus;ammoBonus+=armor.ammoBonus;critChance+=GearScoring.AffixTotal(armor.affixes,"critChance");critDamage+=GearScoring.AffixTotal(armor.affixes,"critDamage");}
+            void Add(string en,string ja,float value,bool percent=true){if(Mathf.Abs(value)>.0001f)lines.Add(T(en,ja)+" +"+(percent?value*100:value).ToString(percent?"0.#":"0.#")+(percent?"%":""));}
+            Add("GEAR HP","装備HP",health,false);Add("DAMAGE","威力",damage);Add("FIRE RATE","連射速度",fire);Add("RELOAD","リロード速度",reload);Add("ACCURACY","命中精度",accuracy);Add("MOVE","移動速度",move);Add("MITIGATION","被ダメージ軽減",mitigation);Add("REGEN","HP回復",regen,false);Add("DODGE","回避",dodge);Add("AMMO","弾数",ammoBonus);Add("CRIT CHANCE","会心率",critChance);Add("CRIT DAMAGE","会心倍率",critDamage);
+            var style=new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?19:17};float height=lines.Count*27+12;
+            eqLoadoutScroll=GUI.BeginScrollView(new Rect(532,660,364,111),eqLoadoutScroll,new Rect(0,0,336,Mathf.Max(111,height)));
+            for(int i=0;i<lines.Count;i++)EqText(new Rect(0,i*27,334,26),lines[i],EqInk,style);
+            GUI.EndScrollView();
         }
         void DrawEquippedCategory(float top)
         {

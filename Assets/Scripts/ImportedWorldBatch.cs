@@ -49,14 +49,17 @@ namespace NeonVault {
   static Material Faded(Material source){
    if(fadedMaterials.TryGetValue(source,out var result))return result;
    result=new Material(source);result.shader=ImportedWorldAssets.BuiltinStandard();
-   if(result.HasProperty("_Color")){var color=result.color;color.a=.16f;result.color=color;}
+   // A building contains several walls, floors and trim meshes along one sightline.
+   // Their transparent layers accumulate, so use a low per-surface alpha to keep
+   // actors visible even through the full depth of a combined building mesh.
+   if(result.HasProperty("_Color")){var color=result.color;color.a=.045f;result.color=color;}
    result.SetFloat("_Mode",3);result.SetFloat("_SrcBlend",(float)BlendMode.One);result.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);result.SetFloat("_ZWrite",0);
    result.DisableKeyword("_ALPHATEST_ON");result.DisableKeyword("_ALPHABLEND_ON");result.EnableKeyword("_ALPHAPREMULTIPLY_ON");result.renderQueue=3000;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
   void SetRendererFade(bool fade){
    if(fade==rendererFade)return;rendererFade=fade;
-   if(fade){foreach(var renderer in GetComponentsInChildren<MeshRenderer>()){
+   if(fade){foreach(var renderer in GetComponentsInChildren<MeshRenderer>(true)){
     if(!renderer)continue;var original=renderer.sharedMaterials;originalRendererMaterials[renderer]=original;
     var faded=new Material[original.Length];for(int i=0;i<original.Length;i++)faded[i]=original[i]?Faded(original[i]):null;renderer.sharedMaterials=faded;
    }}else RestoreRendererMaterials();

@@ -22,7 +22,7 @@ namespace NeonVault
         {
             Rarity rarity=DungeonCatalog.RollRarity(random,boss);
             var stage=SelectedExpeditionStage;
-            if(stage!=null&&random.NextDouble()<.10+stage.region*.06+(int)stage.mission*.03)
+            if(stage!=null&&random.NextDouble()<.08+stage.region*.04+(int)stage.mission*.02)
                 rarity=(Rarity)Mathf.Max((int)rarity,(int)DungeonCatalog.RollRarity(random,boss));
             return rarity;
         }
@@ -118,7 +118,7 @@ namespace NeonVault
             int focus=(stage.region+stage.id%20+(int)stage.mission)%4;
             string[] en={"handguns","shotguns","assault rifles","sniper rifles"};
             string[] ja={"ハンドガン","ショットガン","アサルトライフル","スナイパーライフル"};
-            return T("LOOT FOCUS: ","戦利品傾向: ")+T(en[focus],ja[focus])+T(" / gear Lv "," / 装備Lv ")+Mathf.Max(1,stage.level-1)+"–"+(stage.level+2);
+            return T("LOOT FOCUS: ","戦利品傾向: ")+T(en[focus],ja[focus])+T(" / gear Lv "," / 装備Lv ")+Mathf.Max(1,stage.level-1)+"-"+(stage.level+2);
         }
     }
 }

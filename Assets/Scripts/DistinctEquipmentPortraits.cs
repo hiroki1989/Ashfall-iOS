@@ -17,6 +17,8 @@ namespace NeonVault {
    string path="Art/DistinctEquipment/"+ManufacturerCatalog.Id(r.maker)+"-"+kind+(kind=="armor-accessories"?"-v1":"-parts-v1");
    if(sheets.TryGetValue(path,out var cached)&&cached.texture)return cached;
    string grounded="Art/GroundedEquipment/"+ManufacturerCatalog.Id(r.maker)+"-"+kind+"-parts-v1";if(kind!="armor-accessories"&&Resources.Load<Texture2D>(grounded))path=grounded;
+   string portrait=path+"-portrait-v2";
+   if(Resources.Load<Texture2D>(portrait))path=portrait;
    var texture=Resources.Load<Texture2D>(path);if(!texture){if(warnings.Add(path))Debug.LogWarning("Equipment illustration missing: "+path);return null;}
    Rect[] cells=null;var json=Resources.Load<TextAsset>(path+"-bounds");
    if(json){try{cells=ParseBounds(json.text,6*rows);}catch(System.Exception){}}
@@ -36,6 +38,8 @@ namespace NeonVault {
   static Sheet LoadChestBootRevision(EquipmentRecipe r){
    string path="Art/DistinctEquipment/"+ManufacturerCatalog.Id(r.maker)+"-armor-chest-boots-v2";
    if(sheets.TryGetValue(path,out var cached)&&cached.texture)return cached;
+   string portrait=path+"-portrait-v2";
+   if(Resources.Load<Texture2D>(portrait))path=portrait;
    var texture=Resources.Load<Texture2D>(path);
    var json=Resources.Load<TextAsset>(path+"-bounds");
    if(!texture||!json){if(warnings.Add(path))Debug.LogWarning("Chest/boot illustration missing: "+path);return null;}
