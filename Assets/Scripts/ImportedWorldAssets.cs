@@ -7,7 +7,28 @@ namespace NeonVault {
   static readonly Dictionary<string,GameObject[]> groups=new Dictionary<string,GameObject[]>();
   static Shader builtinStandard;
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] static void Register(){OverworldScenery.AssetAdapter=Place;WorldEntranceBuildings.AssetAdapter=Place;}
+  // Curated props use existing scenery anchors; source geometry is normalized to a
+  // bounded footprint so decorative meshes do not block navigation or cover sites.
+  static bool PlacePolyHaven(string category,Transform parent,Vector3 position,int seed){
+   if(!parent.name.StartsWith("Stream /"))return false;
+   string[] names; float maxWidth,maxHeight,maxDepth;
+   if(category=="street") { names=new[]{"fire_hydrant","metal_trash_can"}; maxWidth=1.0f;maxHeight=3.5f;maxDepth=1.0f; }
+   else if(category=="debris") { names=new[]{"ammo_box","barrel_stove","concrete_road_barrier","metal_toolbox","old_tyre","tree_stump_01"};maxWidth=1.3f;maxHeight=1.2f;maxDepth=1.3f; }
+   else if(category=="car") { names=new[]{"covered_car"};maxWidth=1.8f;maxHeight=1.6f;maxDepth=4.2f; }
+   else return false;
+   // Keep a mix of the existing scenery and the new set.
+   if((seed&3)!=0)return false;
+   string name=names[((seed&int.MaxValue)/4)%names.Length];
+   var source=Resources.Load<GameObject>("ImportedWorld/PolyHaven/"+name);if(!source)return false;
+   var bounds=ImportedWorldBatch.SourceBounds(source);
+   if(bounds.size.x<.001f||bounds.size.y<.001f||bounds.size.z<.001f)return false;
+   float scale=Mathf.Min(maxWidth/bounds.size.x,maxHeight/bounds.size.y,maxDepth/bounds.size.z);
+   var rotation=Quaternion.Euler(0,category=="car"?0:(seed%4)*90,0);
+   var offset=rotation*new Vector3(-bounds.center.x*scale,-bounds.min.y*scale,-bounds.center.z*scale);
+   ImportedWorldBatch.Add(parent,source,position+offset,rotation,Vector3.one*scale);return true;
+  }
   public static bool Place(string category,Transform parent,Vector3 position,int seed){
+   if(PlacePolyHaven(category,parent,position,seed))return true;
    if(!groups.TryGetValue(category,out var prefabs)){prefabs=Array.FindAll(Resources.LoadAll<GameObject>("ImportedWorld/"+category),p=>!EquipmentChestVisual.IsReserved(p));groups[category]=prefabs;}
    if(prefabs.Length==0)return false;
    var source=prefabs[(seed&int.MaxValue)%prefabs.Length];
@@ -55,6 +76,9 @@ namespace NeonVault {
     PlaceBlockedBackdrop(root,layout,"props",i%2==0?"WaterTank":"barrel_open",new Vector3(-15-i%2*1.6f,0,-10+i*2),i*90);
     PlaceBlockedBackdrop(root,layout,"props",i%2==0?"pallet":"OxygenTank",new Vector3(15+i%2*1.6f,0,-9+i*2),i*90);
    }
+   // Realistic props stay entirely inside existing blocked cells so navigation is unchanged.
+   PlaceBlockedBackdrop(root,layout,"PolyHaven","barrel_stove",new Vector3(-17,0,8),0,.7f);
+   PlaceBlockedBackdrop(root,layout,"PolyHaven","metal_trash_can",new Vector3(17,0,7),90,.7f);
   }
   static void PlaceBlockedBackdrop(Transform root,SectorLayout layout,string category,string name,Vector3 position,float yaw,float scale=1){
    var source=Resources.Load<GameObject>("ImportedWorld/"+category+"/"+name);if(!source)return;
@@ -107,8 +131,8 @@ namespace NeonVault {
    // Replace the whole legacy hierarchy, rather than layering a prop over its truck.
    int index=0;foreach(var legacy in root.GetComponentsInChildren<Transform>()){
     if(legacy.name!="Wrecked utility vehicle")continue;
-    string[] names={"WaterTank","rack","pbr_box_ammo","barrel_open"};
-    var source=Resources.Load<GameObject>("ImportedWorld/props/"+names[index++%names.Length]);if(!source)continue;
+    string[] names={"PolyHaven/metal_trash_can","PolyHaven/barrel_stove","PolyHaven/metal_toolbox","props/barrel_open"};
+    var source=Resources.Load<GameObject>("ImportedWorld/"+names[index++%names.Length]);if(!source)continue;
     var placed=UnityEngine.Object.Instantiate(source,legacy.parent,false);placed.name="Imported cover / "+source.name;
     placed.transform.localPosition=legacy.localPosition;placed.transform.localRotation=Quaternion.identity;
     var rs=placed.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(placed);continue;}
@@ -121,6 +145,18 @@ namespace NeonVault {
     legacy.gameObject.SetActive(false);UnityEngine.Object.Destroy(legacy.gameObject);
    }
   }
+  static readonly Dictionary<string,Material> industrialMaterials=new Dictionary<string,Material>();
+  static void SetIndustrialMaterial(GameObject placed,string name){
+   if(!industrialMaterials.TryGetValue(name,out var material)){
+    var texture=Resources.Load<Texture2D>("ImportedWorld/Industrial/"+name+"_diff");
+    if(!texture)return;
+    material=new Material(BuiltinStandard());material.name="Industrial / "+name;
+    material.mainTexture=texture;material.SetFloat("_Glossiness",.12f);material.SetFloat("_Metallic",0);
+    industrialMaterials[name]=material;
+   }
+   foreach(var renderer in placed.GetComponentsInChildren<Renderer>())renderer.sharedMaterial=material;
+   foreach(var collider in placed.GetComponentsInChildren<Collider>())collider.enabled=false;
+  }
   static void DressClosedDungeonBlocks(Transform root,SectorLayout layout){
    int count=0;
    foreach(var rect in layout.walls){
@@ -129,12 +165,17 @@ namespace NeonVault {
     var centre=new Vector3(rect.center.x,0,rect.center.y);
     var entry=layout.Entry;var exit=layout.Exit;entry.y=exit.y=0;
     if((centre-entry).sqrMagnitude<100||(centre-exit).sqrMagnitude<100)continue;
-    var source=Resources.Load<GameObject>("ImportedWorld/building/house_ruined")??Resources.Load<GameObject>("ImportedWorld/building/Warehouse");if(!source)break;
-    var placed=UnityEngine.Object.Instantiate(source,root,false);placed.name="Closed dungeon ruin / "+count;
+    string[] industrial={"control_terminal","tank","tank_capsule","vent"};
+    string industrialName=industrial[count%industrial.Length];
+    var source=Resources.Load<GameObject>("ImportedWorld/Industrial/"+industrialName);
+    if(!source)source=Resources.Load<GameObject>("ImportedWorld/building/house_ruined")??Resources.Load<GameObject>("ImportedWorld/building/Warehouse");
+    if(!source)break;
+    var placed=UnityEngine.Object.Instantiate(source,root,false);placed.name="Closed industrial detail / "+count;
+    if(source.name==industrialName)SetIndustrialMaterial(placed,industrialName);
     placed.transform.localPosition=centre;placed.transform.localRotation=Quaternion.Euler(0,count%2*90,0);
     var rs=placed.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(placed);continue;}
     Bounds b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
-    float scale=Mathf.Min((rect.width-.8f)/Mathf.Max(.01f,b.size.x),(rect.height-.8f)/Mathf.Max(.01f,b.size.z),3/Mathf.Max(.01f,b.size.y));
+    float scale=Mathf.Min(1,Mathf.Min((rect.width-.8f)/Mathf.Max(.01f,b.size.x),(rect.height-.8f)/Mathf.Max(.01f,b.size.z),3/Mathf.Max(.01f,b.size.y)));
     placed.transform.localScale*=scale;
     b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
     var worldCentre=root.TransformPoint(centre);placed.transform.position+=new Vector3(worldCentre.x-b.center.x,root.TransformPoint(new Vector3(0,.82f,0)).y-b.min.y,worldCentre.z-b.center.z);
@@ -152,7 +193,8 @@ namespace NeonVault {
   public static void DressInterior(Transform root,SectorLayout layout,bool hub){
    ReplaceLegacyCovers(root);
    ApplySurfaces(root);
-   if(hub)DressHubPerimeter(root,layout);else DressClosedDungeonBlocks(root,layout);
+   if(hub)DressHubPerimeter(root,layout);
+   DressClosedDungeonBlocks(root,layout);
   }
  }
 }

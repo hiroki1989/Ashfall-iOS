@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 namespace NeonVault {
@@ -14,7 +14,8 @@ namespace NeonVault {
   readonly List<Bounds> buildingBounds=new List<Bounds>();readonly List<bool> hidden=new List<bool>();static VaultGame game;
   static int planeFrame=-1;static Camera planeCamera;static readonly Plane[] planes=new Plane[6];
   float nextOcclusion;bool visibleChunk=true;bool chunkBoundsReady;Bounds chunkBounds;
-  readonly Dictionary<MeshRenderer,Material[]> originalRendererMaterials=new Dictionary<MeshRenderer,Material[]>();bool rendererFade;
+  readonly Dictionary<MeshRenderer,Material[]> originalRendererMaterials=new Dictionary<MeshRenderer,Material[]>();
+  readonly Dictionary<int,MeshRenderer[]> buildingRenderers=new Dictionary<int,MeshRenderer[]>();
   readonly Matrix4x4[] scratch=new Matrix4x4[1023];
   static Template Get(GameObject prefab){
    if(templates.TryGetValue(prefab,out var t))return t;t=new Template();bool first=true;
@@ -26,7 +27,7 @@ namespace NeonVault {
     var source=renderer.sharedMaterials;
     for(int sub=0;sub<filter.sharedMesh.subMeshCount&&sub<source.Length;sub++){
      if(!source[sub])continue;if(!materials.TryGetValue(source[sub],out var mat)){mat=new Material(source[sub]);
-      if(mat.shader&&mat.shader.name=="Standard"){
+      if(mat.shader&&mat.shader.name=="Standard"&&(!mat.HasProperty("_Mode")||mat.GetFloat("_Mode")!=1)){
        mat.shader=ImportedWorldAssets.BuiltinStandard();
        mat.SetFloat("_ZWrite",1);mat.SetFloat("_Mode",0);mat.SetFloat("_SrcBlend",1);mat.SetFloat("_DstBlend",0);mat.renderQueue=-1;mat.DisableKeyword("_ALPHABLEND_ON");mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
       }
@@ -43,6 +44,16 @@ namespace NeonVault {
    int owner=-1;if(building){owner=batch.buildingBounds.Count;var source=Get(prefab).bounds;var bounds=new Bounds(matrix.MultiplyPoint3x4(source.center),Vector3.zero);for(int corner=0;corner<8;corner++)bounds.Encapsulate(matrix.MultiplyPoint3x4(source.center+Vector3.Scale(source.extents,new Vector3((corner&1)==0?-1:1,(corner&2)==0?-1:1,(corner&4)==0?-1:1))));batch.buildingBounds.Add(bounds);batch.hidden.Add(false);}
    foreach(var part in Get(prefab).parts){var key=(part.mesh,part.material,part.sub);if(!batch.groups.TryGetValue(key,out var group)){group=new Group{mesh=part.mesh,material=part.material,sub=part.sub};batch.groups.Add(key,group);}group.matrices.Add(matrix*part.local);group.owners.Add(owner);}
   }
+  // Register all ordinary renderers belonging to the same site as its instanced shell.
+  public void RegisterSiteRenderers(){
+   int owner;if(buildingBounds.Count>0)owner=0;else{owner=buildingBounds.Count;buildingBounds.Add(new Bounds(transform.TransformPoint(new Vector3(0,3.5f,6)),new Vector3(13,8,10)));hidden.Add(false);}
+   var renderers=GetComponentsInChildren<MeshRenderer>(true);buildingRenderers[owner]=renderers;
+   foreach(var renderer in renderers)if(renderer&&renderer.enabled){var bounds=buildingBounds[owner];bounds.Encapsulate(renderer.bounds);buildingBounds[owner]=bounds;}
+  }
+  public int RegisterBuilding(Bounds bounds){int owner=buildingBounds.Count;buildingBounds.Add(bounds);hidden.Add(false);return owner;}
+  public void AddBuildingPart(int owner,Mesh mesh,Material material,Matrix4x4 matrix){
+   var key=(mesh,material,0);if(!groups.TryGetValue(key,out var group)){group=new Group{mesh=mesh,material=material,sub=0};groups.Add(key,group);}group.matrices.Add(matrix);group.owners.Add(owner);
+  }
   void LateUpdate(){DrawNow();}
   static bool ChunkVisible(Camera camera,Bounds bounds){if(planeFrame!=Time.frameCount||planeCamera!=camera){GeometryUtility.CalculateFrustumPlanes(camera,planes);planeFrame=Time.frameCount;planeCamera=camera;}return GeometryUtility.TestPlanesAABB(planes,bounds);}
   bool Hides(Bounds bounds,Vector3 point,Camera camera){var viewport=camera.WorldToViewportPoint(point);if(viewport.z<=0||viewport.x<0||viewport.x>1||viewport.y<0||viewport.y>1)return false;var ray=camera.ViewportPointToRay(viewport);return bounds.IntersectRay(ray,out float distance)&&distance<Vector3.Dot(point-ray.origin,ray.direction)-.4f;}
@@ -57,15 +68,14 @@ namespace NeonVault {
    result.DisableKeyword("_ALPHATEST_ON");result.DisableKeyword("_ALPHABLEND_ON");result.EnableKeyword("_ALPHAPREMULTIPLY_ON");result.renderQueue=3000;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
-  void SetRendererFade(bool fade){
-   if(fade==rendererFade)return;rendererFade=fade;
-   if(fade){foreach(var renderer in GetComponentsInChildren<MeshRenderer>(true)){
-    if(!renderer)continue;var original=renderer.sharedMaterials;originalRendererMaterials[renderer]=original;
-    var faded=new Material[original.Length];for(int i=0;i<original.Length;i++)faded[i]=original[i]?Faded(original[i]):null;renderer.sharedMaterials=faded;
-   }}else RestoreRendererMaterials();
+  void UpdateRendererFades(){
+   foreach(var entry in buildingRenderers){bool fade=hidden[entry.Key];foreach(var renderer in entry.Value){
+    if(!renderer)continue;
+    if(fade&&!originalRendererMaterials.ContainsKey(renderer)){var original=renderer.sharedMaterials;originalRendererMaterials.Add(renderer,original);var faded=new Material[original.Length];for(int i=0;i<original.Length;i++)faded[i]=original[i]?Faded(original[i]):null;renderer.sharedMaterials=faded;}
+    else if(!fade&&originalRendererMaterials.TryGetValue(renderer,out var saved)){renderer.sharedMaterials=saved;originalRendererMaterials.Remove(renderer);}
+   }}
   }
-  void RestoreRendererMaterials(){foreach(var entry in originalRendererMaterials)if(entry.Key)entry.Key.sharedMaterials=entry.Value;originalRendererMaterials.Clear();rendererFade=false;}
-  void OnDisable(){RestoreRendererMaterials();}
+  void OnDisable(){foreach(var entry in originalRendererMaterials)if(entry.Key)entry.Key.sharedMaterials=entry.Value;originalRendererMaterials.Clear();}
   public static bool OcclusionEnabled=true;
   public int HiddenBuildingCount {get;private set;}
   public void DrawNow(){
@@ -74,7 +84,7 @@ namespace NeonVault {
    if(Time.unscaledTime>=nextOcclusion){nextOcclusion=Time.unscaledTime+.12f;HiddenBuildingCount=0;
    for(int i=0;i<buildingBounds.Count;i++){bool hide=false;if(OcclusionEnabled&&camera&&game){hide=Hides(buildingBounds[i],game.PlayerPosition+Vector3.up*1.1f,camera);if(!hide)foreach(var enemy in game.Enemies){if(!enemy||enemy.dead||(enemy.transform.position-game.PlayerPosition).sqrMagnitude>2500)continue;if(Hides(buildingBounds[i],enemy.transform.position+Vector3.up*1.1f,camera)){hide=true;break;}}}hidden[i]=hide;if(hide)HiddenBuildingCount++;}
    }
-   if(gameObject.name.StartsWith("Dungeon building /"))SetRendererFade(HiddenBuildingCount>0);
+   UpdateRendererFades();
    foreach(var group in groups.Values)for(int pass=0;pass<2;pass++){int count=0;for(int index=0;index<group.matrices.Count;index++){int owner=group.owners[index];bool fade=owner>=0&&hidden[owner];if(fade!=(pass==1))continue;scratch[count++]=group.matrices[index];if(count==1023){Graphics.DrawMeshInstanced(group.mesh,group.sub,fade?Faded(group.material):group.material,scratch,count,null,fade||Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);count=0;}}if(count>0)Graphics.DrawMeshInstanced(group.mesh,group.sub,pass==1?Faded(group.material):group.material,scratch,count,null,pass==1||Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);}
   }
  }

@@ -57,8 +57,7 @@ namespace NeonVault
             }
             if(Active&&!InventoryOpen)
             {
-                Vector3 worldAim=VaultMobileInputBridge.ToWorldMovement(MobileTouchControls.Aim).normalized;
-                Vector3 p=cam.WorldToScreenPoint(PlayerPosition+worldAim*6+Vector3.up*.9f);
+                Vector3 p=cam.WorldToScreenPoint(AimReticleWorldPosition);
                 Vector2 reticle=MobileCanvasPoint(p);DrawCrosshair(reticle.x,reticle.y);
                 DrawWorldLootPreview();
                 if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);

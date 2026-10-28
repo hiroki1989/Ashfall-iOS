@@ -25,7 +25,7 @@ namespace NeonVault
         public float SeparationRadius=>kind==3?1.45f:elite?1.0f:.78f;
         public static float TargetDodgeChance(float accuracy)=>Mathf.Clamp((82-Mathf.Clamp(accuracy,1,100))*.006f,0,.30f);
         public float TelegraphSeconds=>kind==3?(bossMove==BossMove.Gun?1.05f:bossMove==BossMove.Slam?1.25f:bossMove==BossMove.Sweep?.82f:.6f):(kind==5||kind==10)?.95f:kind==7?1.2f:kind==4?.65f:kind==8?.42f:kind==0?.7f:.85f;
-        public static string Name(int kind)=>kind==10?VaultLanguage.T("RAIDER","レイダー"):VaultLanguage.T(new[]{"SHAMBLER","ACID SPITTER","RAD GUNNER","WASTELAND COLOSSUS","POUNCER","NEEDLE STALKER","RAD CYCLER","BLOATER","PLATED CORPSE","FLESH WEAVER"}[Mathf.Clamp(kind,0,9)],new[]{"徘徊屍","酸吐き","放射兵","荒野の巨骸","跳び屍","針撃ち","放射旋回体","膨張屍","装甲屍","再生母体"}[Mathf.Clamp(kind,0,9)]);
+        public static string Name(int kind)=>kind==10?VaultLanguage.T("RAIDER","レイダー"):VaultLanguage.T(new[]{"SHAMBLER","ACID SPITTER","RAD GUNNER","WASTELAND COLOSSUS","POUNCER","NEEDLE STALKER","RAD CYCLER","BLOATER","PLATED CORPSE","FLESH WEAVER"}[Mathf.Clamp(kind,0,9)],new[]{"シャンブラー","アシッドスピッター","ラッドガンナー","ウェイストランド・コロッサス","パウンサー","ニードルストーカー","ラッドサイクラー","ブロウター","プレートコープス","フレッシュウィーバー"}[Mathf.Clamp(kind,0,9)]);
         enum BossMove { Rush, Slam, Sweep, Gun }
         bool alerted, charging;float charge,dash,damageScale=1,resistance,lockedRadialAngle,burstTimer;int burstShots;Vector3 lockedAim,lockedTarget;GameObject warning;
         BossMove bossMove;int bossAttackCount;

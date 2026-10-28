@@ -88,6 +88,7 @@ namespace NeonVault
         }
         void ClearWorldScene()
         {
+            ClearActiveActionSkill();
             ResetOverworldRush();
             if(world!=null){world.gameObject.SetActive(false);Destroy(world.gameObject);}
             foreach(var material in materials)if(material!=null)Destroy(material);

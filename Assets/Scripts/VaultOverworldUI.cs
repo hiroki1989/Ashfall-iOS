@@ -238,9 +238,9 @@ namespace NeonVault
                 Box(new Rect(at.x-28,at.y,56,5),Ink);Box(new Rect(at.x-28,at.y,56*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);
             }
             if(!Active)return;
-            Vector3 target=PlayerPosition+aim*5+Vector3.up*.9f;var point=cam.WorldToScreenPoint(target);
+            var point=cam.WorldToScreenPoint(AimReticleWorldPosition);
             if(MobileTouchControls.Enabled){Vector2 at=MobileCanvasPoint(point);DrawCrosshair(at.x,at.y);}
-            else {float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);DrawCrosshair((Input.mousePosition.x-(UnityEngine.Screen.width-1440*scale)*.5f)/scale,(UnityEngine.Screen.height-Input.mousePosition.y-(UnityEngine.Screen.height-900*scale)*.5f)/scale);}
+            else {float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);Vector3 display=HasAimTarget?point:Input.mousePosition;DrawCrosshair((display.x-(UnityEngine.Screen.width-1440*scale)*.5f)/scale,(UnityEngine.Screen.height-display.y-(UnityEngine.Screen.height-900*scale)*.5f)/scale);}
         }
         void DrawWorldLootPreview()
         {
@@ -319,30 +319,39 @@ namespace NeonVault
             {
                 Vector3 target=OverworldWaypointPosition;
                 Vector2 targetOnMap=Local(target), direction=targetOnMap-player;
-                if(direction.sqrMagnitude>100f)
+                Rect safe=new Rect(inside.x+15,inside.y+15,inside.width-30,inside.height-30);
+                if(inside.Contains(targetOnMap))
                 {
-                    Vector2 arrow=targetOnMap;
-                    Rect safe=new Rect(inside.x+15,inside.y+15,inside.width-30,inside.height-30);
-                    if(!safe.Contains(arrow))
-                    {
-                        float fraction=1f;
-                        if(direction.x>0)fraction=Mathf.Min(fraction,(safe.xMax-player.x)/direction.x);
-                        if(direction.x<0)fraction=Mathf.Min(fraction,(safe.xMin-player.x)/direction.x);
-                        if(direction.y>0)fraction=Mathf.Min(fraction,(safe.yMax-player.y)/direction.y);
-                        if(direction.y<0)fraction=Mathf.Min(fraction,(safe.yMin-player.y)/direction.y);
-                        arrow=player+direction*Mathf.Clamp01(fraction);
-                    }
-                    DrawWaypointArrow(arrow,direction.normalized);
+                    // The point of the pin marks the real destination, even when close to the player.
+                    DrawWaypointPin(targetOnMap);
+                }
+                else if(direction.sqrMagnitude>0.001f)
+                {
+                    Vector2 origin=new Vector2(Mathf.Clamp(player.x,safe.xMin,safe.xMax),Mathf.Clamp(player.y,safe.yMin,safe.yMax));
+                    float fraction=float.MaxValue;
+                    if(direction.x>0)fraction=Mathf.Min(fraction,(safe.xMax-origin.x)/direction.x);
+                    if(direction.x<0)fraction=Mathf.Min(fraction,(safe.xMin-origin.x)/direction.x);
+                    if(direction.y>0)fraction=Mathf.Min(fraction,(safe.yMax-origin.y)/direction.y);
+                    if(direction.y<0)fraction=Mathf.Min(fraction,(safe.yMin-origin.y)/direction.y);
+                    DrawWaypointArrow(origin+direction*Mathf.Max(0,fraction),direction.normalized);
                 }
             }
+        }
+        void DrawWaypointPin(Vector2 point)
+        {
+            Color shadow=new Color(.02f,.04f,.05f,.95f);
+            Vector2 top=point+new Vector2(0,-20),left=point+new Vector2(-8,-12),right=point+new Vector2(8,-12);
+            Line(top,left,shadow,6);Line(top,right,shadow,6);Line(left,point,shadow,6);Line(right,point,shadow,6);
+            Line(top,left,Gold,3);Line(top,right,Gold,3);Line(left,point,Gold,3);Line(right,point,Gold,3);
+            Box(new Rect(point.x-2,point.y-14,4,4),Gold);
         }
         void DrawWaypointArrow(Vector2 center,Vector2 direction)
         {
             Vector2 side=new Vector2(-direction.y,direction.x);
-            Vector2 tip=center+direction*12f,back=center-direction*7f;
-            Line(tip,back+side*7f,Gold,3);Line(tip,back-side*7f,Gold,3);
-            Line(back+side*7f,back-side*7f,Gold,3);
-            Box(new Rect(center.x-2,center.y-2,4,4),Gold);
+            Vector2 tip=center+direction*10f,back=center-direction*8f;
+            Color shadow=new Color(.02f,.04f,.05f,.95f);
+            Line(tip,back+side*8f,shadow,7);Line(tip,back-side*8f,shadow,7);Line(back+side*8f,back-side*8f,shadow,7);
+            Line(tip,back+side*8f,Gold,3);Line(tip,back-side*8f,Gold,3);Line(back+side*8f,back-side*8f,Gold,3);
         }
         void UpdateWorldLocalTexture(Vector2 origin)
         {

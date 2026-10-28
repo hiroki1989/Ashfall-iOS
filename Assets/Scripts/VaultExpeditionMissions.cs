@@ -42,6 +42,9 @@ namespace NeonVault
         {
             get {int mask=MissionSurveyMask,count=0;while(mask!=0){count+=mask&1;mask>>=1;}return count;}
         }
+        // Collection and survey missions may move on after interacting with a
+        // supply cache on this floor; a new floor never starts with its exit open.
+        bool CurrentMissionFloorVisited => (MissionSurveyMask & (1 << Mathf.Clamp(room,0,3))) != 0;
         public bool MissionCompleted => missionCompleted;
 
         void ResetExpeditionMission(){missionKills=0;missionCompleted=false;}

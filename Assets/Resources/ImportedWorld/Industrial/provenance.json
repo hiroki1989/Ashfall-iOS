@@ -1,0 +1,28 @@
+{
+  "title": "pbr-industrial-asset-pack",
+  "author": "a52; original by rubberduck",
+  "page": "https://opengameart.org/content/pbr-industrial-asset-pack",
+  "license": "CC0 1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "retrieved_utc": "2026-10-28T02:56:58.532327+00:00",
+  "files": [
+    {
+      "file": "oga_industrial_a52_version_0.zip",
+      "url": "https://opengameart.org/sites/default/files/oga_industrial_a52_version_0.zip",
+      "bytes": 57954847,
+      "sha256": "4499f14fa664e83fd2b746c0e88a12249e8143ec9cd2b7ca9dd3d75aad50da47",
+      "zip_test_bad_entry": null,
+      "entries": 136,
+      "uncompressed_bytes": 73226747
+    },
+    {
+      "file": "oga_industrial_a52_version_baked_models_0.zip",
+      "url": "https://opengameart.org/sites/default/files/oga_industrial_a52_version_baked_models_0.zip",
+      "bytes": 59061043,
+      "sha256": "6779e7185ed377cdf99bb6644c7a0e4198e86bf712ccca7fcac62eb4f11a1cf9",
+      "zip_test_bad_entry": null,
+      "entries": 105,
+      "uncompressed_bytes": 67936880
+    }
+  ]
+}

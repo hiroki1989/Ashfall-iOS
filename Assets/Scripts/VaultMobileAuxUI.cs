@@ -157,15 +157,11 @@ namespace NeonVault
                 if(limit>0)SetDebtPaymentFraction(GUI.HorizontalSlider(new Rect(55,408,1330,60),debtPaymentAmount/(float)limit,0f,1f));
                 if(MobileButton(new Rect(40,485,655,110),T("MAX AMOUNT","全額を選択")))debtPaymentAmount=limit;
                 if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
-                if(MobileButton(new Rect(40,650,1360,130),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
+                if(MobileButton(new Rect(40,650,650,110),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
+                if(MobileButton(new Rect(720,650,680,110),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0")))TryRespecActionSkills();
                 return;
             }
-            string[] en={"HANDGUN","SHOTGUN","ASSAULT","PRECISION","HEAVY MG"},ja={"ハンドガン","ショットガン","アサルトライフル","スナイパーライフル","ヘビーマシンガン"};
-            for(int i=0;i<en.Length;i++)if(MobileButton(new Rect(40+i*277,220,265,110),T(en[i],ja[i]))){debtTrack=i;mobileSkillPage=0;}
-            var nodes=debtSkillNodes.FindAll(n=>n.track==en[debtTrack]);mobileSkillPage=Mathf.Clamp(mobileSkillPage,0,Mathf.Max(0,(nodes.Count-1)/2));
-            for(int row=0;row<2;row++){int index=mobileSkillPage*2+row;if(index>=nodes.Count)break;var node=nodes[index];float y=350+row*185;Panel(new Rect(40,y,1360,170),Gold);MobileCopyAt(60,y+12,VaultLanguage.Japanese?node.ja:node.en,Gold,930);MobileCopyAt(60,y+65,DebtSkillDescription(node),Mist,930);bool owned=unlockedDebtSkills.Contains(node.id);if(MobileButton(new Rect(1035,y+30,325,110),owned?T("OWNED","取得済"):DebtSkillAvailable(node)?T("UNLOCK","習得"):T("LOCKED","条件不足"))&&!owned)TryUnlockDebtSkill(node.id);}
-            if(MobileButton(new Rect(40,780,370,110),T("PREV","前へ")))mobileSkillPage=Mathf.Max(0,mobileSkillPage-1);
-            if(MobileButton(new Rect(1030,780,370,110),T("NEXT","次へ")))mobileSkillPage=Mathf.Min((nodes.Count-1)/2,mobileSkillPage+1);
+            DrawActionSkillTree();
         }
     }
 }

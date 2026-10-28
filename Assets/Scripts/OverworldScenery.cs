@@ -30,6 +30,23 @@ namespace NeonVault
             var river=ImportedRiverWater.Create(owned);if(river!=null)materials[3]=river;
             var primitive=GameObject.CreatePrimitive(PrimitiveType.Cube);cube=primitive.GetComponent<MeshFilter>().sharedMesh;Destroy(primitive);primitive=GameObject.CreatePrimitive(PrimitiveType.Sphere);sphere=primitive.GetComponent<MeshFilter>().sharedMesh;Destroy(primitive);
         }
+        static GameObject[] cc0BuildingSources;
+        static bool PlaceCC0Building(Transform parent,Rect rect,int seed)
+        {
+            // A minority of city buildings use the curated CC0 set; missing imports fall back.
+            if((seed&3)!=0)return false;
+            if(cc0BuildingSources==null)cc0BuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/ApocalypticBuildings");
+            var sources=cc0BuildingSources;
+            if(sources.Length==0)return false;
+            var source=sources[((seed&int.MaxValue)/4)%sources.Length];
+            var bounds=ImportedWorldBatch.SourceBounds(source);
+            if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
+            float scale=Mathf.Min((rect.width-.4f)/bounds.size.x,(rect.height-.4f)/bounds.size.z,11f/bounds.size.y);
+            if(scale<=0)return false;
+            var position=new Vector3(rect.center.x-bounds.center.x*scale,-bounds.min.y*scale,rect.center.y-bounds.center.z*scale);
+            ImportedWorldBatch.Add(parent,source,position,Quaternion.identity,Vector3.one*scale,true);
+            return true;
+        }
         public void TickFocus(Vector3 position)
         {
             var next=new Vector2Int(Mathf.FloorToInt(position.x/100),Mathf.FloorToInt(position.z/100));if(next==focus)return;focus=next;var generationTimer=System.Diagnostics.Stopwatch.StartNew();
@@ -79,15 +96,19 @@ namespace NeonVault
             {
                 Vector3 p=new Vector3(rect.center.x,0,rect.center.y);int seed=unchecked(x*1973+z*9277+index++*101);float h=4.5f+Mathf.Abs(seed%4)*1.7f;
                 int district=geography.District(p);
+                if((district==0||district==1||district==2)&&PlaceCC0Building(obj.transform,rect,seed))continue;
                 if(district==0||district==1||district==2){RuinedCityArchitecture.Place(obj.transform,rect,district==1?7:district==2?6:Mathf.Abs(seed%6));continue;}
                 if(ImportedWorldAssets.PlaceBuilding(obj.transform,rect,seed))continue;
-                Box(p+Vector3.up*.15f,new Vector3(rect.width,.3f,rect.height),0);
-                Box(p+new Vector3(-rect.width*.5f+.25f,h*.5f,0),new Vector3(.5f,h,rect.height),4);
-                Box(p+new Vector3(rect.width*.5f-.25f,h*.35f,0),new Vector3(.5f,h*.7f,rect.height),0);
-                Box(p+new Vector3(0,h*.35f,rect.height*.5f-.25f),new Vector3(rect.width,h*.7f,.5f),4);
-                for(int post=0;post<4;post++)Box(p+new Vector3(-rect.width*.42f+post*rect.width*.28f,h*.4f,-rect.height*.5f+.3f),new Vector3(.55f,h*.8f,.6f),0);
-                Box(p+new Vector3(0,h*.8f,-rect.height*.5f+.3f),new Vector3(rect.width,.35f,.8f),0);
-                for(int rubble=0;rubble<12;rubble++){float a=rubble*2.399f;Box(p+new Vector3(Mathf.Cos(a)*rect.width*.48f,.1f,Mathf.Sin(a)*rect.height*.48f),new Vector3(.4f,.2f,.27f),rubble%2==0?4:0,rubble*31);}
+                var buildingBatch=obj.GetComponent<ImportedWorldBatch>();if(!buildingBatch)buildingBatch=obj.AddComponent<ImportedWorldBatch>();
+                int buildingOwner=buildingBatch.RegisterBuilding(new Bounds(p+Vector3.up*h*.5f,new Vector3(rect.width+2,h+1,rect.height+2)));
+                void BuildingBox(Vector3 position,Vector3 size,int mat,float yaw=0){buildingBatch.AddBuildingPart(buildingOwner,cube,materials[mat],obj.transform.localToWorldMatrix*Matrix4x4.TRS(position,Quaternion.Euler(0,yaw,0),size));}
+                BuildingBox(p+Vector3.up*.15f,new Vector3(rect.width,.3f,rect.height),0);
+                BuildingBox(p+new Vector3(-rect.width*.5f+.25f,h*.5f,0),new Vector3(.5f,h,rect.height),4);
+                BuildingBox(p+new Vector3(rect.width*.5f-.25f,h*.35f,0),new Vector3(.5f,h*.7f,rect.height),0);
+                BuildingBox(p+new Vector3(0,h*.35f,rect.height*.5f-.25f),new Vector3(rect.width,h*.7f,.5f),4);
+                for(int post=0;post<4;post++)BuildingBox(p+new Vector3(-rect.width*.42f+post*rect.width*.28f,h*.4f,-rect.height*.5f+.3f),new Vector3(.55f,h*.8f,.6f),0);
+                BuildingBox(p+new Vector3(0,h*.8f,-rect.height*.5f+.3f),new Vector3(rect.width,.35f,.8f),0);
+                for(int rubble=0;rubble<12;rubble++){float a=rubble*2.399f;BuildingBox(p+new Vector3(Mathf.Cos(a)*rect.width*.48f,.1f,Mathf.Sin(a)*rect.height*.48f),new Vector3(.4f,.2f,.27f),rubble%2==0?4:0,rubble*31);}
             }
             foreach(var tree in data.Trees)
             {

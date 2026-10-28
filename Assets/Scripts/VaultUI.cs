@@ -101,12 +101,12 @@ namespace NeonVault
                 if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
                 if(DebtIntroVisible){DrawMobileDebtIntro();return;}
                 if(manufacturerRegistry)DrawMobileManufacturer();
-                else if(InventoryOpen)DrawEquipmentScreen(false);
+                else if(InventoryOpen){if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
                 else if(screen==Screen.Menu)DrawMobileMenu();
                 else if(screen==Screen.Hub)DrawMobileHub();
                 else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawMobileShop();}
                 else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
-                else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();}
+                else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();}
                 else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
                 if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
@@ -114,14 +114,14 @@ namespace NeonVault
             if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
             if(DebtIntroVisible){DrawDebtIntro();return;}
             if(manufacturerRegistry)DrawManufacturerRegistry();
-            else if(InventoryOpen)DrawEquipmentScreen(false);
+            else if(InventoryOpen){if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
             else if(screen==Screen.Menu)DrawMenu();
             else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,340,50),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}}
             else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawShop();}
             else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
             else
             {
-                if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen!=Screen.Playing)DrawOverlay();
+                if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing)DrawActionSkillHUD();else DrawOverlay();
             }
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
@@ -138,7 +138,7 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));Panel(new Rect(55,125,1330,660),new Color(1,.27f,.19f));
             Text(95,160,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),new GUIStyle(heading){fontSize=42,wordWrap=true},new Color(1,.39f,.28f),1230);
             Text(95,245,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Raider Boss owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはレイダーボス、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=31,wordWrap=true},Mist,1220);
-            Text(95,480,T("Repayment earns levels and skill points. Choose a weapon path, grow stronger, and survive long enough to clear the debt.","返済でレベルとスキルポイントを獲得する。武器系統を選んで強くなり、借金を返しきるまで生き残れ。"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,1220);
+            Text(95,480,T("Repayment earns levels and skill points. Choose an action skill and upgrade its branches.","返済でレベルとスキルポイントを獲得する。アクションスキルと強化の方向を選ぼう。"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,1220);
             if(MobileButton(new Rect(300,640,840,120),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")))MarkDebtIntroSeen();
         }
         void DrawDebtIntro()
@@ -147,7 +147,7 @@ namespace NeonVault
             Panel(new Rect(205,150,1030,600),new Color(1,.27f,.19f));
             Text(250,190,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),heading,new Color(1,.39f,.28f),930);
             Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Raider Boss owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはレイダーボス、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
-            Text(255,490,T("Every 25,000,000 paid grants a level and a skill point. Find Briggs at the safehouse to make payments and build your weapon path.","返済累計2,500万ごとにレベルとスキルポイントを獲得。拠点のブリッグスに話しかけ、返済と武器系統の強化を進めよう。"),small,Cyan,900);
+            Text(255,490,T("Repayment grants levels and skill points. The first level costs 1,000,000 scrap. Visit Briggs to repay and upgrade action skills.","返済でレベルとスキルポイントを獲得。最初のレベルは100万スクラップ。拠点のブリッグスに話しかけて返済と強化を進めよう。"),small,Cyan,900);
             if(MobileTouchControls.Enabled?MobileButton(new Rect(350,620,740,115),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")):Button(new Rect(505,640,430,64),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃"),true))MarkDebtIntroSeen();
         }
         void DrawMenu()
@@ -223,7 +223,7 @@ namespace NeonVault
             DrawMap();
             if(screen!=Screen.Playing || InventoryOpen)return;
             float s=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
-            float mx=(Input.mousePosition.x-(UnityEngine.Screen.width-1440*s)/2)/s,my=(UnityEngine.Screen.height-Input.mousePosition.y-(UnityEngine.Screen.height-900*s)/2)/s;if(MobileTouchControls.Enabled){Vector3 mobileAim=VaultMobileInputBridge.ToWorldMovement(MobileTouchControls.Aim).normalized;Vector3 screenAim=cam.WorldToScreenPoint(PlayerPosition+mobileAim*6+Vector3.up*.9f);Vector2 canvasAim=MobileCanvasPoint(new Vector2(screenAim.x,screenAim.y));mx=canvasAim.x;my=canvasAim.y;}
+            float mx=(Input.mousePosition.x-(UnityEngine.Screen.width-1440*s)/2)/s,my=(UnityEngine.Screen.height-Input.mousePosition.y-(UnityEngine.Screen.height-900*s)/2)/s;if(MobileTouchControls.Enabled||HasAimTarget){Vector3 screenAim=cam.WorldToScreenPoint(AimReticleWorldPosition);if(MobileTouchControls.Enabled){Vector2 canvasAim=MobileCanvasPoint(new Vector2(screenAim.x,screenAim.y));mx=canvasAim.x;my=canvasAim.y;}else{mx=(screenAim.x-(UnityEngine.Screen.width-1440*s)/2)/s;my=(UnityEngine.Screen.height-screenAim.y-(UnityEngine.Screen.height-900*s)/2)/s;}}
             if(smoke&&AimUiReviewPoint.HasValue){mx=AimUiReviewPoint.Value.x;my=AimUiReviewPoint.Value.y;}
             DrawWorldLootPreview();
             if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,355,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);

@@ -9,7 +9,7 @@ namespace NeonVault
         const int InitialDebt = 1000000000;
         const int FirstDebtLevelRequirement = 1000000;
         const float DebtLevelRequirementGrowth = .12f;
-        const int DebtLevelCap = 40;
+        const int DebtLevelCap = 123;
         const string DebtSaveKey = "Vault.DebtSkills.v1";
 
         enum DebtSkillKind { Damage, FireRate, Accuracy, Reload, Ammo, Health, Recovery, WeaponSlot, DamageReduction, HealOnKill, AmmoPickup, ShopDiscount, KillChain, BossDamage, CriticalChance, CriticalDamage, AmmoCapacity }
@@ -50,10 +50,20 @@ namespace NeonVault
             }
         }
         // Legacy expedition token saves now contribute to the same spendable pool.
-        public int DebtSkillPoints => Mathf.Max(0,DebtLevel-1+ExpeditionTokens-unlockedDebtSkills.Count);
+        public int DebtSkillPoints => ActionSkillAvailablePoints;
         public int DebtRemaining => Mathf.Max(0,InitialDebt-debtPaid);
         public int DebtNextLevelRemaining => DebtLevel>=DebtLevelCap?0:Mathf.Max(0,DebtTotalForLevel(DebtLevel+1)-debtPaid);
-        public int DebtNextLevelRequirement => DebtLevel>=DebtLevelCap?0:DebtRequirementForLevel(DebtLevel+1);
+        public int DebtNextLevelRequirement => DebtLevel>=DebtLevelCap?0:DebtTotalForLevel(DebtLevel+1)-DebtTotalForLevel(DebtLevel);
+        // At the cap use the final level's full cost, since there is no next level.
+        public int ActionSkillRespecCost => Mathf.Max(1,Mathf.RoundToInt((DebtLevel>=DebtLevelCap?DebtTotalForLevel(DebtLevelCap)-DebtTotalForLevel(DebtLevelCap-1):DebtNextLevelRequirement)*.1f));
+        public bool TryRespecActionSkills()
+        {
+            if(ActionSkillSpentPoints<=0){Notify("NO SKILLS TO RESET","振り直すスキルがありません");return false;}
+            if(Credits<ActionSkillRespecCost){Notify("NOT ENOUGH SCRAP","スクラップが足りません");return false;}
+            if(!TrySpendCredits(ActionSkillRespecCost))return false;
+            ResetActionSkills();RefreshPermanentStats();
+            Notify("SKILLS RESET","スキルを振り直しました");return true;
+        }
         public float DebtProgressRatio
         {
             get
@@ -69,10 +79,12 @@ namespace NeonVault
         int DebtTotalForLevel(int level)
         {
             int total=0;
-            for(int reached=2;reached<=level;reached++)total+=DebtRequirementForLevel(reached);
-            return total;
+            for(int reached=2;reached<=Mathf.Min(level,DebtLevelCap);reached++)total+=DebtRequirementForLevel(reached);
+            return Mathf.Min(InitialDebt,total);
         }
-        public int DebtExtraWeaponSlots => (unlockedDebtSkills.Contains("survival_slot1")?1:0) + (unlockedDebtSkills.Contains("survival_slot2")?1:0);
+        // Preserve weapon slots already unlocked in a pre-migration save. The old
+        // tree no longer grants combat bonuses or consumes new tree points.
+        public int DebtExtraWeaponSlots => (unlockedDebtSkills.Contains("survival_slot1")?1:0)+(unlockedDebtSkills.Contains("survival_slot2")?1:0);
         bool DebtIntroReview => Array.IndexOf(Environment.GetCommandLineArgs(),"--debt-intro-review")>=0;
         public bool DebtIntroVisible => !debtIntroSeen && DebtIntroReview;
         public int DebtTotalPaid => debtPaid;
@@ -109,17 +121,16 @@ namespace NeonVault
         }
         public bool TryUnlockDebtSkill(string id)
         {
-            var node=FindDebtSkill(id);if(node==null||unlockedDebtSkills.Contains(id)||DebtSkillPoints<=0)return false;
-            foreach(var requirement in node.requires)if(!unlockedDebtSkills.Contains(requirement))return false;
-            unlockedDebtSkills.Add(id);SaveDebtSkills();RefreshPermanentStats();return true;
+            // Retained for old callers; legacy skills no longer spend points or grant effects.
+            return false;
         }
         DebtSkillNode FindDebtSkill(string id)=>debtSkillNodes.Find(n=>n.id==id);
         bool DebtSkillAvailable(DebtSkillNode node)
         {if(node==null||unlockedDebtSkills.Contains(node.id))return false;foreach(var id in node.requires)if(!unlockedDebtSkills.Contains(id))return false;return true;}
         bool HasDebtSkill(DebtSkillKind kind,int family=-1)
-        {foreach(var node in debtSkillNodes)if(node.kind==kind&&unlockedDebtSkills.Contains(node.id)&&(family<0||node.modelFamily==family))return true;return false;}
+        {return false;}
         float SumDebtSkill(DebtSkillKind kind,int family=-1)
-        {float total=0;foreach(var node in debtSkillNodes)if(node.kind==kind&&unlockedDebtSkills.Contains(node.id)&&(family<0||node.modelFamily==family))total+=node.value;return total;}
+        {return ActionSkillPassive(kind.ToString(),family);}
 
         int DebtWeaponFamily(int model)
         {
@@ -177,7 +188,7 @@ namespace NeonVault
             Box(new Rect(68,244,1070,22),new Color(.09f,.13f,.15f));
             Box(new Rect(68,244,1070*DebtProgressRatio,22),new Color(.12f,.82f,.73f));
             Text(1150,244,DebtLevel>=DebtLevelCap?"100%":(DebtProgressRatio*100f).ToString("0")+"%",tiny,Cyan,110);
-            if(debtSkillTreePage){DrawDebtSkillTree();}
+            if(debtSkillTreePage){DrawActionSkillTree();return;}
             else
             {
                 Text(68,276,T("REPAYMENTS ARE PERMANENT. EACH LEVEL COSTS MORE THAN THE LAST.","返済は取り消せません。レベルが上がるほど次の必要額が増えます。"),small,Mist,1200);
@@ -193,6 +204,7 @@ namespace NeonVault
                 Text(68,556,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
                 Text(68,602,T("The collar detonator stays with the Raider Boss. Clearing your balance is the only way out.","起爆装置はレイダーのボスが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
                 if(Button(new Rect(68,694,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
+                if(Button(new Rect(480,694,550,54),T("RESET SKILLS / ","スキル振り直し / ")+ActionSkillRespecCost.ToString("N0"),ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost))TryRespecActionSkills();
             }
             if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る")))screen=Screen.Hub;
         }

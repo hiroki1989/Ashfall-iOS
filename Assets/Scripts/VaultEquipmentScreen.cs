@@ -161,6 +161,7 @@ namespace NeonVault
             Box(new Rect(950,620,446,1),EqLine);
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
             DrawEquippedCategory(top);
+            if(!merchant&&EqButton(new Rect(618,top+10,285,54),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();
@@ -202,7 +203,7 @@ namespace NeonVault
                 if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}
                 EqActions(selected,merchant);
             }
-            for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");if(EqButton(r,caption))BuyAmmo(type,1);}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
+            for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");var previous=eqButtonStyle;var fitted=new GUIStyle(previous){wordWrap=false};while(fitted.fontSize>12&&fitted.CalcSize(new GUIContent(shortLabel)).x>r.width-20)fitted.fontSize--;eqButtonStyle=fitted;if(EqButton(r,caption))BuyAmmo(type,1);eqButtonStyle=previous;}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
             if(!merchant)EqText(new Rect(28,864,1384,32),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=18});
             GUI.enabled=eqPreviousEnabled;if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();return true;
         }

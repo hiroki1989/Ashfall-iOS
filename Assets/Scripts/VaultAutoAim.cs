@@ -7,8 +7,15 @@ namespace NeonVault
         // Accuracy controls both target cone and reach. At 100, any visible
         // enemy inside the 30-degree cone can be acquired; lower accuracy
         // progressively narrows both, with occlusion still respected.
+        Foe aimTarget;
+        public Vector3 AimReticleWorldPosition => aimTarget != null && !aimTarget.dead
+            ? new Vector3(aimTarget.transform.position.x, PlayerWeapon.MuzzlePosition.y, aimTarget.transform.position.z)
+            : PlayerPosition + aim * 6 + Vector3.up * .9f;
+        public bool HasAimTarget => aimTarget != null && !aimTarget.dead;
+
         Vector3 AutoAimDirection(Vector3 origin,Vector3 intended,float accuracy)
         {
+            aimTarget=null;
             if(Layout==null||intended.sqrMagnitude<.0001f)return intended;
             intended.y=0;intended.Normalize();
             float precision=Mathf.Clamp01(accuracy/100f);
@@ -39,6 +46,7 @@ namespace NeonVault
                 if(score>=bestScore)continue;
                 selected=foe;selectedDirection=direction;bestScore=score;
             }
+            aimTarget=selected;
             return selected!=null?selectedDirection:intended;
         }
     }

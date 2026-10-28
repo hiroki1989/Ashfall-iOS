@@ -1,3 +1,22 @@
+## 2026-10-28 / 再攻略開始時の出口
+原因: 回収/調査系のミッションは、初回・再攻略に関係なく途中フロアの出口を無条件に開放していた。再入場では既存の ResetExpeditionMission がミッション進行を初期化し、過去のクリア済み記録は報酬の選択にのみ使う。
+変更: 回収/調査系の途中フロアは、物資箱の調査、敵の全滅、または今回のミッション完了後に出口を開放。最終フロアはボス撃破後に脱出可能とし、過去の階で目標を取り逃した場合の進行不能を防止。初回/再攻略報酬の条件を維持。
+検証: Unity 6000.6 batchmodeでプレイヤーのセーブを使用しない ExpeditionReplayReview を実行し6任務39件・失敗0。新規/再攻略の進行初期化、初期出口、調査後・全滅後、最終フロアを確認。runtime全C# Roslyn compile、git diff check成功。ログ D:/Unity/QA-expedition-replay-unity.log、結果 D:/Unity/QA-expedition-replay/result.txt。
+制限: 実機iOSおよび実戦での全ミッション一周は未検証。報酬保存処理が複数の保存に分かれる既存の中断時リスクは別件として残る。未commit/push/IPA。
+
+## 2026-10-28 / 建物全体透過・照準追従・表示/価格
+変更: 屋外入口建物の通常renderer全体を本体に紐付け、部材ごとに生成される建物も所有単位を登録して遮蔽時に全パーツを薄く透過し解除時復帰。PC/iOSで入力照準から毎フレームオートエイムし、プレイヤー/武器とクロスヘアを同じ敵へ向ける。日本語の敵名を英語由来カタカナに変更。商人の弾薬ボタンは弾種名が1行に収まるようフォントを調整。ミニマップ目的地は範囲内ピン・範囲外縁取り矢印。店の銃/防具/モジュール/近接価格を当該装備の売却価格の10倍に統一（装備価格への旧割引は適用しない）。
+検証: runtime全C# Roslyn compile、git diff check成功。Unity 6000.6 batchmode取り込み/コンパイルはメモリ監視下でexit 0、ログ D:/Unity/world-fade-aim-unity-check.log。QAがコードの価格/所有単位を独立確認。
+未解決: 建物の透過・復帰と射撃前照準をUnityの実戦画面で視認する検証、iOSでの操作や性能は未実施。未commit/push/IPA。
+
+## 2026-10-28 / 3種アクションスキル・完済上限・版22
+変更: version/build 22。タレット/グレネード/回復エリアと各3枝5段の225ランク、撃破で15点まで充填し発動、インベントリ切替時にゲージ初期化。GUIのツリー/選択/戦闘発動を日英対応、VキーとiOSタップ。既存旧ツリー効果を新パッシブに置換しポイント返還、旧保存の追加銃枠は維持。返済10億でLv123停止、振り直しは次レベル必要額10%（完済時は最終必要額の10%）。途中保存のアクションゲージを保持。imagegenスキル選択用3イラスト。次回IPA送信前に内包番号と既存ビルドを比較する旨をBuildAutomation/ios/README.mdへ記録。報酬試算 Development/ActionSkillEconomy.md。
+検証: runtime C# Roslyn全体compile・git diff check成功。Unity 6000.6 batchmodeで素材取り込み/スクリプトコンパイルしexit 0、その後の軽微なUI/互換修正はRoslyn再検証。QAのコード独立点検で旧追加銃枠の喪失を発見し修正。最大レベル/ポイント構成は計算確認。
+未解決: 実戦で各スキルの発動/追尾/敵命中、iPhoneのタッチ・HUD配置、スキルツリーの実画面撮影は未確認。報酬の装備売却部分は単価仮定の概算。未commit/push/IPA。
+
+## 2026-10-28 / iOS IPA 21をApp Store Connectへアップロード
+ユーザー指定 C:/Users/hiroki/Downloads/15669788263318-ash-8-default-ios-5.ipa（1,806,999,738 bytes）を既存Ash8アプリ com.hiroki1989.ashfall へApple Build Upload APIで直接送信。IPA内部メタデータはversion 21/build 21。27分割を送信し、ファイルcommit成功・asset COMPLETE、build upload ID ccb6529b-0412-47e5-a6f7-c9a2e909e518。Apple側の状態はPROCESSING、エラー/警告なし。TestFlightの最終処理結果は未確認。ログ D:/Unity/ashfall-ios-5-upload.log。
+
 ## 2026-10-28 / HPラベル・装備絵分離・自由入場・発見地図
 変更: 表示中の敵HPにLvと敵名を屋外/ダンジョン、PC/iOS UIとも併記。通常銃144セルのうち混入12件、拡張銃288セルのうち125片をportraitメタデータから除外。防具/通常銃部品/レジェンダリー計30 atlas・161セルに表示専用portrait画像を追加して原画と3D投影元を保持。近接5種を独立列画像へ切替。レベル不足によるダンジョン入場制限撤廃。屋外入口を現地発見すると保存し、未発見ダンジョンの名前/レベル/任務/報酬を全体地図で?表示。インベントリ中央下に装備ボーナス合計の項目別スクロール表示。
 検証: runtime全C# Roslyn compile、git diff --check成功。画像はアルファ連結成分監査と代表セル目視。

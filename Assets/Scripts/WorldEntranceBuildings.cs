@@ -67,6 +67,8 @@ namespace NeonVault
             Box(site.transform,state.materials,"Door header",new Vector3(0,3,1.85f),new Vector3(3,.32f,.45f),1);
             Box(site.transform,state.materials,"Door threshold",new Vector3(0,.08f,1),new Vector3(2.8f,.12f,1.9f),0);
             Box(site.transform,state.materials,"Entrance lamp",new Vector3(0,3.3f,1.64f),new Vector3(.65f,.16f,.18f),4);
+            var batch=site.GetComponent<ImportedWorldBatch>();if(!batch)batch=site.AddComponent<ImportedWorldBatch>();
+            batch.RegisterSiteRenderers();
             return site;
         }
         static void BuildShell(Transform root,Material[] mats,int style,bool camp)

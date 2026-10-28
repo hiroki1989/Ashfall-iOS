@@ -196,3 +196,6 @@ imagegen six original engraved industrial marks without text; sheet exec-c179623
 
 ## Manufacturer wordmarks v2
 User explicitly requested trademark-style textual logos. Imagegen source exec-68fb755c-de33-4808-8d26-3192c8bdfade.png; six manufacturer emblems with letterforms and palettes saved as maker-wordmark-v2-0..5. This text is part of each brand logo; interface labels remain separate localized text.
+
+## Action skill illustrations v1
+Imagegen source exec-11cdcb53-d4c2-4e1e-b2b2-b7396f61f0b2.png: three military field devices (sentry, grenade, healing emitter), aged copper and charcoal with no text. `Assets/Resources/Art/action-skills-v1.png` uses three equal horizontal cells for the inventory skill selector. Labels and values are rendered separately in the UI.

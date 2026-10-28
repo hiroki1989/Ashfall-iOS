@@ -9,7 +9,7 @@ namespace NeonVault
         const string RunSaveKey = "Vault.ExpeditionCheckpoint.v1";
         [Serializable] sealed class RunCheckpoint
         {
-            public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount;
+            public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount, actionSkillPoints;
             public int[] routeX, routeY, ammoReserves, ammoCrateRooms, upgradeKeys, upgradeValues;
             public float hp, baseMaxHp, damageBonus, fireBonus, runDamage, runFire, runVitality, runDash, runChain, runHarvest, runTime, artifactShield, artifactClock;
             public float playerX, playerZ, aimX, aimZ;
@@ -42,7 +42,7 @@ namespace NeonVault
             var save=new RunCheckpoint
             {
                 seed=seed,dungeon=DungeonIndex,stage=SelectedStageId,room=room,kills=kills,ammo=ammo,activeWeaponSlot=ActiveWeaponSlot,
-                missionKills=missionKills,missionCompleted=missionCompleted,debtChainCount=debtChainCount,chestRoomForRun=chestRoomForRun,
+                missionKills=missionKills,missionCompleted=missionCompleted,debtChainCount=debtChainCount,chestRoomForRun=chestRoomForRun,actionSkillPoints=ActionSkillPoints,
                 ammoCratePlanCount=ammoCratePlanCount,hp=hp,baseMaxHp=baseMaxHp,damageBonus=damageBonus,fireBonus=fireBonus,
                 runDamage=runDamage,runFire=runFire,runVitality=runVitality,runDash=runDash,runChain=runChain,runHarvest=runHarvest,
                 runTime=runTime,artifactShield=ArtifactShield,artifactClock=artifactCombatClock,playerX=player.position.x,playerZ=player.position.z,
@@ -73,7 +73,7 @@ namespace NeonVault
             DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);ResetGameplayOverlays();shake=0;meleeAttack?.ResetCooldown();seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
             if(save.foes==null)save.foes=new List<FoeCheckpoint>();if(save.guns==null)save.guns=new List<GunDropCheckpoint>();if(save.armor==null)save.armor=new List<ArmorDropCheckpoint>();if(save.modules==null)save.modules=new List<ArtifactDropCheckpoint>();if(save.melee==null)save.melee=new List<MeleeDropCheckpoint>();if(save.supplies==null)save.supplies=new List<SupplyCheckpoint>();if(save.chests==null)save.chests=new List<PositionCheckpoint>();if(save.ammoCrates==null)save.ammoCrates=new List<AmmoCrateCheckpoint>();
             route.Clear();for(int i=0;i<save.routeX.Length;i++)route.Add(new Vector2Int(save.routeX[i],save.routeY[i]));
-            kills=save.kills;ricochetEvents=0;splitEvents=0;runTime=save.runTime;baseMaxHp=save.baseMaxHp;runDamage=save.runDamage;runFire=save.runFire;runVitality=save.runVitality;runDash=save.runDash;runChain=save.runChain;runHarvest=save.runHarvest;
+            kills=save.kills;ActionSkillPoints=Mathf.Clamp(save.actionSkillPoints,0,ActionSkillChargeMax);ricochetEvents=0;splitEvents=0;runTime=save.runTime;baseMaxHp=save.baseMaxHp;runDamage=save.runDamage;runFire=save.runFire;runVitality=save.runVitality;runDash=save.runDash;runChain=save.runChain;runHarvest=save.runHarvest;
             damageBonus=save.damageBonus;fireBonus=save.fireBonus;RecalculateArmor();hp=Mathf.Clamp(save.hp,1,maxHp);LoadAmmoReserves(save.ammoReserves);ActiveWeaponSlot=Mathf.Clamp(save.activeWeaponSlot,0,AvailableWeaponSlotCount-1);gun=WeaponInSlot(ActiveWeaponSlot)??WeaponInSlot(0)??Weapons[0];ActiveWeaponSlot=Mathf.Max(0,EquippedWeaponSlot(gun));SelectedWeapon=Weapons.IndexOf(gun);ammo=Mathf.Clamp(save.ammo,0,EffectiveMagazine);reload=0;reloadPending=0;invincible=1;dodgeCooldown=0;dodgeTimer=0;fireTimer=0;debtChainCount=save.debtChainCount;
             chestRoomForRun=save.chestRoomForRun;ammoCratePlanCount=save.ammoCratePlanCount;ammoCrateRoomPlan.Clear();if(save.ammoCrateRooms!=null)ammoCrateRoomPlan.AddRange(save.ammoCrateRooms);
             ResetArtifactCombat();ArtifactShield=save.artifactShield;artifactCombatClock=save.artifactClock;missionKills=save.missionKills;missionCompleted=save.missionCompleted;

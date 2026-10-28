@@ -41,7 +41,7 @@ namespace NeonVault
         public float hp, maxHp, damageBonus, fireBonus, dodgeTimer, dodgeCooldown, invincible, reload;
         internal float fireTimer;
         float halfWidth, halfDepth, runTime, shake, toastTimer;
-        Vector3 dodgeDirection, aim=Vector3.right;
+        Vector3 dodgeDirection, aim=Vector3.right, mobileInputAim=Vector3.right;
         Vector3 aimedPoint;Ray aimedRay;bool hasAimedPoint,aimUsesCursor;
         string toast="",toastJapanese="";
         string Toast=>VaultLanguage.T(toast,toastJapanese);
@@ -146,6 +146,7 @@ namespace NeonVault
         public void BuildRoom(bool populate){if(populate&&QueueWorldTransition(()=>BuildRoomImmediate(populate)))return;BuildRoomImmediate(populate);}
         void BuildRoomImmediate(bool populate)
         {
+            ClearActiveActionSkill();
             IsOverworld=false;
             if(world!=null) { world.gameObject.SetActive(false); Destroy(world.gameObject); }
             foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();
@@ -161,7 +162,7 @@ namespace NeonVault
             player=art.Character(Layout.Entry,true);
             barrel=art.Weapon(player,gun==null?Cyan:gun.color);if(gun!=null)VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));RefreshWeaponAppearance();
             PlayerAppearance?.ApplyArmor(EquippedArmor);
-            aim=Vector3.right;hasAimedPoint=false;PlayerWeapon.Aim(aim);navigationTimer=0;
+            aim=Vector3.right;mobileInputAim=aim;aimTarget=null;hasAimedPoint=false;PlayerWeapon.Aim(aim);navigationTimer=0;
             CreateSatellites();
             if(populate)
             {
@@ -303,7 +304,8 @@ namespace NeonVault
             }
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
             if(worldTransitionPending||!Active)return;
-            TickArtifacts(Time.deltaTime);
+            TickArtifacts(Time.deltaTime);TickActionSkill(Time.deltaTime);
+            if(Input.GetKeyDown(KeyCode.V))TryUseActionSkill();
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
             if(Time.time-lastHurt>3&&HealthRegen>0)hp=Mathf.Min(maxHp,hp+HealthRegen*Time.deltaTime);
@@ -311,7 +313,9 @@ namespace NeonVault
             Layout.Discover(PlayerPosition,IsOverworld?1.5f:5f);navigationTimer-=Time.deltaTime;if(navigationTimer<=0){if(!IsOverworld||Layout.ToCell(PlayerPosition)!=lastNavigationCell){Layout.BuildDistanceField(PlayerPosition);lastNavigationCell=Layout.ToCell(PlayerPosition); }navigationTimer=IsOverworld?.75f:.25f;}
             if(VaultMobileInputBridge.Enabled)
             {
-                ApplyMobileAim(VaultMobileInputBridge.Aim);
+                var mobileDirection=VaultMobileInputBridge.ToWorldMovement(VaultMobileInputBridge.Aim);
+                if(mobileDirection.sqrMagnitude>.0001f)mobileInputAim=mobileDirection.normalized;
+                aim=mobileInputAim;aimUsesCursor=false;hasAimedPoint=false;
             }
             else
             {
@@ -361,21 +365,9 @@ namespace NeonVault
         public void Fire()
         {
             if(reload>0||ammo<=0)return;
+            // Use the same displayed direction for the shot; recalculating from the
+            // cursor here would discard continuous tracking just before firing.
             PlayerWeapon.Aim(aim);PlayerWeapon.Kick();
-            if(hasAimedPoint)for(int pass=0;pass<2;pass++)
-            {
-                if(aimUsesCursor){var plane=new Plane(Vector3.up,new Vector3(0,PlayerWeapon.MuzzlePosition.y,0));if(plane.Raycast(aimedRay,out float distance))aimedPoint=aimedRay.GetPoint(distance);}
-                var direction=aimedPoint-PlayerWeapon.MuzzlePosition;direction.y=0;if(direction.sqrMagnitude>.0001f)aim=direction.normalized;
-                player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
-            }
-            // Both mouse and touch aim arrive here. Keep the player's input
-            // direction so releasing the touch stick does not retain a snap.
-            Vector3 inputAim=aim;
-            var assisted=AutoAimDirection(PlayerWeapon.MuzzlePosition,aim,EffectiveAccuracy);
-            if(Vector3.Dot(assisted,aim)<.99999f)
-            {
-                aim=assisted;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);
-            }
             LegendaryTrigger("fire",PlayerPosition);
             ammo--;fireTimer=1/EffectiveFireRate;audioSource.PlayOneShot(gun.effect==GunEffect.Scatter?scatterSound:VaultLanguage.DisplayModel(gun)>=7?coilSound:fireSound,.5f);shake=gun.effect==GunEffect.Scatter?.38f:.25f;
             CombatVisuals.Muzzle(PlayerWeapon.MuzzlePosition,aim,gun.color,gun.effect,world,VaultLanguage.DisplayModel(gun));
@@ -396,7 +388,6 @@ namespace NeonVault
                 if(shot.critical)shot.damage*=EffectiveCriticalMultiplier;
                 LegendaryModifyShot(shot);
             }
-            aim=inputAim;
         }
         public bool AttackMelee()=>meleeAttack!=null&&meleeAttack.TryAttack(EquippedMeleeWeapon,aim,PlayerPosition,world);
         public void ResetMeleeCooldown()=>meleeAttack?.ResetCooldown();
@@ -431,6 +422,7 @@ namespace NeonVault
         }
         public void FoeKilled(Foe f)
         {
+            ActionSkillOnKill(f);
             if(IsOverworld)OnOverworldEnemyKilled(f);
             kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
             if(!IsOverworld)ExpeditionEnemyKilled(f);
@@ -523,7 +515,17 @@ namespace NeonVault
             if(!StoreWeapon(drop.gun)){Notify("10 weapon slots full / discard a weapon in [I]","銃10枠が満杯 / [I]で所持品を整理してください");return;}drops.Remove(drop);Destroy(drop.visual);
             audioSource.PlayOneShot(pickupSound);Notify("WEAPON: "+VaultLanguage.GunName(drop.gun,false)+" / Assign in [I]","銃: "+VaultLanguage.GunName(drop.gun,true)+" / [I]で装備");
         }
-        bool ExpeditionExitOpen=>cleared||(ExpeditionAllowsBypass&&(room<CurrentDungeon.AreaCount-1||MissionCompleted));
+        bool ExpeditionExitOpen
+        {
+            get
+            {
+                if(SelectedExpeditionStage==null)return cleared;
+                // The last floor must remain escapable after its boss is defeated,
+                // even if an optional objective was missed on an earlier floor.
+                if(room>=CurrentDungeon.AreaCount-1)return cleared;
+                return cleared||(ExpeditionAllowsBypass&&(CurrentMissionFloorVisited||MissionCompleted));
+            }
+        }
         public void Advance()
         {
             if(IsOverworld||screen!=Screen.Playing||!ExpeditionExitOpen)return;

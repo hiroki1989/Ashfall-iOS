@@ -37,3 +37,5 @@ Windows エクスポート由来の IL2CPP ツールが macOS 用バイナリを
 Local checks only / ローカル検証のみ: Python syntax and fixture-based profile validation can run on Windows; Xcode, `security`, signing, archive/export and upload require the macOS Actions run with valid Apple credentials. This change does not perform an upload or access configured secrets.
 
 References: [fastlane TestFlight options](https://docs.fastlane.tools/actions/pilot/), [Apple manual signing](https://help.apple.com/xcode/mac/current/en.lproj/dev1bf96f17e.html), [Apple archive export](https://help.apple.com/xcode/mac/current/en.lproj/deva1f2ab5a2.html).
+
+アップロード前確認: 指定IPAのInfo.plistからCFBundleShortVersionStringとCFBundleVersionを読み、Unity設定およびApp Store Connectの登録済みビルドと比較する。番号が期待どおり進んでいない場合はアップロード前に報告し、IPAを書き換えない。
