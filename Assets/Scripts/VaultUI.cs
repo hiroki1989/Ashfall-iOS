@@ -156,14 +156,14 @@ namespace NeonVault
             for(int i=0;i<40;i++)Box(new Rect(i*24,0,25,900),new Color(.008f,.016f,.022f,.96f*Mathf.Pow(1-i/40f,.65f)));
             Box(new Rect(0,0,1440,78),new Color(.012f,.02f,.025f,.65f));
             Line(new Vector2(64,139),new Vector2(505,139),Gold*.6f);Diamond(64,139,6,Gold);
-            Text(60,204,"ASHFALL",title,Gold);
-            if(Button(new Rect(66,483,440,60),T("CONTINUE / ASHFALL","アッシュフォールへ"),true))ContinueOverworldGame();
+            var brand=Resources.Load<Texture2D>("Art/Brand/ApprovedLogoReference");if(brand)GUI.DrawTextureWithTexCoords(new Rect(55,100,520,310),brand,new Rect(.07f,.15f,.39f,.70f),true);else Text(60,204,"DUST & DEBT",title,Gold);
+            if(Button(new Rect(66,483,440,60),T("CONTINUE","ゲームを続ける"),true))ContinueOverworldGame();
             if(Button(new Rect(66,552,440,54),T("ARSENAL / EQUIPMENT","武器庫 / 装備")))ToggleInventory();
             if(HasSavedRun&&Button(new Rect(66,616,440,54),T("CONTINUE SAVED EXPEDITION","保存した探索を再開"),true))ResumeSavedRun();
             Line(new Vector2(67,686),new Vector2(506,686),new Color(.4f,.5f,.5f,.5f));
             Panel(new Rect(960,644,408,162),Gold);
             Box(new Rect(0,834,1440,66),new Color(.012f,.022f,.027f,.94f));
-            Text(1200,852,"ASHFALL  /  0.7",tiny,Gold,220);toastTimer-=Time.unscaledDeltaTime;
+            toastTimer-=Time.unscaledDeltaTime;
         }
         void DrawOverlay()
         {

@@ -41,7 +41,7 @@ namespace NeonVault
             var source=sources[((seed&int.MaxValue)/4)%sources.Length];
             var bounds=ImportedWorldBatch.SourceBounds(source);
             if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
-            float scale=Mathf.Min((rect.width-.4f)/bounds.size.x,(rect.height-.4f)/bounds.size.z,11f/bounds.size.y);
+            float scale=Mathf.Min((rect.width-.4f)/bounds.size.x,(rect.height-.4f)/bounds.size.z,22f/bounds.size.y);
             if(scale<=0)return false;
             var position=new Vector3(rect.center.x-bounds.center.x*scale,-bounds.min.y*scale,rect.center.y-bounds.center.z*scale);
             ImportedWorldBatch.Add(parent,source,position,Quaternion.identity,Vector3.one*scale,true);

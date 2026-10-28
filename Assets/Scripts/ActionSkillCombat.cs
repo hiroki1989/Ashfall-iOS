@@ -77,7 +77,7 @@ namespace NeonVault
             var k=ActionSkillKind.Bomber;
             int count=1+Mathf.FloorToInt(ASPath(k,0))+3*ASRank(k,0,4);
             float radius=2.7f+ASPath(k,1)*.35f+ASRank(k,1,4)*1.25f;
-            float damage=Mathf.Max(18,EffectiveDamage)*(1.8f+ASPath(k,2)*.3f+ASRank(k,2,4)*.8f);
+            float damage=Mathf.Max(18,EffectiveDamage)*(9.0f+ASPath(k,2)*1.0f+ASRank(k,2,4)*3.0f);
             Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:player.forward;forward.y=0;
             for(int i=0;i<count;i++)
             {

@@ -58,7 +58,7 @@ namespace NeonVault
         static void SetLayer(Transform t,int layer){t.gameObject.layer=layer;foreach(Transform child in t)SetLayer(child,layer);}
         public static void Gun(Rect rect,Gun item){GUI.color=Color.white;GUI.DrawTexture(rect,RequestPortrait("gun/"+ManufacturerEquipment3D.WeaponKey(item),item,null),ScaleMode.ScaleToFit);}
         public static void Armor(Rect rect,ArmorItem item){GUI.color=Color.white;GUI.DrawTexture(rect,RequestPortrait("armor/"+item.visualVariant+"/"+item.slot+"/"+ManufacturerBranding.Maker(item)+"/"+item.designVariant,null,item),ScaleMode.ScaleToFit);}
-        public static void Melee(Rect rect,MeleeWeaponItem item){GUI.color=Color.white;GUI.DrawTexture(rect,RequestPortrait("melee/"+ManufacturerEquipment3D.MeleeKey(item),null,null,item),ScaleMode.ScaleToFit);ManufacturerBranding.PortraitBadge(rect,ManufacturerBranding.Maker(item));}
+        public static void Melee(Rect rect,MeleeWeaponItem item){GUI.color=Color.white;var atlas=Resources.Load<Texture2D>("Art/MeleeWeaponIcons-portrait-v2")??Resources.Load<Texture2D>("Art/MeleeWeaponIcons");if(atlas){float width=.2f;GUI.DrawTextureWithTexCoords(rect,atlas,new Rect((int)item.family*width,0,width,1),true);}ManufacturerBranding.PortraitBadge(rect,ManufacturerBranding.Maker(item));}
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset(){foreach(var t in cache.Values){t.Release();Object.Destroy(t);}cache.Clear();order.Clear();pending.Clear();queued.Clear();if(armorBody)Object.Destroy(armorBody.gameObject);if(pump)Object.Destroy(pump.gameObject);armorBody=null;pump=null;originalBody=null;}
     }

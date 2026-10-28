@@ -19,6 +19,7 @@ namespace NeonVault
         sealed class Finger { public Transform bone; public Quaternion rest; public Vector3 axis; public float curl; }
         readonly List<Finger> fingers=new List<Finger>();
         readonly List<Material> variantMaterials=new List<Material>();
+        readonly List<Mesh> fittedMaskMeshes=new List<Mesh>();
         bool handgun;
         Transform handgunMuzzle;
         public Vector3 MuzzlePosition => handgunMuzzle ? handgunMuzzle.position : raiderRifle ? raiderRifle.position+raiderRifle.forward*(handgun?.19f:.72f) : transform.position+Vector3.up*1.2f;
@@ -84,8 +85,41 @@ namespace NeonVault
             }
             Animate(0,0);
             NormalizeVisibleModel(targetHeight);
+            if((owner&&(owner.kind==10||owner.RaiderBoss))||(!owner&&name.Contains("RaiderBossNPC"))) AttachRaiderMask();
             // Normalization becomes the persistent scale, including during sampled animation.
             for(int i=0;i<scaleTransforms.Length;i++)authoredScales[i]=scaleTransforms[i].localScale;
+        }
+        void AttachRaiderMask()
+        {
+            Transform head=null;foreach(var bone in model.GetComponentsInChildren<Transform>(true))if(bone.name=="Head_M"||bone.name=="head"){head=bone;break;}
+            if(!head){Debug.LogWarning("Raider head bone missing: "+name);return;}
+            var socket=new GameObject("Raider respirator socket").transform;socket.SetParent(head,true);socket.position=head.position;socket.rotation=actor.rotation;socket.localScale=Vector3.one;
+            var mask=GeneratedWardenPreviewAssets.CreateFittedMask(socket);if(!mask){Destroy(socket.gameObject);return;}
+            bool boss=owner&&owner.RaiderBoss||!owner&&name.Contains("RaiderBossNPC");
+            socket.position+=actor.up*(targetHeight*(boss?-.018f:-.012f))+actor.forward*(targetHeight*(boss?.008f:.006f));
+            // Stretch upward from the chin so the lenses reach the eyes without uncovering the mouth.
+            float chin=float.PositiveInfinity;
+            foreach(var f in mask.GetComponentsInChildren<MeshFilter>(true))
+                if(f.sharedMesh)foreach(var v in f.sharedMesh.vertices)chin=Mathf.Min(chin,actor.InverseTransformPoint(f.transform.TransformPoint(v)).y);
+            // Fit the respirator depth independently of its eye-to-mouth spacing.
+            // The source accessory includes long rigid straps authored for another head.
+            foreach(var filter in mask.GetComponentsInChildren<MeshFilter>(true)){
+                if(!filter.sharedMesh)continue;
+                var mesh=Instantiate(filter.sharedMesh);mesh.name="Raider fitted respirator";fittedMaskMeshes.Add(mesh);
+                var vertices=mesh.vertices;
+                for(int i=0;i<vertices.Length;i++){
+                    var point=actor.InverseTransformPoint(filter.transform.TransformPoint(vertices[i]));
+                    var origin=actor.InverseTransformPoint(head.position);
+                    point.y=chin+(point.y-chin)*(boss?1.48f:1.45f);
+                    point.x*=.94f;
+                    // Wrap rear strap vertices against the sides of the head, retaining
+                    // the original mask front and texture coordinates.
+                    float back=Mathf.Clamp01((origin.z+.035f-point.z)/.14f);
+                    point.x=Mathf.Lerp(point.x,Mathf.Clamp(point.x,-.115f,.115f),back);
+                    vertices[i]=filter.transform.InverseTransformPoint(actor.TransformPoint(point));
+                }
+                mesh.vertices=vertices;mesh.RecalculateBounds();mesh.RecalculateNormals();filter.sharedMesh=mesh;
+            }
         }
         void RestoreScales()
         {
@@ -286,6 +320,7 @@ namespace NeonVault
         }
         void Accessory(string name,PrimitiveType shape,Vector3 position,Vector3 size,Material material)
         {
+            if(name=="Soft patrol cap"||name=="Cap brim"||name=="Armored helmet"||name=="Helmet brow"||name.Contains("shoulder"))return;
             var part=GameObject.CreatePrimitive(shape);part.name=name;
             part.transform.SetParent(transform,false);part.transform.localPosition=position;
             part.transform.localScale=size;
@@ -317,6 +352,7 @@ namespace NeonVault
         void OnDestroy()
         {
             foreach(var material in variantMaterials)if(material)Destroy(material);
+            foreach(var mesh in fittedMaskMeshes)if(mesh){if(Application.isPlaying)Destroy(mesh);else DestroyImmediate(mesh);}
         }
         void ApplySecondaryMotion(float speed,int kind)
         {

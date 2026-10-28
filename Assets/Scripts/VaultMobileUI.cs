@@ -20,9 +20,9 @@ namespace NeonVault
         {
             if(menuArt)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
             for(int i=0;i<40;i++)Box(new Rect(i*25,0,26,900),new Color(.035f,.055f,.065f,.97f*Mathf.Pow(1-i/40f,.4f)));
-            Text(54,146,"ASHFALL",new GUIStyle(title){fontSize=104},UiPaper,850);
+            var brand=Resources.Load<Texture2D>("Art/Brand/ApprovedLogoReference");if(brand)GUI.DrawTextureWithTexCoords(new Rect(54,50,550,330),brand,new Rect(.07f,.15f,.39f,.70f),true);else Text(54,146,"DUST & DEBT",new GUIStyle(title){fontSize=78},UiPaper,850);
             Box(new Rect(60,300,72,4),Gold);
-            if(MobileButton(new Rect(58,470,650,112),T("CONTINUE / ASHFALL","アッシュフォールへ")))ContinueOverworldGame();
+            if(MobileButton(new Rect(58,470,650,112),T("CONTINUE","ゲームを続ける")))ContinueOverworldGame();
             if(MobileButton(new Rect(58,605,650,112),T("EQUIPMENT","装備を確認")))ToggleInventory();
             if(HasSavedRun&&MobileButton(new Rect(58,740,650,100),T("CONTINUE SAVED EXPEDITION","保存した探索を再開")))ResumeSavedRun();
         }

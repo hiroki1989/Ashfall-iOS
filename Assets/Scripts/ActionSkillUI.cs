@@ -125,7 +125,7 @@ namespace NeonVault
         {
             if(!Active||InventoryOpen)return;
             bool mobile=MobileTouchControls.Enabled;
-            Rect r=mobile?new Rect(975,375,165,80):new Rect(1035,800,145,70);
+            Rect r=mobile?new Rect(650,705,235,64):new Rect(650,810,235,64);
             bool ready=ActionSkillPoints>=ActionSkillChargeMax;
             Color accent=ActionTreeColors[Mathf.Clamp((int)ActionSkillSelected,0,2)];
             FieldUIArt.Plate(r,ready);
