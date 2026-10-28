@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    public enum MobileAction { Reload, Pickup, Dodge, Melee, SwitchWeapon, Interact, Inventory, Pause, Fire }
+    public enum MobileAction { Reload, Pickup, Dodge, Melee, SwitchWeapon, Interact, Inventory, Pause, Fire, Skill }
 
     /// <summary>Touch coordinates are screen pixels (bottom left); exposed layout rectangles use GUI pixels (top left).</summary>
     [DefaultExecutionOrder(-200)]
@@ -24,8 +24,8 @@ namespace NeonVault
         public static Rect SafeRect { get; private set; }
         readonly Dictionary<int, int> fingers = new Dictionary<int, int>();
         readonly HashSet<MobileAction> actions = new HashSet<MobileAction>();
-        readonly Rect[] buttons = new Rect[9];
-        readonly float[] feedback = new float[9];
+        readonly Rect[] buttons = new Rect[10];
+        readonly float[] feedback = new float[10];
         VaultGame game;
         int mode = -1, width, height;
         Rect previousSafe;
@@ -97,6 +97,7 @@ namespace NeonVault
             buttons[(int)MobileAction.Pause] = new Rect(SafeRect.xMax - pad - b, SafeRect.y + pad, b, b);
             // Large, separate hold target at the natural outer-right thumb position.
             buttons[(int)MobileAction.Fire] = new Rect(SafeRect.xMax-pad-fireSize, fireY, fireSize, fireSize);
+            buttons[(int)MobileAction.Skill] = new Rect(buttons[(int)MobileAction.Interact].xMax + b / 6f, buttons[(int)MobileAction.Interact].y, b, b);
             if (LeftHanded)
             {
                 MoveRect = Mirror(MoveRect); AimRect = Mirror(AimRect);
@@ -188,6 +189,7 @@ namespace NeonVault
                 string[] labels = VaultLanguage.Japanese ? new[] { "装填", "拾得", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃" } : new[] { "LOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE" };
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {
+                    if (i == (int)MobileAction.Skill) continue; // Drawn by the action skill HUD.
                     Rect r = buttons[i]; bool down = fingers.ContainsValue(i) || Time.unscaledTime < feedback[i];
                     bool primary=i==(int)MobileAction.Fire;
                     Circle(r, down, primary);

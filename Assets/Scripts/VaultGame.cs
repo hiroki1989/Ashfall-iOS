@@ -52,7 +52,7 @@ namespace NeonVault
         Font englishHeadingFont;
         AudioSource audioSource;
         VaultMelee meleeAttack;
-        AudioClip fireSound, scatterSound, coilSound, hitSound, pickupSound;
+        AudioClip fireSound, scatterSound, coilSound, hitSound, pickupSound, ammoPickupSound;
         Texture2D pixel;
         GUIStyle label, title, small, button;
         static readonly Color Cyan=new Color(93/255f,226/255f,210/255f), Gold=new Color(1f,209/255f,102/255f), Ink=new Color(21/255f,36/255f,50/255f);
@@ -80,7 +80,7 @@ namespace NeonVault
             var light=new GameObject("Ash-filtered sunlight / shadow casting").AddComponent<Light>();light.type=LightType.Directional;light.color=new Color(1,.95f,.84f);light.intensity=1.2f;light.shadows=LightShadows.Soft;light.shadowStrength=.78f;light.transform.rotation=Quaternion.Euler(48,-25,0);
             var fill=new GameObject("Cool sky fill").AddComponent<Light>();fill.type=LightType.Directional;fill.color=new Color(.57f,.72f,.89f);fill.intensity=.38f;fill.transform.rotation=Quaternion.Euler(28,145,0);
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
-            audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=GunReport(true,true);pickupSound=Tone(620,.16f);
+            audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=GunReport(true,true);pickupSound=Resources.Load<AudioClip>("WeaponSFX/Handgun_equip");if(pickupSound==null)pickupSound=Tone(620,.16f);ammoPickupSound=Resources.Load<AudioClip>("WeaponSFX/Ammo_pickup");if(ammoPickupSound==null)ammoPickupSound=pickupSound;
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
             smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
@@ -129,7 +129,7 @@ namespace NeonVault
             chestRoomForRun=-1; // Chests now roll once per non-final area; extraction always has one.
             PrepareAmmoCratesForRun();
             ResetArtifactCombat();runDamage=0;runFire=0;runVitality=0;runDash=0;runChain=0;runHarvest=0;debtChainCount=0;debtChainTimer=0;
-            gun=WeaponInSlot(ActiveWeaponSlot);if(gun==null)gun=Weapons[SelectedWeapon];ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Min(EffectiveMagazine,loaded):EffectiveMagazine;reload=0;reloadPending=0;dodgeCooldown=0;invincible=2.5f;dodgeTimer=0;fireTimer=0;meleeAttack?.ResetCooldown();lastHurt=-10;screen=Screen.Playing;
+            gun=WeaponInSlot(ActiveWeaponSlot);if(gun==null)gun=Weapons[SelectedWeapon];ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Min(EffectiveMagazine,loaded):EffectiveMagazine;StopReloadSound();reload=0;reloadPending=0;dodgeCooldown=0;invincible=2.5f;dodgeTimer=0;fireTimer=0;meleeAttack?.ResetCooldown();lastHurt=-10;screen=Screen.Playing;
             BuildRoom(true); Notify("ZONE 01 / Scavenge. Watch the infected.","区域01 / 感染者を警戒し、物資を回収せよ");
         }
         Material Mat(Color color,bool glow=false,bool trail=false)
@@ -285,6 +285,7 @@ namespace NeonVault
             }
             if(worldTransitionPending)return;
             if(WorldBossConversationVisible)return;
+            if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(IsOverworld&&OverworldActivityChoiceOpen)
             {
@@ -305,7 +306,7 @@ namespace NeonVault
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
             if(worldTransitionPending||!Active)return;
             TickArtifacts(Time.deltaTime);TickActionSkill(Time.deltaTime);
-            if(Input.GetKeyDown(KeyCode.V))TryUseActionSkill();
+            if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill))TryUseActionSkill();
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
             if(Time.time-lastHurt>3&&HealthRegen>0)hp=Mathf.Min(maxHp,hp+HealthRegen*Time.deltaTime);
@@ -369,7 +370,7 @@ namespace NeonVault
             // cursor here would discard continuous tracking just before firing.
             PlayerWeapon.Aim(aim);PlayerWeapon.Kick();
             LegendaryTrigger("fire",PlayerPosition);
-            ammo--;fireTimer=1/EffectiveFireRate;audioSource.PlayOneShot(gun.effect==GunEffect.Scatter?scatterSound:VaultLanguage.DisplayModel(gun)>=7?coilSound:fireSound,.5f);shake=gun.effect==GunEffect.Scatter?.38f:.25f;
+            ammo--;fireTimer=1/EffectiveFireRate;PlayWeaponSound(gun,"fire",.5f);shake=gun.effect==GunEffect.Scatter?.38f:.25f;
             CombatVisuals.Muzzle(PlayerWeapon.MuzzlePosition,aim,gun.color,gun.effect,world,VaultLanguage.DisplayModel(gun));
             for(int i=0;i<gun.pellets;i++)
             {
@@ -506,11 +507,11 @@ namespace NeonVault
             float meleeDistance=melee==null?float.MaxValue:Vector3.Distance(PlayerPosition,melee.position);
             float moduleDistance=module==null?float.MaxValue:Vector3.Distance(PlayerPosition,module.position);
             if(module!=null&&moduleDistance<weaponDistance&&moduleDistance<armorDistance&&moduleDistance<meleeDistance)
-            {if(!StoreArtifact(module.item)){Notify("Artifact storage full. Discard unused artifacts in [I].","拡張モジュール枠が満杯です。[I]で整理してください。");return;}artifactDrops.Remove(module);Destroy(module.visual);Notify(ArtifactCatalog.DisplayName(module.item,false)+" collected.",ArtifactCatalog.DisplayName(module.item,true)+"を入手");return;}
+            {if(!StoreArtifact(module.item)){Notify("Artifact storage full. Discard unused artifacts in [I].","拡張モジュール枠が満杯です。[I]で整理してください。");return;}artifactDrops.Remove(module);Destroy(module.visual);audioSource.PlayOneShot(pickupSound);Notify(ArtifactCatalog.DisplayName(module.item,false)+" collected.",ArtifactCatalog.DisplayName(module.item,true)+"を入手");return;}
             if(melee!=null&&meleeDistance<weaponDistance&&meleeDistance<armorDistance)
             {if(!StoreMeleeWeapon(melee.item)){Notify("Melee storage full / discard items in [I]","近接武器の所持枠が満杯 / [I]で整理してください");return;}meleeDrops.Remove(melee);Destroy(melee.visual);string rarity=VaultLanguage.RarityName(melee.item.rarity);Notify(rarity+" MELEE: "+MeleeWeaponCatalog.English(melee.item.family)+" / SCORE "+MeleeWeaponCatalog.Score(melee.item),rarity+" 近接武器: "+MeleeWeaponCatalog.Japanese(melee.item.family)+" / 評価 "+MeleeWeaponCatalog.Score(melee.item));audioSource.PlayOneShot(pickupSound);return;}
             if(armor!=null&&armorDistance<weaponDistance)
-            {if(!StoreArmor(armor.item)){Notify("Armor storage full / discard items in [I]","防具所持枠が満杯 / [I]で整理してください");return;}string en=Armory.Name(armor.item,false);string ja=Armory.Name(armor.item,true);armorDrops.Remove(armor);Destroy(armor.visual);Notify("ARMOR: "+en+" / Equip in [I]","防具: "+ja+" / [I]で装備");return;}
+            {if(!StoreArmor(armor.item)){Notify("Armor storage full / discard items in [I]","防具所持枠が満杯 / [I]で整理してください");return;}string en=Armory.Name(armor.item,false);string ja=Armory.Name(armor.item,true);armorDrops.Remove(armor);Destroy(armor.visual);audioSource.PlayOneShot(pickupSound);Notify("ARMOR: "+en+" / Equip in [I]","防具: "+ja+" / [I]で装備");return;}
             if(drop==null)return;
             if(!StoreWeapon(drop.gun)){Notify("10 weapon slots full / discard a weapon in [I]","銃10枠が満杯 / [I]で所持品を整理してください");return;}drops.Remove(drop);Destroy(drop.visual);
             audioSource.PlayOneShot(pickupSound);Notify("WEAPON: "+VaultLanguage.GunName(drop.gun,false)+" / Assign in [I]","銃: "+VaultLanguage.GunName(drop.gun,true)+" / [I]で装備");
@@ -544,7 +545,7 @@ namespace NeonVault
             case 10:runChain+=.20f;fireBonus+=.10f;runFire+=.10f;break;
             case 11:damageBonus+=.15f;runDamage+=.15f;runDash+=.15f;break;
             case 12:hp=Mathf.Min(maxHp,hp+maxHp*.5f);foreach(var type in new[]{AmmoType.Handgun,AmmoType.Shotgun,AmmoType.AssaultRifle,AmmoType.SniperRifle,AmmoType.LightMachineGun})AddAmmo(type,AmmoPackSize(type));break; }
-            room++; ResetGameplayOverlays();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
+            room++; ResetGameplayOverlays();StopReloadSound();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
         }
         void Finish(bool victory)
         {

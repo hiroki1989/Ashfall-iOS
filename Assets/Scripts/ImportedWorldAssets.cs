@@ -76,9 +76,102 @@ namespace NeonVault {
     PlaceBlockedBackdrop(root,layout,"props",i%2==0?"WaterTank":"barrel_open",new Vector3(-15-i%2*1.6f,0,-10+i*2),i*90);
     PlaceBlockedBackdrop(root,layout,"props",i%2==0?"pallet":"OxygenTank",new Vector3(15+i%2*1.6f,0,-9+i*2),i*90);
    }
+   // A defended supply yard gives the safehouse a working perimeter. All props
+   // are fitted and checked against the existing closed cells before retaining them.
+   for(int i=0;i<6;i++){
+    float x=-15+i*6;
+    PlaceHubSupply(root,layout,"props","SM_fence_stand_small",new Vector3(x,0,-16),0,3.1f,2.2f);
+   }
+   string[] supplies={"pbr_box_supply","pbr_box_ammo","pbr_box_med","pallet","WaterTank","barrel_open"};
+   for(int i=0;i<supplies.Length;i++){
+    float side=i<3?-1:1;
+    PlaceHubSupply(root,layout,"props",supplies[i],new Vector3(side*(15.8f+(i%2)*1.5f),0,-5+(i%3)*3.2f),i*90,1.5f,1.8f);
+   }
+   PlaceHubSupply(root,layout,"PolyHaven","concrete_road_barrier",new Vector3(-17,0,12),90,2.6f,1.1f);
+   PlaceHubSupply(root,layout,"PolyHaven","concrete_road_barrier",new Vector3(17,0,12),90,2.6f,1.1f);
+   // Small furnishing clusters define a market, records corner and supply area.
+   // Each occupies a single navigation cell, leaving the central route clear.
+   PlaceHubStation(root,layout,"table",new Vector3(-9.9f,0,-4.4f),0,1.25f);
+   PlaceHubStation(root,layout,"pbr_box_supply",new Vector3(-12.1f,0,-4.4f),20,.9f);
+   PlaceHubStation(root,layout,"rack",new Vector3(9.9f,0,-4.4f),180,1.8f);
+   PlaceHubStation(root,layout,"pbr_box_med",new Vector3(12.1f,0,-4.4f),-20,.9f);
+   PlaceHubStation(root,layout,"pallet",new Vector3(-4.4f,0,-9.9f),0,.4f);
+   PlaceHubStation(root,layout,"pbr_box_ammo",new Vector3(-6.6f,0,-9.9f),15,.9f);
+   PlaceHubStation(root,layout,"bench",new Vector3(4.4f,0,-9.9f),0,1.0f);
+   PlaceHubStation(root,layout,"pbr_box_supply",new Vector3(6.6f,0,-9.9f),-15,.9f);
+   // Stock and workshop details sit just outside the playable circle.  Fit each
+   // asset to a modest footprint before checking the entire blocked-cell area.
+   PlaceHubDetail(root,layout,"rack",new Vector3(-15.5f,0,0),90,2.2f,2.2f);
+   PlaceHubDetail(root,layout,"pbr_box_supply",new Vector3(-15.5f,0,-3),25,1.3f,1.1f);
+   PlaceHubDetail(root,layout,"pbr_box_ammo",new Vector3(-15.5f,0,3),-15,1.3f,1.1f);
+   PlaceHubDetail(root,layout,"table",new Vector3(15.5f,0,0),90,2.2f,1.3f);
+   PlaceHubDetail(root,layout,"pbr_box_med",new Vector3(15.5f,0,-3),20,1.3f,1.1f);
+   PlaceHubDetail(root,layout,"pallet",new Vector3(15.5f,0,3),-15,1.7f,.5f);
+   PlaceHubDetail(root,layout,"bench",new Vector3(-9,0,-14.5f),0,2.0f,1.1f);
+   PlaceHubDetail(root,layout,"pbr_box_supply",new Vector3(9,0,-14.5f),15,1.3f,1.1f);
    // Realistic props stay entirely inside existing blocked cells so navigation is unchanged.
    PlaceBlockedBackdrop(root,layout,"PolyHaven","barrel_stove",new Vector3(-17,0,8),0,.7f);
    PlaceBlockedBackdrop(root,layout,"PolyHaven","metal_trash_can",new Vector3(17,0,7),90,.7f);
+  }
+  static void PlaceHubSupply(Transform root,SectorLayout layout,string category,string name,Vector3 position,float yaw,float footprint,float height){
+   var source=Resources.Load<GameObject>("ImportedWorld/"+category+"/"+name);if(!source)return;
+   var instance=UnityEngine.Object.Instantiate(source,root,false);instance.name="Safehouse perimeter / "+name;
+   instance.transform.localRotation=Quaternion.Euler(0,yaw,0);
+   var rs=instance.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(instance);return;}
+   Bounds b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   float scale=Mathf.Min(footprint/Mathf.Max(.01f,b.size.x),footprint/Mathf.Max(.01f,b.size.z),height/Mathf.Max(.01f,b.size.y));
+   instance.transform.localScale*=scale;
+   b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   var target=root.TransformPoint(position);instance.transform.position+=new Vector3(target.x-b.center.x,target.y-b.min.y,target.z-b.center.z);
+   b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   var min=root.InverseTransformPoint(b.min);var max=root.InverseTransformPoint(b.max);
+   var first=layout.ToCell(min);var last=layout.ToCell(max);bool safe=true;
+   for(int x=first.x;x<=last.x&&safe;x++)for(int z=first.y;z<=last.y;z++)
+    if(!layout.Blocked(layout.Center(new Vector2Int(x,z)),0)){safe=false;break;}
+   if(!safe){instance.SetActive(false);UnityEngine.Object.Destroy(instance);return;}
+   foreach(var collider in instance.GetComponentsInChildren<Collider>())collider.enabled=false;
+  }
+  static void PlaceHubStation(Transform root,SectorLayout layout,string name,Vector3 position,float yaw,float height){
+   var cell=layout.ToCell(position);if(!layout.IsOpen(cell.x,cell.y))return;
+   var source=Resources.Load<GameObject>("ImportedWorld/props/"+name);if(!source)return;
+   var instance=UnityEngine.Object.Instantiate(source,root,false);instance.name="Safehouse station / "+name;
+   var centre=layout.Center(cell);centre.y=0;instance.transform.localPosition=centre;instance.transform.localRotation=Quaternion.Euler(0,yaw,0);
+   var rs=instance.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(instance);return;}
+   Bounds b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   float limit=layout.CellSize-.45f;
+   float scale=Mathf.Min(limit/Mathf.Max(.01f,b.size.x),limit/Mathf.Max(.01f,b.size.z),height/Mathf.Max(.01f,b.size.y));
+   instance.transform.localScale*=scale;b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   var target=root.TransformPoint(centre);instance.transform.position+=new Vector3(target.x-b.center.x,target.y-.06f-b.min.y,target.z-b.center.z);
+   // Never isolate any part of the hub by closing a furnishing cell.
+   layout.open[cell.x,cell.y]=false;
+   if(!HubOpenCellsConnected(layout)){layout.open[cell.x,cell.y]=true;instance.SetActive(false);UnityEngine.Object.Destroy(instance);return;}
+   foreach(var collider in instance.GetComponentsInChildren<Collider>())collider.enabled=false;
+  }
+  static bool HubOpenCellsConnected(SectorLayout layout){
+   var start=layout.ToCell(new Vector3(0,0,-3));if(!layout.IsOpen(start.x,start.y))return false;
+   var seen=new bool[layout.Columns,layout.Rows];var pending=new Queue<Vector2Int>();pending.Enqueue(start);seen[start.x,start.y]=true;
+   var directions=new[]{Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
+   while(pending.Count>0){var cell=pending.Dequeue();foreach(var d in directions){var n=cell+d;if(layout.IsOpen(n.x,n.y)&&!seen[n.x,n.y]){seen[n.x,n.y]=true;pending.Enqueue(n);}}}
+   for(int x=0;x<layout.Columns;x++)for(int z=0;z<layout.Rows;z++)if(layout.IsOpen(x,z)&&!seen[x,z])return false;
+   return true;
+  }
+  static void PlaceHubDetail(Transform root,SectorLayout layout,string name,Vector3 position,float yaw,float footprint,float height){
+   var source=Resources.Load<GameObject>("ImportedWorld/props/"+name);if(!source)return;
+   var instance=UnityEngine.Object.Instantiate(source,root,false);instance.name="Safehouse interior / "+name;
+   instance.transform.localPosition=position;instance.transform.localRotation=Quaternion.Euler(0,yaw,0);
+   var rs=instance.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(instance);return;}
+   Bounds b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   float scale=Mathf.Min(footprint/Mathf.Max(.01f,b.size.x),footprint/Mathf.Max(.01f,b.size.z),height/Mathf.Max(.01f,b.size.y));
+   instance.transform.localScale*=scale;
+   b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   var target=root.TransformPoint(position);instance.transform.position+=new Vector3(target.x-b.center.x,target.y-b.min.y,target.z-b.center.z);
+   b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
+   var min=root.InverseTransformPoint(b.min);var max=root.InverseTransformPoint(b.max);
+   var first=layout.ToCell(min);var last=layout.ToCell(max);bool safe=true;
+   for(int x=first.x;x<=last.x&&safe;x++)for(int z=first.y;z<=last.y;z++)
+    if(!layout.Blocked(layout.Center(new Vector2Int(x,z)),0)){safe=false;break;}
+   if(!safe){instance.SetActive(false);UnityEngine.Object.Destroy(instance);return;}
+   foreach(var collider in instance.GetComponentsInChildren<Collider>())collider.enabled=false;
   }
   static void PlaceBlockedBackdrop(Transform root,SectorLayout layout,string category,string name,Vector3 position,float yaw,float scale=1){
    var source=Resources.Load<GameObject>("ImportedWorld/"+category+"/"+name);if(!source)return;

@@ -80,11 +80,12 @@ namespace NeonVault
             else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
                 c.description=T("TYPE Module","種別 モジュール")+"\n"+shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
-                c.fullDescription=T("TYPE Module","種別 モジュール")+"\n"+LegendaryDescription(m,m.Description);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
-            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"-"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.range.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
+                string moduleDetail=m.Description;int separator=moduleDetail.IndexOf(" / ",StringComparison.Ordinal);if(separator>=0)moduleDetail=moduleDetail.Substring(separator+3);
+                c.fullDescription=T("TYPE Module","種別 モジュール")+"\n"+LegendaryDescription(m,moduleDetail);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
+            else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"-"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.effectiveRange.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
             c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity)+"\n"+(!c.equipped&&has?EqComparison(score,reference):"");
             string comparison=!c.equipped&&has?EqComparison(score,reference):"";
-            string header=ManufacturerCatalog.Name(maker,VaultLanguage.Japanese)+comparison;
+            string header=comparison;
             c.maker=maker;c.description=EqAppend(header,c.description);c.fullDescription=EqAppend(header,c.fullDescription);return c;
         }
         static string EqComparison(int score,int reference)=>score>reference?" <color=#FF5B50>▲"+(score-reference)+"</color>":score<reference?" <color=#65AAFF>▼"+(reference-score)+"</color>":" ＝";
@@ -102,7 +103,12 @@ namespace NeonVault
                 FieldUIArt.GunClassIcon(new Rect(icon.x+2,icon.y+2,size-4,size-4),g,EqInk);}
             else if(item is ArmorItem a){ItemPortraits.Draw(r,a);score=GearScoring.Score(a);}
             else if(item is ArtifactItem m){ManufacturerBranding.ModulePortrait(r,m);score=GearScoring.Score(m);}
-            else if(item is MeleeWeaponItem w){ManufacturerPortraits.Melee(r,w);score=MeleeWeaponCatalog.Score(w);}
+            else if(item is MeleeWeaponItem w){
+                // Each melee atlas cell is one fifth of the texture width; preserve
+                // that aspect ratio when the detail panel is much wider than tall.
+                Rect portrait=r;
+                if(detailed){var atlas=Resources.Load<Texture2D>("Art/MeleeWeaponIcons-portrait-v2")??Resources.Load<Texture2D>("Art/MeleeWeaponIcons");if(atlas){float aspect=atlas.width/(5f*atlas.height);float portraitWidth=Mathf.Min(r.width,r.height*aspect);float portraitHeight=Mathf.Min(r.height,r.width/aspect);portrait=new Rect(r.center.x-portraitWidth*.5f,r.center.y-portraitHeight*.5f,portraitWidth,portraitHeight);}}
+                ManufacturerPortraits.Melee(portrait,w);score=MeleeWeaponCatalog.Score(w);}
             else {ManufacturerBranding.PortraitBadgeEnabled=previousBadge;return;}
             ManufacturerBranding.PortraitBadgeEnabled=previousBadge;
             var style=new GUIStyle(eqCopy){font=this.font,fontStyle=FontStyle.Normal,
@@ -151,7 +157,10 @@ namespace NeonVault
             }
             float top=merchant?196:122;
             string[] tabs={T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
-            var previousTabStyle=eqButtonStyle;eqButtonStyle=new GUIStyle(eqButtonStyle){fontSize=23,wordWrap=false};
+            int[] owned={Weapons.Count,ActiveArmorCount,ArtifactInventory.Count,MeleeWeaponInventory.Count};
+            int[] limits={WeaponCapacity,ArmorCapacity,ArtifactCapacity,MeleeWeaponCapacity};
+            for(int i=0;i<tabs.Length;i++)tabs[i]+="\n"+owned[i]+" / "+limits[i];
+            var previousTabStyle=eqButtonStyle;eqButtonStyle=new GUIStyle(eqButtonStyle){fontSize=19,wordWrap=false};
             for(int i=0;i<4;i++)if(EqNavigation(new Rect(28+i*112,top,106,74),tabs[i],eqCategory==i)){eqCategory=i;saleCategory=i;eqSelectedKey=null;eqShowFullDetails=false;pendingSaleKey=null;eqGridScroll=eqDetailScroll=Vector2.zero;}
             eqButtonStyle=previousTabStyle;
             float gridTop=top+86;
@@ -162,6 +171,7 @@ namespace NeonVault
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
             DrawEquippedCategory(top);
             if(!merchant&&EqButton(new Rect(618,top+10,285,54),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
+            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(618,top+68,190,48),T("STASH","倉庫")))VaultStorageOpen();
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();
@@ -197,8 +207,8 @@ namespace NeonVault
                 const float logoHeight=64;
                 eqDetailExtent=Mathf.Max(detailH,textHeight+logoHeight+16);
                 eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));
-                EqText(new Rect(2,4,410,textHeight),eqDetail,EqInk);
-                if(!string.IsNullOrEmpty(selected.maker))ManufacturerBranding.Badge(new Rect(6,textHeight+6,208,logoHeight),selected.maker);
+                if(!string.IsNullOrEmpty(selected.maker))ManufacturerBranding.Badge(new Rect(6,4,208,logoHeight),selected.maker);
+                EqText(new Rect(2,logoHeight+12,410,textHeight),eqDetail,EqInk);
                 GUI.EndScrollView();
                 if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}
                 EqActions(selected,merchant);
@@ -245,13 +255,13 @@ namespace NeonVault
         {
             EqText(new Rect(28,204,1320,46),T("PERMANENT CAPACITY UPGRADES","恒久的な所持上限の拡張"),EqInk,new GUIStyle(eqCaption){fontSize=29});
             EqText(new Rect(28,253,1320,42),T("Ten levels per category. Purchases use scrap and persist between runs.","各カテゴリ10段階。スクラップで購入し、周回をまたいで引き継ぎます。"),EqMuted);
-            StorageUpgrade[] categories={StorageUpgrade.AmmoHandgun,StorageUpgrade.AmmoShotgun,StorageUpgrade.AmmoSniper,StorageUpgrade.AmmoRifle,StorageUpgrade.AmmoLMG,StorageUpgrade.Weapons,StorageUpgrade.Armor,StorageUpgrade.Modules,StorageUpgrade.Melee};
-            string[] labels={T("HANDGUN AMMO","ハンドガン弾"),T("SHOTGUN AMMO","ショットガン弾"),T("SNIPER RIFLE AMMO","スナイパーライフル弾"),T("ASSAULT RIFLE AMMO","アサルトライフル弾"),T("HEAVY MACHINE GUN AMMO","ヘビーマシンガン弾"),T("FIREARMS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接武器")};
-            string[] values={T("Handgun reserve","ハンドガン弾の上限"),T("Shotgun reserve","ショットガン弾の上限"),T("Sniper rifle reserve","スナイパーライフル弾の上限"),T("Assault rifle reserve","アサルトライフル弾の上限"),T("Heavy machine gun reserve","ヘビーマシンガン弾の上限"),T("Weapon inventory","銃の所持枠"),T("Armor inventory","防具の所持枠"),T("Module inventory","モジュールの所持枠"),T("Melee inventory","近接武器の所持枠")};
+            StorageUpgrade[] categories={StorageUpgrade.AmmoHandgun,StorageUpgrade.AmmoShotgun,StorageUpgrade.AmmoSniper,StorageUpgrade.AmmoRifle,StorageUpgrade.AmmoLMG,StorageUpgrade.Weapons,StorageUpgrade.Armor,StorageUpgrade.Modules,StorageUpgrade.Melee,StorageUpgrade.Stash};
+            string[] labels={T("HANDGUN AMMO","ハンドガン弾"),T("SHOTGUN AMMO","ショットガン弾"),T("SNIPER RIFLE AMMO","スナイパーライフル弾"),T("ASSAULT RIFLE AMMO","アサルトライフル弾"),T("HEAVY MACHINE GUN AMMO","ヘビーマシンガン弾"),T("FIREARMS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接武器"),T("STASH","倉庫")};
+            string[] values={T("Handgun reserve","ハンドガン弾の上限"),T("Shotgun reserve","ショットガン弾の上限"),T("Sniper rifle reserve","スナイパーライフル弾の上限"),T("Assault rifle reserve","アサルトライフル弾の上限"),T("Heavy machine gun reserve","ヘビーマシンガン弾の上限"),T("Weapon inventory","銃の所持枠"),T("Armor inventory","防具の所持枠"),T("Module inventory","モジュールの所持枠"),T("Melee inventory","近接武器の所持枠"),T("Stash capacity","倉庫の所持枠")};
             for(int i=0;i<categories.Length;i++)
             {
                 var category=categories[i];int tier=StorageTier(category),cost=StorageUpgradeCost(category);
-                int column=i%3,row=i/3;float x=28+column*465,y=310+row*150;
+                int column=i%3,row=i/3;float x=28+column*465,y=310+row*140;
                 Box(new Rect(x,y,446,138),EqSurface);Box(new Rect(x,y,4,138),EqAccent);
                 EqText(new Rect(x+18,y+10,410,40),labels[i]+"  "+tier+" / 10",EqInk,new GUIStyle(eqCaption){fontSize=23});
                 EqText(new Rect(x+18,y+61,205,52),values[i],EqMuted,new GUIStyle(eqCopy){fontSize=18});

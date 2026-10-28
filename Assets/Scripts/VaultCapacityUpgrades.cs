@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    public enum StorageUpgrade { AmmoHandgun, Weapons, Armor, Modules, Melee, AmmoShotgun, AmmoRifle, AmmoSniper, AmmoLMG }
+    public enum StorageUpgrade { AmmoHandgun, Weapons, Armor, Modules, Melee, AmmoShotgun, AmmoRifle, AmmoSniper, AmmoLMG, Stash }
 
     public partial class VaultGame
     {
@@ -29,25 +29,28 @@ namespace NeonVault
                 case StorageUpgrade.Armor:return ArmorCapacityTier;
                 case StorageUpgrade.Modules:return ModuleCapacityTier;
                 case StorageUpgrade.Melee:return MeleeCapacityTier;
+                case StorageUpgrade.Stash:return StashTier;
                 default:return 0;
             }
         }
 
         public int StorageUpgradeCost(StorageUpgrade category)
         {
-            if((int)category<0||(int)category>8)return 0;
+            if((int)category<0||(int)category>9)return 0;
             int tier=StorageTier(category);
             if(tier>=10)return 0;
             int ammoIndex=AmmoIndex(category);
-            int baseCost=ammoIndex>=0?2500+ammoIndex*350:category==StorageUpgrade.Weapons?4000:category==StorageUpgrade.Armor?3000:category==StorageUpgrade.Modules?3500:2500;
+            int baseCost=ammoIndex>=0?2500+ammoIndex*350:category==StorageUpgrade.Stash?4000:category==StorageUpgrade.Weapons?4000:category==StorageUpgrade.Armor?3000:category==StorageUpgrade.Modules?3500:2500;
             return baseCost*(tier+1)*ScrapLevelMultiplier;
         }
 
         public bool BuyStorageUpgrade(StorageUpgrade category)
         {
-            if((int)category<0||(int)category>8||screen!=Screen.Shop)return false;
+            if((int)category<0||(int)category>9||screen!=Screen.Shop)return false;
             int cost=StorageUpgradeCost(category);
-            if(cost<=0||!TrySpendCredits(cost))return false;
+            if(cost<=0||Credits<cost)return false;
+            if(category==StorageUpgrade.Stash)return BuyStashCapacity(cost);
+            if(!TrySpendCredits(cost))return false;
             int ammoIndex=AmmoIndex(category);
             if(ammoIndex>=0)ammoCapacityTiers[ammoIndex]++;
             else switch(category)
@@ -56,6 +59,7 @@ namespace NeonVault
                 case StorageUpgrade.Armor:ArmorCapacityTier++;break;
                 case StorageUpgrade.Modules:ModuleCapacityTier++;break;
                 case StorageUpgrade.Melee:MeleeCapacityTier++;break;
+                case StorageUpgrade.Stash:StashTier++;SaveStash();break;
             }
             SaveInventory();SaveProgression();
             return true;

@@ -58,8 +58,9 @@ namespace NeonVault
             float edge=1+.12f*Mathf.Sin(angle*3+phase)+.06f*Mathf.Sin(angle*5-phase);
             return dx*dx+dz*dz<edge*edge;
         }
-        public bool Park(Vector3 p)=>p.x<-3250+330*Mathf.Sin(p.z*.0009f)
-            ||p.z>3550+240*Mathf.Sin(p.x*.0008f)
+        // The outer green belts and two city parks occupy about 18% of the world.
+        public bool Park(Vector3 p)=>p.x<-4000+330*Mathf.Sin(p.z*.0009f)
+            ||p.z>4300+240*Mathf.Sin(p.x*.0008f)
             ||CityPark(p,-700,-500,600,350,.8f)
             ||CityPark(p,2900,2800,660,440,2.1f);
         // Legacy street APIs retained for compatibility only. Actual roads are the
@@ -203,10 +204,10 @@ namespace NeonVault
             float left=x*ChunkSize,bottom=z*ChunkSize;
             // Rejection packing makes buildings independent of the 100m streaming grid.
             // A two metre margin at chunk borders prevents neighbouring cache overlap.
-            for(int attempt=0;attempt<1000&&data.Buildings.Count<36;attempt++)
+            for(int attempt=0;attempt<1800&&data.Buildings.Count<48;attempt++)
             {
                 var p=new Vector3(left+8+(float)rng.NextDouble()*84,0,bottom+8+(float)rng.NextDouble()*84);
-                int district=District(p);if(district==4||RoadDistance(p)>=200)continue;
+                int district=District(p);if(district==4)continue;
                 bool warehouse=district==2&&rng.NextDouble()<.09;
                 float w=warehouse?24+(float)rng.NextDouble()*15:8+(float)rng.NextDouble()*14;
                 float h=warehouse?19+(float)rng.NextDouble()*17:8+(float)rng.NextDouble()*14;
@@ -214,7 +215,7 @@ namespace NeonVault
                 if(rect.xMin<left+2||rect.xMax>left+98||rect.yMin<bottom+2||rect.yMax>bottom+98||Mathf.Abs(p.x)>4960||Mathf.Abs(p.z)>4960)continue;
                 // Keep coarse navigation cell centres free for the shared 50m graph.
                 bool overlaps=false;
-                foreach(var other in data.Buildings)if(new Rect(other.xMin-2,other.yMin-2,other.width+4,other.height+4).Overlaps(rect)){overlaps=true;break;}
+                foreach(var other in data.Buildings)if(new Rect(other.xMin-1.5f,other.yMin-1.5f,other.width+3,other.height+3).Overlaps(rect)){overlaps=true;break;}
                 // Narrow pedestrian passages connect every 50m navigation centre.
                 // Their clear width is independent of the vehicle-road layout.
                 for(float spine=25;spine<100;spine+=50)
@@ -226,7 +227,7 @@ namespace NeonVault
             var forest=new System.Random(unchecked(Seed+x*92821+z*68917));
             for(int i=0;i<650;i++){
                 var p=new Vector3(left+3+(float)forest.NextDouble()*94,0,bottom+3+(float)forest.NextDouble()*94);
-                bool park=Park(p);if(!park&&i>100)continue;
+                bool park=Park(p);if(!park&&i>=45)continue;
                 if(River(p)||RoadClearance(p)<2.5f||SiteProtected(p,8)||Mathf.Abs(p.x)>4990||Mathf.Abs(p.z)>4990)continue;
                 if(Mathf.Abs(Mathf.Repeat(p.x,50)-25)<4||Mathf.Abs(Mathf.Repeat(p.z,50)-25)<4)continue;
                 bool occupied=false;foreach(var b in data.Buildings)if(new Rect(b.xMin-2,b.yMin-2,b.width+4,b.height+4).Contains(new Vector2(p.x,p.z))){occupied=true;break;}foreach(var car in data.Cars)if((car-p).sqrMagnitude<16)occupied=true;if(occupied)continue;

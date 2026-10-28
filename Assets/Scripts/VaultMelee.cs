@@ -23,9 +23,10 @@ namespace NeonVault
             if(game==null||!game.Active||weapon==null||weapon.damage<=0||weapon.interval<=0||cooldown>0)return false;
             direction.y=0;if(direction.sqrMagnitude<.0001f)direction=Vector3.forward;direction.Normalize();
             cooldown=Mathf.Max(.08f,weapon.interval);
+            game.PlayMeleeSwingSound();
             struckThisSwing.Clear();
             var color=FamilyColor(weapon.family);
-            CombatVisuals.MeleeSlash(origin,direction,weapon.range,weapon.arcDegrees,weapon.family,color,parent);
+            CombatVisuals.MeleeSlash(origin,direction,weapon.effectiveRange,weapon.arcDegrees,weapon.family,color,parent);
             game.PlayerAppearance?.GetComponent<LayeredPlayer2D>()?.MeleeSwing();
             game.PlayerAppearance?.GetComponent<DetailedHeroPlayer3D>()?.NotifyMelee();
 
@@ -35,7 +36,7 @@ namespace NeonVault
                 if(foe==null||foe.dead||!struckThisSwing.Add(foe))continue;
                 Vector3 delta=foe.transform.position-origin;delta.y=0;
                 float targetRadius=foe.kind==3?1.2f:.65f;
-                if(delta.sqrMagnitude<.0001f||delta.magnitude>weapon.range+targetRadius)continue;
+                if(delta.sqrMagnitude<.0001f||delta.magnitude>weapon.effectiveRange+targetRadius)continue;
                 if(Vector3.Angle(direction,delta)>Mathf.Clamp(weapon.arcDegrees,1,360)*.5f)continue;
                 if(!game.LineOfSight(origin+Vector3.up*.7f,foe.transform.position+Vector3.up*.7f))continue;
                 Vector3 point=foe.transform.position-direction*(targetRadius*.45f)+Vector3.up*.8f;

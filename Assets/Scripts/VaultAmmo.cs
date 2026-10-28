@@ -76,11 +76,12 @@ namespace NeonVault
         {
             if(gun==null||reload>0||ammo>=EffectiveMagazine||AmmoReserve(AmmoForGun(gun))<=0)return false;
             reloadPending=Mathf.Min(EffectiveMagazine-ammo,AmmoReserve(AmmoForGun(gun)));
-            if(reloadPending<=0)return false;reload=EffectiveReload;return true;
+            if(reloadPending<=0)return false;reload=EffectiveReload;PlayWeaponSound(gun,"reload",.7f);return true;
         }
         int reloadPending;
         void CompleteAmmoReload()
         {
+            StopReloadSound();
             if(gun==null){reloadPending=0;return;}
             var type=AmmoForGun(gun);int amount=Mathf.Min(reloadPending,ammoReserves[(int)type]);ammoReserves[(int)type]-=amount;ammo=Mathf.Min(EffectiveMagazine,ammo+amount);reloadPending=0;ArtifactOnReload();SaveInventory();
         }
@@ -101,7 +102,7 @@ namespace NeonVault
                 }
                 float ammoScale=DebtAmmoPickupBonus+ArmorTotal(a=>a.ammoBonus)+EquippedWeaponAffixBonus("ammo")+ArtifactAffixBonus("ammo");
                 if(d.credits>0)AwardCredits(d.credits);int reserveBefore=AmmoReserve(d.ammoType);int requestedAmmo=d.ammoAmount>0?Mathf.Max(1,Mathf.RoundToInt(d.ammoAmount*(1+ammoScale))+Mathf.RoundToInt(DebtAmmoBonus(AmmoModel(d.ammoType)))):0;int pickedAmmo=Mathf.Min(requestedAmmo,AmmoCapacity(d.ammoType)-reserveBefore);if(d.ammoAmount>0&&pickedAmmo<=0)continue;if(pickedAmmo>0)AddAmmo(d.ammoType,pickedAmmo);
-                if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickupSound);
+                if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickedAmmo>0?ammoPickupSound:pickupSound);
                 if(d.credits>0)Notify("SCRAP +"+d.credits,"スクラップ +"+d.credits);
                 else Notify(AmmoPickupEnglish(d.ammoType,pickedAmmo),AmmoPickupJapanese(d.ammoType,pickedAmmo));
             }

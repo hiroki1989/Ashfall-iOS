@@ -14,8 +14,9 @@ namespace NeonVault {
   readonly List<Bounds> buildingBounds=new List<Bounds>();readonly List<bool> hidden=new List<bool>();static VaultGame game;
   static int planeFrame=-1;static Camera planeCamera;static readonly Plane[] planes=new Plane[6];
   float nextOcclusion;bool visibleChunk=true;bool chunkBoundsReady;Bounds chunkBounds;
-  readonly Dictionary<MeshRenderer,Material[]> originalRendererMaterials=new Dictionary<MeshRenderer,Material[]>();
-  readonly Dictionary<int,MeshRenderer[]> buildingRenderers=new Dictionary<int,MeshRenderer[]>();
+  readonly Dictionary<Renderer,Material[]> originalRendererMaterials=new Dictionary<Renderer,Material[]>();
+  readonly Dictionary<Renderer,ShadowCastingMode> originalRendererShadows=new Dictionary<Renderer,ShadowCastingMode>();
+  readonly Dictionary<int,Renderer[]> buildingRenderers=new Dictionary<int,Renderer[]>();
   readonly Matrix4x4[] scratch=new Matrix4x4[1023];
   static Template Get(GameObject prefab){
    if(templates.TryGetValue(prefab,out var t))return t;t=new Template();bool first=true;
@@ -47,7 +48,7 @@ namespace NeonVault {
   // Register all ordinary renderers belonging to the same site as its instanced shell.
   public void RegisterSiteRenderers(){
    int owner;if(buildingBounds.Count>0)owner=0;else{owner=buildingBounds.Count;buildingBounds.Add(new Bounds(transform.TransformPoint(new Vector3(0,3.5f,6)),new Vector3(13,8,10)));hidden.Add(false);}
-   var renderers=GetComponentsInChildren<MeshRenderer>(true);buildingRenderers[owner]=renderers;
+   var renderers=GetComponentsInChildren<Renderer>(true);buildingRenderers[owner]=renderers;
    foreach(var renderer in renderers)if(renderer&&renderer.enabled){var bounds=buildingBounds[owner];bounds.Encapsulate(renderer.bounds);buildingBounds[owner]=bounds;}
   }
   public int RegisterBuilding(Bounds bounds){int owner=buildingBounds.Count;buildingBounds.Add(bounds);hidden.Add(false);return owner;}
@@ -64,18 +65,19 @@ namespace NeonVault {
    // Their transparent layers accumulate, so use a low per-surface alpha to keep
    // actors visible even through the full depth of a combined building mesh.
    if(result.HasProperty("_Color")){var color=result.color;color.a=.045f;result.color=color;}
-   result.SetFloat("_Mode",3);result.SetFloat("_SrcBlend",(float)BlendMode.One);result.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);result.SetFloat("_ZWrite",0);
-   result.DisableKeyword("_ALPHATEST_ON");result.DisableKeyword("_ALPHABLEND_ON");result.EnableKeyword("_ALPHAPREMULTIPLY_ON");result.renderQueue=3000;result.enableInstancing=true;
+   if(result.HasProperty("_Metallic"))result.SetFloat("_Metallic",0);if(result.HasProperty("_Glossiness"))result.SetFloat("_Glossiness",0);
+   result.SetFloat("_Mode",2);result.SetFloat("_SrcBlend",(float)BlendMode.SrcAlpha);result.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);result.SetFloat("_ZWrite",0);
+   result.DisableKeyword("_ALPHATEST_ON");result.EnableKeyword("_ALPHABLEND_ON");result.DisableKeyword("_ALPHAPREMULTIPLY_ON");result.renderQueue=3000;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
   void UpdateRendererFades(){
    foreach(var entry in buildingRenderers){bool fade=hidden[entry.Key];foreach(var renderer in entry.Value){
     if(!renderer)continue;
-    if(fade&&!originalRendererMaterials.ContainsKey(renderer)){var original=renderer.sharedMaterials;originalRendererMaterials.Add(renderer,original);var faded=new Material[original.Length];for(int i=0;i<original.Length;i++)faded[i]=original[i]?Faded(original[i]):null;renderer.sharedMaterials=faded;}
-    else if(!fade&&originalRendererMaterials.TryGetValue(renderer,out var saved)){renderer.sharedMaterials=saved;originalRendererMaterials.Remove(renderer);}
+    if(fade&&!originalRendererMaterials.ContainsKey(renderer)){var original=renderer.sharedMaterials;originalRendererMaterials.Add(renderer,original);originalRendererShadows[renderer]=renderer.shadowCastingMode;renderer.shadowCastingMode=ShadowCastingMode.Off;var faded=new Material[original.Length];for(int i=0;i<original.Length;i++)faded[i]=original[i]?Faded(original[i]):null;renderer.sharedMaterials=faded;}
+    else if(!fade&&originalRendererMaterials.TryGetValue(renderer,out var saved)){renderer.sharedMaterials=saved;originalRendererMaterials.Remove(renderer);if(originalRendererShadows.TryGetValue(renderer,out var shadows))renderer.shadowCastingMode=shadows;originalRendererShadows.Remove(renderer);}
    }}
   }
-  void OnDisable(){foreach(var entry in originalRendererMaterials)if(entry.Key)entry.Key.sharedMaterials=entry.Value;originalRendererMaterials.Clear();}
+  void OnDisable(){foreach(var entry in originalRendererMaterials)if(entry.Key){entry.Key.sharedMaterials=entry.Value;if(originalRendererShadows.TryGetValue(entry.Key,out var shadows))entry.Key.shadowCastingMode=shadows;}originalRendererMaterials.Clear();originalRendererShadows.Clear();}
   public static bool OcclusionEnabled=true;
   public int HiddenBuildingCount {get;private set;}
   public void DrawNow(){
@@ -89,3 +91,5 @@ namespace NeonVault {
   }
  }
 }
+
+

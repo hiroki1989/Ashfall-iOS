@@ -5,7 +5,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         bool actionSkillInventoryOpen;
-        Texture2D actionSkillArt;
+        Texture2D actionSkillArt, actionSkillDisc;
         int actionTreeKind, actionTreeBranch, actionTreeTier;
         static readonly Color[] ActionTreeColors = {
             new Color(.38f,.70f,.76f), new Color(.91f,.53f,.27f), new Color(.44f,.76f,.53f)
@@ -121,11 +121,53 @@ namespace NeonVault
             }
         }
 
+        void DrawMobileActionSkill()
+        {
+            Rect use=MobileTouchControls.GetControlRect(MobileAction.Skill);
+            if(use.width<=0)return;
+            Matrix4x4 previousMatrix=GUI.matrix;
+            GUI.matrix=Matrix4x4.identity;
+            try
+            {
+                Rect r=use;
+                if(!actionSkillDisc)
+                {
+                    const int size=64;
+                    actionSkillDisc=new Texture2D(size,size,TextureFormat.RGBA32,false){name="Action skill button disc",hideFlags=HideFlags.HideAndDontSave};
+                    var pixels=new Color32[size*size];
+                    for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+                    {
+                        float dx=(x+.5f-size*.5f)/(size*.5f),dy=(y+.5f-size*.5f)/(size*.5f);
+                        byte alpha=(byte)(Mathf.Clamp01((1-Mathf.Sqrt(dx*dx+dy*dy))*size*.5f)*230);
+                        pixels[y*size+x]=new Color32(17,27,32,alpha);
+                    }
+                    actionSkillDisc.SetPixels32(pixels);actionSkillDisc.Apply();
+                }
+                bool ready=ActionSkillPoints>=ActionSkillChargeMax;
+                float charge=Mathf.Clamp01(ActionSkillPoints/(float)Mathf.Max(1,ActionSkillChargeMax));
+                Color accent=ActionTreeColors[Mathf.Clamp((int)ActionSkillSelected,0,2)];
+                GUI.color=Color.white;GUI.DrawTexture(r,actionSkillDisc);
+                Vector2 center=r.center;float radius=r.width*.46f;
+                const int segments=48;
+                for(int i=0;i<segments;i++)
+                {
+                    float a=-Mathf.PI*.5f+i*Mathf.PI*2/segments,b=-Mathf.PI*.5f+(i+1)*Mathf.PI*2/segments;
+                    Color color=(i+.5f)/segments<=charge?accent:new Color(.35f,.40f,.42f,.8f);
+                    Line(center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,center+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,color,Mathf.Max(2,r.width*.045f));
+                }
+                int fontSize=Mathf.Max(12,Mathf.RoundToInt(r.width*.15f));
+                ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.28f,r.width*.8f,r.height*.25f),T("SKILL","スキル"),ready?UiPaper:Mist,fontSize,TextAnchor.MiddleCenter);
+                ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.53f,r.width*.8f,r.height*.21f),ready?T("READY","発動可能"):ActionSkillPoints+" / "+ActionSkillChargeMax,ready?accent:Mist,Mathf.Max(10,Mathf.RoundToInt(r.width*.12f)),TextAnchor.MiddleCenter);
+
+            }
+            finally{GUI.matrix=previousMatrix;GUI.color=Color.white;}
+        }
         void DrawActionSkillHUD()
         {
             if(!Active||InventoryOpen)return;
             bool mobile=MobileTouchControls.Enabled;
-            Rect r=mobile?new Rect(650,705,235,64):new Rect(650,810,235,64);
+            if(mobile){DrawMobileActionSkill();return;}
+            Rect r=new Rect(650,810,235,64);
             bool ready=ActionSkillPoints>=ActionSkillChargeMax;
             Color accent=ActionTreeColors[Mathf.Clamp((int)ActionSkillSelected,0,2)];
             FieldUIArt.Plate(r,ready);

@@ -15,25 +15,21 @@ namespace NeonVault
             }
         }
         Vector2 MobileCanvasPoint(Vector2 bottomScreen)=>MobileCanvasMatrix.inverse.MultiplyPoint3x4(new Vector3(bottomScreen.x,UnityEngine.Screen.height-bottomScreen.y,0));
-        bool MobileButton(Rect r,string caption){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=38,fontStyle=FontStyle.Bold,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
+        bool MobileButton(Rect r,string caption,int fontSize=38){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=fontSize,fontStyle=FontStyle.Bold,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
         void DrawMobileMenu()
         {
             if(menuArt)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
-            for(int i=0;i<40;i++)Box(new Rect(i*25,0,26,900),new Color(.035f,.055f,.065f,.97f*Mathf.Pow(1-i/40f,.4f)));
-            var brand=Resources.Load<Texture2D>("Art/Brand/ApprovedLogoReference");if(brand)GUI.DrawTextureWithTexCoords(new Rect(54,50,550,330),brand,new Rect(.07f,.15f,.39f,.70f),true);else Text(54,146,"DUST & DEBT",new GUIStyle(title){fontSize=78},UiPaper,850);
-            Box(new Rect(60,300,72,4),Gold);
+            for(int i=0;i<40;i++)Box(new Rect(i*25,0,26,900),new Color(.035f,.055f,.065f,.72f*Mathf.Pow(1-i/40f,.7f)));
+            var brand=Resources.Load<Texture2D>("Art/Brand/ApprovedLogoReference");if(brand)GUI.DrawTextureWithTexCoords(new Rect(58,92,550,330),brand,new Rect(.07f,.15f,.39f,.70f),true);else Text(54,146,"DUST & DEBT",new GUIStyle(title){fontSize=78},UiPaper,850);
             if(MobileButton(new Rect(58,470,650,112),T("CONTINUE","ゲームを続ける")))ContinueOverworldGame();
-            if(MobileButton(new Rect(58,605,650,112),T("EQUIPMENT","装備を確認")))ToggleInventory();
-            if(HasSavedRun&&MobileButton(new Rect(58,740,650,100),T("CONTINUE SAVED EXPEDITION","保存した探索を再開")))ResumeSavedRun();
+            if(HasSavedRun&&MobileButton(new Rect(58,605,650,100),T("CONTINUE SAVED EXPEDITION","保存した探索を再開")))ResumeSavedRun();
         }
         void DrawMobileHub()
         {
             Panel(new Rect(24,22,620,116),Gold);Text(42,36,OverworldCampName(LastVisitedCamp,VaultLanguage.Japanese),new GUIStyle(label){fontSize=28},Gold,595);
             Text(42,84,T("LEVEL ","レベル ")+DebtLevel+T("  SCRAP ","  スクラップ ")+Credits.ToString("N0"),new GUIStyle(label){fontSize=25},Cyan,595);
-            if(MobileButton(new Rect(690,30,270,110),T("CITY MAP","都市マップ")))OpenOverworldMap();
-            if(MobileButton(new Rect(995,30,410,110),T("EXIT TO CITY","街へ出る")))ExitCampToOverworld();
-            if(MobileButton(new Rect(690,157,270,110),T("MERCHANT","装備商人"))){debtPage=false;debtSkillTreePage=false;shopSellingPage=false;screen=Screen.Shop;}
-            if(MobileButton(new Rect(690,284,270,110),T("MAKERS","製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}
+            if(MobileButton(new Rect(690,30,220,72),T("CITY MAP","都市マップ"),28))OpenOverworldMap();
+            if(MobileButton(new Rect(930,30,220,72),T("MAKERS","製品図鑑"),28)){manufacturerRegistry=true;manufacturerKind=-1;}
             string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: MARA / MERCHANT","調べる：マラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONE / ADVICE","調べる：イオネ / 探索の助言"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
             Text(380,740,string.IsNullOrEmpty(hubDialogue)?hint:hubDialogue,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,680);
             if(toastTimer>0){Panel(new Rect(30,170,620,145),Gold);Text(50,185,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,580);}

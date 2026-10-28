@@ -231,7 +231,7 @@ namespace NeonVault
                 Color rarityColor=item.color;Panel(new Rect(0,y,1290,92),rarityColor);
                 DrawMeleeIcon(new Rect(18,y+20,48,48),item.family);
                 Text(88,y+7,MeleeWeaponCatalog.Name(item)+"  /  Lv "+item.level+" / "+VaultLanguage.RarityName(item.rarity),label,rarityColor,640);
-                Text(88,y+42,T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(item)+"  ·  "+T("DMG ","威力 ")+item.damage+"  ·  "+T("RATE ","間隔 ")+(1/Mathf.Max(.01f,item.interval)).ToString("0.0")+T("/s  ·  RANGE ","/秒  ·  射程 ")+item.range.ToString("0.0")+"m  ·  "+T("ARC ","攻撃角 ")+item.arcDegrees.ToString("0")+"°"+(item.uniqueEffect?LegendaryRedOpen+T("  ·  UNIQUE EFFECT","  ·  固有効果")+LegendaryRedClose:""),small,Mist,710);
+                Text(88,y+42,T("SCORE ","評価 ")+MeleeWeaponCatalog.Score(item)+"  ·  "+T("DMG ","威力 ")+item.damage+"  ·  "+T("RATE ","間隔 ")+(1/Mathf.Max(.01f,item.interval)).ToString("0.0")+T("/s  ·  RANGE ","/秒  ·  射程 ")+item.effectiveRange.ToString("0.0")+"m  ·  "+T("ARC ","攻撃角 ")+item.arcDegrees.ToString("0")+"°"+(item.uniqueEffect?LegendaryRedOpen+T("  ·  UNIQUE EFFECT","  ·  固有効果")+LegendaryRedClose:""),small,Mist,710);
                 if(item==EquippedMeleeWeapon)EquippedTab(new Rect(890,y+8,150,28));
                 else if(InventoryAction(new Rect(1070,y+8,125,36),T("EQUIP","装備")))EquipMeleeWeapon(item);
                 if(item!=EquippedMeleeWeapon)InventoryCompare(new Rect(890,y+43,160,20),MeleeWeaponCatalog.Score(item),MeleeWeaponCatalog.Score(EquippedMeleeWeapon));

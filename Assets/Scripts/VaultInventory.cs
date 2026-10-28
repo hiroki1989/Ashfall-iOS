@@ -88,7 +88,7 @@ namespace NeonVault
             for(int i=1;i<5;i++)if(EquippedArmor[i]==null&&!hasSavedArmorSlots)
             {var armor=ArmorInventory.Find(a=>(int)a.slot==i);if(armor==null){armor=smoke&&!reviewTrailWardenMigration?Armory.Starter((ArmorSlot)i):Armory.TrailWarden((ArmorSlot)i);if(ActiveArmorCount<ArmorCapacity)ArmorInventory.Add(armor);else continue;}EquippedArmor[i]=armor;}
             if(!smoke||reviewTrailWardenMigration){if(trailWardenGrantVersion==0)trailWardenGrantVersion=1;DeliverTrailWardenGifts(reviewTrailWardenMigration);}
-            RepairWeaponSlots(legacySlots);gun=WeaponInSlot(ActiveWeaponSlot);SelectedWeapon=Weapons.IndexOf(gun);RefreshPermanentStats();ammo=gun!=null&&magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Min(EffectiveMagazine,loaded):gun==null?0:EffectiveMagazine;hp=maxHp;SaveInventory(storageKey);
+            RepairWeaponSlots(legacySlots);gun=WeaponInSlot(ActiveWeaponSlot);SelectedWeapon=Weapons.IndexOf(gun);RefreshPermanentStats();ammo=gun!=null&&magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Min(EffectiveMagazine,loaded):gun==null?0:EffectiveMagazine;hp=maxHp;SaveInventory(storageKey);if(storageKey=="Vault.Loadout.v1")LoadStash();
         }
         bool DeliverTrailWardenGifts(bool review=false)
         {
@@ -185,9 +185,10 @@ namespace NeonVault
         public void ActivateWeaponSlot(int slot)
         {
             var next=WeaponInSlot(slot);if(next==null)return;
+            bool changed=gun!=null&&gun!=next;
             if(gun!=null)magazineAmmo[gun.id]=ammo;
             ActiveWeaponSlot=slot;SelectedWeapon=Weapons.IndexOf(next);gun=next;ammo=magazineAmmo.TryGetValue(gun.id,out int remaining)?Mathf.Min(EffectiveMagazine,remaining):EffectiveMagazine;
-            reload=0;reloadPending=0;fireTimer=Mathf.Max(fireTimer,.16f);PlayerWeapon?.Recolor(gun.color);if(PlayerWeapon!=null)VaultArt.ConfigureWeapon(PlayerWeapon.transform,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));RefreshWeaponAppearance();CreateSatellites();RecalculateArmor();SaveInventory();
+            StopReloadSound();reload=0;reloadPending=0;fireTimer=Mathf.Max(fireTimer,.16f);if(changed&&Active)PlayWeaponSound(gun,"equip",.65f);PlayerWeapon?.Recolor(gun.color);if(PlayerWeapon!=null)VaultArt.ConfigureWeapon(PlayerWeapon.transform,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));RefreshWeaponAppearance();CreateSatellites();RecalculateArmor();SaveInventory();
         }
         public void CycleWeapon(int direction)
         {

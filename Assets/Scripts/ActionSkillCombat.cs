@@ -12,7 +12,21 @@ namespace NeonVault
         float actionSkillDuration, actionSkillFireTimer, actionSkillPulseTimer;
         float actionSkillPower, actionSkillRadius;
         bool actionSkillFollows, actionSkillMultitarget;
+        AudioClip actionTurretSound, actionGrenadeSound;
+        bool actionAudioLoaded;
         readonly List<ActionGrenade> actionGrenades=new List<ActionGrenade>();
+
+        void PlayActionSound(bool grenade)
+        {
+            if(!actionAudioLoaded)
+            {
+                actionTurretSound=Resources.Load<AudioClip>("ActionSkillAudio/turret");
+                actionGrenadeSound=Resources.Load<AudioClip>("ActionSkillAudio/grenade");
+                actionAudioLoaded=true;
+            }
+            AudioClip clip=grenade?actionGrenadeSound:actionTurretSound;
+            if(clip&&audioSource)audioSource.PlayOneShot(clip,grenade ? .7f : .4f);
+        }
 
         sealed class ActionGrenade
         {
@@ -156,6 +170,7 @@ namespace NeonVault
             direction.Normalize();actionSkillHead.rotation=Quaternion.LookRotation(direction);
             Vector3 muzzle=actionSkillHead.position+direction*.64f;
             SpawnBullet(muzzle,direction,true,actionSkillPower,25,new Color(.9f,.67f,.32f),GunEffect.Normal);
+            PlayActionSound(false);
             CombatVisuals.Muzzle(muzzle,direction,new Color(.9f,.67f,.32f),GunEffect.Normal,world);
             if(actionSkillMultitarget)
             {
@@ -168,6 +183,7 @@ namespace NeonVault
 
         void ExplodeActionGrenade(ActionGrenade grenade)
         {
+            PlayActionSound(true);
             Vector3 center=grenade.end;CombatVisuals.Burst(center+Vector3.up*.25f,new Color(1,.47f,.13f),20,world);
             CombatVisuals.Impact(center+Vector3.up*.25f,Vector3.up,new Color(1,.55f,.16f),GunEffect.Scatter,world);
             // Copy targets because damage can synchronously run kill/reward logic.

@@ -17,6 +17,8 @@ namespace NeonVault
         public int damage = 18;
         public GearAffix[] affixes;
         public float interval = .7f, range = 1.2f, arcDegrees = 85f;
+        // Keep serialized range in its original units so old and new saves share the same scaling.
+        public float effectiveRange=>range*2f;
         public Color color=>Arsenal.Colors[Mathf.Clamp((int)rarity,0,Arsenal.Colors.Length-1)];
     }
 
@@ -117,6 +119,6 @@ namespace NeonVault
         }
         public static string English(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"Shiv":family==MeleeWeaponFamily.Cleaver?"Cleaver":family==MeleeWeaponFamily.Machete?"Machete":family==MeleeWeaponFamily.Hatchet?"Hatchet":"Field Knife";
         public static string Japanese(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"シヴ":family==MeleeWeaponFamily.Cleaver?"ブッチャーナイフ":family==MeleeWeaponFamily.Machete?"マチェット":family==MeleeWeaponFamily.Hatchet?"ハチェット":"フィールドナイフ";
-        public static int Score(MeleeWeaponItem item){EnsureAffixes(item);return item==null?0:Mathf.Max(1,Mathf.RoundToInt((Mathf.Log(1+item.damage/Mathf.Max(.05f,item.interval))*12+Mathf.Log(1+item.range)*4+item.arcDegrees*.06f+item.level*2+(int)item.rarity*5+GearScoring.AffixTotal(item.affixes,"critChance")*200+GearScoring.AffixTotal(item.affixes,"critDamage")*20)*10));}
+        public static int Score(MeleeWeaponItem item){EnsureAffixes(item);return item==null?0:Mathf.Max(1,Mathf.RoundToInt((Mathf.Log(1+item.damage/Mathf.Max(.05f,item.interval))*12+Mathf.Log(1+item.effectiveRange)*4+item.arcDegrees*.06f+item.level*2+(int)item.rarity*5+GearScoring.AffixTotal(item.affixes,"critChance")*200+GearScoring.AffixTotal(item.affixes,"critDamage")*20)*10));}
     }
 }

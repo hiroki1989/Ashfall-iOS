@@ -820,7 +820,7 @@ namespace NeonVault
                 Check(visual,"melee swing draws a visible slash / "+item.family);
                 game.ResetMeleeCooldown();target.transform.position=origin+perpendicular*.8f;target.hp=5000;game.AimAt(origin+axis*5);float missHealth=target.hp;
                 Check(game.AttackMelee()&&Mathf.Abs(target.hp-missHealth)<.001f,"survivor outside family fan arc / "+item.family);
-                game.ResetMeleeCooldown();target.transform.position=origin+axis*(item.range+.80f);target.hp=5000;game.AimAt(target.transform.position);missHealth=target.hp;
+                game.ResetMeleeCooldown();target.transform.position=origin+axis*(item.effectiveRange+.80f);target.hp=5000;game.AimAt(target.transform.position);missHealth=target.hp;
                 Check(game.AttackMelee()&&Mathf.Abs(target.hp-missHealth)<.001f,"survivor outside family range / "+item.family);
             }
 
