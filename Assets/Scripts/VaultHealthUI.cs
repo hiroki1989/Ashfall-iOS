@@ -46,7 +46,7 @@ namespace NeonVault
             float ratio=Mathf.Clamp01(hp/Mathf.Max(1,maxHp));
             Color accent=VitalColor;
             Box(bounds,VitalPanel);
-            Box(new Rect(bounds.x,bounds.y,bounds.width,2),new Color(.51f,.64f,.66f,.65f));
+            Box(new Rect(bounds.x,bounds.y,bounds.width,2),new Color(.51f,.64f,.66f,.35f));
             Box(new Rect(bounds.x,bounds.y,3,bounds.height),accent);
             Box(new Rect(bounds.x+bounds.width-48,bounds.y,48,2),accent);
             Box(new Rect(bounds.x+bounds.width-2,bounds.y,2,20),accent);
@@ -54,13 +54,13 @@ namespace NeonVault
             if(mobile)
             {
                 Text(bounds.x+26,bounds.y+5,Mathf.CeilToInt(hp).ToString(),new GUIStyle(number){fontSize=43},Color.white,132);
-                Text(bounds.x+153,bounds.y+25,"/ "+Mathf.CeilToInt(maxHp)+" HP",new GUIStyle(label){fontSize=23},Mist,185);
-                Text(bounds.x+320,bounds.y+25,CriticalHealth?T("CRITICAL","瀕死"):T("VITALS","HP"),new GUIStyle(tiny){fontSize=16,fontStyle=FontStyle.Bold},accent,86);
+                Text(bounds.x+153,bounds.y+25,"/ "+Mathf.CeilToInt(maxHp)+" HP",new GUIStyle(label){fontSize=23},Mist,160);
+                Text(bounds.x+305,bounds.y+25,CriticalHealth?T("CRITICAL","瀕死"):"LV. "+DebtLevel,new GUIStyle(tiny){fontSize=18},accent,100);
                 DrawHealthFill(new Rect(bounds.x+26,bounds.y+65,bounds.width-50,11),ratio,accent);
             }
             else
             {
-                Text(bounds.x+25,bounds.y+10,CriticalHealth?T("CRITICAL / VITALS","瀕死 / 生存状態"):T("VITALS","生存状態"),new GUIStyle(tiny){fontSize=14,fontStyle=FontStyle.Bold},accent,310);
+                Text(bounds.x+25,bounds.y+10,(CriticalHealth?T("CRITICAL","瀕死"):T("VITALS","生存状態"))+"   /   LV. "+DebtLevel,new GUIStyle(tiny){fontSize=15},accent,310);
                 Text(bounds.x+25,bounds.y+35,Mathf.CeilToInt(hp).ToString(),new GUIStyle(number){fontSize=43},Color.white,145);
                 Text(bounds.x+150,bounds.y+56,"/ "+Mathf.CeilToInt(maxHp)+" HP",new GUIStyle(small){fontSize=19},Mist,170);
                 DrawHealthFill(new Rect(bounds.x+25,bounds.y+91,bounds.width-50,15),ratio,accent);

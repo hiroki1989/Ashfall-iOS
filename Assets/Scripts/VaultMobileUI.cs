@@ -56,7 +56,7 @@ namespace NeonVault
                 Vector3 p=cam.WorldToScreenPoint(AimReticleWorldPosition);
                 Vector2 reticle=MobileCanvasPoint(p);DrawCrosshair(reticle.x,reticle.y);
                 DrawWorldLootPreview();
-                if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);
+                if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE: OPEN CACHE","調べる：物資箱を開ける"),Gold,20);
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&(foe.elite||foe.kind==3||foe.hp<foe.maxHp)&&Layout.IsVisible(foe.transform.position))
                 {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);WorldLabel(new Rect(at.x-82,at.y-31,164,25),EnemyHealthLabel(foe),UiPaper,17);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);}
             }
@@ -64,7 +64,7 @@ namespace NeonVault
         void DrawMobilePause()
         {
             Box(new Rect(0,0,1440,900),new Color(.01f,.02f,.025f,.88f));Text(300,190,T("EXPEDITION PAUSED","探索一時停止"),heading,Gold,900);
-            DrawCameraZoom(300,225,840,true);
+            DrawCameraZoom(300,225,400,true);DrawMasterVolume(740,225,400,true);
             if(MobileButton(new Rect(300,320,840,120),T("RESUME","探索を再開"))){screen=Screen.Playing;Time.timeScale=1;}
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
             if(MobileButton(new Rect(300,755,840,100),T("WORLD MAP","全体地図")))OpenOverworldMap();

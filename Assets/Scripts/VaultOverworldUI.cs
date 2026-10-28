@@ -218,13 +218,13 @@ namespace NeonVault
             if(entrance>=0)
             {
                 var stage=ExpeditionMap.Get(entrance,DebtLevel);
-                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+T("ENTER / E","入場 / E")))EnterNearbyWorldDungeon(entrance);
+                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+T(mobile?"ENTER":"ENTER / E",mobile?"入場":"入場 / E")))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
             {
-                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),OverworldCampName(camp,VaultLanguage.Japanese)+"\n"+T("ENTER CAMP / E","拠点へ入る / E")))EnterNearbyWorldCamp(camp);
+                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),OverworldCampName(camp,VaultLanguage.Japanese)+"\n"+T(mobile?"ENTER CAMP":"ENTER CAMP / E",mobile?"拠点へ入る":"拠点へ入る / E")))EnterNearbyWorldCamp(camp);
             }
-            else if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(940,625,475,74),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,26);
+            else if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(940,625,475,74),T(mobile?"USE: OPEN CACHE":"USE / F: OPEN CACHE",mobile?"調べる：物資箱を開ける":"調べる / F：物資箱を開ける"),Gold,26);
             DrawOverworldActivityHUD(entrance<0&&camp<0&&!NearbyAmmoCrate&&!NearbySupplyChest);
             if(toastTimer>0){Rect notice=mobile?new Rect(25,150,390,100):new Rect(435,160,570,72);Panel(notice,Gold);WorldLabel(new Rect(notice.x+12,notice.y+10,notice.width-24,notice.height-15),Toast,Gold,mobile?20:21);}
         }
@@ -258,7 +258,7 @@ namespace NeonVault
             if(kind==0)ItemPortraits.Draw(picture,drop.gun);else if(kind==1)ItemPortraits.Draw(picture,armor.item);else if(kind==2)ManufacturerBranding.ModulePortrait(picture,module.item);else ManufacturerPortraits.Melee(picture,melee.item);
             WorldLabel(new Rect(card.x+130,card.y+12,card.width-140,40),VaultLanguage.RarityName(rarity),color,mobile?22:27);
             WorldLabel(new Rect(card.x+130,card.y+54,card.width-140,42),T("LEVEL ","レベル ")+level+T("   SCORE ","   評価 ")+score,UiPaper,mobile?21:25);
-            WorldLabel(new Rect(card.x+130,card.y+100,card.width-140,46),T("TAKE / F","拾得 / F"),Gold,22);
+            WorldLabel(new Rect(card.x+130,card.y+100,card.width-140,46),T(MobileTouchControls.Enabled?"TAKE":"TAKE / F",MobileTouchControls.Enabled?"拾得":"拾得 / F"),Gold,22);
         }
         bool DrawActivityRewardPreview()
         {

@@ -1,0 +1,87 @@
+using UnityEngine;
+
+namespace NeonVault
+{
+    public partial class VaultGame
+    {
+        const string FirstStepsKey = "Vault.FirstSteps.v1";
+        const string FirstStepsTargetKey = "Vault.FirstSteps.target.v1";
+        const string DebtBossDefeatedKey = "Vault.DebtBoss.defeated.v1";
+        bool finalDebtBossFight;
+        int debtFinalBeat;
+        bool DebtFinalConversationVisible => !smoke && screen == Screen.Hub && WorldStorySeen && DebtRemaining == 0 && PlayerPrefs.GetInt(DebtBossDefeatedKey, 0) == 0;
+        void DrawDebtFinalConversation()
+        {
+            string[] en={"A billion. Every last scrap. Now remove the collar.","You actually believed me? The cargo was never stolen. I needed a worker who couldn't walk away.","Then there's only one debt left to settle.","Come and collect it. Let's see what a billion bought me."};
+            string[] ja={"10億だ。一片残らず返した。首輪を外せ。","本気で信じていたのか？ 積み荷は盗まれていない。逃げられない働き手が欲しかっただけだ。","なら、残る借りは一つだ。","取り立てに来い。10億で何を買えたか見せてもらおう。"};
+            debtFinalBeat=Mathf.Clamp(debtFinalBeat,0,en.Length-1);
+            Box(new Rect(0,0,1440,900),new Color(.01f,.015f,.02f,.9f));
+            Panel(new Rect(100,470,1240,315),Gold);
+            Text(135,500,debtFinalBeat%2==0?T("YOU","主人公"):T("RAIDER BOSS","レイダーのボス"),heading,Gold,1100);
+            Text(135,570,T(en[debtFinalBeat],ja[debtFinalBeat]),new GUIStyle(label){fontSize=29,wordWrap=true},Color.white,1100);
+            if(WorldButton(new Rect(920,700,370,65),debtFinalBeat==en.Length-1?T("FIGHT","戦う"):T("CONTINUE","続ける")))
+            {
+                if(++debtFinalBeat>=en.Length)
+                {
+                    debtFinalBeat=0; finalDebtBossFight=true; SelectedStageId=-1; DungeonIndex=2;
+                    ResetExpeditionMission(); StartRun();
+                }
+            }
+        }
+        void CompleteDebtBossFight()
+        {
+            finalDebtBossFight=false;
+            PlayerPrefs.SetInt(DebtBossDefeatedKey,1);PlayerPrefs.Save();
+            ClearRunCheckpoint();SaveInventory();screen=Screen.Victory;
+            Notify("THE RAIDER BOSS IS DOWN / The debt is settled.","レイダーのボスを撃破 / 借りは返した。");
+        }
+        int FirstStepsStage => PlayerPrefs.GetInt(FirstStepsKey, 0);
+        void SetFirstStepsStage(int stage)
+        {
+            if (smoke) return;
+            PlayerPrefs.SetInt(FirstStepsKey, stage);
+            PlayerPrefs.Save();
+        }
+        void BeginFirstStepsTutorial()
+        {
+            if (smoke || FirstStepsStage != 0) return;
+            int target = -1; float closest = float.MaxValue;
+            Vector3 camp = WorldGeography.Camps[LastVisitedCamp];
+            for (int i = 0; i < ExpeditionMap.StageCount; i++)
+            {
+                if (ExpeditionMap.Get(i, 1).level != 1) continue;
+                float distance = (WorldGeography.Entrances[i] - camp).sqrMagnitude;
+                if (distance < closest) { closest = distance; target = i; }
+            }
+            PlayerPrefs.SetInt(FirstStepsTargetKey, target);
+            SetFirstStepsStage(1);
+            if (target >= 0) SetOverworldWaypoint(2, target);
+        }
+        void DrawFirstStepsTutorial()
+        {
+            if (smoke || InventoryOpen || manufacturerRegistry || WorldBossConversationVisible || worldTransitionPending) return;
+            int stage = FirstStepsStage;
+            if (stage == 0 || stage >= 5 || screen == Screen.Menu || screen == Screen.Dead) return;
+            if (stage == 2 && IsOverworld && screen == Screen.Playing) { SetFirstStepsStage(3); stage = 3; }
+            if (stage == 3 && OverworldMissionClears > 0) { SetFirstStepsStage(4); stage = 4; }
+            if (stage == 4 && DebtLevel >= 2) { SetFirstStepsStage(5); Notify("FIRST STEPS COMPLETE / Repay the billion", "チュートリアル完了 / 10億スクラップの返済を目指そう"); return; }
+            if (stage == 1 && screen == Screen.Hub)
+            {
+                Box(new Rect(0,0,1440,900),new Color(0,0,0,.72f));
+                Panel(new Rect(230,190,980,490),Gold);
+                Text(270,225,T("YOUR SAFEHOUSE","拠点について"),heading,Gold,900);
+                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage. Briggs records debt payments and awards levels. Use the exit to explore the city. Your nearest level 1 dungeon has been marked on the map.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。ブリッグスに返済するとレベルが上がります。出口から街へ出ましょう。最も近いレベル1のダンジョンを地図に示しました。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+                if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
+                return;
+            }
+            string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (IsOverworld ? "Follow the marked destination and clear the level 1 dungeon." : "Complete the mission and leave the dungeon.") : "Return to a safehouse. Sell spare gear, then pay Briggs until you reach level 2.";
+            string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (IsOverworld ? "地図の目的地へ向かい、レベル1のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : "拠点に戻り、不要な装備を売ってブリッグスに返済し、レベル2を目指そう。";
+            if (screen == Screen.Hub || screen == Screen.Playing)
+            {
+                Box(new Rect(410,76,620,82),new Color(.02f,.03f,.04f,.88f));
+                Text(430,83,T("FIRST STEPS","最初の一歩"),small,Gold,580);
+                Text(430,109,T(en,ja),new GUIStyle(small){fontSize=20,wordWrap=true},Color.white,580);
+            }
+        }
+    }
+}

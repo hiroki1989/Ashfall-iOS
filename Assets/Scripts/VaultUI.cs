@@ -92,9 +92,18 @@ namespace NeonVault
         void OnGUI()
         {
             Styles();float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
+            if(MobileTouchControls.Enabled && screen==Screen.Menu && !InventoryOpen && !manufacturerRegistry)
+            {
+                // Cover the physical display, including the unsafe margins around the
+                // camera cutout; interactive controls remain inside the safe area.
+                GUI.matrix=Matrix4x4.identity;
+                if(menuArt)GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),menuArt,ScaleMode.ScaleAndCrop);
+                else GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),Texture2D.blackTexture);
+            }
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
             if(worldTransitionPending){DrawWorldLoading();return;}
+            if(DebtFinalConversationVisible){DrawDebtFinalConversation();return;}
             if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(VaultStorageVisible){DrawVaultStorage();return;}
             if(MobileTouchControls.Enabled)
@@ -110,6 +119,7 @@ namespace NeonVault
                 else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();}
                 else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
+                DrawFirstStepsTutorial();
                 if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
             }
             if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
@@ -124,6 +134,7 @@ namespace NeonVault
             {
                 if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing)DrawActionSkillHUD();else DrawOverlay();
             }
+            DrawFirstStepsTutorial();
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
         void DrawDeathScreen()
@@ -186,7 +197,7 @@ namespace NeonVault
             Diamond(720,205,12,Gold);Text(390,249,text,heading,screen==Screen.Victory?Gold:Color.white,680);
             Text(390,320,CurrentDungeon.Name+" / "+(room+1)+" / "+CurrentDungeon.AreaCount+T("  ·  Scrap ","  ·  スクラップ ")+Credits,small,Mist,660);
             if(screen==Screen.Pause)
-            {DrawCameraZoom(390,365,660,false);if(Button(new Rect(390,443,660,68),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}}
+            {DrawCameraZoom(390,365,310,false);DrawMasterVolume(740,365,310,false);if(Button(new Rect(390,443,660,68),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}}
             else
             {if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(390,343,660,93));else Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}
             if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
@@ -199,7 +210,8 @@ namespace NeonVault
             if(gun==null)return;Box(r,new Color(.025f,.04f,.05f,.55f));
             Box(new Rect(r.x,r.y,2,r.height),new Color(.62f,.72f,.72f,.55f));
             FieldUIArt.GunClassIcon(new Rect(r.x+7,r.y+5,58,r.height-10),gun,UiPaper);
-            Text(r.x+71,r.y+12,ammo+"/"+AmmoReserve(AmmoForGun(gun)),new GUIStyle(number){fontSize=25},UiPaper,r.width-78);
+            var ammoStyle=new GUIStyle(number){fontSize=25,alignment=TextAnchor.MiddleCenter};
+            GUI.color=UiPaper;GUI.Label(new Rect(r.x+70,r.y+8,r.width-80,r.height-16),ammo+" / "+AmmoReserve(AmmoForGun(gun)),ammoStyle);GUI.color=Color.white;
             if(reload>0)Box(new Rect(r.x+8,r.yMax-7,(r.width-16)*Mathf.Clamp01(1-reload/Mathf.Max(.01f,EffectiveReload)),2),Gold);
         }
         void DrawHUD()

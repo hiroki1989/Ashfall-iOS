@@ -73,6 +73,10 @@ namespace NeonVault
             pixel=new Texture2D(1,1); pixel.SetPixel(0,0,Color.white); pixel.Apply();
             cam=new GameObject("Isometric camera").AddComponent<Camera>(); cam.orthographic=true; cam.orthographicSize=13.5f; cam.backgroundColor=Ink; cam.clearFlags=CameraClearFlags.SolidColor;
             cam.tag="MainCamera";
+            // Runtime-created cameras do not receive Unity's default listener.
+            // Without one, all weapon AudioSources are silent on device.
+            if (UnityEngine.Object.FindFirstObjectByType<AudioListener>() == null) cam.gameObject.AddComponent<AudioListener>();
+            AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat("Ashfall.MasterVolume", 1f));
             cam.transform.rotation=Quaternion.Euler(35.264f,45,0);cam.allowHDR=true;cam.depthTextureMode=DepthTextureMode.Depth|DepthTextureMode.DepthNormals;cam.gameObject.AddComponent<VaultPost>();
             QualitySettings.antiAliasing=4;QualitySettings.shadows=ShadowQuality.All;QualitySettings.shadowResolution=ShadowResolution.High;QualitySettings.shadowDistance=145;QualitySettings.pixelLightCount=4;
             RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Trilight;RenderSettings.ambientSkyColor=new Color(.32f,.37f,.43f);RenderSettings.ambientEquatorColor=new Color(.25f,.27f,.23f);RenderSettings.ambientGroundColor=new Color(.13f,.11f,.085f);
@@ -125,7 +129,7 @@ namespace NeonVault
                 cell=available[rng.Next(available.Count)];
                 route.Add(cell);
             }
-            room=0;kills=0;ricochetEvents=0;splitEvents=0;runTime=0;baseMaxHp=100*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.startingHpMultiplier : 1f);RecalculateArmor();hp=maxHp;damageBonus=0;fireBonus=0;
+            room=finalDebtBossFight?CurrentDungeon.AreaCount-1:0;kills=0;ricochetEvents=0;splitEvents=0;runTime=0;baseMaxHp=100*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.startingHpMultiplier : 1f);RecalculateArmor();hp=maxHp;damageBonus=0;fireBonus=0;
             chestRoomForRun=-1; // Chests now roll once per non-final area; extraction always has one.
             PrepareAmmoCratesForRun();
             ResetArtifactCombat();runDamage=0;runFire=0;runVitality=0;runDash=0;runChain=0;runHarvest=0;debtChainCount=0;debtChainTimer=0;
@@ -208,7 +212,7 @@ namespace NeonVault
             if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
             var f=art.Character(position,false,kind).gameObject.AddComponent<Foe>();
             f.Init(this,kind,room);
-            bool raiderBoss=kind==3&&SelectedStageId>=0&&SelectedStageId%5==2;
+            bool raiderBoss=kind==3&&(finalDebtBossFight||SelectedStageId>=0&&SelectedStageId%5==2);
             f.SetRaiderBoss(raiderBoss);
             // Infected attack with their bodies; only the armed revenant carries a firearm.
             if(kind==5||kind==10){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
@@ -221,6 +225,7 @@ namespace NeonVault
                 float levelHealth=1+(stageLevel-1)*.14f,levelDamage=1+(stageLevel-1)*.065f;
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
+            if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
             bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275);
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
@@ -284,7 +289,7 @@ namespace NeonVault
                 return;
             }
             if(worldTransitionPending)return;
-            if(WorldBossConversationVisible)return;
+            if(WorldBossConversationVisible||DebtFinalConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(IsOverworld&&OverworldActivityChoiceOpen)
@@ -428,6 +433,7 @@ namespace NeonVault
             kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
             if(!IsOverworld)ExpeditionEnemyKilled(f);
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
+            if(finalDebtBossFight&&boss){CompleteDebtBossFight();return;}
             if(!IsOverworld&&!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(boss||f.elite)DropChampionReward(f,boss);
@@ -564,7 +570,16 @@ namespace NeonVault
             }
             if(!smoke||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0)ReturnFromWorldDungeon(true);
         }
-        void Notify(string message,string japanese=null) { toast=message;toastJapanese=japanese??message;toastTimer=4; }
+        void Notify(string message,string japanese=null)
+        {
+            toast=message;toastJapanese=japanese??message;
+            if(MobileTouchControls.Enabled)
+            {
+                toast=toast.Replace("[E]", "USE").Replace("[F]", "PICK UP").Replace("[I]", "INVENTORY");
+                toastJapanese=toastJapanese.Replace("[E]", "調べる").Replace("[F]", "拾得").Replace("[I]", "装備画面");
+            }
+            toastTimer=4;
+        }
         void OnDestroy() { foreach(var m in materials)if(m!=null)Destroy(m); if(pixel!=null)Destroy(pixel);if(overworldAtlasTexture!=null)Destroy(overworldAtlasTexture); }
 
     }

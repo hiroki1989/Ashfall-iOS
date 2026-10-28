@@ -45,7 +45,7 @@ namespace NeonVault
             EnterHub();
         }
         public void CompleteWorldBossConversation()
-        {CompleteOverworldStory();MarkDebtIntroSeen();bossDeparting=departingRaiderBoss!=null;Notify("BOSS: Bring me a billion scrap. Briggs will collect.","ボス：10億スクラップ、稼いでこい。返済はブリッグスに渡せ。");}
+        {CompleteOverworldStory();MarkDebtIntroSeen();bossDeparting=departingRaiderBoss!=null;BeginFirstStepsTutorial();Notify("BOSS: Bring me a billion scrap. Briggs will collect.","ボス：10億スクラップ、稼いでこい。返済はブリッグスに渡せ。");}
         public void ExitCampToOverworld()
         {
             EnsureOverworldState();if(!WorldStorySeen)return;
