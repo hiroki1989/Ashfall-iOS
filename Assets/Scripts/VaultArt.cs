@@ -256,6 +256,9 @@ namespace NeonVault
         }
         public void Chamber(Vector3 p,int index)
         {
+            // SectorLayout.Center is at actor height (0.65 m), not floor height.
+            // Chamber props and painted ground marks use floor-relative offsets.
+            p.y=0;
             var corner=p+new Vector3(-4.5f,0,3);Brazier(corner);
             var marks=Group("Painted service bay markings",p+new Vector3(2,-.043f,2));
             Color paint=index%3==0?new Color(.75f,.66f,.35f):new Color(.56f,.64f,.65f);

@@ -62,16 +62,29 @@ namespace NeonVault {
   }
   void LateUpdate(){DrawNow();}
   static bool ChunkVisible(Camera camera,Bounds bounds){if(planeFrame!=Time.frameCount||planeCamera!=camera){GeometryUtility.CalculateFrustumPlanes(camera,planes);planeFrame=Time.frameCount;planeCamera=camera;}return GeometryUtility.TestPlanesAABB(planes,bounds);}
-  bool Hides(Bounds bounds,Vector3 point,Camera camera){var viewport=camera.WorldToViewportPoint(point);if(viewport.z<=0||viewport.x<0||viewport.x>1||viewport.y<0||viewport.y>1)return false;var ray=camera.ViewportPointToRay(viewport);return bounds.IntersectRay(ray,out float distance)&&distance<Vector3.Dot(point-ray.origin,ray.direction)-.4f;}
+  static bool ForegroundNear(Bounds bounds,Vector3 point,Camera camera){
+   Vector3 forward=camera.transform.forward;forward.y=0;if(forward.sqrMagnitude<.0001f)return false;forward.Normalize();
+   Vector3 side=new Vector3(-forward.z,0,forward.x);Vector3 offset=point-bounds.center;
+   float frontExtent=Mathf.Abs(forward.x)*bounds.extents.x+Mathf.Abs(forward.z)*bounds.extents.z;
+   float sideExtent=Mathf.Abs(side.x)*bounds.extents.x+Mathf.Abs(side.z)*bounds.extents.z;
+   float depth=Vector3.Dot(offset,forward);
+   return depth<=-frontExtent+.15f&&depth>=-frontExtent-6f&&Mathf.Abs(Vector3.Dot(offset,side))<=sideExtent+2f;
+  }
+  bool Hides(Bounds bounds,Vector3 point,Camera camera){
+   // Only geometry between the camera and the actor can obscure them. Avoid
+   // treating an inflated building bounds as blocking someone just in front.
+   if(ForegroundNear(bounds,point,camera))return false;
+   var viewport=camera.WorldToViewportPoint(point);if(viewport.z<=0||viewport.x<0||viewport.x>1||viewport.y<0||viewport.y>1)return false;var ray=camera.ViewportPointToRay(viewport);return bounds.IntersectRay(ray,out float distance)&&distance<Vector3.Dot(point-ray.origin,ray.direction)-.4f;
+  }
   static Material Faded(Material source){
    if(fadedMaterials.TryGetValue(source,out var result))return result;
    var ghostShader=Resources.Load<Shader>("BuildingGhost");
    if(!ghostShader){Debug.LogError("BuildingGhost shader is missing; building opacity cannot be changed.");return source;}
    result=new Material(source);result.shader=ghostShader;
-   // A building contains several walls, floors and trim meshes along one sightline.
-   // Their transparent layers accumulate, so use a low per-surface alpha to keep
-   // actors visible even through the full depth of a combined building mesh.
-   if(result.HasProperty("_Color")){var color=result.color;color.a=.16f;result.color=color;}
+   // 50% transparent keeps the building visible while revealing actors behind it.
+   // BuildingGhost writes depth so walls and floors do not repeatedly compound
+   // opacity along the same sightline when viewed through a multi-part building.
+   if(result.HasProperty("_Color")){var color=result.color;color.a=.50f;result.color=color;}
    result.renderQueue=3000;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
@@ -89,7 +102,7 @@ namespace NeonVault {
    if(!game)game=Object.FindAnyObjectByType<VaultGame>();var camera=game?game.GameCamera:Camera.main;
    if(camera&&gameObject.name.StartsWith("Stream /")){if(!chunkBoundsReady){var centre=transform.position;var parts=gameObject.name.Split('/');if(parts.Length>=3&&int.TryParse(parts[1].Trim(),out int cx)&&int.TryParse(parts[2].Trim(),out int cz))centre=new Vector3(cx*100+50,8,cz*100+50);chunkBounds=new Bounds(centre,new Vector3(135,70,135));chunkBoundsReady=true;}visibleChunk=ChunkVisible(camera,chunkBounds);if(!visibleChunk)return;}
    if(Time.unscaledTime>=nextOcclusion){nextOcclusion=Time.unscaledTime+.12f;HiddenBuildingCount=0;
-   for(int i=0;i<buildingBounds.Count;i++){bool hide=false;if(OcclusionEnabled&&camera&&game){hide=Hides(buildingBounds[i],game.PlayerPosition+Vector3.up*1.1f,camera);if(!hide)foreach(var enemy in game.Enemies){if(!enemy||enemy.dead||(enemy.transform.position-game.PlayerPosition).sqrMagnitude>2500)continue;if(Hides(buildingBounds[i],enemy.transform.position+Vector3.up*1.1f,camera)){hide=true;break;}}}hidden[i]=hide;if(hide)HiddenBuildingCount++;}
+   for(int i=0;i<buildingBounds.Count;i++){bool hide=false;if(OcclusionEnabled&&camera&&game){var playerPoint=game.PlayerPosition+Vector3.up*1.1f;hide=Hides(buildingBounds[i],playerPoint,camera);if(!hide&&!ForegroundNear(buildingBounds[i],playerPoint,camera))foreach(var enemy in game.Enemies){if(!enemy||enemy.dead||(enemy.transform.position-game.PlayerPosition).sqrMagnitude>2500)continue;if(Hides(buildingBounds[i],enemy.transform.position+Vector3.up*1.1f,camera)){hide=true;break;}}}hidden[i]=hide;if(hide)HiddenBuildingCount++;}
    }
    UpdateRendererFades();
    foreach(var group in groups.Values)for(int pass=0;pass<2;pass++){int count=0;for(int index=0;index<group.matrices.Count;index++){int owner=group.owners[index];bool fade=owner>=0&&hidden[owner];if(fade!=(pass==1))continue;scratch[count++]=group.matrices[index];if(count==1023){Graphics.DrawMeshInstanced(group.mesh,group.sub,fade?Faded(group.material):group.material,scratch,count,null,fade||Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);count=0;}}if(count>0)Graphics.DrawMeshInstanced(group.mesh,group.sub,pass==1?Faded(group.material):group.material,scratch,count,null,pass==1||Application.isMobilePlatform?ShadowCastingMode.Off:ShadowCastingMode.On,true,gameObject.layer);}

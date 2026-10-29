@@ -226,7 +226,7 @@ namespace NeonVault
             var obj=ObjectAt("Expanding impact halo",p,parent);var line=Ring(obj,color,radius,.045f);
             obj.AddComponent<CombatTransient>().Init(line,color,life,Vector3.zero,3.5f);
         }
-        public static void DamageNumber(Vector3 p,float damage,Color color,Camera camera,Transform parent=null)
+        public static void DamageNumber(Vector3 p,float damage,Color color,Camera camera,Transform parent=null,bool healing=false)
         {
             if(camera==null||damage<=0)return;
             if(numbers>=NumberLimit){DamageFloat oldest=null;foreach(var number in Object.FindObjectsByType<DamageFloat>(FindObjectsSortMode.None))if(oldest==null||number.Age>oldest.Age)oldest=number;oldest?.Retire();}
@@ -238,7 +238,7 @@ namespace NeonVault
             text.font=numberFont;text.GetComponent<MeshRenderer>().sharedMaterial=numberFont.material;
             text.fontSize=48;text.fontStyle=FontStyle.Bold;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;
             text.GetComponent<MeshRenderer>().sortingOrder=20010;
-            text.text=Mathf.Max(1,Mathf.RoundToInt(damage)).ToString(CultureInfo.InvariantCulture);
+            text.text=healing?"+"+damage.ToString("0.#",CultureInfo.InvariantCulture):Mathf.Max(1,Mathf.RoundToInt(damage)).ToString(CultureInfo.InvariantCulture);
             text.color=Color.Lerp(color,Color.white,.55f);
             text.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.Off;
             obj.AddComponent<DamageFloat>().Init(text,camera);

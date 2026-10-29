@@ -291,18 +291,18 @@ namespace NeonVault
             WorldLabel(new Rect(map.x+10,map.y+3,map.width-20,27),T("LOCAL / 200 m / NORTH ↑","周辺 / 200m / 北 ↑"),Mist,17);
             Vector2 Local(Vector3 p)=>new Vector2(inside.x+(p.x/(l.Columns*l.CellSize)+.5f-left)/uw*inside.width,inside.yMax-(p.z/(l.Rows*l.CellSize)+.5f-bottom)/vh*inside.height);
             foreach(var enemy in Enemies)if(enemy!=null&&!enemy.dead){var p=Local(enemy.transform.position);if(inside.Contains(p))Box(new Rect(p.x-2,p.y-2,4,4),UiDanger);}
-            for(int i=0;i<WorldGeography.Entrances.Length;i++){var p=Local(WorldGeography.Entrances[i]);if(inside.Contains(p))FieldUIArt.Icon(new Rect(p.x-8,p.y-8,16,16),7,Gold);}
+            for(int i=0;i<WorldGeography.Entrances.Length;i++){var p=Local(WorldGeography.Entrances[i]);if(inside.Contains(p))DrawMapArt(new Rect(p.x-10,p.y-10,20,20),1,Color.white);}
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
                 var p=Local(WorldGeography.Camps[i]);if(!inside.Contains(p))continue;
                 Box(new Rect(p.x-6,p.y-6,12,12),new Color(.02f,.04f,.05f,.9f));
-                FieldUIArt.Icon(new Rect(p.x-9,p.y-9,18,18),6,IsCampVisited(i)?UiPaper:Mist);
+                DrawMapArt(new Rect(p.x-10,p.y-10,20,20),0,IsCampVisited(i)?Color.white:Mist);
             }
             foreach(var site in NearbyOverworldActivitySites)
             {
                 if(site.completed)continue;
                 var p=Local(site.position);
-                if(inside.Contains(p))FieldUIArt.Icon(new Rect(p.x-9,p.y-9,18,18),site.type==1?9:site.type==2?11:10,WorldActivityColor(site.type));
+                if(inside.Contains(p))DrawMapArt(new Rect(p.x-10,p.y-10,20,20),site.type==1?2:site.type==2?4:3,Color.white);
             }
             void LootDot(Vector3 position)
             {
@@ -338,24 +338,24 @@ namespace NeonVault
                 }
             }
         }
+        Texture2D waypointArt,mapIconsArt;
+        void DrawMapArt(Rect rect,int icon,Color tint)
+        {
+            if(!mapIconsArt)mapIconsArt=Resources.Load<Texture2D>("Art/UI/map-icons-v1");
+            if(!mapIconsArt){FieldUIArt.Icon(rect,icon==0?6:icon==1?7:9,tint);return;}
+            Color old=GUI.color;GUI.color=tint;
+            GUI.DrawTextureWithTexCoords(rect,mapIconsArt,new Rect(icon*.2f,.21f,.2f,.58f),true);GUI.color=old;
+        }
         void DrawWaypointPin(Vector2 point,bool tutorial=false)
         {
-            Color shadow=new Color(.02f,.04f,.05f,.95f);
-            Vector2 top=point+new Vector2(0,-20),left=point+new Vector2(-8,-12),right=point+new Vector2(8,-12);
-            Line(top,left,shadow,6);Line(top,right,shadow,6);Line(left,point,shadow,6);Line(right,point,shadow,6);
-            Line(top,left,Gold,3);Line(top,right,Gold,3);Line(left,point,Gold,3);Line(right,point,Gold,3);
-            Box(new Rect(point.x-2,point.y-14,4,4),Gold);
+            if(!waypointArt)waypointArt=Resources.Load<Texture2D>("Art/UI/map-waypoint-v1");
+            if(waypointArt)GUI.DrawTexture(new Rect(point.x-22,point.y-38,44,42),waypointArt,ScaleMode.ScaleToFit,true);
             if(tutorial)WorldLabel(new Rect(point.x-44,point.y-48,88,24),T("OBJECTIVE","目的地"),Color.white,18);
         }
         void DrawWaypointArrow(Vector2 center,Vector2 direction,bool tutorial=false)
         {
-            Vector2 side=new Vector2(-direction.y,direction.x);
-            float scale=tutorial?1.45f:1f;
-            Vector2 tip=center+direction*(10f*scale),back=center-direction*(8f*scale);
-            Color shadow=new Color(.02f,.04f,.05f,.95f);
-            Line(tip,back+side*(8f*scale),shadow,7);Line(tip,back-side*(8f*scale),shadow,7);Line(back+side*(8f*scale),back-side*(8f*scale),shadow,7);
-            Color marker=tutorial?new Color(1,.68f,.22f):Gold;
-            Line(tip,back+side*(8f*scale),marker,4);Line(tip,back-side*(8f*scale),marker,4);Line(back+side*(8f*scale),back-side*(8f*scale),marker,4);
+            if(!waypointArt)waypointArt=Resources.Load<Texture2D>("Art/UI/map-waypoint-v1");
+            if(waypointArt){var previous=GUI.matrix;float angle=Mathf.Atan2(direction.y,direction.x)*Mathf.Rad2Deg-90;GUI.matrix=previous*Matrix4x4.TRS(new Vector3(center.x,center.y,0),Quaternion.Euler(0,0,angle),Vector3.one)*Matrix4x4.Translate(new Vector3(-center.x,-center.y,0));float size=tutorial?46:34;GUI.DrawTexture(new Rect(center.x-size*.5f,center.y-size*.5f,size,size),waypointArt,ScaleMode.ScaleToFit,true);GUI.matrix=previous;}
         }
         void UpdateWorldLocalTexture(Vector2 origin)
         {
@@ -461,13 +461,13 @@ namespace NeonVault
             {
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i,DebtLevel);bool selected=overworldSelectedCamp<0&&expeditionMapSelection==i;
                 Color color=OverworldWaypointKind==2&&OverworldWaypointId==i?Gold:selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):IsOverworldDungeonDiscovered(i)?UiPaper:Mist;
-                if(selected)Box(new Rect(p.x-12,p.y-12,24,24),new Color(.02f,.04f,.06f,.9f));FieldUIArt.Icon(new Rect(p.x-(selected?18:13),p.y-(selected?18:13),selected?36:26,selected?36:26),7,color);
+                if(selected)Box(new Rect(p.x-12,p.y-12,24,24),new Color(.02f,.04f,.06f,.9f));DrawMapArt(new Rect(p.x-(selected?18:13),p.y-(selected?18:13),selected?36:26,selected?36:26),1,color);
                 if(OverworldWaypointKind==2&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+12,p.y-22,26,28),"▲",Gold,19);
                 if(GUI.Button(new Rect(p.x-13,p.y-13,26,26),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;}
             }
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;FieldUIArt.Icon(new Rect(p.x-18,p.y-18,36,36),6,IsCampVisited(i)?Color.white:Color.gray);
+                Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;DrawMapArt(new Rect(p.x-18,p.y-18,36,36),0,IsCampVisited(i)?Color.white:Color.gray);
                 if(OverworldWaypointKind==1&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+15,p.y-24,28,28),"▲",Gold,20);
                 if(GUI.Button(new Rect(p.x-18,p.y-18,36,36),GUIContent.none,GUIStyle.none))overworldSelectedCamp=i;
             }
@@ -475,7 +475,7 @@ namespace NeonVault
             {
                 if(site.completed)continue;
                 Vector2 p=WorldAtlasPoint(map,site.position);
-                if(map.Contains(p))FieldUIArt.Icon(new Rect(p.x-14,p.y-14,28,28),site.type==1?9:site.type==2?11:10,WorldActivityColor(site.type));
+                if(map.Contains(p))DrawMapArt(new Rect(p.x-14,p.y-14,28,28),site.type==1?2:site.type==2?4:3,Color.white);
             }
             if(IsOverworld){var p=WorldAtlasPoint(map,PlayerPosition);if(map.Contains(p)){WorldMarker(p.x,p.y,12,Color.white);Box(new Rect(p.x-2,p.y-2,4,4),Cyan);}}
             if(WorldButton(new Rect(744,112,78,55),"−"))SetWorldMapZoom(worldMapZoom/1.5f,map.center,map);
@@ -509,7 +509,7 @@ namespace NeonVault
             for(int i=0;i<3;i++)
             {
                 float y=legend.y+15+i*43;
-                FieldUIArt.Icon(new Rect(legend.x+12,y,28,28),icons[i],i==2?new Color(.91f,.54f,.28f):UiPaper);
+                DrawMapArt(new Rect(legend.x+12,y,28,28),i==0?0:i==1?1:4,Color.white);
                 WorldLabel(new Rect(legend.x+47,y+3,104,32),names[i],UiPaper,18);
             }
         }

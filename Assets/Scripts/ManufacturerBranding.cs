@@ -30,7 +30,7 @@ namespace NeonVault
         {
             var old=GUI.color;GUI.color=Color.white;var logo=Logo(maker);
             if(logo){int index=Mathf.Max(0,ManufacturerCatalog.Index(maker));
-                if(!cutoutLogos[index]){var shader=Resources.Load<Shader>("ManufacturerLogoCutout");if(shader){if(!cutoutMaterial)cutoutMaterial=new Material(shader);var image=new RenderTexture(logo.width,logo.height,0,RenderTextureFormat.ARGB32);image.Create();Graphics.Blit(logo,image,cutoutMaterial);cutoutLogos[index]=image;}}
+                if(!cutoutLogos[index]){var shader=Resources.Load<Shader>("ManufacturerLogoCutout");if(shader){if(!cutoutMaterial)cutoutMaterial=new Material(shader);var image=new RenderTexture(logo.width,logo.height,0,RenderTextureFormat.ARGB32);image.Create();var previous=RenderTexture.active;try{Graphics.Blit(logo,image,cutoutMaterial);}finally{RenderTexture.active=previous;}cutoutLogos[index]=image;}}
                 GUI.DrawTexture(rect,cutoutLogos[index]?cutoutLogos[index]:logo,ScaleMode.ScaleToFit,true);}
             GUI.color=old;
         }

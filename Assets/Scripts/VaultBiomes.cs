@@ -11,6 +11,8 @@ namespace NeonVault
             foreach(var chamber in layout.chambers)
             {
                 var p=layout.Center(chamber)+new Vector3(3,0,3);
+                // Cell centres are positioned at actor height; landmarks sit on the floor.
+                p.y=-.06f;
                 var g=Group("Salvage landmark / "+theme,p);
                 g.localRotation=Quaternion.Euler(0,(index++%4)*90,0);
                 if(theme==1) PressurePlant(g);

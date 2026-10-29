@@ -5,6 +5,17 @@ namespace NeonVault
     {
         public float runDamage,runFire,runVitality,runDash,runChain,runHarvest;
         readonly Vector3 merchantPosition=new Vector3(-7,.65f,2),archivistPosition=new Vector3(6,.65f,2),portalPosition=new Vector3(0,.65f,10);
+        public bool HasNearbyInteraction
+        {
+            get
+            {
+                if(player==null||worldTransitionPending)return false;
+                if(screen==Screen.Hub)return Vector3.Distance(PlayerPosition,debtCollectorPosition)<3||Vector3.Distance(PlayerPosition,merchantPosition)<3||Vector3.Distance(PlayerPosition,portalPosition)<3||Vector3.Distance(PlayerPosition,archivistPosition)<3;
+                if(!Active)return false;
+                if(IsOverworld)return NearbyWorldCamp>=0||NearbyWorldEntrance>=0||NearbyOverworldActivity>=0;
+                return Layout!=null&&ExpeditionExitOpen&&Vector3.Distance(PlayerPosition,ExitPosition)<3;
+            }
+        }
         string hubDialogue="";
         Transform departingRaiderBoss; bool bossDeparting;
         public void BuildHub() {if(QueueWorldTransition(()=>BuildHubImmediate()))return;BuildHubImmediate();}

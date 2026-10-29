@@ -13,6 +13,9 @@ namespace NeonVault
             public RoadSegment(Vector3 a,Vector3 b,float width,bool bridge=false){A=a;B=b;Width=width;BridgeDeck=bridge;}
         }
         readonly Dictionary<Vector2Int,List<RoadSegment>> roadBuckets=new Dictionary<Vector2Int,List<RoadSegment>>();
+        readonly List<RoadSegment> mainRoadSegments=new List<RoadSegment>();
+        readonly List<RoadSegment> boroughConnectors=new List<RoadSegment>();
+        public IReadOnlyList<RoadSegment> BoroughConnectors=>boroughConnectors;
         static readonly RoadSegment[] noRoads=new RoadSegment[0];
         public int RoadSegmentCount {get;private set;}
         public IReadOnlyList<RoadSegment> GetRoadSegmentsForChunk(int x,int z)
@@ -48,6 +51,47 @@ namespace NeonVault
                 var key=new Vector2Int(x,z);if(!roadBuckets.TryGetValue(key,out var roads)){roads=new List<RoadSegment>();roadBuckets.Add(key,roads);}roads.Add(road);
             }
             RoadSegmentCount++;
+            if(width>=19&&!bridge)mainRoadSegments.Add(road);
+        }
+        // Join each borough loop to an existing arterial on the same bank.  The
+        // connector is part of the road graph used by terrain, streaming and maps.
+        void ConnectBoroughLoop(Func<float,Vector3> loop,List<RoadSegment> arterials)
+        {
+            const int count=110;var valid=new bool[count];int validCount=0;
+            for(int n=0;n<count;n++)
+            {
+                Vector3 a=loop(n/(float)count),b=loop((n+1)/(float)count),mid=(a+b)*.5f;
+                valid[n]=!River(a)&&!River(mid)&&!River(b)&&!Park(mid)&&Mathf.Abs(mid.x)<4920&&Mathf.Abs(mid.z)<4920;
+                if(valid[n])validCount++;
+            }
+            for(int n=0;n<count;n++)
+            {
+                if(!valid[n]||(validCount<count&&valid[(n+count-1)%count]))continue;
+                int length=1;while(length<count&&valid[(n+length)%count])length++;
+                ConnectLoopSection(loop,arterials,n,length,count);
+                if(validCount==count)break;
+            }
+        }
+        void ConnectLoopSection(Func<float,Vector3> loop,List<RoadSegment> arterials,int first,int length,int count)
+        {
+            float best=float.MaxValue;Vector3 start=default,end=default;
+            for(int n=0;n<length;n++)
+            {
+                Vector3 p=loop(((first+n)%count)/(float)count);
+                foreach(var road in arterials)
+                {
+                    Vector3 d=road.B-road.A;float t=Mathf.Clamp01(Vector3.Dot(p-road.A,d)/d.sqrMagnitude);
+                    Vector3 target=road.A+d*t;float distance=(p-target).sqrMagnitude;
+                    if(distance>=best)continue;
+                    int samples=Mathf.Max(1,Mathf.CeilToInt(Mathf.Sqrt(distance)/20));bool dry=true;
+                    for(int k=0;k<=samples;k++)if(River(Vector3.Lerp(p,target,k/(float)samples))){dry=false;break;}
+                    if(dry){best=distance;start=p;end=target;}
+                }
+            }
+            if(best==float.MaxValue){Debug.LogWarning("No dry arterial connection found for borough at "+loop(0));return;}
+            boroughConnectors.Add(new RoadSegment(start,end,14));
+            int segments=Mathf.Max(1,Mathf.CeilToInt(Mathf.Sqrt(best)/20));
+            for(int i=0;i<segments;i++)RegisterRoad(Vector3.Lerp(start,end,i/(float)segments),Vector3.Lerp(start,end,(i+1)/(float)segments),14);
         }
         Vector3 BankPoint(float z,int side)=>new Vector3(RiverX(z)+side*(RiverWidth(z)*.5f+120+25*Mathf.Sin(z*.0013f)),0,z);
         void JoinBank(Vector3 end,float width)
@@ -121,6 +165,7 @@ namespace NeonVault
                 var a=route[i-1];var b=route[i];var normal=Vector3.Cross(Vector3.up,(b-a).normalized);
                 RoadCurve(t=>Vector3.Lerp(a,b,t)+normal*(Mathf.Sin(t*Mathf.PI)*55),26,Mathf.CeilToInt(Vector3.Distance(a,b)/30),true);
             }
+            var arterials=new List<RoadSegment>(mainRoadSegments);
             // Boroughs are finite, rotated neighbourhoods with loops and radial links.
             // Centres and radii are deliberately irregular and never repeated on a world grid.
             var centres=new[]{new Vector3(-2300,0,-3300),new Vector3(-1350,0,-2100),new Vector3(-1700,0,-650),new Vector3(-1350,0,1050),new Vector3(-2350,0,2300),new Vector3(-200,0,2400),new Vector3(1500,0,2500),new Vector3(3000,0,2600),new Vector3(3650,0,650),new Vector3(2300,0,-650),new Vector3(1400,0,-1950),new Vector3(3000,0,-2800),new Vector3(800,0,-3600),new Vector3(4200,0,-1400),new Vector3(700,0,400)};
@@ -130,7 +175,9 @@ namespace NeonVault
                 var u=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));var v=new Vector3(-u.z,0,u.x);
                 float rx=390+(borough*113%300),rz=300+(borough*79%270);
                 Vector3 Local(float x,float z)=>centre+u*x+v*z;
-                RoadCurve(t=>{float a=t*Mathf.PI*2;float irregular=1+.07f*Mathf.Sin(a*3+borough);return Local(Mathf.Cos(a)*rx*irregular,Mathf.Sin(a)*rz*irregular);},14,110);
+                Vector3 Loop(float t){float a=t*Mathf.PI*2;float irregular=1+.07f*Mathf.Sin(a*3+borough);return Local(Mathf.Cos(a)*rx*irregular,Mathf.Sin(a)*rz*irregular);}
+                RoadCurve(Loop,14,110);
+                ConnectBoroughLoop(Loop,arterials);
                 for(int radial=0;radial<5;radial++)
                 {
                     float a=angle+radial*Mathf.PI*.4f+.12f*Mathf.Sin(radial+borough);var end=Local(Mathf.Cos(a)*rx,Mathf.Sin(a)*rz);

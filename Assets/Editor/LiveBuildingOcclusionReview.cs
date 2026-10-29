@@ -23,6 +23,7 @@ public static class LiveBuildingOcclusionReview
     static FieldInfo boundsField = typeof(ImportedWorldBatch).GetField("buildingBounds", Flags);
     static FieldInfo hiddenField = typeof(ImportedWorldBatch).GetField("hidden", Flags);
     static MethodInfo hides = typeof(ImportedWorldBatch).GetMethod("Hides", Flags);
+    static MethodInfo foreground = typeof(ImportedWorldBatch).GetMethod("ForegroundNear", BindingFlags.Static | BindingFlags.NonPublic);
     static MethodInfo updateCamera = typeof(VaultGame).GetMethod("UpdateCamera", Flags);
     static LiveBuildingOcclusionReview() { if (Array.IndexOf(Environment.GetCommandLineArgs(), "--live-building-review") >= 0) EditorApplication.update += Tick; }
     public static void Run()
@@ -69,7 +70,7 @@ public static class LiveBuildingOcclusionReview
                             Position(p);
                             bool h=(bool)hides.Invoke(batch,new object[]{b,p+Vector3.up*1.1f,game.GameCamera});
                             if(h&&!foundBehind){behind=p;foundBehind=true;}
-                            if(!h&&!foundClear){clear=p;foundClear=true;}
+                            if(!h&&!foundClear&&(bool)foreground.Invoke(null,new object[]{b,p+Vector3.up*1.1f,game.GameCamera})){clear=p;foundClear=true;}
                         }
                         if(foundBehind&&foundClear){Position(clear);step=2;next=EditorApplication.timeSinceStartup+1;return;}
                     }

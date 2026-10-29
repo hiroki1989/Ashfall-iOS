@@ -107,6 +107,7 @@ namespace NeonVault
         static Rect Mirror(Rect r) { r.x = SafeRect.x + SafeRect.xMax - r.xMax; return r; }
         bool Visible(int i)
         {
+            if(i==(int)MobileAction.Interact && (game==null||!game.HasNearbyInteraction))return false;
             if (combat) return true;
             if (hub) return i == (int)MobileAction.Interact || i == (int)MobileAction.Inventory || i == (int)MobileAction.Pause;
             if (modal) return false; // Full-screen menus provide their own large close/resume buttons.

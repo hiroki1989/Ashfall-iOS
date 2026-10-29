@@ -100,7 +100,7 @@ namespace NeonVault
             ManufacturerBranding.PortraitBadgeEnabled=!detailed;
             int score=0;
             if(item is Gun g){ItemPortraits.Draw(r,g);score=GearScoring.Score(g);
-                float size=Mathf.Clamp(Mathf.Min(r.width,r.height)*.23f,20,30);
+                float size=Mathf.Clamp(Mathf.Min(r.width,r.height)*.30f,25,40);
                 var icon=new Rect(r.x+5,r.y+5,size,size);Box(icon,new Color(.04f,.045f,.05f,.88f));
                 FieldUIArt.GunClassIcon(new Rect(icon.x+2,icon.y+2,size-4,size-4),g,EqInk);}
             else if(item is ArmorItem a){ItemPortraits.Draw(r,a);score=GearScoring.Score(a);}
@@ -113,6 +113,7 @@ namespace NeonVault
                 ManufacturerPortraits.Melee(portrait,w);score=MeleeWeaponCatalog.Score(w);}
             else {ManufacturerBranding.PortraitBadgeEnabled=previousBadge;return;}
             ManufacturerBranding.PortraitBadgeEnabled=previousBadge;
+            if(detailed){string maker=item is Gun dg?ManufacturerBranding.Maker(dg):item is ArmorItem da?ManufacturerBranding.Maker(da):item is ArtifactItem dm?ManufacturerBranding.Maker(dm):item is MeleeWeaponItem dw?ManufacturerBranding.Maker(dw):null;if(!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(new Rect(r.x+6,r.yMax-82,Mathf.Min(290,r.width*.49f),76),maker);}
             var style=new GUIStyle(eqCopy){font=this.font,fontStyle=FontStyle.Normal,
                 fontSize=r.width>200?29:24,alignment=TextAnchor.LowerRight,wordWrap=false};
             string value=score.ToString("N0");
@@ -171,8 +172,8 @@ namespace NeonVault
             Box(new Rect(950,620,446,1),EqLine);
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
             DrawEquippedCategory(top);
-            if(!merchant&&EqButton(new Rect(618,top+10,285,54),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
-            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(618,top+68,190,48),T("STASH","倉庫")))VaultStorageOpen();
+            if(!merchant&&EqButton(new Rect(500,top+4,240,48),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
+            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(746,top+4,164,48),T("STASH","倉庫")))VaultStorageOpen();
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();
@@ -211,11 +212,9 @@ namespace NeonVault
                 float detailH=362-top;
                 string eqDetail=selected.fullDescription;
                 float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
-                const float logoHeight=82;
-                eqDetailExtent=Mathf.Max(detailH,textHeight+logoHeight+16);
+                eqDetailExtent=Mathf.Max(detailH,textHeight+16);
                 eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));
-                if(!string.IsNullOrEmpty(selected.maker))ManufacturerBranding.Badge(new Rect(6,4,290,logoHeight),selected.maker);
-                EqText(new Rect(2,logoHeight+12,410,textHeight),eqDetail,EqInk);
+                EqText(new Rect(2,4,410,textHeight),eqDetail,EqInk);
                 GUI.EndScrollView();
                 EqActions(selected,merchant);
             }

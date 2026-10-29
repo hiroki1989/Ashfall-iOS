@@ -23,10 +23,12 @@ namespace NeonVault
             var stale=new List<Transform>();foreach(var entry in worlds)if(entry.Value.root==null)stale.Add(entry.Key);
             foreach(var key in stale)worlds.Remove(key);
             var id=root;if(worlds.TryGetValue(id,out var previous))foreach(var obj in previous.active.Values)if(obj!=null)UnityEngine.Object.Destroy(obj);
-            Color[] palette={new Color(.39f,.36f,.30f),new Color(.22f,.25f,.23f),new Color(.075f,.11f,.12f),new Color(.43f,.22f,.12f),new Color(.62f,.49f,.29f)};
+            Color[] palette={new Color(.31f,.30f,.27f),new Color(.19f,.20f,.18f),new Color(.055f,.065f,.065f),new Color(.34f,.19f,.12f),new Color(.49f,.40f,.27f)};
             var mats=new Material[palette.Length];
             Shader shader=Resources.Load<Shader>("VaultSurface")??Shader.Find("Standard");
-            for(int i=0;i<mats.Length;i++){mats[i]=new Material(shader){name="Streamed entrance / "+i,color=palette[i],enableInstancing=true};materials.Add(mats[i]);}
+            var weatheredConcrete=Resources.Load<Texture2D>("Art/WastelandFloor");
+            var rust=Resources.Load<Texture2D>("Art/WastelandSurface");
+            for(int i=0;i<mats.Length;i++){mats[i]=new Material(shader){name="Streamed entrance / "+i,color=palette[i],enableInstancing=true};if(i==0&&weatheredConcrete)mats[i].mainTexture=weatheredConcrete;else if((i==1||i==3)&&rust)mats[i].mainTexture=rust;materials.Add(mats[i]);}
             worlds[id]=new SiteState{root=root,geography=geo,materials=mats};
             // Initial focus is the nearby player; do not instantiate all 107 sites here.
         }
@@ -62,7 +64,7 @@ namespace NeonVault
             if(!camp){RuinedCityArchitecture.Place(site.transform,new Rect(-6,2,12,8),(key%5==0)?6:key%6);adapted=true;}
             else { BuildShell(site.transform,state.materials,style,true); BuildCampFortification(site.transform,state.materials); adapted=true; }
             if(!adapted)BuildShell(site.transform,state.materials,style,camp);
-            if(camp)DressCampExterior(site.transform,key);
+            if(camp){DressCampExterior(site.transform,key);WeatherCampFacade(site.transform,state.materials,key);}
             // A readable dark doorway and recessed jambs are always present, including imported exteriors.
             Box(site.transform,state.materials, "Door recess",new Vector3(0,1.3f,2.03f),new Vector3(2.3f,2.6f,.12f),2);
             Box(site.transform,state.materials,"Door left jamb",new Vector3(-1.35f,1.5f,1.85f),new Vector3(.32f,3,.45f),1);
@@ -79,8 +81,9 @@ namespace NeonVault
         static void BuildCampFortification(Transform root,Material[] mats)
         {
             Box(root,mats,"HQ main roof",new Vector3(0,5.35f,6),new Vector3(11.5f,.35f,7.4f),1);
-            Box(root,mats,"HQ roof front parapet",new Vector3(0,5.85f,2.35f),new Vector3(11.7f,1,.38f),0);
-            Box(root,mats,"HQ roof west parapet",new Vector3(-5.65f,5.85f,6),new Vector3(.38f,1,7.5f),0);
+            Box(root,mats,"HQ broken front parapet west",new Vector3(-3.65f,5.75f,2.35f),new Vector3(4.4f,.8f,.38f),0);
+            Box(root,mats,"HQ broken front parapet east",new Vector3(3.95f,5.65f,2.35f),new Vector3(3.7f,.6f,.38f),0);
+            Box(root,mats,"HQ broken west parapet",new Vector3(-5.65f,5.72f,7.1f),new Vector3(.38f,.75f,5.1f),0);
             Box(root,mats,"HQ roof east parapet",new Vector3(5.65f,5.85f,6),new Vector3(.38f,1,7.5f),0);
             Box(root,mats,"HQ roof rear parapet",new Vector3(0,5.85f,9.65f),new Vector3(11.7f,1,.38f),0);
             Box(root,mats,"HQ lookout tower",new Vector3(3.3f,6.7f,7.2f),new Vector3(3.6f,2.6f,3.4f),0);
@@ -104,6 +107,31 @@ namespace NeonVault
             PlaceCampProp(root,"props/barrel_open",new Vector3(4.4f,0,1.1f),key*90,1.05f,1.2f);
             PlaceCampProp(root,"props/SM_fence_stand_small",new Vector3(-4.3f,0,-1f),90,2.3f,1.8f);
             PlaceCampProp(root,"PolyHaven/concrete_road_barrier",new Vector3(4.4f,0,-1f),90,2.1f,1.05f);
+        }
+        // Weathering belongs to the facade and remains clear of the entrance lane.
+        static void WeatherCampFacade(Transform root,Material[] mats,int key)
+        {
+            for(int side=-1;side<=1;side+=2)
+            {
+                float x=side*4.25f;
+                for(int i=0;i<4;i++)
+                {
+                    float px=x+side*(i-1.5f)*.46f;
+                    var stain=Box(root,mats,"Weathered facade runoff",new Vector3(px,3.8f-(i%2)*.23f,1.96f),new Vector3(.08f+(i%3)*.04f,.75f+i*.26f,.025f),2);
+                    stain.transform.localRotation=Quaternion.Euler(0,0,side*(i%2==0?3:-4));
+                }
+                for(int i=0;i<3;i++)
+                {
+                    var patch=Box(root,mats,"Corroded repair patch",new Vector3(x+side*(i-1)*.7f,1.1f+i*.43f,1.74f),new Vector3(.68f,.13f,.06f),3);
+                    patch.transform.localRotation=Quaternion.Euler(0,0,side*(i*9-8));
+                }
+                for(int i=0;i<3;i++)
+                {
+                    var rebar=Box(root,mats,"Exposed roof rebar",new Vector3(side*(1.6f+i*.30f),5.7f+i*.08f,2.30f),new Vector3(.07f,.95f,.07f),3);
+                    rebar.transform.localRotation=Quaternion.Euler(0,0,side*(18+i*6));
+                }
+                PlaceCampProp(root,"PolyHaven/concrete_road_barrier",new Vector3(side*5.1f,0,1.55f),key*31+side*12,1.25f,.6f);
+            }
         }
         static void PlaceCampProp(Transform root,string path,Vector3 position,float yaw,float footprint,float height)
         {

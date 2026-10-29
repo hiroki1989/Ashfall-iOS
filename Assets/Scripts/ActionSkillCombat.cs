@@ -11,6 +11,7 @@ namespace NeonVault
         Material actionSkillRingMaterial;
         float actionSkillDuration, actionSkillFireTimer, actionSkillPulseTimer;
         float actionSkillPower, actionSkillRadius;
+        float medicHealAccumulated, medicHealNumberTimer;
         bool actionSkillFollows, actionSkillMultitarget;
         AudioClip actionTurretSound, actionGrenadeSound;
         bool actionAudioLoaded;
@@ -77,14 +78,22 @@ namespace NeonVault
             Vector3 origin=MoveWithinRoom(PlayerPosition,aim.normalized*1.5f,.6f);origin.y=.08f;actionSkillObject.position=origin;
             var dark=new Color(.19f,.21f,.19f);var steel=new Color(.39f,.37f,.30f);var brass=new Color(.67f,.39f,.14f);
             art.Part("Sentry mounting foot",PrimitiveType.Cylinder,new Vector3(0,.10f,0),new Vector3(.55f,.11f,.55f),dark,actionSkillObject);
+            art.Part("Sentry turntable rim",PrimitiveType.Cylinder,new Vector3(0,.23f,0),new Vector3(.46f,.035f,.46f),brass,actionSkillObject);
             for(int i=0;i<3;i++)
-            {float a=i*Mathf.PI*2/3;var support=art.Part("Sentry support leg",PrimitiveType.Cube,new Vector3(Mathf.Sin(a)*.27f,.10f,Mathf.Cos(a)*.27f),new Vector3(.13f,.12f,.54f),steel,actionSkillObject);support.localRotation=Quaternion.Euler(0,a*Mathf.Rad2Deg,0);}
+            {float a=i*Mathf.PI*2/3;var support=art.Part("Sentry support leg",PrimitiveType.Cube,new Vector3(Mathf.Sin(a)*.27f,.10f,Mathf.Cos(a)*.27f),new Vector3(.13f,.12f,.54f),steel,actionSkillObject);support.localRotation=Quaternion.Euler(0,a*Mathf.Rad2Deg,0);art.Part("Sentry rubber foot",PrimitiveType.Cylinder,new Vector3(Mathf.Sin(a)*.53f,.055f,Mathf.Cos(a)*.53f),new Vector3(.16f,.045f,.16f),dark,actionSkillObject);}
             art.Part("Sentry rotating post",PrimitiveType.Cylinder,new Vector3(0,.36f,0),new Vector3(.24f,.26f,.24f),steel,actionSkillObject);
             actionSkillHead=new GameObject("Sentry aiming head").transform;actionSkillHead.SetParent(actionSkillObject,false);actionSkillHead.localPosition=new Vector3(0,.66f,0);
             art.Part("Receiver casing",PrimitiveType.Cube,new Vector3(0,0,0),new Vector3(.47f,.30f,.48f),dark,actionSkillHead);
             art.Part("Feed box",PrimitiveType.Cube,new Vector3(-.31f,-.06f,-.02f),new Vector3(.17f,.25f,.30f),steel,actionSkillHead);
             art.Part("Barrel jacket",PrimitiveType.Cylinder,new Vector3(0,0,.36f),new Vector3(.12f,.28f,.12f),steel,actionSkillHead).localRotation=Quaternion.Euler(90,0,0);
             art.Part("Sentry sight",PrimitiveType.Cube,new Vector3(0,.19f,.02f),new Vector3(.14f,.08f,.18f),brass,actionSkillHead);
+            art.Part("Receiver upper rail",PrimitiveType.Cube,new Vector3(0,.17f,-.08f),new Vector3(.25f,.035f,.34f),steel,actionSkillHead);
+            art.Part("Feed box lid",PrimitiveType.Cube,new Vector3(-.31f,.075f,-.02f),new Vector3(.19f,.035f,.31f),dark,actionSkillHead);
+            art.Part("Feed box latch",PrimitiveType.Cube,new Vector3(-.405f,-.01f,.07f),new Vector3(.025f,.07f,.06f),brass,actionSkillHead);
+            art.Part("Optics lens",PrimitiveType.Cylinder,new Vector3(0,.19f,.125f),new Vector3(.075f,.012f,.075f),new Color(.48f,.72f,.66f),actionSkillHead).localRotation=Quaternion.Euler(90,0,0);
+            art.Part("Barrel muzzle",PrimitiveType.Cylinder,new Vector3(0,0,.66f),new Vector3(.075f,.08f,.075f),dark,actionSkillHead).localRotation=Quaternion.Euler(90,0,0);
+            for(int i=0;i<4;i++)art.Part("Barrel cooling collar",PrimitiveType.Cylinder,new Vector3(0,0,.20f+i*.105f),new Vector3(.14f,.018f,.14f),dark,actionSkillHead).localRotation=Quaternion.Euler(90,0,0);
+            for(int i=0;i<3;i++)art.Part("Receiver fastener",PrimitiveType.Cylinder,new Vector3(.24f,-.08f+i*.08f,-.16f),new Vector3(.035f,.012f,.035f),brass,actionSkillHead).localRotation=Quaternion.Euler(0,0,90);
             CombatVisuals.Burst(origin+Vector3.up*.3f,new Color(.8f,.66f,.35f),9,world);
         }
 
@@ -117,6 +126,7 @@ namespace NeonVault
             actionSkillDuration=12+duration*1.5f+ASRank(k,2,4)*5;
             actionSkillFollows=ASRank(k,2,4)>0;
             actionSkillPulseTimer=0;
+            medicHealAccumulated=0;medicHealNumberTimer=1f;
             actionSkillObject=new GameObject("Medic / healing field").transform;
             actionSkillObject.SetParent(world,false);var p=PlayerPosition;p.y=.10f;actionSkillObject.position=p;
             var shader=Resources.Load<Shader>("CombatGlow")??Shader.Find("Sprites/Default");
@@ -156,9 +166,22 @@ namespace NeonVault
             else
             {
                 Vector3 separation=PlayerPosition-actionSkillObject.position;separation.y=0;
-                if(separation.sqrMagnitude<=actionSkillRadius*actionSkillRadius&&LineOfSight(actionSkillObject.position,PlayerPosition))hp=Mathf.Min(maxHp,hp+maxHp*actionSkillPower*delta);
+                if(separation.sqrMagnitude<=actionSkillRadius*actionSkillRadius&&LineOfSight(actionSkillObject.position,PlayerPosition))
+                {
+                    float before=hp;hp=Mathf.Min(maxHp,hp+maxHp*actionSkillPower*delta);
+                    medicHealAccumulated+=Mathf.Max(0,hp-before);
+                }
+                medicHealNumberTimer-=delta;
+                if(medicHealNumberTimer<=0){ShowMedicHealNumber();medicHealNumberTimer=1f;}
                 actionSkillPulseTimer-=delta;if(actionSkillPulseTimer<=0){actionSkillPulseTimer=1.5f;CombatVisuals.Burst(actionSkillObject.position+Vector3.up*.1f,new Color(.28f,.72f,.44f),3,world);}
             }
+        }
+
+        void ShowMedicHealNumber()
+        {
+            if(medicHealAccumulated<.05f)return;
+            CombatVisuals.DamageNumber(PlayerPosition+Vector3.up*1.7f,medicHealAccumulated,new Color(.22f,.9f,.47f),cam,world,true);
+            medicHealAccumulated=0;
         }
 
         void TickActionTurret(float delta)
@@ -202,6 +225,7 @@ namespace NeonVault
 
         void ClearActionDevice()
         {
+            if(actionSkillObject&&!actionSkillHead)ShowMedicHealNumber();
             if(actionSkillObject)Destroy(actionSkillObject.gameObject);
             if(actionSkillRingMaterial)Destroy(actionSkillRingMaterial);
             actionSkillObject=null;actionSkillHead=null;actionSkillRingMaterial=null;actionSkillDuration=0;

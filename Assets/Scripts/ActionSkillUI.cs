@@ -4,7 +4,7 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        bool actionSkillInventoryOpen;
+        bool actionSkillInventoryOpen, actionSkillInventoryTree;
         Texture2D actionSkillArt, actionSkillDisc;
         int actionTreeKind, actionTreeBranch, actionTreeTier;
         static readonly Color[] ActionTreeColors = {
@@ -62,7 +62,7 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.045f,.053f,.059f,.99f));
             ActionLabel(new Rect(46,22,760,55),T("ACTION SKILL TREE","アクションスキルツリー"),UiPaper,34);
             ActionLabel(new Rect(46,77,700,34),T("AVAILABLE POINTS  ","残りポイント  ")+ActionSkillAvailablePoints,accent,23);
-            if(ActionButton(new Rect(1195,24,200,70),T("BACK","戻る"),false,accent)) {debtSkillTreePage=false;return;}
+            if(ActionButton(new Rect(1195,24,200,70),T("BACK","戻る"),false,accent)) {if(actionSkillInventoryTree)actionSkillInventoryTree=false;else debtSkillTreePage=false;return;}
             for(int i=0;i<3;i++)
             {
                 var type=(ActionSkillKind)i;
@@ -73,20 +73,30 @@ namespace NeonVault
             DrawActionSkillArt(new Rect(1305,120,72,72),kind);
             for(int b=0;b<3;b++)
             {
-                Rect column=new Rect(48+b*300,210,284,573);FieldUIArt.Plate(column,false);
-                Box(new Rect(column.x+14,column.y+13,3,40),accent);
-                ActionLabel(new Rect(column.x+27,column.y+10,column.width-42,44),ActionBranchName(kind,b),UiPaper,22);
+                Rect column=new Rect(48+b*300,210,284,573);
+                Box(column,new Color(.075f,.085f,.09f,.8f));
+                Box(new Rect(column.x,column.y,column.width,2),new Color(accent.r,accent.g,accent.b,.55f));
+                ActionLabel(new Rect(column.x+16,column.y+10,column.width-32,44),ActionBranchName(kind,b),UiPaper,22);
+                for(int t=0;t<4;t++){
+                    Vector2 from=new Vector2(column.x+31+(t%2)*9,column.y+109+t*96);
+                    Vector2 to=new Vector2(column.x+31+((t+1)%2)*9,column.y+109+(t+1)*96);
+                    bool linked=ActionSkillRank(selected,b,t)>0;
+                    Line(from,to,linked?accent:new Color(.25f,.28f,.29f,.9f),linked?3:2);
+                }
                 for(int t=0;t<5;t++)
                 {
-                    Rect node=new Rect(column.x+14,column.y+66+t*96,column.width-28,84);
+                    Rect node=new Rect(column.x+14+(t%2)*9,column.y+66+t*96,column.width-38,84);
                     int rank=ActionSkillRank(selected,b,t),max=ActionSkillMaxRank(t);
                     bool active=actionTreeBranch==b&&actionTreeTier==t;
                     bool available=ActionSkillTierAvailable(selected,b,t);
-                    FieldUIArt.Plate(node,active);
-                    if(rank>0)Box(new Rect(node.x+4,node.y+5,3,node.height-10),accent);
-                    ActionLabel(new Rect(node.x+14,node.y+8,node.width-64,46),ActionSkillNodeTitle(selected,b,t),available?UiPaper:Mist,19,TextAnchor.MiddleLeft,true);
-                    ActionLabel(new Rect(node.x+15,node.y+54,node.width-30,23),rank+" / "+max,rank>0?accent:Mist,17);
-                    if(!available)ActionLabel(new Rect(node.xMax-36,node.y+9,25,30),"•",Mist,22,TextAnchor.MiddleCenter);
+                    Color bg=rank>0?new Color(accent.r*.23f,accent.g*.23f,accent.b*.23f,.98f):new Color(.085f,.10f,.105f,.98f);
+                    Box(node,bg);
+                    if(active)Box(new Rect(node.x,node.y,node.width,2),accent);
+                    float cx=node.x+17,cy=node.center.y;
+                    if(rank>0){Box(new Rect(cx-12,cy-12,24,24),new Color(accent.r,accent.g,accent.b,.16f));}
+                    Diamond(cx,cy,9,rank>0?accent:available?new Color(.55f,.58f,.57f):new Color(.3f,.32f,.32f));
+                    ActionLabel(new Rect(node.x+34,node.y+7,node.width-46,46),ActionSkillNodeTitle(selected,b,t),available?UiPaper:Mist,18,TextAnchor.MiddleLeft,true);
+                    ActionLabel(new Rect(node.x+34,node.y+54,node.width-46,23),rank+" / "+max,rank>0?accent:Mist,17);
                     if(GUI.Button(node,GUIContent.none,GUIStyle.none)){actionTreeBranch=b;actionTreeTier=t;branch=b;tier=t;}
                 }
             }
@@ -104,6 +114,7 @@ namespace NeonVault
 
         void DrawActionSkillInventory()
         {
+            if(actionSkillInventoryTree){DrawActionSkillTree();return;}
             Box(new Rect(0,0,1440,900),new Color(.045f,.053f,.059f,.99f));
             ActionLabel(new Rect(50,28,930,60),T("ACTION SKILL","アクションスキル"),UiPaper,36);
             ActionLabel(new Rect(52,95,1000,40),T("Changing skills resets your action gauge.","スキルを切り替えるとゲージは0になります。"),Mist,22);
@@ -117,7 +128,8 @@ namespace NeonVault
                 ActionLabel(new Rect(card.x+38,card.y+28,360,54),ActionSkillName(kind),UiPaper,29);
                 ActionLabel(new Rect(card.x+36,card.y+220,360,115),ActionSkillSummary(kind),UiPaper,24,TextAnchor.UpperLeft,true);
                 ActionLabel(new Rect(card.x+36,card.y+356,360,32),equipped?T("EQUIPPED","装備中"):T("AVAILABLE","選択可能"),equipped?accent:Mist,19);
-                if(ActionButton(new Rect(card.x+28,card.y+420,378,78),equipped?T("EQUIPPED","装備中"):T("EQUIP","装備する"),equipped,accent,22,!equipped))SelectActionSkill(kind);
+                if(ActionButton(new Rect(card.x+28,card.y+400,183,78),equipped?T("EQUIPPED","装備中"):T("EQUIP","装備する"),equipped,accent,20,!equipped))SelectActionSkill(kind);
+                if(ActionButton(new Rect(card.x+220,card.y+400,186,78),T("SKILL TREE","スキルツリー"),false,accent,19)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionSkillInventoryTree=true;}
             }
         }
 
@@ -146,6 +158,7 @@ namespace NeonVault
                 bool ready=ActionSkillPoints>=ActionSkillChargeMax;
                 float charge=Mathf.Clamp01(ActionSkillPoints/(float)Mathf.Max(1,ActionSkillChargeMax));
                 Color accent=ActionTreeColors[Mathf.Clamp((int)ActionSkillSelected,0,2)];
+                if(ready)DrawActionReadyPulse(r,accent);
                 GUI.color=Color.white;GUI.DrawTexture(r,actionSkillDisc);
                 Vector2 center=r.center;float radius=r.width*.46f;
                 const int segments=48;
@@ -153,6 +166,7 @@ namespace NeonVault
                 {
                     float a=-Mathf.PI*.5f+i*Mathf.PI*2/segments,b=-Mathf.PI*.5f+(i+1)*Mathf.PI*2/segments;
                     Color color=(i+.5f)/segments<=charge?accent:new Color(.35f,.40f,.42f,.8f);
+                    if(ready)color=Color.Lerp(color,Color.white,.45f*Mathf.Pow(Mathf.Max(0,Mathf.Sin(Time.unscaledTime*2.62f)),10));
                     Line(center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,center+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,color,Mathf.Max(2,r.width*.045f));
                 }
                 int fontSize=Mathf.Max(12,Mathf.RoundToInt(r.width*.15f));
@@ -170,6 +184,7 @@ namespace NeonVault
             Rect r=new Rect(650,810,235,64);
             bool ready=ActionSkillPoints>=ActionSkillChargeMax;
             Color accent=ActionTreeColors[Mathf.Clamp((int)ActionSkillSelected,0,2)];
+            if(ready)DrawActionReadyPulse(r,accent);
             FieldUIArt.Plate(r,ready);
             Box(new Rect(r.x+9,r.yMax-12,r.width-18,4),new Color(.18f,.20f,.21f));
             Box(new Rect(r.x+9,r.yMax-12,(r.width-18)*Mathf.Clamp01(ActionSkillPoints/(float)Mathf.Max(1,ActionSkillChargeMax)),4),accent);
@@ -179,6 +194,20 @@ namespace NeonVault
             bool previous=GUI.enabled;GUI.enabled=previous&&ready;
             if(GUI.Button(r,GUIContent.none,GUIStyle.none))TryUseActionSkill();
             GUI.enabled=previous;
+        }
+        void DrawActionReadyPulse(Rect rect,Color accent)
+        {
+            float phase=Mathf.Repeat(Time.unscaledTime,2.4f)/2.4f;
+            float fade=(1-phase)*(1-phase);
+            Vector2 center=rect.center;
+            float radius=Mathf.Min(rect.width,rect.height)*(.48f+phase*.5f);
+            Color wave=new Color(accent.r,accent.g,accent.b,.65f*fade);
+            const int segments=40;
+            for(int i=0;i<segments;i++)
+            {
+                float a=i*Mathf.PI*2/segments,b=(i+1)*Mathf.PI*2/segments;
+                Line(center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,center+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,wave,Mathf.Max(1.5f,rect.height*.025f));
+            }
         }
     }
 }

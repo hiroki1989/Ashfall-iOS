@@ -1,11 +1,11 @@
 Shader "NeonVault/BuildingGhost"
 {
-    Properties { _MainTex ("Texture", 2D) = "white" {} _Color ("Tint", Color) = (1,1,1,0.16) }
+    Properties { _MainTex ("Texture", 2D) = "white" {} _Color ("Tint", Color) = (1,1,1,0.50) }
     SubShader
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
         Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
+        ZWrite On
         Cull Back
         Pass
         {
@@ -21,7 +21,7 @@ Shader "NeonVault/BuildingGhost"
                 v2f o; UNITY_SETUP_INSTANCE_ID(v); UNITY_INITIALIZE_OUTPUT(v2f,o); UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.vertex=UnityObjectToClipPos(v.vertex); o.uv=TRANSFORM_TEX(v.uv,_MainTex); return o;
             }
-            fixed4 frag(v2f i) : SV_Target { fixed4 c=tex2D(_MainTex,i.uv)*_Color; return c; }
+            fixed4 frag(v2f i) : SV_Target { fixed4 c=tex2D(_MainTex,i.uv)*_Color; clip(c.a-0.01); return c; }
             ENDCG
         }
     }

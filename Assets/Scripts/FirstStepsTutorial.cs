@@ -17,7 +17,7 @@ namespace NeonVault
             if(!actionSkillTutorialVisible)return;
             Box(new Rect(0,0,1440,900),new Color(0,0,0,.78f));Panel(new Rect(220,190,1000,520),Gold);
             Text(260,220,T("ACTION SKILL READY","アクションスキル発動可能"),heading,Gold,920);
-            Text(260,310,T("Hit enemies to charge your action skill. Activate it when the gauge is full. Switch skills in the inventory, and spend skill points earned from leveling up to improve them.","敵に弾を当てるとポイントがたまり、満タンになるとアクションスキルを使えます。スキルは装備画面で切り替えられます。レベルアップで得たスキルポイントを使うと強化できます。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+            Text(260,310,T("Hit enemies to charge your action skill. Activate it when the gauge is full.\nSwitch skills in the inventory, and spend skill points earned from leveling up to improve them.","敵に弾を当てるとポイントがたまり、満タンになるとアクションスキルを使えます。\nスキルは装備画面で切り替えられます。\nレベルアップで得たスキルポイントを使うと強化できます。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
             if(WorldButton(new Rect(500,600,440,70),T("CONTINUE","続ける"))){actionSkillTutorialVisible=false;PlayerPrefs.SetInt(ActionSkillTutorialKey,1);PlayerPrefs.Save();Time.timeScale=1;}
         }
         const string FirstStepsTargetKey = "Vault.FirstSteps.target.v1";
@@ -97,7 +97,7 @@ namespace NeonVault
                 Box(new Rect(0,0,1440,900),new Color(0,0,0,.72f));
                 Panel(new Rect(230,190,980,490),Gold);
                 Text(270,225,T("YOUR SAFEHOUSE","拠点について"),heading,Gold,900);
-                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage. Briggs records debt payments and awards levels. Use the exit to explore the city. Your nearest level 1 dungeon has been marked on the map.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。ブリッグスに返済するとレベルが上がります。出口から街へ出ましょう。最も近いレベル1のダンジョンを地図に示しました。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage.\nBriggs records debt payments and awards levels.\nUse the exit to explore the city.\nYour nearest level 1 dungeon has been marked on the map.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。\nブリッグスに返済するとレベルが上がります。\n出口から街へ出ましょう。\n最も近いレベル1のダンジョンを地図に示しました。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
                 if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
                 return;
             }
