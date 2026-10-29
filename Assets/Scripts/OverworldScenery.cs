@@ -131,12 +131,15 @@ namespace NeonVault
             }
             // Broken masonry gathers along ruined foundations instead of uniform scattering.
             foreach(var building in data.Buildings)for(int corner=0;corner<4;corner++){
+                var buildingBatch=obj.GetComponent<ImportedWorldBatch>();
+                if(buildingBatch)buildingBatch.BeginBuildingDecoration(obj.transform.TransformPoint(new Vector3(building.center.x,0,building.center.y)));
                 var anchor=new Vector3(corner%2==0?building.xMin-.8f:building.xMax+.8f,0,corner<2?building.yMin-.8f:building.yMax+.8f);
                 for(int piece=0;piece<6;piece++){
                     var p=anchor+new Vector3(((float)rng.NextDouble()-.5f)*2.8f,0,((float)rng.NextDouble()-.5f)*2.8f);
                     if(geography.RoadClearance(p)<1||geography.SiteProtected(p,1)||geography.River(p))continue;
                     OverworldScenery.AssetAdapter?.Invoke("debris",obj.transform,p,index++);
                 }
+                if(buildingBatch)buildingBatch.EndBuildingDecoration();
             }
             // Imported street furniture sits off the roadway; low debris remains passable.
             for(int i=0;i<240;i++){

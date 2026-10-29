@@ -157,7 +157,7 @@ namespace NeonVault
                 }
                 int fontSize=Mathf.Max(12,Mathf.RoundToInt(r.width*.15f));
                 ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.28f,r.width*.8f,r.height*.25f),T("SKILL","スキル"),ready?UiPaper:Mist,fontSize,TextAnchor.MiddleCenter);
-                ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.53f,r.width*.8f,r.height*.21f),ready?T("READY","発動可能"):ActionSkillPoints+" / "+ActionSkillChargeMax,ready?accent:Mist,Mathf.Max(10,Mathf.RoundToInt(r.width*.12f)),TextAnchor.MiddleCenter);
+                ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.53f,r.width*.8f,r.height*.21f),ready?T("READY","発動可能"):Mathf.FloorToInt(ActionSkillPoints)+" / "+ActionSkillChargeMax,ready?accent:Mist,Mathf.Max(10,Mathf.RoundToInt(r.width*.12f)),TextAnchor.MiddleCenter);
 
             }
             finally{GUI.matrix=previousMatrix;GUI.color=Color.white;}
@@ -175,7 +175,7 @@ namespace NeonVault
             Box(new Rect(r.x+9,r.yMax-12,(r.width-18)*Mathf.Clamp01(ActionSkillPoints/(float)Mathf.Max(1,ActionSkillChargeMax)),4),accent);
             var title=ActionSkillName(ActionSkillSelected);
             ActionLabel(new Rect(r.x+5,r.y+4,r.width-10,28),title,ready?UiPaper:Mist,mobile?16:14,TextAnchor.MiddleCenter);
-            ActionLabel(new Rect(r.x+5,r.y+30,r.width-10,25),ready?(mobile?T("READY","発動可能"):T("READY / V","発動 / V")):ActionSkillPoints+" / "+ActionSkillChargeMax,ready?accent:Mist,16,TextAnchor.MiddleCenter);
+            ActionLabel(new Rect(r.x+5,r.y+30,r.width-10,25),ready?(mobile?T("READY","発動可能"):T("READY / V","発動 / V")):Mathf.FloorToInt(ActionSkillPoints)+" / "+ActionSkillChargeMax,ready?accent:Mist,16,TextAnchor.MiddleCenter);
             bool previous=GUI.enabled;GUI.enabled=previous&&ready;
             if(GUI.Button(r,GUIContent.none,GUIStyle.none))TryUseActionSkill();
             GUI.enabled=previous;

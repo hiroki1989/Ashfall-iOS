@@ -5,6 +5,8 @@ namespace NeonVault
     public static class ManufacturerBranding
     {
         static readonly Texture2D[] logos=new Texture2D[6];
+        static readonly RenderTexture[] cutoutLogos=new RenderTexture[6];
+        static Material cutoutMaterial;
         public static bool PortraitBadgeEnabled=true;
         public static string Maker(Gun g){ManufacturerCatalog.InferGunIdentity(g);return g.manufacturerId;}
         public static string Maker(ArmorItem a)=>ManufacturerCatalog.Index(a.manufacturerId)>=0?a.manufacturerId:ManufacturerCatalog.Id(a.visualVariant+(int)a.slot);
@@ -26,11 +28,14 @@ namespace NeonVault
         }
         public static void Badge(Rect rect,string maker)
         {
-            var old=GUI.color;GUI.color=new Color(.02f,.025f,.03f,.94f);GUI.DrawTexture(rect,Texture2D.whiteTexture);
-            GUI.color=Color.white;var logo=Logo(maker);if(logo)GUI.DrawTexture(new Rect(rect.x+2,rect.y+2,rect.width-4,rect.height-4),logo,ScaleMode.ScaleToFit,true);GUI.color=old;
+            var old=GUI.color;GUI.color=Color.white;var logo=Logo(maker);
+            if(logo){int index=Mathf.Max(0,ManufacturerCatalog.Index(maker));
+                if(!cutoutLogos[index]){var shader=Resources.Load<Shader>("ManufacturerLogoCutout");if(shader){if(!cutoutMaterial)cutoutMaterial=new Material(shader);var image=new RenderTexture(logo.width,logo.height,0,RenderTextureFormat.ARGB32);image.Create();Graphics.Blit(logo,image,cutoutMaterial);cutoutLogos[index]=image;}}
+                GUI.DrawTexture(rect,cutoutLogos[index]?cutoutLogos[index]:logo,ScaleMode.ScaleToFit,true);}
+            GUI.color=old;
         }
         public static void PortraitBadge(Rect card,string maker)
-        {if(!PortraitBadgeEnabled)return;float width=Mathf.Min(card.width*.37f,70),height=width*.7f;Badge(new Rect(card.x+3,card.yMax-height-4,width,height),maker);}
+        {if(!PortraitBadgeEnabled)return;float width=Mathf.Min(card.width*.46f,85),height=width*.7f;Badge(new Rect(card.x+3,card.yMax-height-4,width,height),maker);}
         static Texture2D moduleIllustrations;
         public static bool ModuleIllustrationAvailable=>Resources.Load<Texture2D>("Art/Manufacturers/ModuleIllustrations-v1")!=null;
         public static void ModulePortrait(Rect r,ArtifactItem item)

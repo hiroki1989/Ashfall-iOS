@@ -41,7 +41,7 @@ namespace NeonVault
             float rate=1/Mathf.Max(.001f,item.interval);
             float reloadTime=item.reloadSeconds;
             return T("SCORE ","評価 ")+GearScoring.Score(item)+T("  BASE · Lv ","  基礎値 · Lv ")+item.level+T("  DMG ","  威力 ")+GunDamageMin(item).ToString("0.0")+"-"+GunDamageMax(item).ToString("0.0")+T(" × "," × ")+item.pellets+
-                T("  RATE ","  連射 ")+rate.ToString("0.0")+T("/s  MAG ","/秒  弾数 ")+item.magazine+T("  RELOAD ","  装填 ")+reloadTime.ToString("0.00")+T("s  SPEED ","秒  弾速 ")+item.speed.ToString("0.0")+T("  ACCURACY ","  命中精度 ")+Arsenal.Accuracy(item).ToString("0.0")+"%"+T("  CRIT ","  会心 ")+(GunCriticalChance(item)*100).ToString("0.#")+"% ×"+GunCriticalMultiplier(item).ToString("0.00")+"\n"+GearScoring.AffixSummary(item);
+                T("  RATE ","  連射 ")+rate.ToString("0.0")+T("/s  MAG ","/秒  弾数 ")+item.magazine+T("  RELOAD ","  リロード ")+reloadTime.ToString("0.00")+T("s  SPEED ","秒  弾速 ")+item.speed.ToString("0.0")+T("  ACCURACY ","  命中精度 ")+Arsenal.Accuracy(item).ToString("0.0")+"%"+T("  CRIT ","  会心 ")+(GunCriticalChance(item)*100).ToString("0.#")+"% ×"+GunCriticalMultiplier(item).ToString("0.00")+"\n"+GearScoring.AffixSummary(item);
         }
         void InventoryCopy(float x,float y,string value,GUIStyle style,Color color,float width)
         {GUI.color=color;GUIStyle copy=value!=null&&value.Contains(LegendaryRedOpen)?new GUIStyle(style){richText=true}:style;GUI.Label(new Rect(x,y,width,copy.CalcHeight(new GUIContent(value),width)+4),value,copy);GUI.color=Color.white;}
@@ -97,7 +97,7 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.027f,.028f,.023f,.97f));
             if(Button(new Rect(950,80,225,48),T("FIELD MODULES","拡張モジュール"))){artifactPage=true;meleeInventoryPage=false;}
             if(Button(new Rect(710,80,225,48),T("MELEE KIT","近接武器"))){artifactPage=false;meleeInventoryPage=true;}
-            Text(48,32,T("ARSENAL / EQUIPMENT","武器庫 / 装備"),heading,Gold,1050);
+            Text(48,32,T("ARSENAL / EQUIPMENT","インベントリ"),heading,Gold,1050);
             Text(50,90,T("Own up to 10 guns; equip 2. Choose a slot below. Q / wheel switches equipped guns only.","銃は10本所持・2本装備。下の枠を選んで装備。Q / ホイールは装備銃だけ切替。"),small,Mist,1100);
             DrawRunBuffLine(118);
             if(Button(new Rect(1190,80,225,48),T("CLOSE [I / ESC]","閉じる [I / ESC]")))ToggleInventory();
@@ -186,7 +186,7 @@ namespace NeonVault
             if(runHarvest>.01f)parts.Add(T("KILL HEAL ","撃破回復 ")+"+"+runHarvest.ToString("0.#"));
             if(ArtifactShield>.01f)parts.Add(T("BARRIER ","障壁 ")+ArtifactShield.ToString("0.#"));
             if(ArtifactDamageMultiplier>1.001f)parts.Add(T("MOD DMG ","モジュール威力 ")+"×"+ArtifactDamageMultiplier.ToString("0.00"));
-            if(reloadSurge>0)parts.Add(T("RELOAD ","装填強化 ")+reloadSurge.ToString("0.0")+T("s","秒"));
+            if(reloadSurge>0)parts.Add(T("RELOAD ","リロード強化 ")+reloadSurge.ToString("0.0")+T("s","秒"));
             string[] augments={T("OVERCHARGE","過負荷"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復手順"),T("SHOCK BOOSTER","衝撃増幅"),T("TESLA BRIDGE","電弧連鎖"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
             foreach(var kv in runUpgradeCounts)if(kv.Key>=0&&kv.Key<augments.Length)parts.Add(augments[kv.Key]+(kv.Value>1?" ×"+kv.Value:""));
             return T("UPGRADES: ","強化: ")+(parts.Count==0?T("none active","有効な効果なし"):string.Join("  ·  ",parts));
@@ -200,7 +200,7 @@ namespace NeonVault
         {
             if(item.effect==ArtifactEffect.KillShield)return ArtifactShield>0?T("barrier active","障壁発動中"):T("on kill","敵撃破で発動");
             if(item.effect==ArtifactEffect.DashPulse)return T("on dash","ダッシュで発動");
-            if(item.effect==ArtifactEffect.ReloadSurge)return ArtifactReloadSurgeRemaining(item)>0?T("surge active","強化発動中"):T("on reload","装填完了で発動");
+            if(item.effect==ArtifactEffect.ReloadSurge)return ArtifactReloadSurgeRemaining(item)>0?T("surge active","強化発動中"):T("on reload","リロード完了で発動");
             return ArtifactShield>0?T("conversion active","変換効果発動中"):T("requires barrier","障壁が必要");
         }
         void DrawAmmoInventoryStrip(float y)

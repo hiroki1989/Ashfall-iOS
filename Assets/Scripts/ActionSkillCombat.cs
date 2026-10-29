@@ -40,10 +40,12 @@ namespace NeonVault
         float ASPath(ActionSkillKind kind,int branch)
         {float n=0;for(int tier=0;tier<4;tier++)n+=Mathf.Clamp(ActionSkillRank(kind,branch,tier),0,6)/6f;return n;}
 
-        public void ActionSkillOnKill(Foe foe)
+        public void ActionSkillOnBulletHit(float charge)
         {
-            if(foe==null)return;
-            ActionSkillPoints=Mathf.Min(ActionSkillChargeMax,ActionSkillPoints+(foe.kind==3?4:foe.elite?2:1));
+            if(charge<=0)return;
+            bool wasReady=ActionSkillPoints>=ActionSkillChargeMax;
+            ActionSkillPoints=Mathf.Min(ActionSkillChargeMax,ActionSkillPoints+charge);
+            if(!wasReady&&ActionSkillPoints>=ActionSkillChargeMax)BeginActionSkillTutorial();
         }
 
         public bool TryUseActionSkill()

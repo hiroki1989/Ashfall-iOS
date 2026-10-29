@@ -251,9 +251,9 @@ namespace NeonVault
                 new[]{"Penetrator I","Bolt Timing I","Rangefinder I","Field Strip I","Long Case I","Penetrator II","Boss Hunter I","Third Weapon Slot","Fourth Weapon Slot","Boss Hunter II"},
                 new[]{"Suppressive Fire I","Sustained Fire I","Heavy Sight I","Feed Drill I","Belt Carrier I","Suppressive Fire II","Ammo Scavenging I","Quartermaster I","Kill Chain I","Ammo Scavenging II"}};
             string[][] titlesJa={
-                new[]{"口径強化 I","速射 I","照準 I","素早い装填 I","深い弾倉 I","口径強化 II","防護ライニング I","衝撃緩和 I","応急回復 I","起死回生"},
-                new[]{"重装弾 I","ポンプ操作 I","集弾 I","装填訓練 I","弾薬携行 I","重装弾 II","防護ライニング II","衝撃緩和 II","応急回復 II","回収弾薬"},
-                new[]{"制圧火力 I","継続射撃 I","戦闘照準 I","高速装填 I","ベルト給弾 I","制圧火力 II","弾薬回収 I","仕入れの達人 I","撃破連鎖 I","弾薬回収 II"},
+                new[]{"口径強化 I","速射 I","照準 I","素早いリロード I","深い弾倉 I","口径強化 II","防護ライニング I","衝撃緩和 I","応急回復 I","起死回生"},
+                new[]{"重装弾 I","ポンプ操作 I","集弾 I","リロード訓練 I","弾薬携行 I","重装弾 II","防護ライニング II","衝撃緩和 II","応急回復 II","回収弾薬"},
+                new[]{"制圧火力 I","継続射撃 I","戦闘照準 I","高速リロード I","ベルト給弾 I","制圧火力 II","弾薬回収 I","仕入れの達人 I","撃破連鎖 I","弾薬回収 II"},
                 new[]{"貫通弾 I","操作短縮 I","測距 I","分解整備 I","長尺弾倉 I","貫通弾 II","対ボス戦 I","武器枠 第3","武器枠 第4","対ボス戦 II"},
                 new[]{"制圧火力 I","継続射撃 I","重機関照準 I","給弾訓練 I","ベルト携行 I","制圧火力 II","弾薬回収 I","仕入れの達人 I","撃破連鎖 I","弾薬回収 II"}};
             for(int f=0;f<tracks.Length;f++)

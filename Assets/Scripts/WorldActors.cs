@@ -212,6 +212,7 @@ namespace NeonVault
         public Vector3 velocity;
         public float damage, life=3;
         public float hitAccuracy=100;
+        public float actionCharge;
         public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect;
         public GunEffect effect;
         public int bounces;
@@ -242,6 +243,7 @@ namespace NeonVault
                     Vector3 hitPoint=ContactPoint(target.transform.position,old,transform.position,target.kind==3?1.2f:.65f);
                     transform.position=hitPoint;CombatVisuals.Impact(hitPoint,velocity,visualColor,effect,transform.parent);
                     if(!target.Hit(damage,hitPoint,DamageNumberColor,hitAccuracy)){Destroy(gameObject);return;}
+                    if(actionCharge>0){game.ActionSkillOnBulletHit(actionCharge);actionCharge=0;}
                     game.RunHit(target,damage,hitPoint);
                     game.LegendaryBulletHit(target,hitPoint);
                     if(effect==GunEffect.Singularity) { game.GravityWell(transform.position,damage,DamageNumberColor); Destroy(gameObject); return; }

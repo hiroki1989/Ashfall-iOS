@@ -10,7 +10,7 @@ namespace NeonVault
         static readonly string[] english={"Kestrel","Ironwake","Voltarc","Mireline","Cinder","Aegis"};
         static readonly string[] japanese={"ケストレル","アイアンウェイク","ヴォルトアーク","マイアライン","シンダー","イージス"};
         static readonly string[] descriptions={"Precise action, quick reload; reduced damage.","Heavy impact; slower fire and handling.","Rapid fire, large magazines; reduced impact and accuracy.","Medical recovery systems restore health; reduced direct damage.","Reclaimed scatter systems; broad spread and longer reload.","Reliable protection; lower output and faster reload."};
-        static readonly string[] descriptionsJa={"高精度・高速装填。単発威力は低い。","高威力の重機関。射撃・装填は遅い。","高速連射・大容量。単発威力と精度は低い。","医療・防疫機構で体力を回復。直接威力は低い。","再生散弾機構。拡散が広く装填が遅い。","安定した防護と高速装填。攻撃出力は低い。"};
+        static readonly string[] descriptionsJa={"高精度・高速リロード。単発威力は低い。","高威力の重機関。射撃・リロードは遅い。","高速連射・大容量。単発威力と精度は低い。","医療・防疫機構で体力を回復。直接威力は低い。","再生散弾機構。拡散が広くリロードが遅い。","安定した防護と高速リロード。攻撃出力は低い。"};
         public static string Id(int index)=>ids[(index%Count+Count)%Count];
         public static int Index(string id){for(int i=0;i<Count;i++)if(ids[i]==id)return i;return -1;}
         public static string Name(string id,bool japanese=false){int i=Index(id);return i<0?(japanese?"不明メーカー":"Unknown manufacturer"):(japanese?ManufacturerCatalog.japanese:english)[i];}

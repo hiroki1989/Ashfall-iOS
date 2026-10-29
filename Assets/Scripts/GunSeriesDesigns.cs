@@ -81,12 +81,12 @@ namespace NeonVault {
    {"Box receiver: balanced close-range automatic", "Top magazine: controlled accurate fire, smaller capacity and slower cadence", "Helical feed: large reserve and quick fire, reduced impact and slower reload", "Drum feed: maximum reserve and cadence, reduced accuracy and slow reload"},
    {"Wood-stock bolt action: balanced precision", "Chassis action: stable deliberate fire, larger magazine and slower reload", "Bullpup action: compact handling and larger magazine, reduced precision and impact", "Heavy anti-materiel: high impact, slow fire and reload"}};
   static readonly string[,] descriptionsJa={
-   {"哨戒機構：均衡の取れた制式銃", "短カービン：連射・装填が速いが威力・精度が低い", "重戦機構：高威力だが連射が遅く弾数が少ない", "選抜射手機構：高精度の慎重な射撃、弾数は少ない"},
-   {"小型スライド：高速装填、威力・弾数は少ない", "制式自動拳銃：均衡の取れた副武装", "六連回転弾倉：強い単発、連射・装填は遅い", "大口径機構：高威力だが連射・装填は遅い"},
-   {"管状弾倉ポンプ：均衡の取れた散弾射撃", "水平二連折開機構：強い近距離斉射、装弾数は二発", "短胴ドラム：弾数・連射と引き換えに威力・精度が低い", "半自動機構：速い散弾連射、威力が低く装填は長い"},
-   {"弾帯箱：大容量だが弾帯交換は遅い", "円盤給弾：正確な支援射撃、装弾数は少ない", "ドラム給弾：高速持続射撃、威力・精度は低い", "重支援機構：強い安定射撃、連射・装填は遅い"},
-   {"箱型機関：均衡の取れた近距離連射", "上部弾倉：正確な射撃、弾数・連射速度は控えめ", "螺旋弾倉：大容量・高速連射、威力が低く装填は長い", "ドラム給弾：最大容量と高速連射、精度が低く装填は長い"},
-   {"木銃床ボルト：均衡の取れた精密射撃", "シャーシ機構：安定射撃と増弾、連射・装填は遅い", "ブルパップ機構：小型・増弾、威力・精度は控えめ", "重対物機構：高威力だが連射・装填は遅い"}};
+   {"哨戒機構：均衡の取れた制式銃", "短カービン：連射・リロードが速いが威力・精度が低い", "重戦機構：高威力だが連射が遅く弾数が少ない", "選抜射手機構：高精度の慎重な射撃、弾数は少ない"},
+   {"小型スライド：高速リロード、威力・弾数は少ない", "制式自動拳銃：均衡の取れた副武装", "六連回転弾倉：強い単発、連射・リロードは遅い", "大口径機構：高威力だが連射・リロードは遅い"},
+   {"管状弾倉ポンプ：均衡の取れた散弾射撃", "水平二連折開機構：強い近距離斉射、装弾数は二発", "短胴ドラム：弾数・連射と引き換えに威力・精度が低い", "半自動機構：速い散弾連射、威力が低くリロードは長い"},
+   {"弾帯箱：大容量だが弾帯交換は遅い", "円盤給弾：正確な支援射撃、装弾数は少ない", "ドラム給弾：高速持続射撃、威力・精度は低い", "重支援機構：強い安定射撃、連射・リロードは遅い"},
+   {"箱型機関：均衡の取れた近距離連射", "上部弾倉：正確な射撃、弾数・連射速度は控えめ", "螺旋弾倉：大容量・高速連射、威力が低くリロードは長い", "ドラム給弾：最大容量と高速連射、精度が低くリロードは長い"},
+   {"木銃床ボルト：均衡の取れた精密射撃", "シャーシ機構：安定射撃と増弾、連射・リロードは遅い", "ブルパップ機構：小型・増弾、威力・精度は控えめ", "重対物機構：高威力だが連射・リロードは遅い"}};
   public static string Description(EquipmentRecipe r,bool japanese=false){
    string mechanism=r.series>=4?ExpandedGunDesigns.Description(r.gunClass,r.series-4,japanese):r.maker==3&&r.gunClass==4&&r.series==1?(japanese?"密閉箱型給弾：正確な射撃、弾数・連射速度は控えめ":"Sealed box feed: controlled accurate fire, smaller capacity and slower cadence"):(japanese?descriptionsJa:descriptions)[r.gunClass,r.series];return ClassName(r.gunClass,japanese)+" / "+SeriesName(r.maker,r.gunClass,r.series,japanese)+" / "+mechanism+" / "+VariantName(r.seriesVariant,japanese);
   }

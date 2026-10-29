@@ -17,6 +17,7 @@ namespace NeonVault {
   readonly Dictionary<Renderer,Material[]> originalRendererMaterials=new Dictionary<Renderer,Material[]>();
   readonly Dictionary<Renderer,ShadowCastingMode> originalRendererShadows=new Dictionary<Renderer,ShadowCastingMode>();
   readonly Dictionary<int,Renderer[]> buildingRenderers=new Dictionary<int,Renderer[]>();
+  int decorationOwner=-1;
   readonly Matrix4x4[] scratch=new Matrix4x4[1023];
   static Template Get(GameObject prefab){
    if(templates.TryGetValue(prefab,out var t))return t;t=new Template();bool first=true;
@@ -42,7 +43,7 @@ namespace NeonVault {
   public static void Add(Transform parent,GameObject prefab,Vector3 position,Quaternion rotation,Vector3 scale,bool building=false){
    var batch=parent.GetComponent<ImportedWorldBatch>();if(!batch)batch=parent.gameObject.AddComponent<ImportedWorldBatch>();
    var matrix=parent.localToWorldMatrix*Matrix4x4.TRS(position,rotation,scale);
-   int owner=-1;if(building){owner=batch.buildingBounds.Count;var source=Get(prefab).bounds;var bounds=new Bounds(matrix.MultiplyPoint3x4(source.center),Vector3.zero);for(int corner=0;corner<8;corner++)bounds.Encapsulate(matrix.MultiplyPoint3x4(source.center+Vector3.Scale(source.extents,new Vector3((corner&1)==0?-1:1,(corner&2)==0?-1:1,(corner&4)==0?-1:1))));batch.buildingBounds.Add(bounds);batch.hidden.Add(false);}
+   int owner=batch.decorationOwner;if(building){owner=batch.buildingBounds.Count;var source=Get(prefab).bounds;var bounds=new Bounds(matrix.MultiplyPoint3x4(source.center),Vector3.zero);for(int corner=0;corner<8;corner++)bounds.Encapsulate(matrix.MultiplyPoint3x4(source.center+Vector3.Scale(source.extents,new Vector3((corner&1)==0?-1:1,(corner&2)==0?-1:1,(corner&4)==0?-1:1))));batch.buildingBounds.Add(bounds);batch.hidden.Add(false);}
    foreach(var part in Get(prefab).parts){var key=(part.mesh,part.material,part.sub);if(!batch.groups.TryGetValue(key,out var group)){group=new Group{mesh=part.mesh,material=part.material,sub=part.sub};batch.groups.Add(key,group);}group.matrices.Add(matrix*part.local);group.owners.Add(owner);}
   }
   // Register all ordinary renderers belonging to the same site as its instanced shell.
@@ -52,6 +53,10 @@ namespace NeonVault {
    foreach(var renderer in renderers)if(renderer&&renderer.enabled){var bounds=buildingBounds[owner];bounds.Encapsulate(renderer.bounds);buildingBounds[owner]=bounds;}
   }
   public int RegisterBuilding(Bounds bounds){int owner=buildingBounds.Count;buildingBounds.Add(bounds);hidden.Add(false);return owner;}
+  // Nearby foundation debris is instanced separately from the facade but belongs
+  // to the same building. Choose the owner at the footprint centre before adding it.
+  public void BeginBuildingDecoration(Vector3 point){decorationOwner=-1;float best=float.MaxValue;for(int i=0;i<buildingBounds.Count;i++){var center=buildingBounds[i].center;float dx=center.x-point.x,dz=center.z-point.z;float d=dx*dx+dz*dz;if(d<best){best=d;decorationOwner=i;}}}
+  public void EndBuildingDecoration(){decorationOwner=-1;}
   public void AddBuildingPart(int owner,Mesh mesh,Material material,Matrix4x4 matrix){
    var key=(mesh,material,0);if(!groups.TryGetValue(key,out var group)){group=new Group{mesh=mesh,material=material,sub=0};groups.Add(key,group);}group.matrices.Add(matrix);group.owners.Add(owner);
   }
@@ -60,14 +65,14 @@ namespace NeonVault {
   bool Hides(Bounds bounds,Vector3 point,Camera camera){var viewport=camera.WorldToViewportPoint(point);if(viewport.z<=0||viewport.x<0||viewport.x>1||viewport.y<0||viewport.y>1)return false;var ray=camera.ViewportPointToRay(viewport);return bounds.IntersectRay(ray,out float distance)&&distance<Vector3.Dot(point-ray.origin,ray.direction)-.4f;}
   static Material Faded(Material source){
    if(fadedMaterials.TryGetValue(source,out var result))return result;
-   result=new Material(source);result.shader=ImportedWorldAssets.BuiltinStandard();
+   var ghostShader=Resources.Load<Shader>("BuildingGhost");
+   if(!ghostShader){Debug.LogError("BuildingGhost shader is missing; building opacity cannot be changed.");return source;}
+   result=new Material(source);result.shader=ghostShader;
    // A building contains several walls, floors and trim meshes along one sightline.
    // Their transparent layers accumulate, so use a low per-surface alpha to keep
    // actors visible even through the full depth of a combined building mesh.
-   if(result.HasProperty("_Color")){var color=result.color;color.a=.045f;result.color=color;}
-   if(result.HasProperty("_Metallic"))result.SetFloat("_Metallic",0);if(result.HasProperty("_Glossiness"))result.SetFloat("_Glossiness",0);
-   result.SetFloat("_Mode",2);result.SetFloat("_SrcBlend",(float)BlendMode.SrcAlpha);result.SetFloat("_DstBlend",(float)BlendMode.OneMinusSrcAlpha);result.SetFloat("_ZWrite",0);
-   result.DisableKeyword("_ALPHATEST_ON");result.EnableKeyword("_ALPHABLEND_ON");result.DisableKeyword("_ALPHAPREMULTIPLY_ON");result.renderQueue=3000;result.enableInstancing=true;
+   if(result.HasProperty("_Color")){var color=result.color;color.a=.16f;result.color=color;}
+   result.renderQueue=3000;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
   void UpdateRendererFades(){

@@ -186,7 +186,7 @@ namespace NeonVault
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
                 if (combat || hub) Stick(AimRect, aimStick, fingers.ContainsValue(-2));
-                string[] labels = VaultLanguage.Japanese ? new[] { "装填", "拾得", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃" } : new[] { "LOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE" };
+                string[] labels = VaultLanguage.Japanese ? new[] { "リロード", "拾う", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃" } : new[] { "RELOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE" };
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {
                     if (i == (int)MobileAction.Skill) continue; // Drawn by the action skill HUD.
@@ -222,12 +222,12 @@ namespace NeonVault
         void IconLine(Rect r,float ax,float ay,float bx,float by,Color color,float weight=.075f)
         {
             Vector2 a=new Vector2(r.x+ax*r.width,r.y+ay*r.height), b=new Vector2(r.x+bx*r.width,r.y+by*r.height);
-            Matrix4x4 old=GUI.matrix;GUI.color=color;GUIUtility.RotateAroundPivot(Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg,a);
+            Matrix4x4 old=GUI.matrix;GUI.color=color;GUI.matrix=old*Matrix4x4.TRS(new Vector3(a.x,a.y,0),Quaternion.Euler(0,0,Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg),Vector3.one)*Matrix4x4.Translate(new Vector3(-a.x,-a.y,0));
             GUI.DrawTexture(new Rect(a.x,a.y-r.width*weight*.5f,Vector2.Distance(a,b),r.width*weight),Texture2D.whiteTexture);GUI.matrix=old;
         }
         void ActionIcon(Rect r,MobileAction action,Color c)
         {
-            int artIndex=action==MobileAction.Fire?0:action==MobileAction.Reload?1:action==MobileAction.Pickup||action==MobileAction.Interact?2:action==MobileAction.Melee?3:action==MobileAction.Inventory?4:action==MobileAction.Pause?12:-1;
+            int artIndex=action==MobileAction.Fire?0:action==MobileAction.Reload?1:action==MobileAction.Interact?2:action==MobileAction.Melee?3:action==MobileAction.Inventory?4:action==MobileAction.Pause?12:-1;
             if(artIndex>=0&&FieldUIArt.Icon(r,artIndex,Color.white))return;
             switch(action)
             {

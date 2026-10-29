@@ -54,7 +54,8 @@ namespace NeonVault
         {GUI.color=color??Color.white;GUIStyle copy=style??label;if(value!=null&&value.Contains(LegendaryRedOpen)&&!copy.richText)copy=new GUIStyle(copy){richText=true};GUI.Label(new Rect(x,y,width,160),value,copy);GUI.color=Color.white;}
         void Line(Vector2 a,Vector2 b,Color color,float thickness=1)
         {
-            Matrix4x4 previous=GUI.matrix;Vector2 delta=b-a;GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg,a);
+            Matrix4x4 previous=GUI.matrix;Vector2 delta=b-a;
+            GUI.matrix=previous*Matrix4x4.TRS(new Vector3(a.x,a.y,0),Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg),Vector3.one)*Matrix4x4.Translate(new Vector3(-a.x,-a.y,0));
             Box(new Rect(a.x,a.y,delta.magnitude,thickness),color);GUI.matrix=previous;
         }
         void Diamond(float x,float y,float size,Color color)
@@ -119,7 +120,7 @@ namespace NeonVault
                 else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();}
                 else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
-                DrawFirstStepsTutorial();
+                DrawFirstStepsTutorial();DrawActionSkillTutorial();
                 if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
             }
             if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
@@ -134,7 +135,7 @@ namespace NeonVault
             {
                 if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing)DrawActionSkillHUD();else DrawOverlay();
             }
-            DrawFirstStepsTutorial();
+            DrawFirstStepsTutorial();DrawActionSkillTutorial();
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
         void DrawDeathScreen()
@@ -164,14 +165,7 @@ namespace NeonVault
         }
         void DrawMenu()
         {
-            if(menuArt!=null)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
-            for(int i=0;i<40;i++)Box(new Rect(i*24,0,25,900),new Color(.008f,.016f,.022f,.72f*Mathf.Pow(1-i/40f,.7f)));
-            Box(new Rect(0,0,1440,78),new Color(.012f,.02f,.025f,.65f));
-            var brand=Resources.Load<Texture2D>("Art/Brand/ApprovedLogoReference");if(brand)GUI.DrawTextureWithTexCoords(new Rect(60,105,520,310),brand,new Rect(.07f,.15f,.39f,.70f),true);else Text(60,204,"DUST & DEBT",title,Gold);
-            if(Button(new Rect(66,483,440,60),T("CONTINUE","ゲームを続ける"),true))ContinueOverworldGame();
-            if(HasSavedRun&&Button(new Rect(66,552,440,54),T("CONTINUE SAVED EXPEDITION","保存した探索を再開"),true))ResumeSavedRun();
-            Line(new Vector2(67,686),new Vector2(506,686),new Color(.4f,.5f,.5f,.5f));
-            Box(new Rect(0,834,1440,66),new Color(.012f,.022f,.027f,.94f));
+            DrawTitleMenu(false);
             toastTimer-=Time.unscaledDeltaTime;
         }
         void DrawOverlay()
@@ -202,7 +196,7 @@ namespace NeonVault
             {if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(390,343,660,93));else Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}
             if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
             if(screen==Screen.Pause&&Button(new Rect(390,700,660,42),T("WORLD MAP","全体地図")))OpenOverworldMap();
-            if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","武器庫 / 装備 [I]")))ToggleInventory();
+            if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","インベントリ [I]")))ToggleInventory();
             if(screen==Screen.Pause && Button(new Rect(390,654,660,48),T("SAVE EXPEDITION & RETURN TO MENU","探索を保存してメニューへ")))SaveRunAndReturnToMenu();
         }
         void DrawHeldWeaponHUD(Rect r)

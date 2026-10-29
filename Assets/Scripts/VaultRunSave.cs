@@ -9,7 +9,8 @@ namespace NeonVault
         const string RunSaveKey = "Vault.ExpeditionCheckpoint.v1";
         [Serializable] sealed class RunCheckpoint
         {
-            public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount, actionSkillPoints;
+            public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount;
+            public float actionSkillPoints;
             public int[] routeX, routeY, ammoReserves, ammoCrateRooms, upgradeKeys, upgradeValues;
             public float hp, baseMaxHp, damageBonus, fireBonus, runDamage, runFire, runVitality, runDash, runChain, runHarvest, runTime, artifactShield, artifactClock;
             public float playerX, playerZ, aimX, aimZ;
@@ -33,7 +34,7 @@ namespace NeonVault
         [Serializable] sealed class AmmoCrateCheckpoint { public Vector3 position; public int type,amount; }
 
         public bool HasSavedRun => !smoke && PlayerPrefs.HasKey(RunSaveKey);
-        void ClearRunCheckpoint(){if(PlayerPrefs.HasKey(RunSaveKey)){PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();}}
+        void ClearRunCheckpoint(){if(smoke)return;if(PlayerPrefs.HasKey(RunSaveKey)){PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();}}
 
         public bool SaveRunCheckpoint()
         {
@@ -80,10 +81,12 @@ namespace NeonVault
             runUpgradeCounts.Clear();if(save.upgradeKeys!=null&&save.upgradeValues!=null)for(int i=0;i<Math.Min(save.upgradeKeys.Length,save.upgradeValues.Length);i++)runUpgradeCounts[save.upgradeKeys[i]]=save.upgradeValues[i];
             screen=Screen.Playing;fieldAmmoCrates.Clear();BuildRoom(false);float groundedPlayerY=player.position.y;var savedPosition=new Vector3(save.playerX,groundedPlayerY,save.playerZ);player.position=Blocked(savedPosition,.45f)?new Vector3(Layout.Entry.x,groundedPlayerY,Layout.Entry.z):savedPosition;aim=new Vector3(save.aimX,0,save.aimZ);if(aim.sqrMagnitude<.01f)aim=Vector3.right;aim.Normalize();player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);cleared=save.cleared;
             foreach(var state in save.foes){var position=new Vector3(state.x,.65f,state.z);if(Blocked(position,.8f))position=FindEnemySpawn();restoringChampionCheckpoint=true;try{SpawnFoe(position,state.kind);}finally{restoringChampionCheckpoint=false;}var foe=Enemies[Enemies.Count-1];if(state.elite){foe.elite=true;foe.ConfigureDifficulty(1,1.35f,.12f);foe.transform.localScale*=1.15f;}foe.hp=Mathf.Clamp(state.hp,1,state.maxHp);foe.maxHp=state.maxHp;foe.timer=state.timer;}
+            restoringLoot=true;
             foreach(var d in save.guns)if(d.item!=null)AddDrop(d.item,d.position);
             foreach(var d in save.armor)if(d.item!=null)AddArmorDrop(d.item,d.position);
             foreach(var d in save.modules)if(d.item!=null)AddArtifactDrop(d.item,d.position);
             foreach(var d in save.melee)if(d.item!=null)AddMeleeDrop(d.item,d.position);
+            restoringLoot=false;
             foreach(var d in save.supplies){if(d.healthPack)AddHealthPackDrop(d.position);else if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,NormalizeAmmoType((AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1)),d.ammoAmount);}
             foreach(var c in save.chests){Vector3 p=c.position;p.y=0;var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);chests.Add(new Chest{position=p,visual=obj});}
             foreach(var c in save.ammoCrates){var type=NormalizeAmmoType((AmmoType)Mathf.Clamp(c.type,0,AmmoTypeCount-1));var obj=CreateLootPresentation(AmmoPickupName(type,c.amount),c.position,new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,c.amount);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,type=type,amount=c.amount,visual=obj});}

@@ -7,6 +7,8 @@ namespace NeonVault
     {
         int eqCategory;
         string eqSelectedKey;
+        object eqPendingDiscard;
+        string eqPendingDiscardName;
         bool eqLastMerchant,eqLastSelling,eqShowFullDetails,eqUpgradePage;
         Vector2 eqGridScroll,eqDetailScroll,eqLoadoutScroll;
         GUIStyle eqCopy,eqCaption,eqButtonStyle;
@@ -14,10 +16,10 @@ namespace NeonVault
         public bool EquipmentMenuVisible=>InventoryOpen||(screen==Screen.Shop&&!debtPage);
         public int EquipmentGestureRegion(Vector2 point)
         {
-            if(!EquipmentMenuVisible||eqUpgradePage||!string.IsNullOrEmpty(pendingSaleKey))return 0;
+            if(!EquipmentMenuVisible||eqUpgradePage||!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null)return 0;
             float top=InventoryOpen?122:196,gridTop=top+86;
             if(new Rect(36,gridTop+8,432,766-gridTop).Contains(point))return 1;
-            if(new Rect(950,top+248,446,312-top).Contains(point))return 2;
+            if(new Rect(950,top+248,446,362-top).Contains(point))return 2;
             if(new Rect(502,652,406,126).Contains(point))return 4;
             if(new Rect(494,top+8,422,(InventoryOpen?526:452)-45).Contains(point))return 3;
             return 0;
@@ -26,13 +28,13 @@ namespace NeonVault
         {
             float top=InventoryOpen?122:196;
             if(region==1)eqGridScroll.y=Mathf.Clamp(eqGridScroll.y-delta.y,0,Mathf.Max(0,eqGridExtent-(680-top)));
-            if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(312-top)));
+            if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(362-top)));
             if(region==3&&equipmentHeroPreview)equipmentHeroPreview.Angle=Mathf.Repeat(equipmentHeroPreview.Angle-delta.x*.55f+155,360)-155;
             if(region==4)eqLoadoutScroll.y=Mathf.Max(0,eqLoadoutScroll.y-delta.y);
         }
         sealed class EqCard
         {
-            public string key,name,description,fullDescription,summary,maker; public Color color; public bool equipped;
+            public string key,name,description,fullDescription,summary,comparison,maker; public Color color; public bool equipped;
             public object item; public int offer=-1; public SaleEntry sale;
         }
         void EqText(Rect r,string value,Color color,GUIStyle style=null)
@@ -68,7 +70,7 @@ namespace NeonVault
             var c=new EqCard{item=item,color=Mist};bool has=false;int score=0,reference=0,level=1;Rarity rarity=Rarity.Common;string maker=null;
             if(item is Gun g){c.key="g:"+g.id;c.name=VaultLanguage.GunName(g);c.color=g.color;c.equipped=EquippedWeaponSlot(g)>=0;score=GearScoring.Score(g);reference=EqGunComparison(out has);level=g.level;rarity=g.rarity;maker=ManufacturerBranding.Maker(g);
                 string damage=T("DMG ","威力 ")+GunDamageMin(g).ToString("0.0")+"-"+GunDamageMax(g).ToString("0.0")+(g.pellets>1?" ×"+g.pellets:"");
-                c.description=T("TYPE ","銃種 ")+VaultLanguage.GunClassName(g)+"\n"+damage+T("   RATE ","   連射 ")+(1/Mathf.Max(.001f,g.interval)).ToString("0.0")+T("/s\nMAG ","/秒\n装弾 ")+g.magazine+T("   RELOAD ","   装填 ")+g.reloadSeconds.ToString("0.0")+T("s\nCRIT ","秒\n会心 ")+(GunCriticalChance(g)*100).ToString("0.#")+"%";
+                c.description=T("TYPE ","銃種 ")+VaultLanguage.GunClassName(g)+"\n"+damage+T("   RATE ","   連射 ")+(1/Mathf.Max(.001f,g.interval)).ToString("0.0")+T("/s\nMAG ","/秒\n装弾 ")+g.magazine+T("   RELOAD ","   リロード ")+g.reloadSeconds.ToString("0.0")+T("s\nCRIT ","秒\n会心 ")+(GunCriticalChance(g)*100).ToString("0.#")+"%";
                 c.description=EqAppend(c.description,GearScoring.AffixSummary(g));
                 if(!string.IsNullOrEmpty(g.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(g,LegendaryCatalog.Description(g,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,T("ACCURACY ","命中 ")+Arsenal.Accuracy(g).ToString("0.#")+"%"+T("   SPEED ","   弾速 ")+g.speed.ToString("0.#"));
@@ -83,7 +85,7 @@ namespace NeonVault
                 string moduleDetail=m.Description;int separator=moduleDetail.IndexOf(" / ",StringComparison.Ordinal);if(separator>=0)moduleDetail=moduleDetail.Substring(separator+3);
                 c.fullDescription=T("TYPE Module","種別 モジュール")+"\n"+LegendaryDescription(m,moduleDetail);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
             else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"-"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.effectiveRange.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
-            c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity)+"\n"+(!c.equipped&&has?EqComparison(score,reference):"");
+            c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity);c.comparison=!c.equipped&&has?EqComparison(score,reference):"";
             string comparison=!c.equipped&&has?EqComparison(score,reference):"";
             string header=comparison;
             c.maker=maker;c.description=EqAppend(header,c.description);c.fullDescription=EqAppend(header,c.fullDescription);return c;
@@ -136,17 +138,16 @@ namespace NeonVault
         bool DrawEquipmentScreen(bool merchant)
         {
             if(merchant&&debtPage)return false;
-            int copyFontSize=MobileTouchControls.Enabled?28:23;
+            int copyFontSize=MobileTouchControls.Enabled?31:23;
             eqCopy=new GUIStyle(label){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip,richText=true};eqCaption=new GUIStyle(eqCopy){font=this.font,fontSize=MobileTouchControls.Enabled?30:27,fontStyle=FontStyle.Normal};eqButtonStyle=new GUIStyle(centered){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};eqButtonStyle.normal.textColor=Color.white;eqButtonStyle.hover.textColor=Color.white;eqButtonStyle.active.textColor=Color.white;
-            if(eqLastMerchant!=merchant||eqLastSelling!=shopSellingPage){eqSelectedKey=null;eqShowFullDetails=false;eqGridScroll=eqDetailScroll=Vector2.zero;eqLastMerchant=merchant;eqLastSelling=shopSellingPage;if(!merchant)eqUpgradePage=false;}
-            bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey);
+            if(eqLastMerchant!=merchant||eqLastSelling!=shopSellingPage){eqSelectedKey=null;eqShowFullDetails=false;eqPendingDiscard=null;eqGridScroll=eqDetailScroll=Vector2.zero;eqLastMerchant=merchant;eqLastSelling=shopSellingPage;if(!merchant)eqUpgradePage=false;}
+            bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey)&&eqPendingDiscard==null;
             Box(new Rect(0,0,1440,900),EqCanvas);
             Box(new Rect(28,12,44,3),EqAccent);
-            FieldUIArt.Icon(new Rect(1080,28,44,44),5,EqAccent);
             Box(new Rect(28,103,1384,1),EqLine);
-            EqText(new Rect(28,18,950,44),merchant?T("MARA / SALVAGE EXCHANGE","マラ / 回収品交換所"):T("ARSENAL / EQUIPMENT","武器庫 / 装備"),EqInk,new GUIStyle(eqCaption){fontSize=34});
+            EqText(new Rect(28,18,950,44),merchant?T("MARA / SALVAGE EXCHANGE","マラ / 回収品交換所"):T("INVENTORY","インベントリ"),EqInk,new GUIStyle(eqCaption){fontSize=34});
             if(merchant)EqText(new Rect(28,66,900,44),T("SCRAP ","所持スクラップ ")+Credits.ToString("N0"),EqMuted);
-            if(EqButton(new Rect(1172,16,240,76),T("CLOSE / BACK","閉じて戻る"))){if(merchant){screen=Screen.Hub;pendingSaleKey=null;}else ToggleInventory();return true;}
+            if(EqButton(new Rect(1172,16,240,76),T("CLOSE","閉じる"))){if(merchant){screen=Screen.Hub;pendingSaleKey=null;}else ToggleInventory();return true;}
             if(merchant)
             {
                 if(EqNavigation(new Rect(28,112,212,72),T("BUY","購入"),!shopSellingPage&&!eqUpgradePage)){shopSellingPage=false;eqUpgradePage=false;pendingSaleKey=null;}
@@ -160,7 +161,7 @@ namespace NeonVault
             int[] owned={Weapons.Count,ActiveArmorCount,ArtifactInventory.Count,MeleeWeaponInventory.Count};
             int[] limits={WeaponCapacity,ArmorCapacity,ArtifactCapacity,MeleeWeaponCapacity};
             for(int i=0;i<tabs.Length;i++)tabs[i]+="\n"+owned[i]+" / "+limits[i];
-            var previousTabStyle=eqButtonStyle;eqButtonStyle=new GUIStyle(eqButtonStyle){fontSize=19,wordWrap=false};
+            var previousTabStyle=eqButtonStyle;eqButtonStyle=new GUIStyle(eqButtonStyle){fontSize=MobileTouchControls.Enabled?21:19,wordWrap=false};
             for(int i=0;i<4;i++)if(EqNavigation(new Rect(28+i*112,top,106,74),tabs[i],eqCategory==i)){eqCategory=i;saleCategory=i;eqSelectedKey=null;eqShowFullDetails=false;pendingSaleKey=null;eqGridScroll=eqDetailScroll=Vector2.zero;}
             eqButtonStyle=previousTabStyle;
             float gridTop=top+86;
@@ -180,7 +181,7 @@ namespace NeonVault
             const float rowStep=220;
             eqGridExtent=Mathf.Max(gridHeight,cards.Count*rowStep);
             eqGridScroll=GUI.BeginScrollView(new Rect(36,gridTop+8,432,gridHeight),eqGridScroll,new Rect(0,0,410,eqGridExtent));
-            var cardText=new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?27:24};
+            var cardText=new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?30:24};
             for(int i=0;i<cards.Count;i++)
             {
                 // IMGUI clips pixels, but does not skip loading offscreen portraits.
@@ -191,31 +192,36 @@ namespace NeonVault
                 FieldUIArt.Plate(r,chosen);
                 EqPortrait(new Rect(r.x+16,r.y+16,122,122),c.item);
                 Box(new Rect(r.x+16,r.y+150,32,3),c.color);
-                EqText(new Rect(r.x+154,r.y+12,244,118),(c.equipped?"✓ ":"")+c.name,EqInk,cardText);
-                EqText(new Rect(r.x+154,r.y+142,244,58),c.summary,EqMuted,cardText);
+                string cardName=c.name.Trim().Replace("\n ","\n").Replace("\n　","\n");var nameStyle=new GUIStyle(cardText);
+                while(nameStyle.fontSize>20&&nameStyle.CalcHeight(new GUIContent(cardName),244)>118)nameStyle.fontSize--;
+                EqText(new Rect(r.x+154,r.y+12,244,118),cardName,EqInk,nameStyle);
+                var summaryStyle=new GUIStyle(cardText){fontSize=MobileTouchControls.Enabled?23:24,wordWrap=false};
+                while(summaryStyle.fontSize>14&&summaryStyle.CalcSize(new GUIContent(c.summary)).x>244)summaryStyle.fontSize--;
+                EqText(new Rect(r.x+154,r.y+139,244,29),c.summary,EqMuted,summaryStyle);
+                EqText(new Rect(r.x+154,r.y+170,244,30),c.equipped?"✓ "+T("EQUIPPED","装備中"):c.comparison,EqMuted,new GUIStyle(cardText){fontSize=MobileTouchControls.Enabled?23:24,wordWrap=false});
                 if(GUI.Button(r,GUIContent.none,GUIStyle.none)){eqSelectedKey=c.key;eqShowFullDetails=false;eqDetailScroll=Vector2.zero;}
             }
             GUI.EndScrollView();if(cards.Count==0)EqText(new Rect(48,gridTop+30,400,180),T("No items in this category","このカテゴリにはアイテムがありません"),EqMuted);
             if(selected!=null)
             {
-                EqText(new Rect(952,top+20,440,94),selected.name,EqInk,eqCaption);
+                var nameStyle=new GUIStyle(eqCaption);while(nameStyle.fontSize>20&&nameStyle.CalcHeight(new GUIContent(selected.name),440)>84)nameStyle.fontSize--;
+                EqText(new Rect(952,top+20,440,94),selected.name,EqInk,nameStyle);
                 Box(new Rect(952,top+104,64,3),selected.color);
                 EqPortrait(new Rect(978,top+116,390,124),selected.item,true);
-                float detailH=312-top;
-                string eqDetail=eqShowFullDetails?selected.fullDescription:selected.description;
+                float detailH=362-top;
+                string eqDetail=selected.fullDescription;
                 float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
-                const float logoHeight=64;
+                const float logoHeight=82;
                 eqDetailExtent=Mathf.Max(detailH,textHeight+logoHeight+16);
                 eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));
-                if(!string.IsNullOrEmpty(selected.maker))ManufacturerBranding.Badge(new Rect(6,4,208,logoHeight),selected.maker);
+                if(!string.IsNullOrEmpty(selected.maker))ManufacturerBranding.Badge(new Rect(6,4,290,logoHeight),selected.maker);
                 EqText(new Rect(2,logoHeight+12,410,textHeight),eqDetail,EqInk);
                 GUI.EndScrollView();
-                if(EqButton(new Rect(950,570,446,44),eqShowFullDetails?T("SHOW SUMMARY","要約に戻す"):T("MORE DETAILS","詳細を表示"))){eqShowFullDetails=!eqShowFullDetails;eqDetailScroll=Vector2.zero;}
                 EqActions(selected,merchant);
             }
             for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");var previous=eqButtonStyle;var fitted=new GUIStyle(previous){wordWrap=false};while(fitted.fontSize>12&&fitted.CalcSize(new GUIContent(shortLabel)).x>r.width-20)fitted.fontSize--;eqButtonStyle=fitted;if(EqButton(r,caption))BuyAmmo(type,1);eqButtonStyle=previous;}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
             if(!merchant)EqText(new Rect(28,864,1384,32),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=18});
-            GUI.enabled=eqPreviousEnabled;if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();return true;
+            GUI.enabled=eqPreviousEnabled;if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();else if(!merchant&&eqPendingDiscard!=null)EqDiscardConfirmation();return true;
         }
         void DrawEquippedTotals()
         {
@@ -276,10 +282,10 @@ namespace NeonVault
         }
         void EqEquipActions(EqCard c,float y,bool discard)
         {
-            if(c.item is Gun g){for(int slot=0;slot<AvailableWeaponSlotCount;slot++){int index=slot;if(EqButton(new Rect(950+slot*112,y,106,72),T("SLOT ","枠 ")+(slot+1),EquippedWeaponSlot(g)==slot))EquipWeapon(Weapons.IndexOf(g),index);}if(discard&&!c.equipped&&Weapons.Count>1&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))DiscardWeapon(Weapons.IndexOf(g));}
-            else if(c.item is ArmorItem a){if(EqButton(new Rect(950,y,446,72),c.equipped?T("REMOVE","外す"):T("EQUIP","装備"))){if(c.equipped)UnequipArmor((int)a.slot);else EquipArmor(a);}if(discard&&!c.equipped&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))DiscardArmor(a);}
-            else if(c.item is ArtifactItem m){int current=Array.IndexOf(EquippedArtifacts,m);if(!discard&&current>=0){if(EqButton(new Rect(950,y,446,70),T("REMOVE","外す")))UnequipArtifact(current);return;}for(int slot=0;slot<2;slot++)if(EqButton(new Rect(950+slot*226,y,220,72),T("SLOT ","枠 ")+(slot+1),current==slot))EquipArtifact(m,slot);if(current>=0){if(EqButton(new Rect(950,y+80,446,70),T("REMOVE","外す")))UnequipArtifact(current);}else if(discard&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))DiscardArtifact(m);}
-            else if(c.item is MeleeWeaponItem w){if(!c.equipped&&EqButton(new Rect(950,y,446,72),T("EQUIP","装備")))EquipMeleeWeapon(w);else if(c.equipped)EqText(new Rect(958,y,420,70),T("✓ EQUIPPED","✓ 装備中"),EqAccent);if(discard&&!c.equipped&&MeleeWeaponInventory.Count>1&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄"))){MeleeWeaponInventory.Remove(w);SaveInventory();}}
+            if(c.item is Gun g){for(int slot=0;slot<AvailableWeaponSlotCount;slot++){int index=slot;if(EqButton(new Rect(950+slot*112,y,106,72),T("SLOT ","枠 ")+(slot+1),EquippedWeaponSlot(g)==slot))EquipWeapon(Weapons.IndexOf(g),index);}if(discard&&!c.equipped&&Weapons.Count>1&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))QueueDiscard(c);}
+            else if(c.item is ArmorItem a){if(EqButton(new Rect(950,y,446,72),c.equipped?T("REMOVE","外す"):T("EQUIP","装備"))){if(c.equipped)UnequipArmor((int)a.slot);else EquipArmor(a);}if(discard&&!c.equipped&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))QueueDiscard(c);}
+            else if(c.item is ArtifactItem m){int current=Array.IndexOf(EquippedArtifacts,m);if(!discard&&current>=0){if(EqButton(new Rect(950,y,446,70),T("REMOVE","外す")))UnequipArtifact(current);return;}for(int slot=0;slot<2;slot++)if(EqButton(new Rect(950+slot*226,y,220,72),T("SLOT ","枠 ")+(slot+1),current==slot))EquipArtifact(m,slot);if(current>=0){if(EqButton(new Rect(950,y+80,446,70),T("REMOVE","外す")))UnequipArtifact(current);}else if(discard&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))QueueDiscard(c);}
+            else if(c.item is MeleeWeaponItem w){if(!c.equipped&&EqButton(new Rect(950,y,446,72),T("EQUIP","装備")))EquipMeleeWeapon(w);else if(c.equipped)EqText(new Rect(958,y,420,70),T("✓ EQUIPPED","✓ 装備中"),EqAccent);if(discard&&!c.equipped&&MeleeWeaponInventory.Count>1&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄"))){QueueDiscard(c);}}
         }
         void EqSaleConfirmation()
         {
@@ -288,6 +294,22 @@ namespace NeonVault
             string copy=T("CONFIRM SALE\n\n","売却の確認\n\n")+s.title+"\n\n"+T("Receive ","売却額 ")+s.price.ToString("N0")+T(" scrap. Cannot be undone."," スクラップ。売却後は戻せません。");EqText(new Rect(340,240,760,295),copy,EqInk);
             if(EqButton(new Rect(340,555,360,86),T("CONFIRM SALE","売却を確定"))){CompleteSale(s);pendingSaleKey=null;}
             if(EqButton(new Rect(730,555,370,86),T("CANCEL","キャンセル")))pendingSaleKey=null;
+        }
+        void QueueDiscard(EqCard card){eqPendingDiscard=card.item;eqPendingDiscardName=card.name;}
+        void EqDiscardConfirmation()
+        {
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.85f));Box(new Rect(310,220,820,450),EqSurface);Box(new Rect(340,228,60,3),EqAccent);
+            string copy=T("CONFIRM DISCARD\n\n","破棄の確認\n\n")+eqPendingDiscardName+"\n\n"+T("Discard this item? This cannot be undone.","この装備を破棄しますか？ 破棄後は戻せません。");
+            EqText(new Rect(340,240,760,295),copy,EqInk);
+            if(EqButton(new Rect(340,555,360,86),T("CONFIRM DISCARD","破棄を確定")))
+            {
+                var item=eqPendingDiscard;eqPendingDiscard=null;eqSelectedKey=null;
+                if(item is Gun g){int index=Weapons.IndexOf(g);if(index>=0&&Weapons.Count>1&&EquippedWeaponSlot(g)<0)DiscardWeapon(index);}
+                else if(item is ArmorItem a)DiscardArmor(a);
+                else if(item is ArtifactItem m)DiscardArtifact(m);
+                else if(item is MeleeWeaponItem w&&w!=EquippedMeleeWeapon&&MeleeWeaponInventory.Count>1&&MeleeWeaponInventory.Remove(w))SaveInventory();
+            }
+            if(EqButton(new Rect(730,555,370,86),T("CANCEL","キャンセル")))eqPendingDiscard=null;
         }
     }
 }

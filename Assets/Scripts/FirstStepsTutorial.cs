@@ -5,6 +5,21 @@ namespace NeonVault
     public partial class VaultGame
     {
         const string FirstStepsKey = "Vault.FirstSteps.v1";
+        const string ActionSkillTutorialKey = "Vault.ActionSkillTutorial.v1";
+        bool actionSkillTutorialVisible;
+        void BeginActionSkillTutorial()
+        {
+            if(smoke || PlayerPrefs.GetInt(ActionSkillTutorialKey,0)!=0)return;
+            actionSkillTutorialVisible=true;Time.timeScale=0;
+        }
+        void DrawActionSkillTutorial()
+        {
+            if(!actionSkillTutorialVisible)return;
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.78f));Panel(new Rect(220,190,1000,520),Gold);
+            Text(260,220,T("ACTION SKILL READY","アクションスキル発動可能"),heading,Gold,920);
+            Text(260,310,T("Hit enemies to charge your action skill. Activate it when the gauge is full. Switch skills in the inventory, and spend skill points earned from leveling up to improve them.","敵に弾を当てるとポイントがたまり、満タンになるとアクションスキルを使えます。スキルは装備画面で切り替えられます。レベルアップで得たスキルポイントを使うと強化できます。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+            if(WorldButton(new Rect(500,600,440,70),T("CONTINUE","続ける"))){actionSkillTutorialVisible=false;PlayerPrefs.SetInt(ActionSkillTutorialKey,1);PlayerPrefs.Save();Time.timeScale=1;}
+        }
         const string FirstStepsTargetKey = "Vault.FirstSteps.target.v1";
         const string DebtBossDefeatedKey = "Vault.DebtBoss.defeated.v1";
         bool finalDebtBossFight;
@@ -36,6 +51,18 @@ namespace NeonVault
             Notify("THE RAIDER BOSS IS DOWN / The debt is settled.","レイダーのボスを撃破 / 借りは返した。");
         }
         int FirstStepsStage => PlayerPrefs.GetInt(FirstStepsKey, 0);
+        bool TryFirstStepsWaypoint(out Vector3 target)
+        {
+            target=Vector3.zero;
+            if(smoke || !IsOverworld || screen!=Screen.Playing)return false;
+            if(FirstStepsStage==3)
+            {
+                int id=PlayerPrefs.GetInt(FirstStepsTargetKey,-1);
+                if(id>=0&&id<ExpeditionMap.StageCount){target=WorldGeography.Entrances[id];return true;}
+            }
+            if(FirstStepsStage==4){target=WorldGeography.Camps[LastVisitedCamp];return true;}
+            return false;
+        }
         void SetFirstStepsStage(int stage)
         {
             if (smoke) return;

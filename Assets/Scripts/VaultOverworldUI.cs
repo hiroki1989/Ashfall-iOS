@@ -258,7 +258,7 @@ namespace NeonVault
             if(kind==0)ItemPortraits.Draw(picture,drop.gun);else if(kind==1)ItemPortraits.Draw(picture,armor.item);else if(kind==2)ManufacturerBranding.ModulePortrait(picture,module.item);else ManufacturerPortraits.Melee(picture,melee.item);
             WorldLabel(new Rect(card.x+130,card.y+12,card.width-140,40),VaultLanguage.RarityName(rarity),color,mobile?22:27);
             WorldLabel(new Rect(card.x+130,card.y+54,card.width-140,42),T("LEVEL ","レベル ")+level+T("   SCORE ","   評価 ")+score,UiPaper,mobile?21:25);
-            WorldLabel(new Rect(card.x+130,card.y+100,card.width-140,46),T(MobileTouchControls.Enabled?"TAKE":"TAKE / F",MobileTouchControls.Enabled?"拾得":"拾得 / F"),Gold,22);
+            WorldLabel(new Rect(card.x+130,card.y+100,card.width-140,46),T(MobileTouchControls.Enabled?"TAKE":"TAKE / F",MobileTouchControls.Enabled?"拾う":"拾う / F"),Gold,22);
         }
         bool DrawActivityRewardPreview()
         {
@@ -276,7 +276,7 @@ namespace NeonVault
             WorldLabel(new Rect(card.x+120,card.y+8,card.width-130,37),itemName,UiPaper,20);
             WorldLabel(new Rect(card.x+120,card.y+44,card.width-130,32),VaultLanguage.RarityName(rarity),color,20);
             WorldLabel(new Rect(card.x+120,card.y+77,card.width-130,30),T("LEVEL ","レベル ")+level+T("  SCORE ","  評価 ")+score,UiPaper,18);
-            WorldLabel(new Rect(card.x+120,card.y+109,card.width-130,38),LastActivityRewardOnGround?T("ON GROUND / TAKE","足元に配置 / 拾得"):T("RECEIVED","獲得"),Gold,18);return true;
+            WorldLabel(new Rect(card.x+120,card.y+109,card.width-130,38),LastActivityRewardOnGround?T("ON GROUND / TAKE","足元に配置 / 拾う"):T("RECEIVED","獲得"),Gold,18);return true;
         }
         void DrawWorldLocalMap(Rect map)
         {
@@ -315,15 +315,16 @@ namespace NeonVault
             foreach(var d in artifactDrops)if(d.item.rarity==Rarity.Legendary)LootDot(d.position);
             foreach(var d in meleeDrops)if(d.item.rarity==Rarity.Legendary)LootDot(d.position);
             var player=Local(PlayerPosition);WorldMarker(player.x,player.y,5,Cyan);
-            if(OverworldWaypointKind!=0)
+            bool tutorialTarget=TryFirstStepsWaypoint(out Vector3 firstStepsTarget);
+            if(tutorialTarget||OverworldWaypointKind!=0)
             {
-                Vector3 target=OverworldWaypointPosition;
+                Vector3 target=tutorialTarget?firstStepsTarget:OverworldWaypointPosition;
                 Vector2 targetOnMap=Local(target), direction=targetOnMap-player;
                 Rect safe=new Rect(inside.x+15,inside.y+15,inside.width-30,inside.height-30);
                 if(inside.Contains(targetOnMap))
                 {
                     // The point of the pin marks the real destination, even when close to the player.
-                    DrawWaypointPin(targetOnMap);
+                    DrawWaypointPin(targetOnMap,tutorialTarget);
                 }
                 else if(direction.sqrMagnitude>0.001f)
                 {
@@ -333,25 +334,28 @@ namespace NeonVault
                     if(direction.x<0)fraction=Mathf.Min(fraction,(safe.xMin-origin.x)/direction.x);
                     if(direction.y>0)fraction=Mathf.Min(fraction,(safe.yMax-origin.y)/direction.y);
                     if(direction.y<0)fraction=Mathf.Min(fraction,(safe.yMin-origin.y)/direction.y);
-                    DrawWaypointArrow(origin+direction*Mathf.Max(0,fraction),direction.normalized);
+                    DrawWaypointArrow(origin+direction*Mathf.Max(0,fraction),direction.normalized,tutorialTarget);
                 }
             }
         }
-        void DrawWaypointPin(Vector2 point)
+        void DrawWaypointPin(Vector2 point,bool tutorial=false)
         {
             Color shadow=new Color(.02f,.04f,.05f,.95f);
             Vector2 top=point+new Vector2(0,-20),left=point+new Vector2(-8,-12),right=point+new Vector2(8,-12);
             Line(top,left,shadow,6);Line(top,right,shadow,6);Line(left,point,shadow,6);Line(right,point,shadow,6);
             Line(top,left,Gold,3);Line(top,right,Gold,3);Line(left,point,Gold,3);Line(right,point,Gold,3);
             Box(new Rect(point.x-2,point.y-14,4,4),Gold);
+            if(tutorial)WorldLabel(new Rect(point.x-44,point.y-48,88,24),T("OBJECTIVE","目的地"),Color.white,18);
         }
-        void DrawWaypointArrow(Vector2 center,Vector2 direction)
+        void DrawWaypointArrow(Vector2 center,Vector2 direction,bool tutorial=false)
         {
             Vector2 side=new Vector2(-direction.y,direction.x);
-            Vector2 tip=center+direction*10f,back=center-direction*8f;
+            float scale=tutorial?1.45f:1f;
+            Vector2 tip=center+direction*(10f*scale),back=center-direction*(8f*scale);
             Color shadow=new Color(.02f,.04f,.05f,.95f);
-            Line(tip,back+side*8f,shadow,7);Line(tip,back-side*8f,shadow,7);Line(back+side*8f,back-side*8f,shadow,7);
-            Line(tip,back+side*8f,Gold,3);Line(tip,back-side*8f,Gold,3);Line(back+side*8f,back-side*8f,Gold,3);
+            Line(tip,back+side*(8f*scale),shadow,7);Line(tip,back-side*(8f*scale),shadow,7);Line(back+side*(8f*scale),back-side*(8f*scale),shadow,7);
+            Color marker=tutorial?new Color(1,.68f,.22f):Gold;
+            Line(tip,back+side*(8f*scale),marker,4);Line(tip,back-side*(8f*scale),marker,4);Line(back+side*(8f*scale),back-side*(8f*scale),marker,4);
         }
         void UpdateWorldLocalTexture(Vector2 origin)
         {

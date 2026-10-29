@@ -13,7 +13,7 @@ namespace NeonVault
         readonly int[] actionSkillRanks = new int[ActionSkillSlots];
         bool actionSkillLoaded;
         ActionSkillKind actionSkillSelected;
-        public int ActionSkillPoints { get; private set; }
+        public float ActionSkillPoints { get; private set; }
         public int ActionSkillChargeMax => 15;
         public ActionSkillKind ActionSkillSelected { get { LoadActionSkills(); return actionSkillSelected; } }
         public static int ActionSkillMaxRank(int tier) => tier==4?1:6;
@@ -79,7 +79,7 @@ namespace NeonVault
         public string ActionSkillNodeTitle(ActionSkillKind kind,int branch,int tier)
         {
             string[,,] en={{{"CALIBRATED FIRE","FIELD GUNNER","HARDENED BARREL","DEEP MAGAZINE","OVERDRIVE"},{"EXTENDED CELL","MOBILE PLATFORM","LONG WATCH","HEAVY FEED","FOLLOW MODE"},{"LONG SIGHT","FAST HANDS","AREA CONTROL","RAPID CYCLE","CROSS FIRE"}},{{"EXTRA PAYLOAD","BREACHER","RESERVE POUCH","SATURATION","FULL SALVO"},{"WIDE BURST","FRAGMENT FIELD","SHOCK WAVE","QUICK HANDS","WIDE DETONATION"},{"HEAVY CHARGE","WEAK POINT","COMPOUND","DEEP IMPACT","CLUSTER CHARGE"}},{{"FIRST AID","FIELD HEALTH","DEEP RECOVERY","SUSTAINED CARE","LIFE SURGE"},{"WIDE FIELD","STEADY AIM","COVERAGE","TRIAGE","SANCTUARY"},{"LONG SHIFT","PROTECTIVE CARE","SUPPORT LINE","LASTING FIELD","MOBILE CLINIC"}}};
-            string[,,] ja={{{"照準調整","野戦射手","強化銃身","装填支援","過給射撃"},{"予備電池","機動架台","長時間監視","給弾強化","追尾モード"},{"長距離照準","早業","制圧射界","高速循環","交差射撃"}},{{"追加弾薬","突入兵","予備ポーチ","集中投擲","一斉投擲"},{"広域爆破","破片領域","衝撃波","迅速動作","大爆発"},{"重装薬","弱点狙い","複合装薬","深部衝撃","連鎖装薬"}},{{"応急手当","野戦体力","集中回復","持続治療","生命の鼓動"},{"広域治療","精密照準","治療範囲","治療選別","安全地帯"},{"長時間活動","防護治療","支援線","持続領域","移動診療所"}}};
+            string[,,] ja={{{"照準調整","野戦射手","強化銃身","リロード支援","過給射撃"},{"予備電池","機動架台","長時間監視","給弾強化","追尾モード"},{"長距離照準","早業","制圧射界","高速循環","交差射撃"}},{{"追加弾薬","突入兵","予備ポーチ","集中投擲","一斉投擲"},{"広域爆破","破片領域","衝撃波","迅速動作","大爆発"},{"重装薬","弱点狙い","複合装薬","深部衝撃","連鎖装薬"}},{{"応急手当","野戦体力","集中回復","持続治療","生命の鼓動"},{"広域治療","精密照準","治療範囲","治療選別","安全地帯"},{"長時間活動","防護治療","支援線","持続領域","移動診療所"}}};
             return VaultLanguage.Japanese?ja[(int)kind,branch,tier]:en[(int)kind,branch,tier];
         }
         public string ActionSkillNodeDescription(ActionSkillKind kind,int branch,int tier)

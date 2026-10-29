@@ -122,7 +122,7 @@ namespace NeonVault
         {
             if(item.uniqueEffect>0)return ja?new[]{"撃破障壁：撃破時に障壁+4、待機4秒","疾走回復：ダッシュ時にHP+4、待機5秒","変換：モジュール障壁の持続中に威力+15%"}[Mathf.Clamp(item.dungeon,0,2)]:new[]{"Kill shield: +4 shield on kill, 4s cooldown","Dash recovery: regain 4 HP on dash, 5s cooldown","Conversion: +15% damage while module shield is active"}[Mathf.Clamp(item.dungeon,0,2)];
 
-            return ja?new[]{"照準と生命力を支える頭部装甲","大きく生命力を高める胴部装甲","生命力・火力・装填・連射から2効果の籠手","生命力と移動を支える脚甲","生命力と高い移動速度を支えるブーツ"}[(int)item.slot]:new[]{"Head armor supports accuracy and vitality","Chest armor provides greater health","Gauntlets roll two of health, damage, reload and fire rate","Greaves improve health and movement","Boots improve health and greater movement"}[(int)item.slot];
+            return ja?new[]{"照準と生命力を支える頭部装甲","大きく生命力を高める胴部装甲","生命力・火力・リロード・連射から2効果の籠手","生命力と移動を支える脚甲","生命力と高い移動速度を支えるブーツ"}[(int)item.slot]:new[]{"Head armor supports accuracy and vitality","Chest armor provides greater health","Gauntlets roll two of health, damage, reload and fire rate","Greaves improve health and movement","Boots improve health and greater movement"}[(int)item.slot];
         }
         public static string Stats(ArmorItem item,bool? japanese=null)
         {

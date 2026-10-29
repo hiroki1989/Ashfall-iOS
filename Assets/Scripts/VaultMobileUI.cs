@@ -3,7 +3,7 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||DebtIntroVisible||WorldBossConversationVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
+        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
         public static Matrix4x4 MobileCanvasMatrix
         {
             get
@@ -18,11 +18,7 @@ namespace NeonVault
         bool MobileButton(Rect r,string caption,int fontSize=38){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=fontSize,fontStyle=FontStyle.Bold,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
         void DrawMobileMenu()
         {
-            if(menuArt)GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
-            for(int i=0;i<40;i++)Box(new Rect(i*25,0,26,900),new Color(.035f,.055f,.065f,.72f*Mathf.Pow(1-i/40f,.7f)));
-            var brand=Resources.Load<Texture2D>("Art/Brand/ApprovedLogoReference");if(brand)GUI.DrawTextureWithTexCoords(new Rect(58,92,550,330),brand,new Rect(.07f,.15f,.39f,.70f),true);else Text(54,146,"DUST & DEBT",new GUIStyle(title){fontSize=78},UiPaper,850);
-            if(MobileButton(new Rect(58,470,650,112),T("CONTINUE","ゲームを続ける")))ContinueOverworldGame();
-            if(HasSavedRun&&MobileButton(new Rect(58,605,650,100),T("CONTINUE SAVED EXPEDITION","保存した探索を再開")))ResumeSavedRun();
+            DrawTitleMenu(true);
         }
         void DrawMobileHub()
         {

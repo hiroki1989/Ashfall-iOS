@@ -93,7 +93,15 @@ namespace NeonVault
         {
             var texture=Resources.Load<Texture2D>("Art/ApprovedFieldkit/Portrait_"+key);if(texture==null)return false;
             Fill(rect,new Color(.005f,.008f,.015f));Fill(new Rect(rect.x+3,rect.y+3,rect.width-6,3),Arsenal.Colors[(int)rarity]);
-            GUI.color=Color.white;GUI.DrawTexture(new Rect(rect.x+5,rect.y+5,rect.width-10,rect.height-10),texture,ScaleMode.ScaleToFit,true);return true;
+            // Approved portraits include a large transparent margin. Crop to the
+            // illustrated item while preserving its aspect and a small safety margin.
+            Rect bounds;
+            switch(key){case "Armor_0":bounds=new Rect(100,67,358,425);break;case "Armor_1":bounds=new Rect(69,80,440,417);break;case "Armor_2":bounds=new Rect(73,84,468,447);break;case "Armor_3":bounds=new Rect(92,66,372,423);break;case "Armor_4":bounds=new Rect(73,92,466,428);break;case "Weapon_12":bounds=new Rect(100,242,638,355);break;case "Weapon_15":bounds=new Rect(81,56,304,355);break;default:bounds=new Rect(0,0,texture.width,texture.height);break;}
+            float pad=Mathf.Max(bounds.width,bounds.height)*.045f;bounds=Rect.MinMaxRect(Mathf.Max(0,bounds.xMin-pad),Mathf.Max(0,bounds.yMin-pad),Mathf.Min(texture.width,bounds.xMax+pad),Mathf.Min(texture.height,bounds.yMax+pad));
+            Rect image=new Rect(rect.x+5,rect.y+5,rect.width-10,rect.height-10);float ratio=bounds.width/bounds.height;
+            if(ratio>image.width/image.height){float h=image.width/ratio;image.y+=(image.height-h)*.5f;image.height=h;}else{float w=image.height*ratio;image.x+=(image.width-w)*.5f;image.width=w;}
+            Rect uv=new Rect(bounds.x/texture.width,1f-bounds.yMax/texture.height,bounds.width/texture.width,bounds.height/texture.height);
+            GUI.color=Color.white;GUI.DrawTextureWithTexCoords(image,texture,uv,true);return true;
         }
         static void DrawSpriteCard(Rect rect,Sprite sprite,Color tint,Rarity rarity,bool directTint=false,int weaponModel=-1)
         {

@@ -6,11 +6,12 @@ namespace NeonVault
     {
         Texture2D criticalHealthVignette;
         static readonly Color VitalPanel=new Color(.025f,.042f,.052f,.68f);
-        static readonly Color VitalTrack=new Color(.12f,.16f,.17f);
+        static readonly Color VitalTrack=new Color(.24f,.24f,.23f,.95f);
         static readonly Color VitalRed=new Color(.93f,.19f,.16f);
 
         bool CriticalHealth=>screen==Screen.Playing&&!InventoryOpen&&maxHp>0&&hp>0&&hp/maxHp<=.25f;
-        Color VitalColor=>CriticalHealth?VitalRed:Cyan;
+        Color VitalColor=>CriticalHealth?VitalRed:new Color(.84f,.32f,.12f);
+        Texture2D healthPanelArt;
 
         void DrawCriticalHealthVignette()
         {
@@ -45,40 +46,32 @@ namespace NeonVault
         {
             float ratio=Mathf.Clamp01(hp/Mathf.Max(1,maxHp));
             Color accent=VitalColor;
-            Box(bounds,VitalPanel);
-            Box(new Rect(bounds.x,bounds.y,bounds.width,2),new Color(.51f,.64f,.66f,.35f));
-            Box(new Rect(bounds.x,bounds.y,3,bounds.height),accent);
-            Box(new Rect(bounds.x+bounds.width-48,bounds.y,48,2),accent);
-            Box(new Rect(bounds.x+bounds.width-2,bounds.y,2,20),accent);
-            Box(new Rect(bounds.x+14,bounds.y+11,2,bounds.height-25),new Color(accent.r,accent.g,accent.b,.43f));
+            if(!healthPanelArt)healthPanelArt=Resources.Load<Texture2D>("Art/UI/health-panel-minimal-v27");
+            if(healthPanelArt)GUI.DrawTextureWithTexCoords(bounds,healthPanelArt,new Rect(0,.24f,1,.53f),true);
+            else Box(bounds,VitalPanel);
             if(mobile)
             {
-                Text(bounds.x+26,bounds.y+5,Mathf.CeilToInt(hp).ToString(),new GUIStyle(number){fontSize=43},Color.white,132);
-                Text(bounds.x+153,bounds.y+25,"/ "+Mathf.CeilToInt(maxHp)+" HP",new GUIStyle(label){fontSize=23},Mist,160);
-                Text(bounds.x+305,bounds.y+25,CriticalHealth?T("CRITICAL","瀕死"):"LV. "+DebtLevel,new GUIStyle(tiny){fontSize=18},accent,100);
-                DrawHealthFill(new Rect(bounds.x+26,bounds.y+65,bounds.width-50,11),ratio,accent);
+                Text(bounds.x+28,bounds.y+20,"HP  "+Mathf.CeilToInt(hp)+" / "+Mathf.CeilToInt(maxHp),new GUIStyle(label){fontSize=25,fontStyle=FontStyle.Normal},Color.white,240);
+                Text(bounds.x+bounds.width-112,bounds.y+24,CriticalHealth?T("CRITICAL","瀕死"):"LV. "+DebtLevel,new GUIStyle(tiny){fontSize=18},Color.white,90);
+                DrawHealthFill(new Rect(bounds.x+28,bounds.y+64,bounds.width-56,9),ratio,accent);
             }
             else
             {
-                Text(bounds.x+25,bounds.y+10,(CriticalHealth?T("CRITICAL","瀕死"):T("VITALS","生存状態"))+"   /   LV. "+DebtLevel,new GUIStyle(tiny){fontSize=15},accent,310);
-                Text(bounds.x+25,bounds.y+35,Mathf.CeilToInt(hp).ToString(),new GUIStyle(number){fontSize=43},Color.white,145);
-                Text(bounds.x+150,bounds.y+56,"/ "+Mathf.CeilToInt(maxHp)+" HP",new GUIStyle(small){fontSize=19},Mist,170);
-                DrawHealthFill(new Rect(bounds.x+25,bounds.y+91,bounds.width-50,15),ratio,accent);
+                Text(bounds.x+28,bounds.y+20,"HP  "+Mathf.CeilToInt(hp)+" / "+Mathf.CeilToInt(maxHp),new GUIStyle(label){fontSize=23,fontStyle=FontStyle.Normal},Color.white,220);
+                Text(bounds.x+bounds.width-100,bounds.y+24,CriticalHealth?T("CRITICAL","瀕死"):"LV. "+DebtLevel,new GUIStyle(tiny){fontSize=16},Color.white,78);
+                DrawHealthFill(new Rect(bounds.x+28,bounds.y+64,bounds.width-56,9),ratio,accent);
             }
         }
 
         void DrawHealthFill(Rect track,float ratio,Color accent)
         {
-            Box(new Rect(track.x-2,track.y-3,track.width+4,track.height+6),new Color(.24f,.32f,.34f));
             Box(track,VitalTrack);
             float width=track.width*ratio;
             if(width>0)
             {
                 Box(new Rect(track.x,track.y,width,track.height),accent);
-                Box(new Rect(track.x,track.y,width,2),new Color(1,1,1,.34f));
-                if(width>6)Box(new Rect(track.x+width-4,track.y-2,4,track.height+4),Color.white);
+                Box(new Rect(track.x,track.y,width,1),new Color(1,1,1,.20f));
             }
-            for(int i=1;i<8;i++)Box(new Rect(track.x+track.width*i/8f,track.y+2,1,track.height-4),new Color(.025f,.042f,.052f,.38f));
         }
     }
 }

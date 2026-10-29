@@ -10,7 +10,7 @@ namespace NeonVault
         public const KeyCode MeleeAttackKey=KeyCode.Mouse1;
         public enum Screen { Menu, Hub, Shop, DungeonSelect, Playing, Reward, Pause, Dead, Victory }
         public Screen screen;
-        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending;
+        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible;
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
         public Vector3 ScreenMovement(float horizontal,float vertical)
@@ -65,7 +65,8 @@ namespace NeonVault
             Application.targetFrameRate=MobileTouchControls.Enabled?30:120;
             if(MobileTouchControls.Enabled)QualitySettings.vSyncCount=0;
             cores=PlayerPrefs.GetInt("Vault.Cores",0); rank=PlayerPrefs.GetInt("Vault.Rank",0);
-            font=Resources.Load<Font>("Fonts/851Gkktt-005");
+            font=Resources.Load<Font>("Fonts/851Gkktt-005-narrow");
+            if(font==null)font=Resources.Load<Font>("Fonts/851Gkktt-005");
             if(font==null)font=Resources.Load<Font>("Fonts/NotoSansJP");
             if(font==null)font=Font.CreateDynamicFontFromOSFont(Application.platform==RuntimePlatform.IPhonePlayer?new[]{"HiraginoSans-W3","Hiragino Sans","Arial"}:new[]{"Yu Gothic UI","Meiryo","Segoe UI","Arial"},20);
             englishHeadingFont=Resources.Load<Font>("Fonts/851Gkktt-005");
@@ -84,9 +85,9 @@ namespace NeonVault
             var light=new GameObject("Ash-filtered sunlight / shadow casting").AddComponent<Light>();light.type=LightType.Directional;light.color=new Color(1,.95f,.84f);light.intensity=1.2f;light.shadows=LightShadows.Soft;light.shadowStrength=.78f;light.transform.rotation=Quaternion.Euler(48,-25,0);
             var fill=new GameObject("Cool sky fill").AddComponent<Light>();fill.type=LightType.Directional;fill.color=new Color(.57f,.72f,.89f);fill.intensity=.38f;fill.transform.rotation=Quaternion.Euler(28,145,0);
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
-            audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=GunReport(true,true);pickupSound=Resources.Load<AudioClip>("WeaponSFX/Handgun_equip");if(pickupSound==null)pickupSound=Tone(620,.16f);ammoPickupSound=Resources.Load<AudioClip>("WeaponSFX/Ammo_pickup");if(ammoPickupSound==null)ammoPickupSound=pickupSound;
+            audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=Resources.Load<AudioClip>("SoundEffects/player-hit");if(!hitSound)hitSound=GunReport(true,true);pickupSound=Resources.Load<AudioClip>("WeaponSFX/Handgun_equip");if(pickupSound==null)pickupSound=Tone(620,.16f);ammoPickupSound=Resources.Load<AudioClip>("WeaponSFX/Ammo_pickup");if(ammoPickupSound==null)ammoPickupSound=pickupSound;
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
-            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
+            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--live-building-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
             ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);
             // The title screen uses menuArt. Building a dungeon here loads every
@@ -390,6 +391,7 @@ namespace NeonVault
                     Burst(origin,Gold,3);
                 }
                 var shot=SpawnBullet(origin,direction,true,UnityEngine.Random.Range(EffectiveDamageMin,EffectiveDamageMax),gun.speed,gun.effect==GunEffect.Ricochet?Cyan:gun.color,gun.effect,EffectiveAccuracy);
+                shot.actionCharge=ActionSkillChargeMax*.01f*7.7f/Mathf.Max(.1f,EffectiveFireRate)/Mathf.Max(1,gun.pellets);
                 shot.critical=UnityEngine.Random.value<EffectiveCriticalChance;shot.moduleAmplified=ArtifactDamageMultiplier>1.0001f||ArtifactAffixBonus("damage")>0;
                 if(shot.critical)shot.damage*=EffectiveCriticalMultiplier;
                 LegendaryModifyShot(shot);
@@ -428,7 +430,6 @@ namespace NeonVault
         }
         public void FoeKilled(Foe f)
         {
-            ActionSkillOnKill(f);
             if(IsOverworld)OnOverworldEnemyKilled(f);
             kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
             if(!IsOverworld)ExpeditionEnemyKilled(f);
@@ -576,7 +577,7 @@ namespace NeonVault
             if(MobileTouchControls.Enabled)
             {
                 toast=toast.Replace("[E]", "USE").Replace("[F]", "PICK UP").Replace("[I]", "INVENTORY");
-                toastJapanese=toastJapanese.Replace("[E]", "調べる").Replace("[F]", "拾得").Replace("[I]", "装備画面");
+                toastJapanese=toastJapanese.Replace("[E]", "調べる").Replace("[F]", "拾う").Replace("[I]", "装備画面");
             }
             toastTimer=4;
         }

@@ -25,7 +25,7 @@ namespace NeonVault {
    {.82f,.88f,.70f,.78f,3},{1.55f,1.52f,.64f,1.35f,-8},{1.14f,1.16f,.80f,1.09f,9},
    {.74f,.66f,1.05f,1.18f,-5},{1.72f,1.68f,.55f,1.51f,-12}};
   static readonly string[] traits={"High impact and steady aim; slower cycle and smaller magazine.","Fast reload and cadence; light impact and short reach.","Rapid split discharge; severe spread and slow reload.","Compact handling and quick reload; low impact and capacity.","Heavy punch; slow cycling, weight and recovery.","Accurate long reach; deliberate fire and reduced capacity.","Very fast bursts; poor control and lower impact.","Extreme impact; tiny magazine and long recovery."};
-  static readonly string[] traitsJa={"高威力・安定照準、遅い連射と少ない装弾数。","高速装填・連射、低威力で射程が短い。","分割機構の高速射撃、散りやすく装填は遅い。","小型で装填が速いが威力と弾数が少ない。","重い一撃、連射・取り回し・復帰が遅い。","遠距離高精度、慎重な射撃と少ない装弾数。","非常に速い点射、制御しづらく低威力。","最大級の一撃、極小弾倉と長い復帰時間。"};
+  static readonly string[] traitsJa={"高威力・安定照準、遅い連射と少ない装弾数。","高速リロード・連射、低威力で射程が短い。","分割機構の高速射撃、散りやすくリロードは遅い。","小型でリロードが速いが威力と弾数が少ない。","重い一撃、連射・取り回し・復帰が遅い。","遠距離高精度、慎重な射撃と少ない装弾数。","非常に速い点射、制御しづらく低威力。","最大級の一撃、極小弾倉と長い復帰時間。"};
   public static string SeriesName(int maker,int gunClass,int series,bool ja){string root=(ja?rootsJa:roots)[series];return root+" "+(ja?mechanismsJa:mechanisms)[gunClass,series];}
   public static string Description(int gunClass,int series,bool ja)=> (ja?traitsJa:traits)[series];
   public static string VisualDirection(int maker,int gunClass,int series)=>"Maker "+maker+", class "+gunClass+": "+directions[series]+"; "+mechanisms[gunClass,series]+" silhouette.";

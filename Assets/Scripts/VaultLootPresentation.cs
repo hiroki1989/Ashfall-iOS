@@ -6,6 +6,8 @@ namespace NeonVault
 
     public partial class VaultGame
     {
+        bool restoringLoot;
+        AudioClip legendaryDropSound;
         void ApplyProductDropModel(GameObject root,object item)
         {
             if(!root)return;
@@ -59,6 +61,11 @@ namespace NeonVault
             LootPresentationKind kind, AmmoType ammoType = AmmoType.AssaultRifle, int amount = 0,
             Rarity rarity = Rarity.Common)
         {
+            if(!restoringLoot&&rarity==Rarity.Legendary&&(kind==LootPresentationKind.Weapon||kind==LootPresentationKind.Armor||kind==LootPresentationKind.Module||kind==LootPresentationKind.Melee))
+            {
+                if(!legendaryDropSound)legendaryDropSound=Resources.Load<AudioClip>("SoundEffects/legendary-drop");
+                if(legendaryDropSound&&audioSource)audioSource.PlayOneShot(legendaryDropSound);
+            }
             var root = new GameObject("Loot / " + displayName);
             root.transform.SetParent(world, false);
             root.transform.position = position;
