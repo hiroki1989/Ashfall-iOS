@@ -1,3 +1,25 @@
+## 2026-10-30 / 弾薬箱とダンジョン出口案内
+配置済み弾薬箱を接近時に自動取得。満杯の場合は箱を残し、必要なミッション調査は従来通り進行。ダンジョン出口開放の文言を明滅し、PC・モバイルの画面内に出口方向のマーカーを表示。Unity batch compile exit 0、git diff --check通過。ゲーム画面・iOS実機での操作と表示は未確認。
+変更: VaultAmmoCrates.cs、VaultGame.cs、VaultUI.cs、VaultMobileUI.cs、VaultOverworldUI.cs。
+
+## 2026-10-30 / 商人説明・装備名・全体マップイベント
+武器商人の所持枠拡張で周回引き継ぎを説明する文を削除。インベントリのメーカー切り抜きロゴをイラスト左端へ寄せ、銃種アイコン直下に配置（一覧と詳細）。量産装備の名前を都市の地区・交易路・現場用語に由来する語へ変更し、繰り返しの多かった「ラスト」系の伝説品名も整理。既存の製品ID・効果・セーブの識別子は維持。
+ランダムイベントの殲滅目標を地点ごと15〜19体、制限100秒にし、選択文・進捗・成功判定を一致させた。敵襲開始時に通常敵から最大8枠を解放し、イベント中の通常敵補充を制限。出現地点の探索回数を増やし通常出現地点へのフォールバックを追加。生存・防衛は敵が一度も出ないまま成功しないようにした。Unity 6000.6.0f1 batch compile exit 0、CSエラーなし、git diff --check通過。実戦操作とiOS実機での出現密度・難易度は未確認。
+変更: VaultEquipmentScreen.cs、DistinctEquipmentDesigns.cs、LegendaryCatalog.cs、OverworldActivities.cs、OverworldRush.cs、VaultOverworld.cs。
+
+## 2026-10-30 / 地図アイコンと未発見ダンジョンのレベル
+広域地図の入口アイコンを固定42px、周辺地図を固定30pxに拡大。感染者は入口マーク、レッドクロウとコヨーテは既存の勢力旗を使用し、広域地図に凡例を追加。旧市街地図も拡大率と独立した固定サイズの旗・レベル表示に変更し、選択判定を同サイズに統一。未発見の入口でも右側にレベルを表示し、名称・任務・報酬は従来通り未開示。Unity 6000.6.0f1 batch compile成功、CSエラーなし、git diff --check成功。iOS実機での密集地の見やすさは未確認。
+変更: VaultOverworldUI.cs、VaultExpeditionCityMap.cs。
+
+## 2026-10-30 / 製品図鑑の開示とダンジョン01入場
+製品図鑑（PC/iOS）で未入手の名称・絵・説明を?表示。入手した製品IDをPlayerPrefsへ保存、所持中の旧セーブ品を開示済みへ移行。通常品の性能数値を図鑑から外して短い世界観説明へ変更し、伝説品は固有効果だけ表示。各製品カテゴリで伝説品を先頭へ並べ替え、近接伝説品を通常品と別の図鑑項目にした。
+01ダンジョンが感染者向け導入ミッションなのに最近の勢力割当でレッドクロウ拠点となり、入場時に19体の高負荷人間モデルを同時生成していた不整合を修正。01を本来の感染者配置へ戻し、レッドクロウ割当を03へ移し勢力数各50を維持。Unity Editor playmodeの専用入場検査で01開始/敵19体/人間モデル0/勢力数50+50を確認（D:/Unity/dungeon-01-entry-review.txt、log）。最終Unity batch compile exit 0・compiler errorsなし、git diff --check通過。iOS実機のクラッシュ解消と図鑑の実画面可読性は未確認。
+変更: EquipmentDiscovery.cs、DungeonEntryReview.cs、ExpeditionMap.cs、VaultGame.cs、VaultInventory.cs、VaultProgression.cs、VaultManufacturerUI.cs、VaultMobileAuxUI.cs（新規meta含む）。
+
+## 2026-10-30 / UI太字の解除
+見出し、ボタン、戦闘中の数値・回避表示、マップバッジ、導入会話で使われていたFontStyle.Bold 10箇所をNormalへ変更。GUIレイアウト寸法は維持。Assets/Scripts内に太字・rich text <b>指定が残っていないこと、git diff --check成功を確認。Unity実画面とiOS実機での可読性は未確認。フォント原本April Gothic One自体の字形は維持。
+変更: VaultUI.cs、VaultMobileUI.cs、VaultBossIntro.cs、VaultExpeditionCityMap.cs、MobileTouchControls.cs、CombatVisuals.cs。
+
 ## 2026-10-29 / 野営地敵数
 野営地ごとに敵10〜20体をランダム生成、二重の円に分散。既存の同時表示上限は維持し、未表示の敵も全員撃破対象。ソース確認のみ、Unity実戦・iOS負荷未検証。
 

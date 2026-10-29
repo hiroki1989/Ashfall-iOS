@@ -89,7 +89,7 @@ namespace NeonVault
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
             audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=Resources.Load<AudioClip>("SoundEffects/player-hit");if(!hitSound)hitSound=GunReport(true,true);pickupSound=Resources.Load<AudioClip>("WeaponSFX/Handgun_equip");if(pickupSound==null)pickupSound=Tone(620,.16f);ammoPickupSound=Resources.Load<AudioClip>("WeaponSFX/Ammo_pickup");if(ammoPickupSound==null)ammoPickupSound=pickupSound;
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
-            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--live-building-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
+            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--dungeon-entry-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--live-building-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
             ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);
             // The title screen uses menuArt. Building a dungeon here loads every
@@ -372,11 +372,12 @@ namespace NeonVault
             if(dodgeTimer>0) { dodgeTimer-=Time.deltaTime; movement=dodgeDirection*3.3f; }
             player.position=MoveWithinRoom(player.position,movement*EffectiveMoveSpeed*Time.deltaTime,.45f);
             TickFieldEconomy();
+            if(NearbyAmmoCrate)OpenNearbyAmmoCrate(true);
             if(reload>0) { reload-=Time.deltaTime; if(reload<=0)CompleteAmmoReload(); }
             else if(VaultMobileInputBridge.Pressed(MobileAction.Reload,KeyCode.R)||ammo<=0)TryStartReload();
             else if(VaultMobileInputBridge.Firing&&fireTimer<=0)Fire();
             if(VaultMobileInputBridge.MeleePressed)AttackMelee();
-            if(VaultMobileInputBridge.Pressed(MobileAction.Pickup,KeyCode.F)&&!OpenNearbyAmmoCrate()&&!OpenNearbyChest())PickupNearest();
+            if(VaultMobileInputBridge.Pressed(MobileAction.Pickup,KeyCode.F)&&!OpenNearbyChest())PickupNearest();
             if(IsOverworld)
             {
                 TickOverworld();

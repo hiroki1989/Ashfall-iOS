@@ -118,6 +118,7 @@ namespace NeonVault
         {
             EquippedArmor[0]=null;
             if(smoke&&storageKey=="Vault.Loadout.v1")return;var ids=new string[5];for(int i=0;i<5;i++)ids[i]=EquippedArmor[i]?.id;
+            if(!smoke&&storageKey=="Vault.Loadout.v1")EquipmentDiscovery.RecordCurrent(Weapons,ArmorInventory,null,MeleeWeaponInventory);
             if(gun!=null)magazineAmmo[gun.id]=ammo;
             var magIds=new string[Weapons.Count];var mags=new int[Weapons.Count];for(int i=0;i<Weapons.Count;i++){magIds[i]=Weapons[i].id;mags[i]=magazineAmmo.TryGetValue(Weapons[i].id,out int value)?value:Weapons[i].magazine;}
             PlayerPrefs.SetString(storageKey,JsonUtility.ToJson(new LoadoutSave{trailWardenGrantVersion=trailWardenGrantVersion,trailWardenDelivered=trailWardenDelivered,weaponCapacityTier=WeaponCapacityTier,armorCapacityTier=ArmorCapacityTier,meleeCapacityTier=MeleeCapacityTier,ammoCapacityTiers=(int[])ammoCapacityTiers.Clone(),weapons=Weapons,armor=ArmorInventory,meleeWeapons=MeleeWeaponInventory,equippedMelee=EquippedMeleeWeapon?.id,equipped=ids,selected=SelectedWeapon,weaponSlots=(string[])weaponSlotIds.Clone(),activeWeaponSlot=ActiveWeaponSlot,ammoReserves=SaveAmmoReserves(),magazineIds=magIds,magazines=mags}));PlayerPrefs.Save();

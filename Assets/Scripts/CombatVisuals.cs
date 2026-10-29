@@ -237,7 +237,7 @@ namespace NeonVault
             if(numberFont==null)numberFont=Resources.Load<Font>("Fonts/851Gkktt-005");
             if(numberFont==null)numberFont=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.font=numberFont;text.GetComponent<MeshRenderer>().sharedMaterial=numberFont.material;
-            text.fontSize=48;text.fontStyle=FontStyle.Bold;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;
+            text.fontSize=48;text.fontStyle=FontStyle.Normal;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;
             text.GetComponent<MeshRenderer>().sortingOrder=20010;
             text.text=healing?"+"+damage.ToString("0.#",CultureInfo.InvariantCulture):Mathf.Max(1,Mathf.RoundToInt(damage)).ToString(CultureInfo.InvariantCulture);
             text.color=Color.Lerp(color,Color.white,.55f);
@@ -253,7 +253,7 @@ namespace NeonVault
             if(avoidFont==null)avoidFont=Resources.Load<Font>("Fonts/851Gkktt-005");
             if(avoidFont==null)avoidFont=Resources.Load<Font>("Fonts/NotoSansJP");
             if(avoidFont==null)avoidFont=Font.CreateDynamicFontFromOSFont(new[]{"HiraginoSans-W3","Hiragino Sans","Yu Gothic UI","Meiryo","Segoe UI"},42);
-            text.font=avoidFont;text.GetComponent<MeshRenderer>().sharedMaterial=avoidFont.material;text.fontSize=42;text.fontStyle=FontStyle.Bold;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.text=VaultLanguage.T("DODGED","回避");text.color=new Color(.4f,.94f,.9f);
+            text.font=avoidFont;text.GetComponent<MeshRenderer>().sharedMaterial=avoidFont.material;text.fontSize=42;text.fontStyle=FontStyle.Normal;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.text=VaultLanguage.T("DODGED","回避");text.color=new Color(.4f,.94f,.9f);
             text.GetComponent<MeshRenderer>().sortingOrder=20010;text.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.Off;obj.AddComponent<DamageFloat>().Init(text,camera);
         }
     }

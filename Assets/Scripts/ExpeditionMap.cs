@@ -27,7 +27,13 @@ namespace NeonVault
     {
         public const int StageCount = 200;
         // Stable per-stage assignment: 50 raider hideouts, 50 gang hideouts, 100 original sites.
-        public static DungeonFaction FactionForStage(int id) => id < 0 || id >= StageCount ? DungeonFaction.None : id % 4 == 0 ? DungeonFaction.Raiders : id % 4 == 1 ? DungeonFaction.Gang : DungeonFaction.None;
+        // The first contract is the infected tutorial. Keep its authored mission and
+        // low-cost enemy roster; move its Red Claw allocation to site 03 so the
+        // faction totals remain 50 / 50 without loading a crowd of full human rigs
+        // during the first transition on memory-constrained phones.
+        public static DungeonFaction FactionForStage(int id) => id < 0 || id >= StageCount ? DungeonFaction.None
+            : id == 0 ? DungeonFaction.None : id == 2 ? DungeonFaction.Raiders
+            : id % 4 == 0 ? DungeonFaction.Raiders : id % 4 == 1 ? DungeonFaction.Gang : DungeonFaction.None;
         public static readonly Vector2 CityCanvasSize = new Vector2(1440, 1000);
         // A coprime permutation scatters stable stage IDs
         // across the city without changing progression, rewards, or claimed contracts.

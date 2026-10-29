@@ -41,9 +41,9 @@ namespace NeonVault
             label=new GUIStyle(GUI.skin.label){font=font,fontSize=20,wordWrap=false};label.normal.textColor=Color.white;
             small=new GUIStyle(label){fontSize=14};tiny=new GUIStyle(label){fontSize=12};
             Font headingFont=englishHeadingFont==null?font:englishHeadingFont;
-            title=new GUIStyle(label){font=headingFont,fontSize=68,fontStyle=FontStyle.Bold};
-            heading=new GUIStyle(label){font=headingFont,fontSize=38,fontStyle=FontStyle.Bold};
-            number=new GUIStyle(label){fontSize=42,fontStyle=FontStyle.Bold};
+            title=new GUIStyle(label){font=headingFont,fontSize=68,fontStyle=FontStyle.Normal};
+            heading=new GUIStyle(label){font=headingFont,fontSize=38,fontStyle=FontStyle.Normal};
+            number=new GUIStyle(label){fontSize=42,fontStyle=FontStyle.Normal};
             centered=new GUIStyle(small){alignment=TextAnchor.MiddleCenter};
             button=new GUIStyle(label){fontSize=20,alignment=TextAnchor.MiddleLeft,padding=new RectOffset(26,12,8,8)};
             button.normal.background=null;button.hover.background=null;button.active.background=null;
@@ -73,7 +73,7 @@ namespace NeonVault
             bool hover=r.Contains(Event.current.mousePosition);
             Color accent=primary?Gold:Cyan;
             FieldUIArt.Plate(r,primary||hover);
-            var style=new GUIStyle(button){fontStyle=FontStyle.Bold};
+            var style=new GUIStyle(button){fontStyle=FontStyle.Normal};
             style.normal.textColor=primary?Ink:UiPaper;style.hover.textColor=primary?Ink:UiPaper;style.active.textColor=primary?Ink:UiPaper;
             style.normal.textColor=UiPaper;style.hover.textColor=Color.white;style.active.textColor=Color.white;
             bool clicked=GUI.Button(r,value,style);
@@ -222,7 +222,8 @@ namespace NeonVault
             Text(42,32,T("ZONE","探索区域"),tiny,Mist);Text(42,56,(room+1).ToString("00")+" / "+CurrentDungeon.AreaCount.ToString("00"),label,Gold);
             for(int i=0;i<CurrentDungeon.AreaCount;i++)Box(new Rect(159+i*25,68,18,4),i<=room?Gold:new Color(.2f,.27f,.28f));
             Text(440,28,room==CurrentDungeon.AreaCount-1?T("WASTELAND COLOSSUS","荒野の巨骸"):SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name,label,Gold,650);
-            Text(440,61,ExpeditionExitOpen?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,Mist,720);
+            Text(440,61,ExpeditionExitOpen?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,ExpeditionExitOpen?Color.Lerp(Gold,Color.white,.5f+.5f*Mathf.Sin(Time.unscaledTime*5)):Mist,720);
+            if(ExpeditionExitOpen)DrawDungeonExitDirection(false);
             if(SelectedExpeditionStage!=null){var stage=SelectedExpeditionStage;string mission=ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese);if(stage.mission==ExpeditionMission.HuntTarget||stage.mission==ExpeditionMission.DestroyNest)mission+=" / "+stage.Target;mission+="  ·  "+MissionProgress;if(stage.mission==ExpeditionMission.RecoverSupplies||stage.mission==ExpeditionMission.SurveySectors||stage.mission==ExpeditionMission.SalvageSweep)mission+=T(" / floors "," / フロア ")+SurveyedFloorCount;Text(42,117,mission,new GUIStyle(tiny){wordWrap=true},MissionCompleted?Cyan:Gold,350);}else Text(42,121,T("SEED "+seed+"  /  "+Mathf.FloorToInt(runTime)+"s","シード "+seed+"  /  "+Mathf.FloorToInt(runTime)+"秒"),tiny,Mist,350);
             if(toastTimer>0){Panel(new Rect(405,111,720,44),Gold*.6f);Text(421,123,Toast,small,Gold,695);}
             DrawHealthPanel(new Rect(24,754,375,122),false);
@@ -236,7 +237,7 @@ namespace NeonVault
             float mx=(Input.mousePosition.x-(UnityEngine.Screen.width-1440*s)/2)/s,my=(UnityEngine.Screen.height-Input.mousePosition.y-(UnityEngine.Screen.height-900*s)/2)/s;if(MobileTouchControls.Enabled||HasAimTarget){Vector3 screenAim=cam.WorldToScreenPoint(AimReticleWorldPosition);if(MobileTouchControls.Enabled){Vector2 canvasAim=MobileCanvasPoint(new Vector2(screenAim.x,screenAim.y));mx=canvasAim.x;my=canvasAim.y;}else{mx=(screenAim.x-(UnityEngine.Screen.width-1440*s)/2)/s;my=(UnityEngine.Screen.height-screenAim.y-(UnityEngine.Screen.height-900*s)/2)/s;}}
             if(smoke&&AimUiReviewPoint.HasValue){mx=AimUiReviewPoint.Value.x;my=AimUiReviewPoint.Value.y;}
             DrawWorldLootPreview();
-            if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,355,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);
+            if(NearbySupplyChest)WorldLabel(new Rect(25,355,390,55),T("USE / F: OPEN CACHE","調べる / F：物資箱を開ける"),Gold,20);
             if(ExpeditionExitOpen)
             {Vector3 p=cam.WorldToScreenPoint(ExitPosition+Vector3.up*2);if(p.z>0){float x=(p.x-(UnityEngine.Screen.width-1440*s)/2)/s,y=(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*s)/2)/s;Text(Mathf.Clamp(x-80,20,1260),Mathf.Clamp(y,170,680),T("[E] DESCEND","[E] 次のエリアへ"),small,Gold,190);}}
             foreach(var f in Enemies)if(f!=null&&!f.dead&&(f.kind==3||f.elite||f.hp<f.maxHp-.01f)&&Layout.IsVisible(f.transform.position))

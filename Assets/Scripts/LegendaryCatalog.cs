@@ -8,33 +8,33 @@ namespace NeonVault
     {
         public const int GunCount=90,NewGunCount=60,ArmorCount=30;
         static readonly string[][] GunsEn={
-            new[]{"Third Witness","Glass Jury","Last Testament","Pale Meridian","Peregrine"},
+            new[]{"Third Witness","Glass Jury","Cinder Testament","Pale Meridian","Peregrine"},
             new[]{"Third Bell","Debtbreaker","Funeral Engine","Siege Encore","Hammerfall"},
             new[]{"Trinity Circuit","Blackout Choir","Dead Battery","Storm Reprise","Railstorm"},
             new[]{"Blood Dividend","Green Leech","Grave Orchard","Second Spring","Spore Runner"},
-            new[]{"Three Strikes","Scrapyard Saint","Ash Inheritance","Last Cartridge","Firewalk"},
+            new[]{"Three Strikes","Scrapyard Saint","Ash Inheritance","Dead Man's Cartridge","Firewalk"},
             new[]{"Third Guardian","Blue Reprisal","Widow's Pension","Emergency Protocol","Escort Duty"}};
         static readonly string[][] GunsJa={
-            new[]{"サード・ウィットネス","グラス・ジュリー","ラスト・テスタメント","ペイル・メリディアン","ペレグリン"},
+            new[]{"サード・ウィットネス","グラス・ジュリー","シンダー・テスタメント","ペイル・メリディアン","ペレグリン"},
             new[]{"サード・ベル","デットブレイカー","フューネラル・エンジン","シージ・アンコール","ハンマーフォール"},
             new[]{"トリニティ・サーキット","ブラックアウト・クワイア","デッド・バッテリー","ストーム・リプライズ","レールストーム"},
             new[]{"ブラッド・ディビデンド","グリーン・リーチ","グレイヴ・オーチャード","セカンド・スプリング","スポア・ランナー"},
-            new[]{"スリー・ストライクス","スクラップヤード・セイント","アッシュ・インヘリタンス","ラスト・カートリッジ","ファイアウォーク"},
+            new[]{"スリー・ストライクス","スクラップヤード・セイント","アッシュ・インヘリタンス","デッドマンズ・カートリッジ","ファイアウォーク"},
             new[]{"サード・ガーディアン","ブルー・リプライザル","ウィドウズ・ペンション","エマージェンシー・プロトコル","エスコート・デューティー"}};
         static readonly string[][] NewGunsEn={
             new[]{"Prism Verdict","Twin Horizon","Cross Examination","Ghost Measure","Long Vigil","Needle Court","White Feint","Second Angle","Silent Trajectory","Final Bearing"},
-            new[]{"Quake Ledger","Rivet Storm","Anvil Echo","Breach Dividend","Iron Wake","Grave Piston","Siege Relay","Foundry Roar","Crater Debt","Last Hammer"},
+            new[]{"Quake Ledger","Rivet Storm","Anvil Echo","Breach Dividend","Iron Wake","Grave Piston","Siege Relay","Foundry Roar","Crater Debt","Union Hammer"},
             new[]{"Arc Fugue","Copper Serpent","Static Crown","Relay Ghost","Storm Spindle","Broken Conductor","Blue Cascade","Live Junction","Pulse Verdict","Overload Hymn"},
-            new[]{"Spore Covenant","Root Tithe","Verdant Wake","Briar Lullaby","Seed Funeral","Green Refrain","Thorn Orchard","Leech Bloom","Last Harvest","Mycelium Crown"},
+            new[]{"Spore Covenant","Root Tithe","Verdant Wake","Briar Lullaby","Seed Funeral","Green Refrain","Thorn Orchard","Leech Bloom","Rot Harvest","Mycelium Crown"},
             new[]{"Shard Psalm","Cinder Rain","Kiln Memory","Fuse Saint","Ash Cyclone","Ember Debt","Blast Reliquary","Scorch Trail","Scrap Comet","Final Furnace"},
-            new[]{"Ward Beacon","Blue Bulwark","Escort Halo","Guardian Relay","Shield Verdict","Safe Meridian","Bastion Echo","Counterwall","Citadel Line","Last Shelter"}};
+            new[]{"Ward Beacon","Blue Bulwark","Escort Halo","Guardian Relay","Shield Verdict","Safe Meridian","Bastion Echo","Counterwall","Citadel Line","Toll Shelter"}};
         static readonly string[][] NewGunsJa={
             new[]{"プリズム・ヴァーディクト","ツイン・ホライゾン","クロス・エグザミネーション","ゴースト・メジャー","ロング・ヴィジル","ニードル・コート","ホワイト・フェイント","セカンド・アングル","サイレント・トラジェクトリー","ファイナル・ベアリング"},
-            new[]{"クエイク・レジャー","リベット・ストーム","アンヴィル・エコー","ブリーチ・ディビデンド","アイアン・ウェイク","グレイヴ・ピストン","シージ・リレー","ファウンドリー・ロア","クレーター・デット","ラスト・ハンマー"},
+            new[]{"クエイク・レジャー","リベット・ストーム","アンヴィル・エコー","ブリーチ・ディビデンド","アイアン・ウェイク","グレイヴ・ピストン","シージ・リレー","ファウンドリー・ロア","クレーター・デット","ユニオン・ハンマー"},
             new[]{"アーク・フーガ","カッパー・サーペント","スタティック・クラウン","リレー・ゴースト","ストーム・スピンドル","ブロークン・コンダクター","ブルー・カスケード","ライブ・ジャンクション","パルス・ヴァーディクト","オーバーロード・ヒム"},
-            new[]{"スポア・コヴナント","ルート・タイス","ヴァーダント・ウェイク","ブライア・ララバイ","シード・フューネラル","グリーン・リフレイン","ソーン・オーチャード","リーチ・ブルーム","ラスト・ハーヴェスト","マイセリウム・クラウン"},
+            new[]{"スポア・コヴナント","ルート・タイス","ヴァーダント・ウェイク","ブライア・ララバイ","シード・フューネラル","グリーン・リフレイン","ソーン・オーチャード","リーチ・ブルーム","ロット・ハーヴェスト","マイセリウム・クラウン"},
             new[]{"シャード・サーム","シンダー・レイン","キルン・メモリー","フューズ・セイント","アッシュ・サイクロン","エンバー・デット","ブラスト・レリクアリー","スコーチ・トレイル","スクラップ・コメット","ファイナル・ファーネス"},
-            new[]{"ウォード・ビーコン","ブルー・ブルワーク","エスコート・ヘイロー","ガーディアン・リレー","シールド・ヴァーディクト","セーフ・メリディアン","バスティオン・エコー","カウンターウォール","シタデル・ライン","ラスト・シェルター"}};
+            new[]{"ウォード・ビーコン","ブルー・ブルワーク","エスコート・ヘイロー","ガーディアン・リレー","シールド・ヴァーディクト","セーフ・メリディアン","バスティオン・エコー","カウンターウォール","シタデル・ライン","トール・シェルター"}};
         static readonly string[] newVisuals={"faceted muzzle and prism fins","paired barrels on a split receiver","crossed sight rails","recessed shroud and ghost ring","elongated vented barrel","needle muzzle and narrow stock","offset side port","dual angle sight","suppressed shroud with tracer vents","heavy terminal barrel and bearing dial"};
         public static int CatalogIndex(int maker,int variant)=>variant<5?maker*5+variant:GunSeriesDesigns.FirstNewLegendary+maker*10+variant-5;
         public static int VariantFromCatalogIndex(int index)=>index<30?index%5:5+(index-GunSeriesDesigns.FirstNewLegendary)%10;
@@ -45,15 +45,15 @@ namespace NeonVault
             new[]{"Debt Collector","Iron Epitaph","Siege Hands","Earthshaker","Walking Fortress"},
             new[]{"Feedback Crown","Blackout Jacket","Live Terminal","Thunderstep","Perpetual Storm"},
             new[]{"Leech King","Grave Bloom","Transfusion","Mycelium Stride","Undying Root"},
-            new[]{"Blast Survivor","Ash Heir","Last Match","Minewalker","Scrap Phoenix"},
-            new[]{"Return to Sender","Widow's Wall","Reserve Guardian","Safe Passage","Last Bastion"}};
+            new[]{"Blast Survivor","Ash Heir","Fuse Match","Minewalker","Scrap Phoenix"},
+            new[]{"Return to Sender","Widow's Wall","Reserve Guardian","Safe Passage","Toll Bastion"}};
         static readonly string[][] ArmorJa={
             new[]{"ウィットネス・プロテクション","ゴースト・レジャー","サイレント・エクスチェンジ","ヴァニシング・ポイント","ウォッチメーカー"},
             new[]{"デット・コレクター","アイアン・エピタフ","シージ・ハンズ","アースシェイカー","ウォーキング・フォートレス"},
             new[]{"フィードバック・クラウン","ブラックアウト・ジャケット","ライブ・ターミナル","サンダーステップ","パーペチュアル・ストーム"},
             new[]{"リーチ・キング","グレイヴ・ブルーム","トランスフュージョン","マイセリウム・ストライド","アンダイイング・ルート"},
-            new[]{"ブラスト・サバイバー","アッシュ・エア","ラスト・マッチ","マインウォーカー","スクラップ・フェニックス"},
-            new[]{"リターン・トゥ・センダー","ウィドウズ・ウォール","リザーブ・ガーディアン","セーフ・パッセージ","ラスト・バスティオン"}};
+            new[]{"ブラスト・サバイバー","アッシュ・エア","フューズ・マッチ","マインウォーカー","スクラップ・フェニックス"},
+            new[]{"リターン・トゥ・センダー","ウィドウズ・ウォール","リザーブ・ガーディアン","セーフ・パッセージ","トール・バスティオン"}};
         public static string Key(bool armor,int index)
         {index=Mathf.Clamp(index,0,armor?29:GunSeriesDesigns.FirstNewLegendary+NewGunCount-1);return (armor?"armor-":"gun-")+MakerFromCatalogIndex(index)+"-"+VariantFromCatalogIndex(index);}
         public static int Index(string key)

@@ -15,7 +15,7 @@ namespace NeonVault
             }
         }
         Vector2 MobileCanvasPoint(Vector2 bottomScreen)=>MobileCanvasMatrix.inverse.MultiplyPoint3x4(new Vector3(bottomScreen.x,UnityEngine.Screen.height-bottomScreen.y,0));
-        bool MobileButton(Rect r,string caption,int fontSize=38){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=fontSize,fontStyle=FontStyle.Bold,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
+        bool MobileButton(Rect r,string caption,int fontSize=38){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=fontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
         void DrawMobileMenu()
         {
             DrawTitleMenu(true);
@@ -38,7 +38,8 @@ namespace NeonVault
             Text(46,106,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=19,wordWrap=false,clipping=TextClipping.Clip},Mist,370);
             DrawHeldWeaponHUD(new Rect(350,797,280,80));
             int alive=0;foreach(var enemy in Enemies)if(enemy&&!enemy.dead)alive++;
-            Text(38,154,ExpeditionExitOpen?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},ExpeditionExitOpen?Gold:Mist,740);
+            Text(38,154,ExpeditionExitOpen?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},ExpeditionExitOpen?Color.Lerp(Gold,Color.white,.5f+.5f*Mathf.Sin(Time.unscaledTime*5)):Mist,740);
+            if(ExpeditionExitOpen)DrawDungeonExitDirection(true);
             if(toastTimer>0)Text(360,210,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,670);
             Rect mapRect=new Rect(1165,165,250,150);if(GUI.Button(mapRect,GUIContent.none,GUIStyle.none))OpenOverworldMap();Box(mapRect,new Color(.035f,.055f,.075f,.74f));
             if(Layout!=null)
@@ -52,7 +53,7 @@ namespace NeonVault
                 Vector3 p=cam.WorldToScreenPoint(AimReticleWorldPosition);
                 Vector2 reticle=MobileCanvasPoint(p);DrawCrosshair(reticle.x,reticle.y);
                 DrawWorldLootPreview();
-                if(NearbyAmmoCrate||NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE: OPEN CACHE","調べる：物資箱を開ける"),Gold,20);
+                if(NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE: OPEN CACHE","調べる：物資箱を開ける"),Gold,20);
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&(foe.elite||foe.kind==3||foe.hp<foe.maxHp)&&Layout.IsVisible(foe.transform.position))
                 {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);WorldLabel(new Rect(at.x-82,at.y-31,164,25),EnemyHealthLabel(foe),UiPaper,17);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);}
             }

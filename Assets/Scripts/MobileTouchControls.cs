@@ -179,7 +179,7 @@ namespace NeonVault
                 }
                 if (textStyle == null)
                 {
-                    textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true, fontStyle = FontStyle.Bold };
+                    textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true, fontStyle = FontStyle.Normal };
                     textStyle.normal.textColor = new Color(1f,.97f,.83f);
                 }
                 Font bundledFont = VaultFont.Preferred();

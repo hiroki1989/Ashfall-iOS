@@ -7,6 +7,8 @@ namespace NeonVault
         float expeditionCityZoom = .65f;
         bool expeditionCityDragging;
         GUIStyle expeditionCitySiteStyle;
+        float CitySiteWidth => MobileTouchControls.Enabled?68f:48f;
+        float CitySiteHeight => MobileTouchControls.Enabled?88f:60f;
         Texture2D expeditionCityAtlas;
         bool expeditionCityAtlasLoaded;
         static readonly Color CityRoad = new Color(.24f, .28f, .28f);
@@ -134,8 +136,7 @@ namespace NeonVault
             if(!view.Contains(canvasPosition))return false;
             Vector2 local=canvasPosition-view.position+expeditionMapScroll;
             // Match visible marker bounds. Resolve any overlap to the closest center.
-            float w=MobileTouchControls.Enabled?110:expeditionCityZoom>1?51:39;
-            float h=MobileTouchControls.Enabled?110:expeditionCityZoom>1?31:25;
+            float w=CitySiteWidth,h=CitySiteHeight;
             int nearest=-1;float distance=float.MaxValue;
             for(int id=0;id<ExpeditionMap.StageCount;id++)
             {
@@ -153,20 +154,24 @@ namespace NeonVault
             Vector2 p = CityScale(ExpeditionMap.CityPoint(id));
             bool unlocked = stage.level <= DebtLevel, selected = id == expeditionMapSelection, done = clearedExpeditionStages.Contains(id);
             Color mark = selected ? Gold : done ? Cyan : unlocked ? new Color(.83f,.86f,.69f) : new Color(.43f,.47f,.47f);
-            float w = MobileTouchControls.Enabled?110:expeditionCityZoom > 1 ? 51 : 39, h = MobileTouchControls.Enabled?110:expeditionCityZoom > 1 ? 31 : 25;
+            float w=CitySiteWidth,h=CitySiteHeight;
             Rect r = new Rect(p.x-w*.5f,p.y-h*.5f,w,h);
             Box(new Rect(r.x-2,r.y-2,r.width+4,r.height+4),mark);
-            Box(r,new Color(.025f,.045f,.05f,.98f));
-            GUI.color = mark;
-            if (expeditionCitySiteStyle == null) expeditionCitySiteStyle = new GUIStyle(centered) { fontSize = MobileTouchControls.Enabled?27:10, padding = new RectOffset(0, 0, 0, 0) };
-            if(GUI.Button(r,(id+1).ToString("00")+"·L"+stage.level,expeditionCitySiteStyle)) expeditionMapSelection=id;
-            GUI.color = Color.white;
+            Box(r,new Color(.025f,.045f,.05f,.94f));
+            float icon=MobileTouchControls.Enabled?62f:42f;
+            DrawDungeonMapArt(new Rect(p.x-icon*.5f,r.y+3,icon,icon),id,mark);
+            GUI.color=mark;
+            if(expeditionCitySiteStyle==null)expeditionCitySiteStyle=new GUIStyle(centered){padding=new RectOffset(0,0,0,0)};
+            expeditionCitySiteStyle.fontSize=MobileTouchControls.Enabled?18:12;
+            GUI.Label(new Rect(r.x,r.yMax-(MobileTouchControls.Enabled?22:16),w,MobileTouchControls.Enabled?22:16),"L"+stage.level,expeditionCitySiteStyle);
+            GUI.color=Color.white;
+            if(GUI.Button(r,GUIContent.none,GUIStyle.none))expeditionMapSelection=id;
             if(done)
             {
                 float badge=MobileTouchControls.Enabled?26:13;
                 Rect badgeRect=new Rect(r.xMax-badge*.65f,r.y-badge*.45f,badge,badge);
                 Box(badgeRect,Cyan);
-                Text(badgeRect.x+1,badgeRect.y-1,"✓",new GUIStyle(centered){fontSize=MobileTouchControls.Enabled?21:11,fontStyle=FontStyle.Bold},new Color(.025f,.045f,.05f),badge);
+                Text(badgeRect.x+1,badgeRect.y-1,"✓",new GUIStyle(centered){fontSize=MobileTouchControls.Enabled?21:11,fontStyle=FontStyle.Normal},new Color(.025f,.045f,.05f),badge);
                 Box(new Rect(r.x,r.yMax-3,r.width,3),Cyan);
             }
         }

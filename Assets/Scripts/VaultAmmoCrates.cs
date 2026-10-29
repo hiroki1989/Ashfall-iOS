@@ -76,12 +76,13 @@ namespace NeonVault
 
         int AmmoCratesPerFloor => Mathf.Clamp(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.ammoCratesPerFloor : 10,0,30);
 
-        public bool OpenNearbyAmmoCrate()
+        public bool OpenNearbyAmmoCrate(bool automatic=false)
         {
             FieldAmmoCrate nearest=null;float best=2.5f;
             for(int i=0;i<fieldAmmoCrates.Count;i++)
             {
                 var crate=fieldAmmoCrates[i];if(crate==null||crate.visual==null)continue;
+                if(automatic&&AmmoReserve(crate.type)>=AmmoCapacity(crate.type)&&!(SelectedExpeditionStage!=null&&!MissionCompleted&&(ExpeditionAllowsBypass||SelectedExpeditionStage.mission==ExpeditionMission.DestroyNest)))continue;
                 float distance=Vector3.Distance(PlayerPosition,crate.position);if(distance<best){best=distance;nearest=crate;}
             }
             if(nearest==null)return false;

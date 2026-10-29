@@ -38,7 +38,7 @@ namespace NeonVault {
    Box(new Rect(88,570,1264,245),new Color(.035f,.06f,.075f,.97f));
    Box(new Rect(88,570,6,245),bossIntroBeat==2||bossIntroBeat==4?Cyan:Gold);
    string speaker=VaultLanguage.Japanese?speakersJa[bossIntroBeat]:speakersEn[bossIntroBeat];
-   Text(120,590,string.IsNullOrEmpty(speaker)?T("PROLOGUE","序章"):speaker,new GUIStyle(label){fontSize=28,fontStyle=FontStyle.Bold},bossIntroBeat==2||bossIntroBeat==4?Cyan:Gold,1000);
+   Text(120,590,string.IsNullOrEmpty(speaker)?T("PROLOGUE","序章"):speaker,new GUIStyle(label){fontSize=28,fontStyle=FontStyle.Normal},bossIntroBeat==2||bossIntroBeat==4?Cyan:Gold,1000);
    Text(120,642,VaultLanguage.Japanese?linesJa[bossIntroBeat]:linesEn[bossIntroBeat],new GUIStyle(label){fontSize=27,wordWrap=true},Color.white,1190);
    Text(112,832,(bossIntroBeat+1)+" / "+linesEn.Length,tiny,Mist,190);
    if(WorldButton(new Rect(960,822,380,64),bossIntroBeat==linesEn.Length-1?T("ENTER ASHFALL","アッシュフォールへ"):T("CONTINUE","続ける"))){

@@ -97,7 +97,7 @@ namespace NeonVault
         void EqPortrait(Rect r,object item,bool detailed=false)
         {
             bool previousBadge=ManufacturerBranding.PortraitBadgeEnabled;
-            ManufacturerBranding.PortraitBadgeEnabled=!detailed;
+            ManufacturerBranding.PortraitBadgeEnabled=false;
             int score=0;
             if(item is Gun g){ItemPortraits.Draw(r,g);score=GearScoring.Score(g);
                 float size=Mathf.Min(Mathf.Min(r.width,r.height)-10,Mathf.Clamp(Mathf.Min(r.width,r.height)*.36f,30,48));
@@ -113,7 +113,10 @@ namespace NeonVault
                 ManufacturerPortraits.Melee(portrait,w);score=MeleeWeaponCatalog.Score(w);}
             else {ManufacturerBranding.PortraitBadgeEnabled=previousBadge;return;}
             ManufacturerBranding.PortraitBadgeEnabled=previousBadge;
-            if(detailed){string maker=item is Gun dg?ManufacturerBranding.Maker(dg):item is ArmorItem da?ManufacturerBranding.Maker(da):item is ArtifactItem dm?ManufacturerBranding.Maker(dm):item is MeleeWeaponItem dw?ManufacturerBranding.Maker(dw):null;if(!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(new Rect(r.x+1,r.yMax-82,Mathf.Min(290,r.width*.49f),76),maker);}
+            string maker=item is Gun dg?ManufacturerBranding.Maker(dg):item is ArmorItem da?ManufacturerBranding.Maker(da):item is ArtifactItem dm?ManufacturerBranding.Maker(dm):item is MeleeWeaponItem dw?ManufacturerBranding.Maker(dw):null;
+            if(!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(detailed
+                ?new Rect(r.x-22,r.y+53,190,62)
+                :new Rect(r.x-10,r.y+50,82,52),maker);
             var style=new GUIStyle(eqCopy){font=this.font,fontStyle=FontStyle.Normal,
                 fontSize=r.width>200?29:24,alignment=TextAnchor.LowerRight,wordWrap=false};
             string value=score.ToString("N0");
@@ -259,7 +262,6 @@ namespace NeonVault
         void DrawEquipmentCapacityShop()
         {
             EqText(new Rect(28,204,1320,46),T("PERMANENT CAPACITY UPGRADES","恒久的な所持上限の拡張"),EqInk,new GUIStyle(eqCaption){fontSize=29});
-            EqText(new Rect(28,253,1320,42),T("Ten levels per category. Purchases use scrap and persist between runs.","各カテゴリ10段階。スクラップで購入し、周回をまたいで引き継ぎます。"),EqMuted);
             StorageUpgrade[] categories={StorageUpgrade.AmmoHandgun,StorageUpgrade.AmmoShotgun,StorageUpgrade.AmmoSniper,StorageUpgrade.AmmoRifle,StorageUpgrade.AmmoLMG,StorageUpgrade.Weapons,StorageUpgrade.Armor,StorageUpgrade.Modules,StorageUpgrade.Melee,StorageUpgrade.Stash};
             string[] labels={T("HANDGUN AMMO","ハンドガン弾"),T("SHOTGUN AMMO","ショットガン弾"),T("SNIPER RIFLE AMMO","スナイパーライフル弾"),T("ASSAULT RIFLE AMMO","アサルトライフル弾"),T("HEAVY MACHINE GUN AMMO","ヘビーマシンガン弾"),T("FIREARMS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接武器"),T("STASH","倉庫")};
             string[] values={T("Handgun reserve","ハンドガン弾の上限"),T("Shotgun reserve","ショットガン弾の上限"),T("Sniper rifle reserve","スナイパーライフル弾の上限"),T("Assault rifle reserve","アサルトライフル弾の上限"),T("Heavy machine gun reserve","ヘビーマシンガン弾の上限"),T("Weapon inventory","銃の所持枠"),T("Armor inventory","防具の所持枠"),T("Module inventory","モジュールの所持枠"),T("Melee inventory","近接武器の所持枠"),T("Stash capacity","倉庫の所持枠")};

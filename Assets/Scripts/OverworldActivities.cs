@@ -62,8 +62,9 @@ namespace NeonVault
         {
             int type = selectedOverworldActivity != null ? selectedOverworldActivity.type : NearbyOverworldActivity;
             if (type == 4) return choice == 0 ? VaultLanguage.T("Start / survive 45 seconds", "開始 / 45秒間生き延びる") : VaultLanguage.T("Leave", "立ち去る");
-            if (type == 0 || type == 1) return choice == 0 ? VaultLanguage.T("Clear / defeat 6 enemies in 60 seconds", "殲滅 / 60秒以内に敵6体を倒す") : VaultLanguage.T("Defend / hold the site for 30 seconds", "防衛 / 地点を30秒間守る");
-            if (type == 3) return choice == 0 ? VaultLanguage.T("Clear / defeat 6 enemies in 60 seconds", "殲滅 / 60秒以内に敵6体を倒す") : VaultLanguage.T("Leave", "立ち去る");
+            int target=selectedOverworldActivity!=null?ActivityKillTarget(selectedOverworldActivity.id):15;
+            if (type == 0 || type == 1) return choice == 0 ? VaultLanguage.T("Clear / defeat ", "殲滅 / ")+target+VaultLanguage.T(" enemies in 100 seconds", "体を100秒以内に倒す") : VaultLanguage.T("Defend / hold the site for 30 seconds", "防衛 / 地点を30秒間守る");
+            if (type == 3) return choice == 0 ? VaultLanguage.T("Clear / defeat ", "殲滅 / ")+target+VaultLanguage.T(" enemies in 100 seconds", "体を100秒以内に倒す") : VaultLanguage.T("Leave", "立ち去る");
             return choice == 0 ? VaultLanguage.T("Follow marks / track the guarded cache", "印を辿る / 守られた物資箱を追跡") : VaultLanguage.T("Defend / secure the coordinates", "防衛 / 座標を確保する");
         }
         // Use a deterministic representative legendary gun at the player's level, so

@@ -9,12 +9,43 @@ namespace NeonVault
         public void SetManufacturerReview(int maker,int kind){manufacturerRegistry=true;makerSelection=Mathf.Clamp(maker,0,5);manufacturerKind=kind;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
         void BuildManufacturerProducts()
         {
+            if(!smoke)EquipmentDiscovery.RecordCurrent(Weapons,ArmorInventory,ArtifactInventory,MeleeWeaponInventory);
             manufacturerProducts.Clear();string id=ManufacturerCatalog.Id(makerSelection);
             if(manufacturerKind==0){for(int i=0;i<Arsenal.CatalogCount;i++){var item=Arsenal.Catalog(i);if(ManufacturerBranding.Maker(item)==id)manufacturerProducts.Add(item);}}
             else if(manufacturerKind==1){foreach(var product in ArmorProductCatalog.All)if(product.manufacturerId==id&&Armory.IsActiveSlot(product.slot))manufacturerProducts.Add(Armory.CreateCatalog(product.id,Rarity.Common,1));}
             else if(manufacturerKind==2){foreach(var product in ModuleProductCatalog.All)if(product.manufacturerId==id)manufacturerProducts.Add(ArtifactCatalog.CreateCatalog(product.id,product.legendary?Rarity.Legendary:Rarity.Common,1));}
-            else if(manufacturerKind==3){for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){var item=MeleeWeaponCatalog.Catalog(i);if(ManufacturerBranding.Maker(item)==id)manufacturerProducts.Add(item);}}
-
+            else if(manufacturerKind==3){for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){var item=MeleeWeaponCatalog.Catalog(i);if(ManufacturerBranding.Maker(item)==id){manufacturerProducts.Add(MeleeWeaponCatalog.Catalog(i,Rarity.Legendary));manufacturerProducts.Add(item);}}}
+            var legendary=new List<object>();var regular=new List<object>();
+            foreach(var item in manufacturerProducts){if(CatalogIsLegendary(item))legendary.Add(item);else regular.Add(item);}
+            manufacturerProducts.Clear();manufacturerProducts.AddRange(legendary);manufacturerProducts.AddRange(regular);
+        }
+        static bool CatalogIsLegendary(object item)
+        {
+            if(item is Gun gun)return !string.IsNullOrEmpty(gun.legendaryKey);
+            if(item is ArmorItem armor)return !string.IsNullOrEmpty(armor.legendaryKey)||armor.uniqueEffect>0;
+            if(item is ArtifactItem module)return module.rarity==Rarity.Legendary||module.uniqueEffect>0;
+            return item is MeleeWeaponItem melee&&melee.uniqueEffect;
+        }
+        string CatalogEffect(object item)
+        {
+            if(item is Gun gun)return string.IsNullOrEmpty(gun.legendaryKey)
+                ?T("A firearm recovered from the ruined city.","廃きょの街で回収された銃器。")
+                :LegendaryRedOpen+LegendaryCatalog.Description(gun,VaultLanguage.Japanese)+LegendaryRedClose;
+            if(item is ArmorItem armor)return string.IsNullOrEmpty(armor.legendaryKey)
+                ?T("Survival gear built for the dust and debris.","粉じんと瓦礫の中を生き抜くための装備。")
+                :LegendaryRedOpen+LegendaryCatalog.Description(armor,VaultLanguage.Japanese)+LegendaryRedClose;
+            if(item is ArtifactItem module)
+            {
+                if(!CatalogIsLegendary(module))return T("A portable circuit assembled from salvage.","回収部品から組み上げた携帯回路。");
+                string description=module.Description;
+                string marker=T("Legendary circuit ","レジェンダリー回路");
+                int start=description.IndexOf(marker,System.StringComparison.Ordinal);
+                return start<0?"":LegendaryRedOpen+description.Substring(start)+LegendaryRedClose;
+            }
+            if(item is MeleeWeaponItem melee)return melee.uniqueEffect
+                ?LegendaryRedOpen+MeleeWeaponCatalog.LegendaryDescription(melee)+LegendaryRedClose
+                :T("A hand weapon shaped for close quarters.","接近戦に備えて作られた手持ちの刃物。");
+            return "";
         }
         void DrawManufacturerRegistry()
         {
@@ -51,15 +82,24 @@ namespace NeonVault
             {
                 float x=i%3*442,y=i/3*210;if(y+202<manufacturerScroll.y||y>manufacturerScroll.y+560)continue;
                 var item=manufacturerProducts[i];Panel(new Rect(x,y,430,199),ManufacturerCatalog.Color(selected));
-                string name,detail,code;int score;
-                if(item is Gun gun){name=VaultLanguage.GunName(gun);detail=string.IsNullOrEmpty(gun.legendaryKey)?GunNumbers(gun):LegendaryDescription(gun,VaultLanguage.GunDescription(gun));code=gun.catalogId;score=GearScoring.Score(gun);ItemPortraits.Draw(new Rect(x+9,y+12,118,118),gun);}
-                else if(item is ArmorItem armor){name=Armory.Name(armor);detail=string.IsNullOrEmpty(armor.legendaryKey)&&armor.uniqueEffect==0?Armory.Stats(armor):LegendaryDescription(armor,Armory.Description(armor));code=armor.catalogId;score=GearScoring.Score(armor);ItemPortraits.Draw(new Rect(x+9,y+12,118,118),armor);}
-                else if(item is ArtifactItem module){name=module.Name;detail=LegendaryDescription(module,module.Description);code=module.catalogId;score=GearScoring.Score(module);ManufacturerBranding.ModulePortrait(new Rect(x+9,y+12,118,118),module);}
-                else{var melee=(MeleeWeaponItem)item;name=MeleeWeaponCatalog.Name(melee);detail=T("DMG ","威力 ")+melee.damage+" / "+T("INTERVAL ","間隔 ")+melee.interval.ToString("0.00")+" / "+T("RANGE ","射程 ")+melee.effectiveRange.ToString("0.00")+"m / "+melee.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(melee);code=melee.catalogId;score=MeleeWeaponCatalog.Score(melee);ManufacturerPortraits.Melee(new Rect(x+9,y+12,118,118),melee);ManufacturerBranding.Badge(new Rect(x+14,y+95,27,27),selected);}
+                bool known=EquipmentDiscovery.Known(item);string name="?",detail="?",code="?";
+                if(known)
+                {
+                    if(item is Gun gun)name=VaultLanguage.GunName(gun);
+                    else if(item is ArmorItem armor)name=Armory.Name(armor);
+                    else if(item is ArtifactItem module)name=module.Name;
+                    else name=MeleeWeaponCatalog.Name((MeleeWeaponItem)item);
+                    detail=CatalogEffect(item);code=EquipmentDiscovery.Key(item);
+                    Rect icon=new Rect(x+9,y+12,118,118);
+                    if(item is Gun g)ItemPortraits.Draw(icon,g);
+                    else if(item is ArmorItem a)ItemPortraits.Draw(icon,a);
+                    else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(icon,m);
+                    else ManufacturerPortraits.Melee(icon,(MeleeWeaponItem)item);
+                }
+                else Text(x+42,y+39,"?",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter},Mist,55);
                 Text(x+138,y+13,name,new GUIStyle(small){wordWrap=true},Gold,278);
-                Text(x+138,y+65,T("SCORE ","評価 ")+score+" / Lv 1",tiny,Cyan,275);
-                Text(x+10,y+137,detail,new GUIStyle(tiny){wordWrap=true},Mist,407);
-                Text(x+138,y+104,code,tiny,Mist,275);
+                Text(x+10,y+137,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Mist,407);
+                if(known)Text(x+138,y+104,code,tiny,Mist,275);
             }
             GUI.EndScrollView();Text(47,857,T("Product reference / Loot and merchant stock supply these designs. No free equipment is granted here.","製品図鑑 / 各製品は戦利品・商人の在庫から入手できます。"),tiny,Mist,1160);
         }

@@ -40,11 +40,16 @@ namespace NeonVault
             for(int row=0;row<2;row++)
             {
                 int index=mobileCatalogPage*2+row;if(index>=manufacturerProducts.Count)break;object item=manufacturerProducts[index];float y=275+row*240;Panel(new Rect(30,y,1370,225),ManufacturerCatalog.Color(maker));
-                Rect icon=new Rect(45,y+20,170,170);string name,detail;
-                if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);detail=string.IsNullOrEmpty(gun.legendaryKey)?GunNumbers(gun):LegendaryDescription(gun,VaultLanguage.GunDescription(gun));}
-                else if(item is ArmorItem armor){ItemPortraits.Draw(icon,armor);name=Armory.Name(armor);detail=string.IsNullOrEmpty(armor.legendaryKey)&&armor.uniqueEffect==0?Armory.Stats(armor):LegendaryDescription(armor,Armory.Description(armor));}
-                else if(item is ArtifactItem module){ManufacturerBranding.ModulePortrait(icon,module);name=module.Name;detail=LegendaryDescription(module,module.Description);}
-                else{var melee=(MeleeWeaponItem)item;DrawMeleeIcon(icon,melee.family);name=MeleeWeaponCatalog.Name(melee);detail=T("DMG ","威力 ")+melee.damage+" / "+melee.effectiveRange.ToString("0.0")+"m"+MeleeLegendaryDetail(melee);}
+                Rect icon=new Rect(45,y+20,170,170);bool known=EquipmentDiscovery.Known(item);string name="?",detail="?";
+                if(known)
+                {
+                    if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);}
+                    else if(item is ArmorItem armor){ItemPortraits.Draw(icon,armor);name=Armory.Name(armor);}
+                    else if(item is ArtifactItem module){ManufacturerBranding.ModulePortrait(icon,module);name=module.Name;}
+                    else{var melee=(MeleeWeaponItem)item;ManufacturerPortraits.Melee(icon,melee);name=MeleeWeaponCatalog.Name(melee);}
+                    detail=CatalogEffect(item);
+                }
+                else MobileCopyAt(95,y+60,"?",Mist,100);
                 MobileCopyAt(240,y+15,name,Gold,1125);MobileCopyAt(240,y+83,detail,Mist,1125);
             }
             if(MobileButton(new Rect(30,780,350,110),T("PREVIOUS","前のページ")))mobileCatalogPage=Mathf.Max(0,mobileCatalogPage-1);

@@ -213,7 +213,8 @@ namespace NeonVault
                 {spawn.position=foe.transform.position;spawn.position.y=.65f;spawn.hp=foe.hp;spawn.active=null;worldEnemyInstances.Remove(foe);}
                 worldEnemyLevels.Remove(foe);foe.gameObject.SetActive(false);Destroy(foe.gameObject);Enemies.RemoveAt(i);
             }
-            if(worldEnemyInstances.Count>=MaxActiveOverworldEnemies)return;
+            int streamLimit=OverworldRushActive?Mathf.Max(1,MaxActiveOverworldEnemies-8):MaxActiveOverworldEnemies;
+            if(worldEnemyInstances.Count>=streamLimit)return;
             var nearby=new List<WorldEnemySpawn>();
             Vector3 focus=PlayerPosition;
             foreach(var spawn in worldEnemySpawns)
@@ -221,7 +222,7 @@ namespace NeonVault
             nearby.Sort((a,b)=>(a.position-focus).sqrMagnitude.CompareTo((b.position-focus).sqrMagnitude));
             foreach(var nearest in nearby)
             {
-                if(worldEnemyInstances.Count>=MaxActiveOverworldEnemies)break;
+                if(worldEnemyInstances.Count>=streamLimit)break;
                 // Geography is generated lazily; validate the actual footprint only for
                 // nearby spawns so the initial world load does not build every chunk.
                 if(WorldGeography.Blocked(nearest.position,.8f)||WorldEntranceBuildings.Blocked(nearest.position,.8f,WorldGeography))
