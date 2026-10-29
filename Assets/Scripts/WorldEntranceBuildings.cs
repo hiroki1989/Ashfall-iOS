@@ -102,7 +102,7 @@ namespace NeonVault
         // They flank the approach and leave the central threshold unobstructed.
         static void DressCampExterior(Transform root,int key)
         {
-            string[] cargo={"pbr_box_supply","pbr_box_ammo","pbr_box_med"};
+            string[] cargo={"pbr_box_supply","pallet","pbr_box_med"};
             PlaceCampProp(root,"props/"+cargo[key%cargo.Length],new Vector3(-4.4f,0,1.1f),key*90,1.2f,1.15f);
             PlaceCampProp(root,"props/barrel_open",new Vector3(4.4f,0,1.1f),key*90,1.05f,1.2f);
             PlaceCampProp(root,"props/SM_fence_stand_small",new Vector3(-4.3f,0,-1f),90,2.3f,1.8f);

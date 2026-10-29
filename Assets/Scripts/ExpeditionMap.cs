@@ -3,6 +3,8 @@ using UnityEngine;
 
 namespace NeonVault
 {
+    public enum DungeonFaction { None, Raiders, Gang }
+
     public enum ExpeditionMission { ClearHostiles, HuntTarget, RecoverSupplies, DestroyNest, SurveySectors, SalvageSweep }
 
     [Serializable]
@@ -24,6 +26,8 @@ namespace NeonVault
     public static class ExpeditionMap
     {
         public const int StageCount = 200;
+        // Stable per-stage assignment: 50 raider hideouts, 50 gang hideouts, 100 original sites.
+        public static DungeonFaction FactionForStage(int id) => id < 0 || id >= StageCount ? DungeonFaction.None : id % 4 == 0 ? DungeonFaction.Raiders : id % 4 == 1 ? DungeonFaction.Gang : DungeonFaction.None;
         public static readonly Vector2 CityCanvasSize = new Vector2(1440, 1000);
         // A coprime permutation scatters stable stage IDs
         // across the city without changing progression, rewards, or claimed contracts.
@@ -87,13 +91,14 @@ namespace NeonVault
             id=Mathf.Clamp(id,0,StageCount-1); int region=(id%100)/20, n=id%20, place=n/4, variant=n%4+(id/100)*4;
             string loc=places[region][place], locJa=placesJa[region][place]; int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-3);
             int mission=(id+region+place)%missionEn.Length;
+            var faction=FactionForStage(id);
             string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==3?"Infestation network":"Supply cache";
             string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==3?"感染網":"補給物資";
             return new ExpeditionStage { id=id,region=region,level=danger,legacyDungeonIndex=region==0?0:region<3?1:2,
                 englishName=loc+" / " + (variant+1).ToString("00"), japaneseName=locJa+"・"+(variant+1).ToString("00"),
                 englishLocation=regions[region]+" — "+loc,japaneseLocation=regionsJa[region]+" — "+locJa,
-                englishBiome=id%5==2?"Raider-occupied depot":biomes[region][place],japaneseBiome=id%5==2?"レイダー占拠拠点":biomesJa[region][place],mission=(ExpeditionMission)mission,
-                englishTarget=id%5==2&&mission==1?"Raider commander":target,japaneseTarget=id%5==2&&mission==1?"レイダーの指揮官":targetJa,
+                englishBiome=faction==DungeonFaction.Raiders?"RED CLAW HIDEOUT":faction==DungeonFaction.Gang?"DUSK COYOTES HIDEOUT":biomes[region][place],japaneseBiome=faction==DungeonFaction.Raiders?"レッドクロウのアジト":faction==DungeonFaction.Gang?"ダスク・コヨーテのアジト":biomesJa[region][place],mission=(ExpeditionMission)mission,
+                englishTarget=mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"Raider commander":"Gang leader"):target,japaneseTarget=mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"レイダーの指揮官":"ギャングのリーダー"):targetJa,
                 englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[region] };
         }
         public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=0;id<StageCount;id++)if(Get(id).region==Mathf.Clamp(region,0,4)&&Get(id).mission==mission)count++;return count;}

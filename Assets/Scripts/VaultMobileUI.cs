@@ -63,7 +63,7 @@ namespace NeonVault
             DrawCameraZoom(300,225,400,true);DrawMasterVolume(740,225,400,true);
             if(MobileButton(new Rect(300,320,840,120),T("RESUME","探索を再開"))){screen=Screen.Playing;Time.timeScale=1;}
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
-            if(MobileButton(new Rect(300,755,840,100),T("WORLD MAP","全体地図")))OpenOverworldMap();
+            if(MobileButton(new Rect(300,755,840,100),T("WORLD MAP","広域地図")))OpenOverworldMap();
             if(MobileButton(new Rect(300,610,405,120),T("SAVE & MENU","保存してメニューへ")))SaveRunAndReturnToMenu();
             if(MobileButton(new Rect(735,610,405,120),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
         }

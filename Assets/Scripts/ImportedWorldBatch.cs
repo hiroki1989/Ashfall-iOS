@@ -81,6 +81,11 @@ namespace NeonVault {
    var ghostShader=Resources.Load<Shader>("BuildingGhost");
    if(!ghostShader){Debug.LogError("BuildingGhost shader is missing; building opacity cannot be changed.");return source;}
    result=new Material(source);result.shader=ghostShader;
+   // Opaque asset textures may carry unrelated alpha (including all zero).
+   // Preserve alpha only for source materials explicitly using cutout/transparency.
+   bool alpha=source.renderQueue>=2450||(source.HasProperty("_Mode")&&source.GetFloat("_Mode")>0.5f)||(source.HasProperty("_Surface")&&source.GetFloat("_Surface")>0.5f);
+   result.SetFloat("_UseTextureAlpha",alpha?1f:0f);
+   if(source.HasProperty("_BaseMap")&&source.GetTexture("_BaseMap")){result.SetTexture("_MainTex",source.GetTexture("_BaseMap"));result.SetTextureScale("_MainTex",source.GetTextureScale("_BaseMap"));result.SetTextureOffset("_MainTex",source.GetTextureOffset("_BaseMap"));}
    // 50% transparent keeps the building visible while revealing actors behind it.
    // BuildingGhost writes depth so walls and floors do not repeatedly compound
    // opacity along the same sightline when viewed through a multi-part building.

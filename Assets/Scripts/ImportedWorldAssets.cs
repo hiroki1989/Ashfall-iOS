@@ -82,7 +82,7 @@ namespace NeonVault {
     float x=-15+i*6;
     PlaceHubSupply(root,layout,"props","SM_fence_stand_small",new Vector3(x,0,-16),0,3.1f,2.2f);
    }
-   string[] supplies={"pbr_box_supply","pbr_box_ammo","pbr_box_med","pallet","WaterTank","barrel_open"};
+   string[] supplies={"pbr_box_supply","pallet","pbr_box_med","pallet","WaterTank","barrel_open"};
    for(int i=0;i<supplies.Length;i++){
     float side=i<3?-1:1;
     PlaceHubSupply(root,layout,"props",supplies[i],new Vector3(side*(15.8f+(i%2)*1.5f),0,-5+(i%3)*3.2f),i*90,1.5f,1.8f);
@@ -96,14 +96,14 @@ namespace NeonVault {
    PlaceHubStation(root,layout,"rack",new Vector3(9.9f,0,-4.4f),180,1.8f);
    PlaceHubStation(root,layout,"pbr_box_med",new Vector3(12.1f,0,-4.4f),-20,.9f);
    PlaceHubStation(root,layout,"pallet",new Vector3(-4.4f,0,-9.9f),0,.4f);
-   PlaceHubStation(root,layout,"pbr_box_ammo",new Vector3(-6.6f,0,-9.9f),15,.9f);
+   PlaceHubStation(root,layout,"pallet",new Vector3(-6.6f,0,-9.9f),15,.9f);
    PlaceHubStation(root,layout,"bench",new Vector3(4.4f,0,-9.9f),0,1.0f);
    PlaceHubStation(root,layout,"pbr_box_supply",new Vector3(6.6f,0,-9.9f),-15,.9f);
    // Stock and workshop details sit just outside the playable circle.  Fit each
    // asset to a modest footprint before checking the entire blocked-cell area.
    PlaceHubDetail(root,layout,"rack",new Vector3(-15.5f,0,0),90,2.2f,2.2f);
    PlaceHubDetail(root,layout,"pbr_box_supply",new Vector3(-15.5f,0,-3),25,1.3f,1.1f);
-   PlaceHubDetail(root,layout,"pbr_box_ammo",new Vector3(-15.5f,0,3),-15,1.3f,1.1f);
+   PlaceHubDetail(root,layout,"pallet",new Vector3(-15.5f,0,3),-15,1.3f,1.1f);
    PlaceHubDetail(root,layout,"table",new Vector3(15.5f,0,0),90,2.2f,1.3f);
    PlaceHubDetail(root,layout,"pbr_box_med",new Vector3(15.5f,0,-3),20,1.3f,1.1f);
    PlaceHubDetail(root,layout,"pallet",new Vector3(15.5f,0,3),-15,1.7f,.5f);

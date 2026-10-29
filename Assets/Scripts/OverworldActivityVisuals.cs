@@ -18,9 +18,9 @@ namespace NeonVault
         public void Initialize(VaultGame owner)
         {
             game = owner;
-            source[0] = Resources.Load<GameObject>("ImportedWorld/props/pbr_box_ammo");
+            source[0] = Resources.Load<GameObject>("ImportedWorld/props/rack");
             source[1] = Resources.Load<GameObject>("ImportedWorld/props/rack");
-            source[2] = Resources.Load<GameObject>("ImportedWorld/props/pbr_box_ammo");
+            source[2] = Resources.Load<GameObject>("ImportedWorld/props/rack");
         }
 
         public void OpenReward(int id)
@@ -52,7 +52,7 @@ namespace NeonVault
                     chest.transform.SetParent(transform, false);
                     chest.transform.position = new Vector3(site.position.x, 0, site.position.z);
                     chest.transform.rotation = Quaternion.Euler(0, site.id % 4 * 90, 0);
-                    EquipmentChestVisual.Create(chest.transform);
+                    EquipmentChestVisual.Create(chest.transform, site.id >= 100100 && site.id < 100150);
                     visible.Add(site.id, chest);
                     continue;
                 }

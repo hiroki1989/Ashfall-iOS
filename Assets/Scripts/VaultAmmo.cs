@@ -26,7 +26,7 @@ namespace NeonVault
         readonly List<Chest> chests=new List<Chest>();
         readonly List<SupplyDrop> supplyDrops=new List<SupplyDrop>();
         int chestRoomForRun=-1;
-        class Chest { public Vector3 position; public GameObject visual; public bool opened; }
+        class Chest { public Vector3 position; public GameObject visual; public bool opened; public bool rare; }
         class SupplyDrop { public int credits; public AmmoType ammoType; public int ammoAmount; public bool healthPack; public Vector3 position; public GameObject visual; }
 
         public static AmmoType AmmoForGun(Gun item)
@@ -60,6 +60,17 @@ namespace NeonVault
             }
         }
         void SeedAmmoReserves(){Array.Clear(ammoReserves,0,ammoReserves.Length);for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);ammoReserves[(int)type]=AmmoCapacity(type);}}
+        const float DeathSequenceDuration=4.5f;
+        void RestoreDeathAmmoMinimum()
+        {
+            for(int i=0;i<ActiveAmmoTypeCount;i++)
+            {
+                var type=ActiveAmmoTypeAt(i);
+                int minimum=(AmmoCapacity(type)+1)/2;
+                ammoReserves[(int)type]=Mathf.Max(ammoReserves[(int)type],minimum);
+            }
+            SaveInventory();
+        }
         public bool BuyAmmo(AmmoType type,int packs)
         {
             type=NormalizeAmmoType(type);
@@ -133,12 +144,23 @@ namespace NeonVault
             {
                 // Prefer a clear spot beside extraction, never a sealed chamber.
                 bool found=false;
-                for(int ring=0;ring<5&&!found;ring++)for(int i=0;i<16;i++)
+                for(int ring=0;ring<12&&!found;ring++)for(int i=0;i<16;i++)
                 {
                     float angle=i*Mathf.PI/8;
-                    Vector3 candidate=Layout.Exit+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*(2.6f+ring*1.2f);
-                    if(Blocked(candidate,.85f))continue;p=candidate;found=true;break;
+                    Vector3 candidate=Layout.Exit+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*(5f+ring*1.2f);
+                    if(Blocked(candidate,.85f)||!Layout.SpawnSafe(candidate))continue;p=candidate;found=true;break;
                 }
+                if(!found)
+                {
+                    // A connected chamber centre is a safe fallback away from the gate.
+                    foreach(var chamber in Layout.chambers)
+                    {
+                        Vector3 candidate=Layout.Center(chamber);
+                        if((candidate-Layout.Exit).sqrMagnitude<25f||Blocked(candidate,.85f)||!Layout.SpawnSafe(candidate))continue;
+                        p=candidate;found=true;break;
+                    }
+                }
+                if(!found)throw new InvalidOperationException("Generated floor has no safe chest position: "+seed+" / "+room);
             }
             else
             {
@@ -152,8 +174,10 @@ namespace NeonVault
                 if(!found)p=Layout.Exit;
             }
             p.y=0;
+            bool rare=final||rng.NextDouble()<.2;
             var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);
-            chests.Add(new Chest{position=p,visual=obj});
+            if(rare) EquipmentChestVisual.SetRare(obj);
+            chests.Add(new Chest{position=p,visual=obj,rare=rare});
         }
         bool OpenNearbyChest()
         {
@@ -161,7 +185,7 @@ namespace NeonVault
             Chest nearest=null;float distance=2.4f;
             foreach(var chest in chests)if(!chest.opened){float d=Vector3.Distance(PlayerPosition,chest.position);if(d<distance){distance=d;nearest=chest;}}
             if(nearest==null)return false;
-            DropEquipmentChestReward(nearest.position,ExpeditionLootLevel(rng));
+            DropEquipmentChestReward(nearest.position,ExpeditionLootLevel(rng),nearest.rare);
             nearest.opened=true;EquipmentChestVisual.Open(nearest.visual);
             ExpeditionSupplyRecovered();SaveInventory();
             Notify("EQUIPMENT CHEST / Equipment recovered","装備チェスト / 装備を回収しました");return true;

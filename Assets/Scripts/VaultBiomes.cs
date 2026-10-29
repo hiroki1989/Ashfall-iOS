@@ -20,6 +20,27 @@ namespace NeonVault
                 else GeneratorPlant(g);
             }
         }
+        // Faction dressing is non-colliding and uses the same safe landmark position as the existing plants.
+        public void FactionHideout(DungeonFaction faction,SectorLayout layout)
+        {
+            if(faction==DungeonFaction.None)return;
+            int i=0;
+            foreach(var chamber in layout.chambers)
+            {
+                var p=layout.Center(chamber)+new Vector3(-3,0,3);p.y=-.06f;
+                var g=Group(faction==DungeonFaction.Raiders?"Raider salvage barricade":"Gang territory marker",p);
+                g.localRotation=Quaternion.Euler(0,(i++%4)*90,0);
+                Color paint=faction==DungeonFaction.Raiders?new Color(.55f,.22f,.10f):new Color(.55f,.12f,.48f);
+                Detail("Salvage footing",PrimitiveType.Cube,new Vector3(0,.12f,0),new Vector3(1.35f,.2f,.45f),Dark,g);
+                Detail("Salvage post",PrimitiveType.Cube,new Vector3(0,1.05f,0),new Vector3(.12f,1.9f,.12f),Bronze,g,new Vector3(0,0,8));
+                Detail("Faction painted metal panel",PrimitiveType.Cube,new Vector3(0,1.25f,0),new Vector3(1.0f,.65f,.09f),paint,g,new Vector3(0,0,-7));
+                Detail("Faction mark diagonal",PrimitiveType.Cube,new Vector3(0,1.25f,-.06f),new Vector3(.10f,.55f,.025f),Stone*1.7f,g,new Vector3(0,0,42));
+                if(faction==DungeonFaction.Raiders)
+                    Detail("Raider scrap blade",PrimitiveType.Cube,new Vector3(.48f,.55f,0),new Vector3(.14f,1.05f,.12f),Bronze,g,new Vector3(0,0,-23));
+                else
+                    Part("Gang signal lamp",PrimitiveType.Sphere,new Vector3(0,1.84f,0),Vector3.one*.18f,paint,g,true);
+            }
+        }
         void Detail(string name,PrimitiveType shape,Vector3 position,Vector3 scale,Color color,Transform parent,Vector3 rotation=default)
         {Part(name,shape,position,scale,color,parent).localRotation=Quaternion.Euler(rotation);}
         void GeneratorPlant(Transform g)

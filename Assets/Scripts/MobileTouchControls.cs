@@ -182,7 +182,8 @@ namespace NeonVault
                     textStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = true, fontStyle = FontStyle.Bold };
                     textStyle.normal.textColor = new Color(1f,.97f,.83f);
                 }
-                Font bundledFont = Resources.Load<Font>("Fonts/851Gkktt-005");
+                Font bundledFont = VaultFont.Preferred();
+                if(bundledFont==null)bundledFont=Resources.Load<Font>("Fonts/851Gkktt-005");
                 if(bundledFont==null)bundledFont=Resources.Load<Font>("Fonts/NotoSansJP");
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);

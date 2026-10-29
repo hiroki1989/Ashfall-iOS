@@ -112,7 +112,7 @@ namespace NeonVault
             gun=WeaponInSlot(ActiveWeaponSlot)??Weapons[0];ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Clamp(loaded,0,EffectiveMagazine):EffectiveMagazine;
             player=art.Character(position,true);barrel=art.Weapon(player,gun.color);RefreshWeaponAppearance();PlayerAppearance?.ApplyArmor(EquippedArmor);
             aim=Vector3.right;hasAimedPoint=false;PlayerWeapon.Aim(aim);CreateSatellites();
-            CreateWorldSites();CreateWorldChests();GenerateOverworldEnemies();StreamOverworldEnemies();RefreshOverworldActivities();
+            CreateWorldSites();CreateWorldChests();GenerateOverworldEnemies();CreateFactionCamps();StreamOverworldEnemies();RefreshOverworldActivities();
             screen=Screen.Playing;cam.orthographicSize=(MobileTouchControls.Enabled?10:11)/CameraZoom;
             Layout.BuildDistanceField(position);Layout.Discover(position);navigationTimer=.75f;worldSpawnTimer=.5f;worldSaveTimer=0;UpdateCamera(true);
             RememberOverworldPosition(position,true);
@@ -122,10 +122,14 @@ namespace NeonVault
             WorldEntranceBuildings.Build(world,materials,WorldGeography);
             WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);
         }
+        static bool WorldChestIsRare(int id)
+        {
+            unchecked { uint hash=(uint)id*747796405u+277803737u; hash=(hash^(hash>>16))*2246822519u; return (hash^(hash>>13))%5u==0; }
+        }
         void CreateWorldChests()
         {
             for(int i=0;i<WorldGeography.Chests.Length;i++)if(IsOverworldChestAvailable(i))
-            {Vector3 p=WorldGeography.Chests[i];p.y=0;var chest=new Chest{position=p};chests.Add(chest);worldChestIds.Add(chest,i);}
+            {Vector3 p=WorldGeography.Chests[i];p.y=0;var chest=new Chest{position=p,rare=WorldChestIsRare(i)};chests.Add(chest);worldChestIds.Add(chest,i);}
             StreamWorldChests();
         }
         void StreamWorldChests()
@@ -136,7 +140,7 @@ namespace NeonVault
                 float distance=(chest.position-PlayerPosition).sqrMagnitude;
                 if(chest.visual&&distance>220f*220f){Destroy(chest.visual);chest.visual=null;}
                 else if(!chest.visual&&!chest.opened&&distance<180f*180f)
-                    chest.visual=CreateLootPresentation("WASTELAND EQUIPMENT CHEST",chest.position,new Vector3(1.8f,.88f,1),Gold,LootPresentationKind.Chest);
+                    {chest.visual=CreateLootPresentation("WASTELAND EQUIPMENT CHEST",chest.position,new Vector3(1.8f,.88f,1),Gold,LootPresentationKind.Chest);if(chest.rare)EquipmentChestVisual.SetRare(chest.visual);}
             }
         }
         bool OpenOverworldChest()
@@ -145,7 +149,7 @@ namespace NeonVault
             foreach(var chest in chests)if(!chest.opened){float d=Vector3.Distance(PlayerPosition,chest.position);if(d<best){best=d;nearest=chest;}}
             if(nearest==null||!worldChestIds.TryGetValue(nearest,out int id))return false;
             if(!MarkOverworldChestOpened(id))return false;
-            DropEquipmentChestReward(nearest.position,Mathf.Max(1,DebtLevel+rng.Next(-1,2)));
+            DropEquipmentChestReward(nearest.position,Mathf.Max(1,DebtLevel+rng.Next(-1,2)),nearest.rare);
             nearest.opened=true;EquipmentChestVisual.Open(nearest.visual);SaveInventory();
             Notify("EQUIPMENT CACHE / Restocks after three mission clears","装備チェスト / ミッションを3回達成すると復活します");return true;
         }
@@ -157,7 +161,7 @@ namespace NeonVault
             worldSaveTimer-=Time.deltaTime;if(worldSaveTimer<=0){worldSaveTimer=8;RememberOverworldPosition(PlayerPosition,true);SaveInventory();}
             worldSpawnTimer-=Time.deltaTime;if(worldSpawnTimer>0)return;worldSpawnTimer=.5f;
             int nearbyDungeon=NearbyWorldEntrance;if(nearbyDungeon>=0)DiscoverOverworldDungeon(nearbyDungeon);
-            OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();StreamWorldChests();RefreshOverworldActivities();
+            OverworldScenery.UpdateFocus(world,PlayerPosition);WorldEntranceBuildings.UpdateFocus(world,PlayerPosition);StreamOverworldEnemies();TickFactionCamps();StreamWorldChests();RefreshOverworldActivities();
         }
         void GenerateOverworldEnemies()
         {

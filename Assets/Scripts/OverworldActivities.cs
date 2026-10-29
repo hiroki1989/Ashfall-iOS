@@ -166,6 +166,7 @@ namespace NeonVault
             }
             if (overworldRushRewardReady && overworldRushSite != null)
                 nearbyOverworldActivities.Add(new OverworldActivitySite { id = overworldRushSite.id, type = 5, position = overworldRushSite.position });
+            AddFactionCampRewards();
             // Keep the tracked destination on the atlas after fast travel or restart.
             if (HasActiveOverworldClue && (overworldRushSite == null || overworldRushSite.id != 30000 + ActiveOverworldClueId))
                 nearbyOverworldActivities.Add(new OverworldActivitySite { id = 30000 + ActiveOverworldClueId, type = 3, position = ActiveOverworldCluePosition });
@@ -188,7 +189,8 @@ namespace NeonVault
                     RecoverOverworldClue(ActiveOverworldClueId);
                 var visuals=world?world.GetComponent<OverworldActivityVisuals>():null;if(visuals)visuals.OpenReward(rewardSite.id);
                 GrantActivityGear(rewardSite.id, rewardSite.position + Vector3.right * 2);
-                overworldRushRewardReady = false; overworldRushSite = null; SaveInventory();
+                if (!IsFactionCampReward(rewardSite.id)) { overworldRushRewardReady = false; overworldRushSite = null; }
+                SaveInventory();
                 Notify("CHALLENGE CHEST / equipment recovered", "挑戦の報酬箱 / 装備を回収"); RefreshOverworldActivities();
             }
             else Time.timeScale = 0;

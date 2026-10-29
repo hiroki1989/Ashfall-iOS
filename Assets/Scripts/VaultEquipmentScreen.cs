@@ -74,11 +74,11 @@ namespace NeonVault
                 c.description=EqAppend(c.description,GearScoring.AffixSummary(g));
                 if(!string.IsNullOrEmpty(g.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(g,LegendaryCatalog.Description(g,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,T("ACCURACY ","命中 ")+Arsenal.Accuracy(g).ToString("0.#")+"%"+T("   SPEED ","   弾速 ")+g.speed.ToString("0.#"));
-                c.fullDescription=EqAppend(c.fullDescription,LegendaryDescription(g,VaultLanguage.GunDescription(g)));}
+                }
             else if(item is ArmorItem a){c.key="a:"+a.id;c.name=Armory.Name(a);c.equipped=IsArmorEquipped(a);score=GearScoring.Score(a);reference=MobileArmorComparison(a,out has);level=a.level;rarity=a.rarity;maker=ManufacturerBranding.Maker(a);
                 c.description=Armory.SlotName(a.slot)+"\n"+Armory.Stats(a).TrimEnd(' ','·');
                 if(!string.IsNullOrEmpty(a.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(a,LegendaryCatalog.Description(a,VaultLanguage.Japanese)));
-                c.fullDescription=EqAppend(c.description,LegendaryDescription(a,Armory.Description(a)));}
+                c.fullDescription=string.IsNullOrEmpty(a.legendaryKey)?EqAppend(c.description,LegendaryDescription(a,Armory.Description(a))):c.description;}
             else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
                 c.description=T("TYPE Module","種別 モジュール")+"\n"+shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
@@ -100,7 +100,7 @@ namespace NeonVault
             ManufacturerBranding.PortraitBadgeEnabled=!detailed;
             int score=0;
             if(item is Gun g){ItemPortraits.Draw(r,g);score=GearScoring.Score(g);
-                float size=Mathf.Clamp(Mathf.Min(r.width,r.height)*.30f,25,40);
+                float size=Mathf.Min(Mathf.Min(r.width,r.height)-10,Mathf.Clamp(Mathf.Min(r.width,r.height)*.36f,30,48));
                 var icon=new Rect(r.x+5,r.y+5,size,size);Box(icon,new Color(.04f,.045f,.05f,.88f));
                 FieldUIArt.GunClassIcon(new Rect(icon.x+2,icon.y+2,size-4,size-4),g,EqInk);}
             else if(item is ArmorItem a){ItemPortraits.Draw(r,a);score=GearScoring.Score(a);}
@@ -113,7 +113,7 @@ namespace NeonVault
                 ManufacturerPortraits.Melee(portrait,w);score=MeleeWeaponCatalog.Score(w);}
             else {ManufacturerBranding.PortraitBadgeEnabled=previousBadge;return;}
             ManufacturerBranding.PortraitBadgeEnabled=previousBadge;
-            if(detailed){string maker=item is Gun dg?ManufacturerBranding.Maker(dg):item is ArmorItem da?ManufacturerBranding.Maker(da):item is ArtifactItem dm?ManufacturerBranding.Maker(dm):item is MeleeWeaponItem dw?ManufacturerBranding.Maker(dw):null;if(!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(new Rect(r.x+6,r.yMax-82,Mathf.Min(290,r.width*.49f),76),maker);}
+            if(detailed){string maker=item is Gun dg?ManufacturerBranding.Maker(dg):item is ArmorItem da?ManufacturerBranding.Maker(da):item is ArtifactItem dm?ManufacturerBranding.Maker(dm):item is MeleeWeaponItem dw?ManufacturerBranding.Maker(dw):null;if(!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(new Rect(r.x+1,r.yMax-82,Mathf.Min(290,r.width*.49f),76),maker);}
             var style=new GUIStyle(eqCopy){font=this.font,fontStyle=FontStyle.Normal,
                 fontSize=r.width>200?29:24,alignment=TextAnchor.LowerRight,wordWrap=false};
             string value=score.ToString("N0");
@@ -172,8 +172,8 @@ namespace NeonVault
             Box(new Rect(950,620,446,1),EqLine);
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
             DrawEquippedCategory(top);
-            if(!merchant&&EqButton(new Rect(500,top+4,240,48),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
-            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(746,top+4,164,48),T("STASH","倉庫")))VaultStorageOpen();
+            if(!merchant&&EqButton(new Rect(650,24,240,60),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
+            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(900,24,164,60),T("STASH","倉庫")))VaultStorageOpen();
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();

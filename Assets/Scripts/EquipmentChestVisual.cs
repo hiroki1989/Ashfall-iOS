@@ -6,6 +6,7 @@ namespace NeonVault
     public sealed class EquipmentChestVisual : MonoBehaviour
     {
         public const string ResourcePath="ImportedWorld/props/pbr_box_supply";
+        public const string NormalResourcePath="ImportedWorld/props/pbr_box_ammo";
         GameObject model;
         GameObject animationRoot;
         AnimationClip clip;
@@ -15,11 +16,11 @@ namespace NeonVault
         bool opening;
 
         public static bool IsReserved(GameObject prefab)=>prefab&&
-            (prefab.name=="pbr_box_supply"||prefab.name=="box_supply");
+            (prefab.name=="pbr_box_supply"||prefab.name=="box_supply"||prefab.name=="pbr_box_ammo"||prefab.name=="box_ammo");
 
-        public static void Create(Transform parent)
+        public static void Create(Transform parent, bool rare=false)
         {
-            var source=Resources.Load<GameObject>(ResourcePath);
+            var source=Resources.Load<GameObject>(rare?ResourcePath:NormalResourcePath);
             if(!source){Debug.LogError("Equipment chest prefab missing: "+ResourcePath);return;}
             var visual=parent.gameObject.AddComponent<EquipmentChestVisual>();
             visual.model=Instantiate(source,parent,false);
@@ -51,10 +52,18 @@ namespace NeonVault
             }
             visual.enabled=false;
         }
+        public static void SetRare(GameObject root)
+        {
+            if(!root)return;
+            var old=root.GetComponent<EquipmentChestVisual>();
+            if(old){if(old.model){old.model.SetActive(false);Destroy(old.model);}Destroy(old);}
+            Create(root.transform,true);
+        }
         public static void Open(GameObject root)
         {
             if(!root)return;
-            var visual=root.GetComponent<EquipmentChestVisual>();
+            var visuals=root.GetComponents<EquipmentChestVisual>();
+            var visual=visuals.Length>0?visuals[visuals.Length-1]:null;
             if(!visual||visual.opening)return;
             visual.opening=true;visual.elapsed=0;visual.enabled=true;
         }

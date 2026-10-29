@@ -10,7 +10,7 @@ namespace NeonVault
         public static VaultBalanceProfile Current => current != null ? current : current = Resources.Load<VaultBalanceProfile>("VaultBalanceProfile");
 
         [Header("敵・プレイヤー")]
-        [InspectorName("敵HP倍率")] [Min(.1f)] public float enemyHpMultiplier = 1f;
+        [InspectorName("敵HP倍率")] [Min(.1f)] public float enemyHpMultiplier = .8f;
         [InspectorName("プレイヤー初期HP倍率")] [Min(.1f)] public float startingHpMultiplier = 1f;
         [InspectorName("フロアの敵出現数倍率")] [Min(.1f)] public float enemyCountMultiplier = 1f;
         [InspectorName("敵の攻撃力倍率")] [Min(.1f)] public float enemyDamageMultiplier = 1f;

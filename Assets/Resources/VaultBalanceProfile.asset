@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d6281d1a0f84dbfb443071cd5517241, type: 3}
   m_Name: VaultBalanceProfile
   m_EditorClassIdentifier:
-  enemyHpMultiplier: 1
+  enemyHpMultiplier: 0.8
   startingHpMultiplier: 1
   enemyCountMultiplier: 1
   enemyDamageMultiplier: 1

@@ -82,10 +82,10 @@ namespace NeonVault
         }
         void LanguageSelector()
         {
-            Panel(new Rect(1190,22,226,40),Gold*.6f);
+            Panel(new Rect(1190,838,226,40),Gold*.6f);
             for(int i=0;i<2;i++)
             {
-                bool chosen=i==0?VaultLanguage.Japanese:!VaultLanguage.Japanese;Rect r=new Rect(1198+i*106,27,104,30);
+                bool chosen=i==0?VaultLanguage.Japanese:!VaultLanguage.Japanese;Rect r=new Rect(1198+i*106,843,104,30);
                 if(chosen)Box(r,new Color(.3f,.23f,.11f,.7f));
                 GUI.color=chosen?Gold:Mist;if(GUI.Button(r,i==0?"日本語":"ENGLISH",centered))VaultLanguage.Set(i==0,!smoke);GUI.color=Color.white;
             }
@@ -140,12 +140,18 @@ namespace NeonVault
         }
         void DrawDeathScreen()
         {
-            Box(new Rect(0,0,1440,900),new Color(.008f,.008f,.01f,.94f));
+            float elapsed=DeathSequenceDuration-Mathf.Max(0,deathReturnAt-Time.unscaledTime);
+            float backdrop=Mathf.SmoothStep(0,.94f,Mathf.Clamp01(elapsed/1.4f));
+            float titleAlpha=Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-.65f)/1.1f));
+            titleAlpha*=1-Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-3.25f)/1.05f));
+            Box(new Rect(0,0,1440,900),new Color(.008f,.008f,.01f,backdrop));
             var title=new GUIStyle(heading){fontSize=80,alignment=TextAnchor.MiddleCenter};
-            Text(170,330,T("YOU DIED","死亡"),title,new Color(.78f,.16f,.14f),1100);
+            Text(170,330,"YOU DIED",title,new Color(.78f,.16f,.14f,titleAlpha),1100);
+            float blackout=Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-3.65f)/.75f));
+            if(blackout>0)Box(new Rect(0,0,1440,900),new Color(0,0,0,blackout));
         }
         void DrawMobileLanguageButton()
-        { if(MobileButton(new Rect(1190,12,220,94),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke); }
+        { if(MobileButton(new Rect(1190,794,220,94),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke); }
         void DrawMobileDebtIntro()
         {
             Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));Panel(new Rect(55,125,1330,660),new Color(1,.27f,.19f));
@@ -195,7 +201,7 @@ namespace NeonVault
             else
             {if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(390,343,660,93));else Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}
             if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
-            if(screen==Screen.Pause&&Button(new Rect(390,700,660,42),T("WORLD MAP","全体地図")))OpenOverworldMap();
+            if(screen==Screen.Pause&&Button(new Rect(390,700,660,42),T("WORLD MAP","広域地図")))OpenOverworldMap();
             if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","インベントリ [I]")))ToggleInventory();
             if(screen==Screen.Pause && Button(new Rect(390,654,660,48),T("SAVE EXPEDITION & RETURN TO MENU","探索を保存してメニューへ")))SaveRunAndReturnToMenu();
         }

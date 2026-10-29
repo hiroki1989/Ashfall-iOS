@@ -3,7 +3,7 @@ namespace NeonVault {
  public sealed class DungeonProfile {
   public int AreaCount=>4; public int index,minLevel,maxLevel; public string english,japanese,themeEnglish,themeJapanese,backgroundSkin; public Color palette; public int[] enemyRoster; public float healthScale,damageScale;
   // Final area retains its dedicated boss; normal areas build pressure through population.
-  public int EnemyCount(int area)=>area>=AreaCount-1?1:32+(index==0?0:index==1?2:6)+Mathf.Clamp(area,0,AreaCount-2)*6;
+  public int EnemyCount(int area)=>area>=AreaCount-1?1:Mathf.RoundToInt((32+(index==0?0:index==1?2:6)+Mathf.Clamp(area,0,AreaCount-2)*6)*(index==0?.6f:1f));
   public string Name=>VaultLanguage.T(english,japanese); public string Theme=>VaultLanguage.T(themeEnglish,themeJapanese);
  }
  public static class DungeonCatalog {

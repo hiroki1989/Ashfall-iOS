@@ -480,8 +480,6 @@ namespace NeonVault
             if(IsOverworld){var p=WorldAtlasPoint(map,PlayerPosition);if(map.Contains(p)){WorldMarker(p.x,p.y,12,Color.white);Box(new Rect(p.x-2,p.y-2,4,4),Cyan);}}
             if(WorldButton(new Rect(744,112,78,55),"−"))SetWorldMapZoom(worldMapZoom/1.5f,map.center,map);
             if(WorldButton(new Rect(830,112,78,55),"+"))SetWorldMapZoom(worldMapZoom*1.5f,map.center,map);
-            DrawAerialMapLegend(map);
-            WorldLabel(new Rect(35,756,890,42),T("Drag to pan  ·  Pinch / ± to zoom  ·  Map icon: recenter  ·  North ↑","ドラッグで移動・ピンチ / ± で拡大・地図アイコンで現在地へ・北 ↑"),Mist,17);
             Panel(new Rect(950,100,460,650),Gold);
             if(overworldSelectedCamp>=0)
             {

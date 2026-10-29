@@ -35,7 +35,7 @@ namespace NeonVault
             GUI.color=old;
         }
         public static void PortraitBadge(Rect card,string maker)
-        {if(!PortraitBadgeEnabled)return;float width=Mathf.Min(card.width*.46f,85),height=width*.7f;Badge(new Rect(card.x+3,card.yMax-height-4,width,height),maker);}
+        {if(!PortraitBadgeEnabled)return;float width=Mathf.Min(card.width*.46f,85),height=width*.7f;Badge(new Rect(card.x+1,card.yMax-height-4,width,height),maker);}
         static Texture2D moduleIllustrations;
         public static bool ModuleIllustrationAvailable=>Resources.Load<Texture2D>("Art/Manufacturers/ModuleIllustrations-v1")!=null;
         public static void ModulePortrait(Rect r,ArtifactItem item)

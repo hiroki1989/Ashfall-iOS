@@ -65,11 +65,13 @@ namespace NeonVault
             Application.targetFrameRate=MobileTouchControls.Enabled?30:120;
             if(MobileTouchControls.Enabled)QualitySettings.vSyncCount=0;
             cores=PlayerPrefs.GetInt("Vault.Cores",0); rank=PlayerPrefs.GetInt("Vault.Rank",0);
-            font=Resources.Load<Font>("Fonts/851Gkktt-005-narrow");
+            font=VaultFont.Preferred();
+            if(font==null)font=Resources.Load<Font>("Fonts/851Gkktt-005-narrow");
             if(font==null)font=Resources.Load<Font>("Fonts/851Gkktt-005");
             if(font==null)font=Resources.Load<Font>("Fonts/NotoSansJP");
             if(font==null)font=Font.CreateDynamicFontFromOSFont(Application.platform==RuntimePlatform.IPhonePlayer?new[]{"HiraginoSans-W3","Hiragino Sans","Arial"}:new[]{"Yu Gothic UI","Meiryo","Segoe UI","Arial"},20);
-            englishHeadingFont=Resources.Load<Font>("Fonts/851Gkktt-005");
+            englishHeadingFont=VaultFont.Preferred();
+            if(englishHeadingFont==null)englishHeadingFont=Resources.Load<Font>("Fonts/851Gkktt-005");
             if(englishHeadingFont==null)englishHeadingFont=Resources.Load<Font>("Fonts/BarlowCondensed-Bold");
             pixel=new Texture2D(1,1); pixel.SetPixel(0,0,Color.white); pixel.Apply();
             cam=new GameObject("Isometric camera").AddComponent<Camera>(); cam.orthographic=true; cam.orthographicSize=13.5f; cam.backgroundColor=Ink; cam.clearFlags=CameraClearFlags.SolidColor;
@@ -160,6 +162,7 @@ namespace NeonVault
             halfWidth=Layout.Columns*SectorLayout.Cell/2;halfDepth=Layout.Rows*SectorLayout.Cell/2;cleared=false;
             art=new VaultArt(world,materials,new System.Random(seed+room*7919));art.Floor(halfWidth,halfDepth,room);
             art.DungeonAtmosphere(DungeonIndex,Layout);
+            art.FactionHideout(ExpeditionMap.FactionForStage(SelectedStageId),Layout);
             foreach(var rect in Layout.walls)art.Partition(rect);
             foreach(var p in Layout.covers)art.Cover(p);
             for(int i=0;i<Layout.chambers.Count;i++)art.Chamber(Layout.Center(Layout.chambers[i]),i);
@@ -171,13 +174,24 @@ namespace NeonVault
             CreateSatellites();
             if(populate)
             {
-                if(room==CurrentDungeon.AreaCount-1) SpawnFoe(Layout.Exit,3);
+                if(room==CurrentDungeon.AreaCount-1)
+                {
+                    SpawnFoe(Layout.Exit,3);
+                    int champions=rng.Next(3,6);
+                    for(int i=0;i<champions;i++)
+                    {
+                        float angle=2*Mathf.PI*i/champions;
+                        Vector3 aroundBoss=Layout.Exit+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*4f;
+                        int kind=ExpeditionMap.FactionForStage(SelectedStageId)!=DungeonFaction.None?10:CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)];
+                        SpawnFoeInternal(aroundBoss,kind,true);
+                    }
+                }
                 else for(int i=0;i<Mathf.Max(1,Mathf.RoundToInt(CurrentDungeon.EnemyCount(room)*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyCountMultiplier : 1f)));i++)
                 {
                     Vector3 p; int attempts=0;
                     do {var cell=Layout.chambers[rng.Next(Layout.chambers.Count)];p=Layout.Center(cell)+new Vector3((float)rng.NextDouble()*6-3,0,(float)rng.NextDouble()*4-2);attempts++;} while((Blocked(p,.8f)||!Layout.SpawnSafe(p))&&attempts<200);
                     if(Blocked(p,.8f)||!Layout.SpawnSafe(p)) p=FindEnemySpawn();
-                    SpawnFoe(p,(SelectedStageId>=0&&SelectedStageId%5==2?10:CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)]));
+                    SpawnFoe(p,(ExpeditionMap.FactionForStage(SelectedStageId)!=DungeonFaction.None?10:CurrentDungeon.enemyRoster[rng.Next(CurrentDungeon.enemyRoster.Length)]));
                 }
                 SpawnRoomChest();
                 SpawnAmmoCratesForCurrentRoom();
@@ -207,17 +221,28 @@ namespace NeonVault
         {
             InventoryOpen=false;manufacturerRegistry=false;Time.timeScale=1;
         }
-        void SpawnFoe(Vector3 position,int kind)
+        void SpawnFoe(Vector3 position,int kind)=>SpawnFoeInternal(position,kind,false);
+        void SpawnFoeInternal(Vector3 position,int kind,bool forceElite)
         {
             position=SeparateEnemySpawn(position,kind);
             if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
             var f=art.Character(position,false,kind).gameObject.AddComponent<Foe>();
             f.Init(this,kind,room);
-            bool raiderBoss=kind==3&&(finalDebtBossFight||SelectedStageId>=0&&SelectedStageId%5==2);
+            bool raiderBoss=kind==3&&(finalDebtBossFight||ExpeditionMap.FactionForStage(SelectedStageId)!=DungeonFaction.None);
             f.SetRaiderBoss(raiderBoss);
-            // Infected attack with their bodies; only the armed revenant carries a firearm.
-            if(kind==5||kind==10){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
-            f.GetComponent<FaithfulEnemy3D>().Init(f);ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);
+            var faction=IsOverworld?DungeonFaction.None:ExpeditionMap.FactionForStage(SelectedStageId);
+            bool factionHuman=kind==10&&faction!=DungeonFaction.None;
+            // The human model supplies its own weapon; all other actors retain the legacy visual path.
+            if(kind==5||kind==10&&!factionHuman){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
+            f.GetComponent<FaithfulEnemy3D>().Init(f);
+            if(factionHuman)
+            {
+                foreach(var renderer in f.GetComponentsInChildren<Renderer>(true))renderer.enabled=false;
+                var human=HumanFactionVisual.Create(f.transform,faction==DungeonFaction.Raiders?1:2,f.UseAssaultRifle?0:1);
+                // FaithfulEnemy3D's actor origin is 0.03 m above the dungeon floor.
+                human.transform.localPosition=Vector3.down*.03f;
+            }
+            else ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);
             Enemies.Add(f);
             if(IsOverworld)ConfigureOverworldFoe(f);
             else
@@ -227,7 +252,7 @@ namespace NeonVault
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
             if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
-            bool elite=!restoringChampionCheckpoint&&kind!=3&&(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275);
+            bool elite=!restoringChampionCheckpoint&&kind!=3&&(forceElite||(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275));
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
         }
@@ -564,9 +589,10 @@ namespace NeonVault
             {
                 int before=Math.Max(0,Credits);
                 ApplyOverworldDeathPenalty();
+                RestoreDeathAmmoMinimum();
                 deathScrapRemaining=Credits;deathScrapLost=before-Credits;
                 RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);
-                Time.timeScale=1;deathReturnAt=Time.unscaledTime+3f;
+                Time.timeScale=1;deathReturnAt=Time.unscaledTime+DeathSequenceDuration;
                 return;
             }
             if(!smoke||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0)ReturnFromWorldDungeon(true);

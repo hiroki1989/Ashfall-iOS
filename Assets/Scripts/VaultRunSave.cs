@@ -30,7 +30,7 @@ namespace NeonVault
         [Serializable] sealed class ArtifactDropCheckpoint { public ArtifactItem item; public Vector3 position; }
         [Serializable] sealed class MeleeDropCheckpoint { public MeleeWeaponItem item; public Vector3 position; }
         [Serializable] sealed class SupplyCheckpoint { public int credits,ammoType,ammoAmount; public bool healthPack; public Vector3 position; }
-        [Serializable] sealed class PositionCheckpoint { public Vector3 position; }
+        [Serializable] sealed class PositionCheckpoint { public Vector3 position; public bool rare; }
         [Serializable] sealed class AmmoCrateCheckpoint { public Vector3 position; public int type,amount; }
 
         public bool HasSavedRun => !smoke && PlayerPrefs.HasKey(RunSaveKey);
@@ -57,7 +57,7 @@ namespace NeonVault
             foreach(var d in artifactDrops)save.modules.Add(new ArtifactDropCheckpoint{item=d.item,position=d.position});
             foreach(var d in meleeDrops)save.melee.Add(new MeleeDropCheckpoint{item=d.item,position=d.position});
             foreach(var d in supplyDrops)save.supplies.Add(new SupplyCheckpoint{credits=d.credits,ammoType=(int)d.ammoType,ammoAmount=d.ammoAmount,healthPack=d.healthPack,position=d.position});
-            foreach(var chest in chests)if(chest!=null&&!chest.opened)save.chests.Add(new PositionCheckpoint{position=chest.position});
+            foreach(var chest in chests)if(chest!=null&&!chest.opened)save.chests.Add(new PositionCheckpoint{position=chest.position,rare=chest.rare});
             foreach(var crate in fieldAmmoCrates)if(crate!=null&&crate.visual!=null)save.ammoCrates.Add(new AmmoCrateCheckpoint{position=crate.position,type=(int)crate.type,amount=crate.amount});
             SaveInventory();SaveProgression();PlayerPrefs.SetString(RunSaveKey,JsonUtility.ToJson(save));PlayerPrefs.Save();return true;
         }
@@ -88,7 +88,7 @@ namespace NeonVault
             foreach(var d in save.melee)if(d.item!=null)AddMeleeDrop(d.item,d.position);
             restoringLoot=false;
             foreach(var d in save.supplies){if(d.healthPack)AddHealthPackDrop(d.position);else if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,NormalizeAmmoType((AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1)),d.ammoAmount);}
-            foreach(var c in save.chests){Vector3 p=c.position;p.y=0;var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);chests.Add(new Chest{position=p,visual=obj});}
+            foreach(var c in save.chests){Vector3 p=c.position;p.y=0;var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);if(c.rare)EquipmentChestVisual.SetRare(obj);chests.Add(new Chest{position=p,visual=obj,rare=c.rare});}
             foreach(var c in save.ammoCrates){var type=NormalizeAmmoType((AmmoType)Mathf.Clamp(c.type,0,AmmoTypeCount-1));var obj=CreateLootPresentation(AmmoPickupName(type,c.amount),c.position,new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,c.amount);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,type=type,amount=c.amount,visual=obj});}
             ReconcileFloorCompletion();Layout.BuildDistanceField(PlayerPosition);Layout.Discover(PlayerPosition);
             UpdateCamera(true);PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();Notify("EXPEDITION RESTORED / Checkpoint consumed","探索を再開 / 保存データを復元しました");return true;
