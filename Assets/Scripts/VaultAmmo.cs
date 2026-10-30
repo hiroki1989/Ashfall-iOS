@@ -187,7 +187,7 @@ namespace NeonVault
             if(nearest==null)return false;
             DropEquipmentChestReward(nearest.position,ExpeditionLootLevel(rng),nearest.rare);
             nearest.opened=true;EquipmentChestVisual.Open(nearest.visual);
-            ExpeditionSupplyRecovered();SaveInventory();
+            SaveInventory();
             Notify("EQUIPMENT CHEST / Equipment recovered","装備チェスト / 装備を回収しました");return true;
         }
     }

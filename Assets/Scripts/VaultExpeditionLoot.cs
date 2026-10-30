@@ -22,7 +22,7 @@ namespace NeonVault
         {
             Rarity rarity=DungeonCatalog.RollRarity(random,boss);
             var stage=SelectedExpeditionStage;
-            if(stage!=null&&random.NextDouble()<.08+stage.region*.04+(int)stage.mission*.02)
+            if(stage!=null&&random.NextDouble()<(.08+stage.region*.04+(int)stage.mission*.02)*.95)
                 rarity=(Rarity)Mathf.Max((int)rarity,(int)DungeonCatalog.RollRarity(random,boss));
             return rarity;
         }

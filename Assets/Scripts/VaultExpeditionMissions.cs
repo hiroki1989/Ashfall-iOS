@@ -63,7 +63,7 @@ namespace NeonVault
             FieldAmmoCrate nearest=null;float best=float.MaxValue;
             foreach(var crate in fieldAmmoCrates)
             {
-                if(crate==null || !crate.visual)continue;
+                if(crate==null || !crate.visual || !crate.mission)continue;
                 Vector2Int cell=Layout.ToCell(crate.position);
                 Vector2 point=new Vector2(origin.x+(cell.x+.5f)*tile,origin.y+(Layout.Rows-.5f-cell.y)*tile);
                 DrawWaypointPin(point);

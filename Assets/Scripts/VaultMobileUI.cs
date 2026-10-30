@@ -3,7 +3,7 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||collectorOpen||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
+        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
         public static Matrix4x4 MobileCanvasMatrix
         {
             get
@@ -37,6 +37,11 @@ namespace NeonVault
             DrawCriticalHealthVignette();
             DrawHealthPanel(new Rect(20,20,420,125),true);
             Text(46,106,(room+1)+" / "+CurrentDungeon.AreaCount+"  "+(SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name),new GUIStyle(label){fontSize=19,wordWrap=false,clipping=TextClipping.Clip},Mist,370);
+            if(SelectedExpeditionStage!=null)
+            {
+                string objective=ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese)+"  "+MissionProgress;
+                Text(38,199,objective,new GUIStyle(label){fontSize=22,wordWrap=true},MissionCompleted?Cyan:Gold,600);
+            }
             DrawHeldWeaponHUD(new Rect(350,797,280,80));
             int alive=0;foreach(var enemy in Enemies)if(enemy&&!enemy.dead)alive++;
             Text(38,154,ExpeditionExitOpen?T("EXIT OPEN / approach and tap USE","出口開放 / 近づいて「調べる」"):T("HOSTILES ","残敵 ")+alive,new GUIStyle(label){fontSize=25},ExpeditionExitOpen?Color.Lerp(Gold,Color.white,.5f+.5f*Mathf.Sin(Time.unscaledTime*5)):Mist,740);

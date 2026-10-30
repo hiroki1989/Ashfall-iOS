@@ -247,7 +247,14 @@ namespace NeonVault
                 Vector3 p=cam.WorldToScreenPoint(f.transform.position+Vector3.up*(f.kind==3?4.6f:2.4f));if(p.z<=0)continue;
                 float x=(p.x-(UnityEngine.Screen.width-1440*s)/2)/s,y=(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*s)/2)/s;
                 Box(new Rect(x-28,y,56,4),PanelInk);Box(new Rect(x-28,y,56*Mathf.Clamp01(f.hp/f.maxHp),4),f.HealthBarColor);
-                WorldLabel(new Rect(x-82,y-27,164,25),EnemyHealthLabel(f),f.kind==8?Cyan:UiPaper,17);
+                string enemyLabel=EnemyHealthLabel(f);
+                var enemyStyle=WorldCopy(17);
+                enemyStyle.wordWrap=false;
+                enemyStyle.clipping=TextClipping.Clip;
+                enemyStyle.normal.textColor=f.kind==8?Cyan:UiPaper;
+                float availableWidth=210f;
+                while(enemyStyle.fontSize>11&&enemyStyle.CalcSize(new GUIContent(enemyLabel)).x>availableWidth)enemyStyle.fontSize--;
+                GUI.Label(new Rect(x-availableWidth*.5f,y-29,availableWidth,27),enemyLabel,enemyStyle);
             }
             DrawCrosshair(mx,my);
         }

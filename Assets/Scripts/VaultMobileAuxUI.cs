@@ -63,7 +63,6 @@ namespace NeonVault
             if(MobileButton(new Rect(1110,10,290,110),T("SAFEHOUSE","拠点へ"))){screen=Screen.Hub;pendingSaleKey=null;}
             if(MobileButton(new Rect(40,135,410,110),T("BUY EQUIPMENT","装備を購入")))shopSellingPage=false;
             if(MobileButton(new Rect(465,135,410,110),T("SELL EQUIPMENT","装備を売却")))shopSellingPage=true;
-            if(MobileButton(new Rect(890,135,510,110),T("DEBT / SKILLS","借金返済 / スキル"))){debtPage=true;debtSkillTreePage=false;return;}
             if(shopSellingPage)
             {
                 string[] tabs={T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
@@ -150,7 +149,7 @@ namespace NeonVault
         void DrawMobileDebt()
         {
             Box(new Rect(0,0,1440,900),PanelInk);MobileCopyAt(40,25,T("DEBT ","残債 ")+DebtRemaining.ToString("N0")+" / Lv "+DebtLevel,Gold,1050);
-            if(MobileButton(new Rect(1110,10,290,110),T("BACK","戻る"))){debtPage=false;debtSkillTreePage=false;return;}
+            if(MobileButton(new Rect(1110,10,290,110),T("BACK","戻る"))){debtSkillTreePage=false;screen=Screen.Hub;return;}
             MobileCopyAt(40,155,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" / POINTS "," / スキルポイント ")+DebtSkillPoints,Cyan,1300);
             if(!debtSkillTreePage)
             {
@@ -159,7 +158,7 @@ namespace NeonVault
                 Rect progress=new Rect(40,245,1360,22);Box(progress,new Color(.12f,.16f,.17f));Box(new Rect(progress.x,progress.y,progress.width*DebtProgressRatio,progress.height),new Color(1,.34f,.23f));
                 int limit=DebtPaymentLimit;debtPaymentAmount=Mathf.Clamp(debtPaymentAmount,0,limit);
                 MobileCopyAt(40,310,T("SELECT PAYMENT  /  ","返済額を選択  /  ")+debtPaymentAmount.ToString("N0")+" / "+limit.ToString("N0"),Cyan,1320);
-                if(limit>0)SetDebtPaymentFraction(GUI.HorizontalSlider(new Rect(55,408,1330,60),debtPaymentAmount/(float)limit,0f,1f));
+                if(limit>0)SetDebtPaymentFraction(DrawDebtPaymentSlider(new Rect(55,398,1330,82),debtPaymentAmount/(float)limit));
                 if(MobileButton(new Rect(40,485,655,110),T("MAX AMOUNT","全額を選択")))debtPaymentAmount=limit;
                 if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(MobileButton(new Rect(40,650,650,110),T("SKILLS","スキルを確認")))debtSkillTreePage=true;

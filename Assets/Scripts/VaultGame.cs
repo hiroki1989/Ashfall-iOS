@@ -388,7 +388,7 @@ namespace NeonVault
             else if(VaultMobileInputBridge.Pressed(MobileAction.Reload,KeyCode.R)||ammo<=0)TryStartReload();
             else if(VaultMobileInputBridge.Firing&&fireTimer<=0)Fire();
             if(VaultMobileInputBridge.MeleePressed)AttackMelee();
-            if(VaultMobileInputBridge.Pressed(MobileAction.Pickup,KeyCode.F)&&!OpenNearbyChest())PickupNearest();
+            if(VaultMobileInputBridge.Pressed(MobileAction.Pickup,KeyCode.F)&&!OpenNearbyMissionSupplyCrate()&&!OpenNearbyChest())PickupNearest();
             if(IsOverworld)
             {
                 TickOverworld();
@@ -472,7 +472,7 @@ namespace NeonVault
             if(!IsOverworld)ExpeditionEnemyKilled(f);
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
             if(finalDebtBossFight&&boss){CompleteDebtBossFight();return;}
-            if(!IsOverworld&&!smoke&&finalBoss&&DungeonIndex==0&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
+            if(!IsOverworld&&!smoke&&finalBoss&&SelectedStageId==0&&!clearedExpeditionStages.Contains(0)&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(boss||f.elite)DropChampionReward(f,boss);
             if(TryRollScrapDrop(boss,out int scrapAmount))AddScrapDrop(f.transform.position+Vector3.left*.65f,scrapAmount);
@@ -515,7 +515,7 @@ namespace NeonVault
         MeleeDrop NearMeleeDrop()
         {MeleeDrop best=null;float distance=2.6f;foreach(var drop in meleeDrops){float d=Vector3.Distance(PlayerPosition,drop.position);if(d<distance){distance=d;best=drop;}}return best;}
         public MeleeWeaponItem NearbyMeleeWeapon=>NearMeleeDrop()?.item;
-        public bool HasNearbyPickup=>player!=null&&(NearbySupplyChest||NearDrop()!=null||NearArmor()!=null||NearMeleeDrop()!=null||NearArtifact()!=null);
+        public bool HasNearbyPickup=>player!=null&&(NearbyMissionSupplyCrate||NearbySupplyChest||NearDrop()!=null||NearArmor()!=null||NearMeleeDrop()!=null||NearArtifact()!=null);
         public bool MobileActionAvailable(MobileAction action)
         {
             if(action==MobileAction.Dodge)return dodgeCooldown<=0;

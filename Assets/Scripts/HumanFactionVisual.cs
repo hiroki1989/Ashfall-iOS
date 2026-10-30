@@ -54,6 +54,20 @@ namespace NeonVault
             if(baked)
             {
                 var ready=Instantiate(baked,parent,false);
+                if(faction==1)
+                {
+                    var helmet=ready.transform.Find("Human faction / helmet");
+                    if(helmet)
+                    {
+                        var renderer=helmet.GetComponent<MeshRenderer>();
+                        if(renderer)
+                        {
+                            var tint=new MaterialPropertyBlock();
+                            tint.SetColor("_Color",new Color(.42f,.075f,.12f));
+                            renderer.SetPropertyBlock(tint);
+                        }
+                    }
+                }
                 DetailedHeroEquipment3D.DisownSharedMeshes(ready.transform);
                 ready.owner=parent ? parent.GetComponentInParent<Foe>() : null;
                 ready.previous=ready.transform.position; ready.phase=0; ready.deathTime=-1;
@@ -238,7 +252,7 @@ namespace NeonVault
             var helmetRenderer=shell.AddComponent<MeshRenderer>();
             helmetRenderer.sharedMaterial=DetailedHeroMaterials3D.Get("ProductSteel");
             var helmetTint=new MaterialPropertyBlock();
-            helmetTint.SetColor("_Color",faction==0?new Color(.67f,.76f,.56f):faction==1?new Color(.80f,.47f,.34f):new Color(.52f,.66f,.83f));
+            helmetTint.SetColor("_Color",faction==0?new Color(.67f,.76f,.56f):faction==1?new Color(.42f,.075f,.12f):new Color(.52f,.66f,.83f));
             helmetRenderer.SetPropertyBlock(helmetTint);
             var rim=DetailedHeroMaterials3D.Get("Dark");
             var hardware=DetailedHeroMaterials3D.Get("ProductSteel");
@@ -334,9 +348,22 @@ namespace NeonVault
                 dt>0?delta/dt:Vector3.zero,Mathf.Clamp01(speed/2));
             if(deathTime>=0)
             {
-                float fall=Mathf.SmoothStep(0,1,Mathf.Clamp01(deathTime/.55f));
-                Body.transform.localRotation=Quaternion.Euler(fall*75,0,fall*18);
-                Body.transform.localPosition=Vector3.down*(fall*.12f);
+                float buckle=Mathf.SmoothStep(0,1,Mathf.Clamp01(deathTime/.28f));
+                float fall=Mathf.SmoothStep(0,1,Mathf.Clamp01((deathTime-.12f)/.65f));
+                float settle=Mathf.SmoothStep(0,1,Mathf.Clamp01((deathTime-.70f)/.28f));
+                float side=(Faction==2?-1f:1f);
+                Body.transform.localRotation=Quaternion.Euler(fall*78,side*fall*8,side*fall*23);
+                Body.transform.localPosition=new Vector3(side*fall*.08f,-buckle*.10f-fall*.12f,fall*.08f);
+                Body.chest.localRotation*=Quaternion.Euler(-buckle*12+settle*8,side*fall*12,side*fall*8);
+                Body.head.localRotation*=Quaternion.Euler(-buckle*10+settle*12,side*fall*9,side*fall*10);
+                Body.leftThigh.localRotation*=Quaternion.Euler(-buckle*30,0,-side*fall*8);
+                Body.rightThigh.localRotation*=Quaternion.Euler(-buckle*20,0,side*fall*6);
+                Body.leftShin.localRotation*=Quaternion.Euler(buckle*54-settle*20,0,0);
+                Body.rightShin.localRotation*=Quaternion.Euler(buckle*38-settle*12,0,0);
+                Body.leftUpperArm.localRotation*=Quaternion.Euler(fall*20,0,-side*fall*22);
+                Body.rightUpperArm.localRotation*=Quaternion.Euler(fall*15,0,side*fall*25);
+                Body.leftForearm.localRotation*=Quaternion.Euler(-fall*24,0,0);
+                Body.rightForearm.localRotation*=Quaternion.Euler(-fall*18,0,0);
             }
         }
     }

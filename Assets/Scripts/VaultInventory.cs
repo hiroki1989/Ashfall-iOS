@@ -84,7 +84,7 @@ namespace NeonVault
             if(!loadedAmmoReserves)SeedAmmoReserves();
             if(MeleeWeaponInventory.Count==0)MeleeWeaponInventory.Add(MeleeWeaponCatalog.StarterKnife());
             if(EquippedMeleeWeapon==null)EquippedMeleeWeapon=MeleeWeaponInventory[0];
-            if(Weapons.Count==0){Weapons.Add(smoke&&!reviewTrailWardenMigration?Arsenal.Starter():Arsenal.TrailWarden());Weapons.Add(smoke&&!reviewTrailWardenMigration?Arsenal.Model(3,Rarity.Common):Arsenal.TrailWarden(true));}
+            if(Weapons.Count==0){Weapons.Add(smoke&&!reviewTrailWardenMigration?Arsenal.Starter():Arsenal.TrailWarden());Weapons.Add(smoke&&!reviewTrailWardenMigration?Arsenal.Model(3,Rarity.Common):Arsenal.TrailWarden(true));if(!smoke&&!reviewTrailWardenMigration)Weapons.Add(Arsenal.TrailWardenShotgun());}
             for(int i=1;i<5;i++)if(EquippedArmor[i]==null&&!hasSavedArmorSlots)
             {var armor=ArmorInventory.Find(a=>(int)a.slot==i);if(armor==null){armor=smoke&&!reviewTrailWardenMigration?Armory.Starter((ArmorSlot)i):Armory.TrailWarden((ArmorSlot)i);if(ActiveArmorCount<ArmorCapacity)ArmorInventory.Add(armor);else continue;}EquippedArmor[i]=armor;}
             if(!smoke||reviewTrailWardenMigration){if(trailWardenGrantVersion==0)trailWardenGrantVersion=1;DeliverTrailWardenGifts(reviewTrailWardenMigration);}

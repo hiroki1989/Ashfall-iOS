@@ -201,7 +201,7 @@ namespace NeonVault
                 int paymentLimit=DebtPaymentLimit;
                 debtPaymentAmount=Mathf.Clamp(debtPaymentAmount,0,paymentLimit);
                 Text(68,409,T("PAYMENT AMOUNT  /  ","返済額  /  ")+debtPaymentAmount.ToString("N0")+" / "+paymentLimit.ToString("N0"),label,Cyan,800);
-                if(paymentLimit>0)SetDebtPaymentFraction(GUI.HorizontalSlider(new Rect(68,457,750,25),debtPaymentAmount/(float)paymentLimit,0f,1f));
+                if(paymentLimit>0)SetDebtPaymentFraction(DrawDebtPaymentSlider(new Rect(68,442,750,56),debtPaymentAmount/(float)paymentLimit));
                 if(Button(new Rect(850,409,270,58),T("PAY SELECTED","指定額を返済"),true)&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(Button(new Rect(850,476,270,50),T("SELECT ALL","全額を指定")))debtPaymentAmount=paymentLimit;
                 Text(68,556,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
@@ -210,6 +210,20 @@ namespace NeonVault
                 if(Button(new Rect(480,694,550,54),T("RESET SKILLS / ","スキル振り直し / ")+ActionSkillRespecCost.ToString("N0"),ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost))TryRespecActionSkills();
             }
             if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る")))screen=Screen.Hub;
+        }
+
+        float DrawDebtPaymentSlider(Rect bounds,float fraction)
+        {
+            var track=new GUIStyle(GUI.skin.horizontalSlider);
+            track.fixedHeight=18;
+            track.normal.background=Texture2D.whiteTexture;
+            var thumb=new GUIStyle(GUI.skin.horizontalSliderThumb);
+            thumb.fixedWidth=36;thumb.fixedHeight=42;
+            Box(new Rect(bounds.x,bounds.center.y-9,bounds.width,18),new Color(.19f,.24f,.27f));
+            Box(new Rect(bounds.x,bounds.center.y-9,bounds.width*Mathf.Clamp01(fraction),18),new Color(1f,.48f,.18f));
+            float selected=GUI.HorizontalSlider(bounds,fraction,0f,1f,GUIStyle.none,thumb);
+            Box(new Rect(bounds.x+Mathf.Clamp01(selected)*bounds.width-4,bounds.center.y-17,8,34),new Color(1f,.68f,.30f));
+            return selected;
         }
 
         void DrawDebtSkillTree()

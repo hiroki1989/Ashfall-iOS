@@ -158,7 +158,6 @@ namespace NeonVault
                 if(EqNavigation(new Rect(250,112,212,72),T("SELL","売却"),shopSellingPage&&!eqUpgradePage)){shopSellingPage=true;eqUpgradePage=false;pendingSaleKey=null;}
                 if(EqNavigation(new Rect(472,112,252,72),T("CAPACITY","所持枠拡張"),eqUpgradePage)){eqUpgradePage=true;pendingSaleKey=null;}
                 if(shopSellingPage&&!eqUpgradePage&&EqButton(new Rect(730,112,220,72),T("SELL JUNK","不要品売却")))confirmJunkSale=true;
-                if(EqButton(new Rect(958,112,454,72),T("DEBT / SKILLS","返済 / スキル"))){debtPage=true;debtSkillTreePage=false;return true;}
                 if(eqUpgradePage){DrawEquipmentCapacityShop();GUI.enabled=eqPreviousEnabled;return true;}
             }
             float top=merchant?196:122;

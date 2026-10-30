@@ -11,6 +11,7 @@ namespace NeonVault
             public AmmoType type;
             public int amount;
             public GameObject visual;
+            public bool mission;
         }
 
         readonly List<int> ammoCrateRoomPlan = new List<int>(12);
@@ -61,6 +62,26 @@ namespace NeonVault
                 }
                 if (!found) { Debug.LogWarning("Could not safely place all ammunition crates in room " + room); break; }
             }
+            if(MissionNeedsCaches && room < CurrentDungeon.AreaCount-1)
+                for(int i=0;i<2;i++)SpawnMissionSupplyCrate();
+        }
+
+        void SpawnMissionSupplyCrate()
+        {
+            for(int attempt=0;attempt<120;attempt++)
+            {
+                var chamber=Layout.chambers[rng.Next(Layout.chambers.Count)];
+                if(chamber==Layout.chambers[Layout.EntryChamberIndex]||chamber==Layout.chambers[Layout.ExitChamberIndex])continue;
+                Vector3 p=Layout.Center(chamber)+new Vector3((float)rng.NextDouble()*5f-2.5f,0,(float)rng.NextDouble()*5f-2.5f);
+                if(Blocked(p,.8f)||Vector3.Distance(p,Layout.Entry)<7f||Vector3.Distance(p,Layout.Exit)<3f)continue;
+                bool tooClose=false;foreach(var c in fieldAmmoCrates)if(Vector3.Distance(c.position,p)<2.3f){tooClose=true;break;}
+                if(tooClose)continue;
+                var visual=CreateLootPresentation("MISSION SUPPLIES",new Vector3(p.x,.31f,p.z),new Vector3(1.15f,.55f,.9f),new Color(.9f,.48f,.19f),LootPresentationKind.AmmoCrate);
+                ObjectiveGroundRing.Create(visual.transform,p,1.15f);
+                fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,visual=visual,mission=true});
+                return;
+            }
+            Debug.LogWarning("Could not place mission supply crate in room "+room);
         }
 
         bool TryPlaceAmmoCrate(Vector3 p)
@@ -70,7 +91,6 @@ namespace NeonVault
             var type=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));
             int amount=AmmoPackSize(type);
             var visual=CreateLootPresentation(AmmoPickupName(type,amount),new Vector3(p.x,.31f,p.z),new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,amount);
-            if(MissionNeedsCaches) ObjectiveGroundRing.Create(visual.transform, p, 1.0f);
             fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,type=type,amount=amount,visual=visual});
             return true;
         }
@@ -83,7 +103,8 @@ namespace NeonVault
             for(int i=0;i<fieldAmmoCrates.Count;i++)
             {
                 var crate=fieldAmmoCrates[i];if(crate==null||crate.visual==null)continue;
-                if(automatic&&AmmoReserve(crate.type)>=AmmoCapacity(crate.type)&&!(SelectedExpeditionStage!=null&&!MissionCompleted&&(ExpeditionAllowsBypass||SelectedExpeditionStage.mission==ExpeditionMission.DestroyNest)))continue;
+                if(crate.mission)continue;
+                if(automatic&&AmmoReserve(crate.type)>=AmmoCapacity(crate.type))continue;
                 float distance=Vector3.Distance(PlayerPosition,crate.position);if(distance<best){best=distance;nearest=crate;}
             }
             if(nearest==null)return false;
@@ -98,7 +119,6 @@ namespace NeonVault
                 if(SelectedExpeditionStage!=null&&!MissionCompleted&&
                    (ExpeditionAllowsBypass||SelectedExpeditionStage.mission==ExpeditionMission.DestroyNest))
                 {
-                    ExpeditionSupplyRecovered();
                     if(nearest.visual!=null)Destroy(nearest.visual);
                     fieldAmmoCrates.Remove(nearest);
                     Notify("CACHE INSPECTED / AMMO FULL","物資箱を調査 / 弾薬満杯");
@@ -107,12 +127,32 @@ namespace NeonVault
                 return true;
             }
             AddAmmo(nearest.type,picked);
-            ExpeditionSupplyRecovered();
             if(nearest.visual!=null)Destroy(nearest.visual);
             fieldAmmoCrates.Remove(nearest);
             string en=AmmoPickupEnglish(nearest.type,picked),ja=AmmoPickupJapanese(nearest.type,picked);
             Notify("AMMO CRATE / "+en,"弾薬箱 / "+ja);
             return true;
+        }
+
+        public bool OpenNearbyMissionSupplyCrate()
+        {
+            foreach(var crate in fieldAmmoCrates)
+            {
+                if(crate==null||!crate.mission||!crate.visual||Vector3.Distance(PlayerPosition,crate.position)>=2.5f)continue;
+                fieldAmmoCrates.Remove(crate);Destroy(crate.visual);ExpeditionSupplyRecovered();
+                Notify("MISSION SUPPLIES RECOVERED","任務の物資を回収");return true;
+            }
+            return false;
+        }
+
+        public bool NearbyMissionSupplyCrate
+        {
+            get
+            {
+                foreach(var crate in fieldAmmoCrates)
+                    if(crate!=null&&crate.mission&&crate.visual&&Vector3.Distance(PlayerPosition,crate.position)<2.5f)return true;
+                return false;
+            }
         }
 
         static Color AmmoCrateColor(AmmoType type)

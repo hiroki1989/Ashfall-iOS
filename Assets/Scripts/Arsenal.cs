@@ -103,6 +103,14 @@ namespace NeonVault
             item.name=sidearm?"Warden Sidearm":"Warden Woodstock";
             item.subtitle=sidearm?"Trail Warden service sidearm":"Trail Warden wood-stock rifle";return item;
         }
+        public static Gun TrailWardenShotgun()
+        {
+            var item=Model(13,Rarity.Common);
+            item.visualSet=TrailWardenVisualSet;
+            item.name="Warden Breach";
+            item.subtitle="Trail Warden pump-action shotgun";
+            return item;
+        }
         public static Gun Starter()=>Catalog(30,Rarity.Common);
         public static Gun Model(int variant,Rarity rarity)
         {

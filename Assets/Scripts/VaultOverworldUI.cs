@@ -220,7 +220,8 @@ namespace NeonVault
             if(entrance>=0)
             {
                 var stage=ExpeditionMap.Get(entrance,DebtLevel);
-                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E")))EnterNearbyWorldDungeon(entrance);
+                string briefing=stage.Name+" / Lv."+stage.level+"\n"+ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese)+"\n"+ExpeditionRewardDescription(stage.id);
+                if(WorldButton(mobile?new Rect(440,285,570,150):new Rect(940,550,475,160),briefing+"\n"+T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E")))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
             {
