@@ -53,13 +53,22 @@ namespace NeonVault
             Load(); string key = Key(item);
             return !string.IsNullOrEmpty(key) && ids.Contains(key);
         }
+        internal static int CatalogCount()
+        {
+            Load();var catalog=new HashSet<string>(StringComparer.Ordinal);
+            void Add(object item){string key=Key(item);if(!string.IsNullOrEmpty(key)&&ids.Contains(key))catalog.Add(key);}
+            for(int i=0;i<Arsenal.CatalogCount;i++)Add(Arsenal.Catalog(i));
+            foreach(var product in ArmorProductCatalog.All)if(Armory.IsActiveSlot(product.slot))Add(Armory.CreateCatalog(product.id,Rarity.Common,1));
+            foreach(var product in ModuleProductCatalog.All)Add(ArtifactCatalog.CreateCatalog(product.id,product.legendary?Rarity.Legendary:Rarity.Common,1));
+            for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){Add(MeleeWeaponCatalog.Catalog(i));Add(MeleeWeaponCatalog.Catalog(i,Rarity.Legendary));}
+            return catalog.Count;
+        }
 
         internal static void Record(object item)
         {
             Load(); string key = Key(item);
             if (string.IsNullOrEmpty(key)) return;
             bool changed = ids.Add(key);
-            if (item is MeleeWeaponItem melee && melee.uniqueEffect) changed |= ids.Add(melee.catalogId);
             if (!changed) return;
             var sorted = new List<string>(ids); sorted.Sort(StringComparer.Ordinal);
             PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(new Save { ids = sorted.ToArray() }));

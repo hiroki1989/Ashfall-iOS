@@ -33,9 +33,9 @@ namespace NeonVault
             if(MobileButton(new Rect(840,10,125,110),"‹")){makerSelection=(makerSelection+5)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
             if(MobileButton(new Rect(980,10,125,110),"›")){makerSelection=(makerSelection+1)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
             if(MobileButton(new Rect(1120,10,280,110),T("BACK","戻る")))manufacturerRegistry=false;
-            string[] tabs={T("COMPANY","会社"),T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
-            for(int i=0;i<5;i++)if(MobileButton(new Rect(30+i*278,140,265,110),tabs[i])){manufacturerKind=i-1;mobileCatalogPage=0;BuildManufacturerProducts();}
-            if(manufacturerKind<0){ManufacturerBranding.Badge(new Rect(70,310,230,230),maker);MobileCopyAt(345,300,ManufacturerCatalog.Description(maker,VaultLanguage.Japanese),Mist,1015);MobileCopyAt(345,460,ManufacturerBranding.Design(maker,VaultLanguage.Japanese),Cyan,1015);return;}
+            string[] tabs={T("PROFILE","企業概要"),T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
+            for(int i=0;i<5;i++)if(MobileButton(new Rect(30+i*278,140,265,110),tabs[i])){manufacturerKind=i-1;mobileCatalogPage=0;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
+            if(manufacturerKind<0){DrawCompanyProfile(maker,new Rect(30,270,1370,595),true);return;}
             int pages=Mathf.Max(1,Mathf.CeilToInt(manufacturerProducts.Count/2f));mobileCatalogPage=Mathf.Clamp(mobileCatalogPage,0,pages-1);
             for(int row=0;row<2;row++)
             {

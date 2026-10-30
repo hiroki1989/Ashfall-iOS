@@ -5,6 +5,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         bool manufacturerRegistry;int makerSelection,manufacturerKind=-1;Vector2 manufacturerScroll;
+        bool companyDragging;Vector2 companyLastPointer;
         readonly List<object> manufacturerProducts=new List<object>();
         public void SetManufacturerReview(int maker,int kind){manufacturerRegistry=true;makerSelection=Mathf.Clamp(maker,0,5);manufacturerKind=kind;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
         void BuildManufacturerProducts()
@@ -62,18 +63,10 @@ namespace NeonVault
                 if(GUI.Button(new Rect(x+64,140,149,54),ManufacturerCatalog.Name(id,VaultLanguage.Japanese),new GUIStyle(centered){fontSize=14,wordWrap=true})){makerSelection=maker;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
             }
             string selected=ManufacturerCatalog.Id(makerSelection);
-            for(int tab=-1;tab<4;tab++)if(Button(new Rect(44+(tab+1)*195,220,188,42),tab==-1?T("COMPANIES","6社の特徴"):tab==0?T("FIREARMS","銃製品"):tab==1?T("ARMOR","防具製品"):tab==2?T("MODULES","モジュール製品"):T("MELEE","近接製品"))){manufacturerKind=tab;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
+            for(int tab=-1;tab<4;tab++)if(Button(new Rect(44+(tab+1)*195,220,188,42),tab==-1?T("COMPANY PROFILE","企業概要"):tab==0?T("FIREARMS","銃製品"):tab==1?T("ARMOR","防具製品"):tab==2?T("MODULES","モジュール製品"):T("MELEE","近接製品"))){manufacturerKind=tab;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
             if(manufacturerKind<0)
             {
-                for(int i=0;i<6;i++)
-                {
-                    string id=ManufacturerCatalog.Id(i);float x=44+i%3*456,y=284+i/3*278;
-                    Panel(new Rect(x,y,440,260),ManufacturerCatalog.Color(id));
-                    ManufacturerBranding.Badge(new Rect(x+14,y+16,78,78),id);
-                    Text(x+107,y+18,ManufacturerCatalog.Name(id,VaultLanguage.Japanese),new GUIStyle(label){wordWrap=true},ManufacturerCatalog.Color(id),315);
-                    Text(x+16,y+110,ManufacturerCatalog.Description(id,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},Mist,405);
-                    Text(x+16,y+170,ManufacturerBranding.Design(id,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},Cyan,405);
-                }
+                DrawCompanyProfile(selected,new Rect(44,282,1352,550),false);
                 return;
             }
             Text(1050,227,ManufacturerCatalog.Name(selected,VaultLanguage.Japanese)+" / "+manufacturerProducts.Count,small,ManufacturerCatalog.Color(selected),365);
@@ -102,6 +95,33 @@ namespace NeonVault
                 if(known)Text(x+138,y+104,code,tiny,Mist,275);
             }
             GUI.EndScrollView();Text(47,857,T("Product reference / Loot and merchant stock supply these designs. No free equipment is granted here.","製品図鑑 / 各製品は戦利品・商人の在庫から入手できます。"),tiny,Mist,1160);
+        }
+        void DrawCompanyProfile(string maker,Rect viewport,bool mobile)
+        {
+            Panel(viewport,ManufacturerCatalog.Color(maker));
+            float width=viewport.width-58;
+            var copy=new GUIStyle(label){fontSize=mobile?27:22,wordWrap=true,fontStyle=FontStyle.Normal};
+            var title=new GUIStyle(label){fontSize=mobile?27:22,wordWrap=false,fontStyle=FontStyle.Normal};
+            string[] headings={T("ABOUT","企業概要"),T("OUR HISTORY","沿革"),T("OUR PRODUCTS","製品の特徴")};
+            float[] heights=new float[3];float total=150;
+            for(int i=0;i<3;i++){heights[i]=Mathf.Max(mobile?70:52,copy.CalcHeight(new GUIContent(ManufacturerCatalog.CompanyOverview(maker,i,VaultLanguage.Japanese)),width-48));total+=45+heights[i]+22;}
+            if(mobile)
+            {
+                var e=Event.current;
+                if(e.type==EventType.MouseDown&&viewport.Contains(e.mousePosition)){companyDragging=true;companyLastPointer=e.mousePosition;}
+                else if(e.type==EventType.MouseDrag&&companyDragging){manufacturerScroll.y=Mathf.Clamp(manufacturerScroll.y-(e.mousePosition.y-companyLastPointer.y),0,Mathf.Max(0,total-viewport.height));companyLastPointer=e.mousePosition;e.Use();}
+                else if(e.type==EventType.MouseUp)companyDragging=false;
+            }
+            manufacturerScroll=GUI.BeginScrollView(viewport,manufacturerScroll,new Rect(0,0,viewport.width-24,Mathf.Max(viewport.height-10,total)));
+            ManufacturerBranding.Badge(new Rect(18,12,mobile?170:150,100),maker);
+            Text(190,34,ManufacturerCatalog.Name(maker,VaultLanguage.Japanese),new GUIStyle(label){fontSize=mobile?32:29},ManufacturerCatalog.Color(maker),width-200);
+            float y=126;
+            for(int i=0;i<3;i++)
+            {
+                Text(20,y,headings[i],title,ManufacturerCatalog.Color(maker),width-40);y+=42;
+                GUI.color=UiPaper;GUI.Label(new Rect(20,y,width-48,heights[i]+5),ManufacturerCatalog.CompanyOverview(maker,i,VaultLanguage.Japanese),copy);GUI.color=Color.white;y+=heights[i]+25;
+            }
+            GUI.EndScrollView();
         }
     }
 }

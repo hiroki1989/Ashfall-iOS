@@ -17,6 +17,32 @@ namespace NeonVault
             }
         }
         string hubDialogue="";
+        bool collectorIntroSeen,collectorOpen;int collectorClaims,collectorPage,collectorKnown;
+        void OpenCollector()
+        {
+            if(!smoke)EquipmentDiscovery.RecordCurrent(Weapons,ArmorInventory,ArtifactInventory,MeleeWeaponInventory);
+            collectorKnown=EquipmentDiscovery.CatalogCount();collectorPage=collectorIntroSeen?3:0;collectorOpen=true;
+        }
+        void DrawCollectorDialog()
+        {
+            if(!collectorOpen)return;
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));Panel(new Rect(190,190,1060,520),Gold);
+            Text(235,220,T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
+            string[] en={"Hey, you. I collect gear. Anything with a story, a strange mechanism, or a good scar belongs in my catalog.","Find something new, and it'll be recorded. Come back and report when you've filled in more of the catalog. I want to hear about it.","For every 50 different items you discover, I'll give you one skill point. Don't bring me fifty copies of the same junk.","You've discovered "+collectorKnown+" kinds. Report every 50 and I'll pay you a skill point. So? Got something worth showing me?"};
+            string[] ja={"おい、そこのあんた。私は装備を集めてる。妙な仕組みの銃も、傷だらけの防具も、気に入ったものは全部図鑑に載せるんだ。","初めて手に入れた装備は図鑑に記録される。図鑑が埋まったら、私に報告しに来な。どんな物か聞かせてもらうよ。","違う装備を50種類集めるたびに、スキルポイントを1つやる。同じガラクタを50個持って来ても駄目だからね。","今の図鑑は "+collectorKnown+"種類。50種類ごとに報告してくれりゃ、スキルポイントをやるよ。さあ、何か面白い物は見つかったかい？"};
+            Text(235,305,(VaultLanguage.Japanese?ja:en)[Mathf.Clamp(collectorPage,0,3)],new GUIStyle(label){fontSize=29,wordWrap=true},UiPaper,970);
+            if(collectorPage<3)
+            {
+                if(Button(new Rect(900,580,290,75),T("NEXT","次へ"))){collectorPage++;if(collectorPage==3){collectorIntroSeen=true;SaveProgression();}}
+            }
+            else
+            {
+                int available=Mathf.Max(0,collectorKnown/50-collectorClaims);
+                Text(235,475,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available,new GUIStyle(label){fontSize=25},Cyan,700);
+                if(available>0&&Button(new Rect(235,580,360,75),T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);}
+                if(Button(new Rect(900,580,290,75),T("CLOSE","閉じる")))collectorOpen=false;
+            }
+        }
         Transform departingRaiderBoss; bool bossDeparting;
         public void BuildHub() {if(QueueWorldTransition(()=>BuildHubImmediate()))return;BuildHubImmediate();}
         void BuildHubImmediate()
@@ -51,7 +77,7 @@ namespace NeonVault
         }
         void UpdateHub()
         {
-            toastTimer=Mathf.Max(0,toastTimer-Time.deltaTime);
+            toastTimer=Mathf.Max(0,toastTimer-Time.deltaTime);if(collectorOpen)return;
             if(bossDeparting&&departingRaiderBoss){var target=new Vector3(portalPosition.x,departingRaiderBoss.position.y,portalPosition.z+1);var delta=target-departingRaiderBoss.position;delta.y=0;if(delta.sqrMagnitude<.04f){Destroy(departingRaiderBoss.gameObject);departingRaiderBoss=null;bossDeparting=false;}else{departingRaiderBoss.rotation=Quaternion.LookRotation(delta);departingRaiderBoss.position=Vector3.MoveTowards(departingRaiderBoss.position,target,2.5f*Time.deltaTime);}}
             var move=ReadPlayerMovement();var previousPosition=player.position;player.position=MoveWithinRoom(player.position,move*EffectiveMoveSpeed*Time.deltaTime,.45f);TickFootsteps(previousPosition,player.position);
             if(!VaultMobileInputBridge.Enabled&&move.sqrMagnitude>.01f){aim=move.normalized;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);}
@@ -60,7 +86,7 @@ namespace NeonVault
                 if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){debtPage=true;debtSkillTreePage=false;screen=Screen.Shop;}
                 else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){debtPage=false;debtSkillTreePage=false;shopSellingPage=false;pendingSaleKey=null;screen=Screen.Shop;}
                 else if(Vector3.Distance(PlayerPosition,portalPosition)<3){ExitCampToOverworld();return;}
-                else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)hubDialogue=T("IONE: Equipment survives each expedition; field upgrades do not. Flank plated infected. Dodge acid and a locked needle shot, then strike during recovery. Never let the shamblers surround you.","イオネ：持ち帰った装備は残りますが、現地改造は周回ごとに失われます。装甲屍は側面から、酸液と針撃ちは予告を避けてから。徘徊屍に囲まれないように。");
+                else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)OpenCollector();
             }
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);screen=Screen.Menu;hubDialogue="";}
@@ -71,7 +97,7 @@ namespace NeonVault
             if(toastTimer>0){Panel(new Rect(270,130,880,90),Gold);Text(290,145,Toast,new GUIStyle(small){wordWrap=true},Gold,840);}
             string key=MobileTouchControls.Enabled?"":" [E]";
             DrawWorldLabel(merchantPosition+Vector3.up*2,T("MARA / MERCHANT","マラ / 装備商人")+key,Gold);
-            DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONE / ARCHIVIST","イオネ / 記録官")+key,Cyan);
+            DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONE / COLLECTOR","イオネ / コレクター")+key,Cyan);
             DrawWorldLabel(debtCollectorPosition+Vector3.up*2,T("BRIGGS / DEBT COLLECTOR","ブリッグス / 借金取り")+key,new Color(1,.35f,.24f));
             DrawWorldLabel(portalPosition+Vector3.up*2,T("EXIT TO ASHFALL","アッシュフォールの街へ")+key,Gold);
             if(!string.IsNullOrEmpty(hubDialogue)){Panel(new Rect(250,595,940,112),Cyan);Text(270,613,hubDialogue,new GUIStyle(small){wordWrap=true},Mist,900);if(Button(new Rect(1050,658,116,35),T("CLOSE","閉じる")))hubDialogue="";}
