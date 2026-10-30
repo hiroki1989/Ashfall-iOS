@@ -3,24 +3,10 @@ namespace NeonVault {
  public partial class VaultGame {
   int bossIntroBeat;
   void DrawCinematicBossIntro(){
-   string[] speakersEn={"","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","MALCOLM VALE"};
-   string[] speakersJa={"","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","マルコム・ヴェイル"};
-   string[] linesEn={
-    "A low hum. Cold concrete. You wake with a steel collar locked around your neck.",
-    "Look who's back from the dead. Easy there. The collar's got a temper, and I'm holding the switch.",
-    "Where am I? What happened to the convoy?",
-    "You're in Ashfall. The whole region goes by that name. Your convoy burned here, and someone pinned the missing cargo on you. Convenient story, isn't it?",
-    "I didn't take anything. Take this thing off and let me find who set me up.",
-    "Bring me a billion in scrap and I'll unlock it. Briggs keeps the books. Until then, all of Ashfall is your workplace.",
-    "Find the truth if you like. Just make sure you survive long enough to pay me."};
-   string[] linesJa={
-    "低い機械音。冷たいコンクリート。目を覚ますと、首には鋼鉄の首輪が巻かれていた。",
-    "お目覚めか。急に動くなよ。その首輪は気が短い。起爆装置は俺が持ってる。",
-    "ここはどこだ？ 輸送車はどうなった？",
-    "ここはアッシュフォールだ。この地方全体がそう呼ばれてる。輸送車はここで燃えた。積み荷を盗んだ犯人はお前だって話だ。都合のいい話だな。",
-    "俺は何も盗んでない。首輪を外せ。誰が俺をはめたのか突き止める。",
-    "スクラップを10億持ってこい。返済はブリッグスが記録する。それまではアッシュフォール全域がお前の職場だ。",
-    "真犯人を探すのは勝手だ。ただし、返済できるまで生き延びろ。"};
+   string[] speakersEn={"MALCOLM VALE","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","MALCOLM VALE"};
+   string[] speakersJa={"マルコム・ヴェイル","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","マルコム・ヴェイル"};
+   string[] linesEn={"...You awake?","Easy. That collar gets touchy with guests who wake up too fast.","...What is this?","A collar. Surely you can see that.","Take it off.","Impatient, aren't you? We haven't even been introduced.","I'm Vale. I run this place.","Where am I? What happened to the convoy?","Ashfall. The city and the wasteland beyond it all go by that name. Your vehicle burned. Spectacularly.","And the cargo?","Gone. The story is that you ran off with it.","That's nonsense. I was just the driver.","I thought you'd say that. Dead men tell no tales; survivors get the bill. Convenient for somebody.","Who set this up?","Who knows? All I picked up was you and this ledger.","...A billion?","Cargo, trouble, inconvenience. Ask Briggs about the arithmetic.","You expect me to pay a debt I never made?","Want to try skipping out on it?","...One day I'll get this off and get answers from you.","There's that look. Go earn your keep in Ashfall. Briggs takes the payments.","Look for the culprit if you like. First, try living until tomorrow."};
+   string[] linesJa={"……起きたか。","おっと。急に動くな。そいつ、寝起きの客には少し敏感でな。","……何だ、これ。","首輪だ。見れば分かるだろ。","外せ。","せっかちなやつだな。まだ自己紹介も済んでない。","俺はヴェイル。ここを仕切ってる。","ここはどこだ。輸送車は？","アッシュフォールだ。街も、その外の荒れ地も、まとめてそう呼んでる。お前の車は……燃えてたよ。派手にな。","積み荷は？","消えた。で、お前が持ち逃げしたことになってる。","馬鹿を言うな。俺は運んでただけだ。","ああ、そう言うと思った。死人に口なし。生き残りには借金あり。誰かにとっては、ずいぶん都合のいい話だ。","誰が仕組んだ？","さあな。俺が拾ったのはお前と、この帳簿だけだ。","……10億？","積み荷の値段に、手間賃やら迷惑料やらを足した。細かい計算はブリッグスに聞け。","身に覚えのない借金を払えってのか。","嫌なら踏み倒してみるか？","……いずれ、これを外して、お前に答えを聞く。","いいね。その顔だ。アッシュフォールで稼いでこい。返済はブリッグスが受け付ける。","真犯人を探したけりゃ好きにしろ。まずは明日まで生き延びることだな。"};
    bossIntroBeat=Mathf.Clamp(bossIntroBeat,0,linesEn.Length-1);
    if(Event.current.type==EventType.Repaint&&cam&&player)
    {
@@ -36,10 +22,10 @@ namespace NeonVault {
    Text(94,92,T("ASHFALL REGION  /  THE COLLAR","アッシュフォール地方 / 首輪"),heading,Gold,1200);
    Text(96,158,T("A debt you never made.","身に覚えのない負債。"),small,Mist,900);
    Box(new Rect(88,570,1264,245),new Color(.035f,.06f,.075f,.97f));
-   Box(new Rect(88,570,6,245),bossIntroBeat==2||bossIntroBeat==4?Cyan:Gold);
+   Box(new Rect(88,570,6,245),speakersEn[bossIntroBeat]=="REID"?Cyan:Gold);
    string speaker=VaultLanguage.Japanese?speakersJa[bossIntroBeat]:speakersEn[bossIntroBeat];
-   Text(120,590,string.IsNullOrEmpty(speaker)?T("PROLOGUE","序章"):speaker,new GUIStyle(label){fontSize=28,fontStyle=FontStyle.Normal},bossIntroBeat==2||bossIntroBeat==4?Cyan:Gold,1000);
-   Text(120,642,VaultLanguage.Japanese?linesJa[bossIntroBeat]:linesEn[bossIntroBeat],new GUIStyle(label){fontSize=27,wordWrap=true},Color.white,1190);
+   Text(120,590,string.IsNullOrEmpty(speaker)?T("PROLOGUE","序章"):speaker,new GUIStyle(label){fontSize=28,fontStyle=FontStyle.Normal},speakersEn[bossIntroBeat]=="REID"?Cyan:Gold,1000);
+   Text(120,642,VaultLanguage.Japanese?linesJa[bossIntroBeat]:linesEn[bossIntroBeat],new GUIStyle(label){fontSize=32,wordWrap=true},Color.white,1190);
    Text(112,832,(bossIntroBeat+1)+" / "+linesEn.Length,tiny,Mist,190);
    if(WorldButton(new Rect(960,822,380,64),bossIntroBeat==linesEn.Length-1?T("ENTER ASHFALL","アッシュフォールへ"):T("CONTINUE","続ける"))){
     if(++bossIntroBeat>=linesEn.Length){bossIntroBeat=0;CompleteWorldBossConversation();if(cam){cam.orthographicSize=11/CameraZoom;UpdateCamera(true);}}

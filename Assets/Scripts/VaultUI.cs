@@ -106,6 +106,7 @@ namespace NeonVault
             if(screen!=Screen.Shop)debtPage=false;
             if(worldTransitionPending){DrawWorldLoading();return;}
             if(DebtFinalConversationVisible){DrawDebtFinalConversation();return;}
+            if(NpcConversationVisible){DrawNpcConversation();return;}
             if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(VaultStorageVisible){DrawVaultStorage();return;}
             if(MobileTouchControls.Enabled)
@@ -225,7 +226,7 @@ namespace NeonVault
             Text(440,28,room==CurrentDungeon.AreaCount-1?T("WASTELAND COLOSSUS","荒野の巨骸"):SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name,label,Gold,650);
             Text(440,61,ExpeditionExitOpen?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,ExpeditionExitOpen?Color.Lerp(Gold,Color.white,.5f+.5f*Mathf.Sin(Time.unscaledTime*5)):Mist,720);
             if(ExpeditionExitOpen)DrawDungeonExitDirection(false);
-            if(SelectedExpeditionStage!=null){var stage=SelectedExpeditionStage;string mission=ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese);if(stage.mission==ExpeditionMission.HuntTarget||stage.mission==ExpeditionMission.DestroyNest)mission+=" / "+stage.Target;mission+="  ·  "+MissionProgress;if(stage.mission==ExpeditionMission.RecoverSupplies||stage.mission==ExpeditionMission.SurveySectors||stage.mission==ExpeditionMission.SalvageSweep)mission+=T(" / floors "," / フロア ")+SurveyedFloorCount;Text(42,117,mission,new GUIStyle(tiny){wordWrap=true},MissionCompleted?Cyan:Gold,350);}else Text(42,121,T("SEED "+seed+"  /  "+Mathf.FloorToInt(runTime)+"s","シード "+seed+"  /  "+Mathf.FloorToInt(runTime)+"秒"),tiny,Mist,350);
+            if(SelectedExpeditionStage!=null){var stage=SelectedExpeditionStage;string mission=ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese);if(stage.mission==ExpeditionMission.HuntTarget||stage.mission==ExpeditionMission.DestroyNest)mission+=" / "+stage.Target;mission+="  ·  "+MissionProgress;if(stage.mission==ExpeditionMission.RecoverSupplies||stage.mission==ExpeditionMission.SurveySectors||stage.mission==ExpeditionMission.SalvageSweep)mission+=T(" / floors "," / フロア ")+SurveyedFloorCount;Text(42,117,mission,new GUIStyle(tiny){wordWrap=true},MissionCompleted?Cyan:Gold,350);}else Text(42,121,T("SEED "+seed+"  /  "+Mathf.FloorToInt(runTime)+"s","シード "+seed+"  /  "+Mathf.FloorToInt(runTime)+"秒"),tiny,Mist,350);
             if(toastTimer>0){Panel(new Rect(405,111,720,44),Gold*.6f);Text(421,123,Toast,small,Gold,695);}
             DrawHealthPanel(new Rect(24,754,375,122),false);
             Panel(new Rect(414,798,197,78),dodgeCooldown<=0?Cyan:Gold*.4f);
@@ -298,7 +299,7 @@ namespace NeonVault
             Text(1042,311,T("LEVEL ","レベル ")+stage.level+"   /   "+T("YOUR LEVEL ","現在 ")+DebtLevel,label,unlocked?Cyan:new Color(1,.40f,.31f),330);
             Text(1042,356,T("BIOME","地形"),tiny,Mist,320);Text(1042,378,stage.Biome,small,Color.white,330);
             Text(1042,422,T("CONTRACT","任務"),tiny,Mist,320);
-            Text(1042,445,ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese),label,Gold,330);
+            Text(1042,445,ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese),label,Gold,330);
             Text(1042,481,T("MARKED TARGET","標的"),tiny,Mist,320);
             Text(1042,503,stage.Target,small,new Color(1,.51f,.37f),330);
             Text(1042,548,cleared?T("REPEAT CLEAR REWARD","再攻略報酬"):T("FIRST CLEAR CACHE","初回クリア報酬"),tiny,Mist,320);
@@ -315,7 +316,7 @@ namespace NeonVault
             Panel(new Rect(1190,80,226,271),Cyan*.7f);Text(1206,90,T("HOT ZONE / TACTICAL","汚染区域 / 戦術マップ"),tiny,Gold,210);
             float tile=Mathf.Min(190f/Layout.Columns,195f/Layout.Rows);Vector2 origin=new Vector2(1214,117);
             for(int x=0;x<Layout.Columns;x++)for(int z=0;z<Layout.Rows;z++)if(Layout.open[x,z]&&Layout.IsExplored(x,z))Box(new Rect(origin.x+x*tile,origin.y+(Layout.Rows-1-z)*tile,tile-.7f,tile-.7f),Layout.IsVisible(x,z)?new Color(.28f,.44f,.46f):new Color(.13f,.20f,.22f));
-            DrawTacticalMapMarkers(origin,tile,4);
+            DrawTacticalMapMarkers(origin,tile,4);DrawMissionCacheGuidance(origin,tile,false);
             var exitCell=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exitCell.x,exitCell.y))MapPoint(ExitPosition,origin,tile,ExpeditionExitOpen?Gold:new Color(.48f,.42f,.28f),4);MapPoint(PlayerPosition,origin,tile,Cyan,4);
             Text(1206,278,T("SECTORS","周回ルート"),tiny,Mist,190);
             for(int i=0;i<route.Count;i++){float x=1210+i*27;Box(new Rect(x,309,16,16),i==room?Cyan:i<room?Gold*.65f:new Color(.22f,.3f,.31f));if(i<6)Box(new Rect(x+16,316,11,1),Gold*.5f);}

@@ -21,25 +21,34 @@ namespace NeonVault
         void OpenCollector()
         {
             if(!smoke)EquipmentDiscovery.RecordCurrent(Weapons,ArmorInventory,ArtifactInventory,MeleeWeaponInventory);
-            collectorKnown=EquipmentDiscovery.CatalogCount();collectorPage=collectorIntroSeen?3:0;collectorOpen=true;
+            collectorKnown=EquipmentDiscovery.CatalogCount();collectorPage=collectorIntroSeen?12:0;collectorOpen=true;
         }
         void DrawCollectorDialog()
         {
             if(!collectorOpen)return;
             Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));Panel(new Rect(190,190,1060,520),Gold);
-            Text(235,220,T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
-            string[] en={"Hey, you. I collect gear. Anything with a story, a strange mechanism, or a good scar belongs in my catalog.","Find something new, and it'll be recorded. Come back and report when you've filled in more of the catalog. I want to hear about it.","For every 50 different items you discover, I'll give you one skill point. Don't bring me fifty copies of the same junk.","You've discovered "+collectorKnown+" kinds. Report every 50 and I'll pay you a skill point. So? Got something worth showing me?"};
-            string[] ja={"おい、そこのあんた。私は装備を集めてる。妙な仕組みの銃も、傷だらけの防具も、気に入ったものは全部図鑑に載せるんだ。","初めて手に入れた装備は図鑑に記録される。図鑑が埋まったら、私に報告しに来な。どんな物か聞かせてもらうよ。","違う装備を50種類集めるたびに、スキルポイントを1つやる。同じガラクタを50個持って来ても駄目だからね。","今の図鑑は "+collectorKnown+"種類。50種類ごとに報告してくれりゃ、スキルポイントをやるよ。さあ、何か面白い物は見つかったかい？"};
-            Text(235,305,(VaultLanguage.Japanese?ja:en)[Mathf.Clamp(collectorPage,0,3)],new GUIStyle(label){fontSize=29,wordWrap=true},UiPaper,970);
-            if(collectorPage<3)
+            string[] en={"Hey. Don't move.","...What?","Your gun. Let me see it. Strange scar beside the trigger.","Caught a bullet.","Huh. The gun took the hit and you walked away. That's a good scar.","Is that a compliment?","For the gun. I'm Ione. I keep a catalog: guns, armor, anything I haven't seen before.","What do you collect them for?","To remember before they disappear. Who made them, how they were used, what scars they earned.","Find something interesting, come back. New gear goes in the catalog. Report every fifty kinds and I'll give you a skill point.","What about fifty copies of the same gun?","Bring those and I'll throw you out before I start counting."};
+            string[] ja={"おい、動くな。","……何だ？","その銃だよ。見せてみな。引き金の脇に妙な傷がある。","撃たれた時についた。","へえ。銃が先に食らって、あんたが生き残ったのか。いい傷じゃないか。","褒められてるのか？","銃をね。私はイオネ。ここで装備の図鑑を作ってる。銃も防具も、初めて見る代物なら何でも記録する。","集めてどうする。","消えちまう前に覚えておきたいのさ。誰が作って、どう使って、どんな傷をつけたか。","面白い物を見つけたら、また顔を出しな。手に入れた装備は図鑑に記録される。50種類ごとに報告してくれりゃ、スキルポイントを一つやるよ。","同じ銃を50丁じゃ駄目か。","そんなもん持ってきたら、数える前に追い返すよ。"};
+            bool[] isReid={false,true,false,true,false,true,false,true,false,false,true,false};
+            if(collectorPage<12)
             {
-                if(Button(new Rect(900,580,290,75),T("NEXT","次へ"))){collectorPage++;if(collectorPage==3){collectorIntroSeen=true;SaveProgression();}}
+                Text(235,220,isReid[collectorPage]?T("REID","レイド"):T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
+                Text(235,305,(VaultLanguage.Japanese?ja:en)[collectorPage],new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
+                if(Button(new Rect(900,580,290,75),T("NEXT","次へ"))){collectorPage++;if(collectorPage==12){collectorIntroSeen=true;SaveProgression();}}
+            }
+            else if(collectorPage==13)
+            {
+                Text(235,220,T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
+                Text(235,305,T("Let's see... now that's a find. Here's your point. Bring me something stranger next time.","見せてごらん……へえ、こいつはいい。約束のポイントだ。次はもっと変わった物を期待してるよ。"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
+                if(Button(new Rect(900,580,290,75),T("CLOSE","閉じる")))collectorOpen=false;
             }
             else
             {
+                Text(235,220,T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
+                Text(235,305,T("Back already? Your catalog has "+collectorKnown+" kinds. Find anything interesting?","お、帰ってきたね。図鑑は今、"+collectorKnown+"種類だ。何か面白い物は見つかったかい？"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
                 int available=Mathf.Max(0,collectorKnown/50-collectorClaims);
                 Text(235,475,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available,new GUIStyle(label){fontSize=25},Cyan,700);
-                if(available>0&&Button(new Rect(235,580,360,75),T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);}
+                if(available>0&&Button(new Rect(235,580,360,75),T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);collectorPage=13;}
                 if(Button(new Rect(900,580,290,75),T("CLOSE","閉じる")))collectorOpen=false;
             }
         }
@@ -58,7 +67,7 @@ namespace NeonVault
             for(int i=0;i<8;i++){float a=i*Mathf.PI/4;art.Column(new Vector3(Mathf.Sin(a)*12.5f,0,Mathf.Cos(a)*12.5f),2.5f);}
             art.Cover(merchantPosition+Vector3.back*2);art.Brazier(merchantPosition+Vector3.left*2);art.Cover(archivistPosition+Vector3.back*2);
             Transform HubNpc(Vector3 p,int variant,string name){var root=new GameObject(name).transform;root.SetParent(world,false);root.position=new Vector3(p.x,0,p.z);root.rotation=Quaternion.LookRotation(Vector3.back);var visual=HumanFactionVisual.Create(root,0,variant);visual.enabled=false;return root;}
-            HubNpc(merchantPosition,0,"Mara / Salvage Merchant");
+            HubNpc(merchantPosition,0,"Sera / Salvage Merchant");
             HubNpc(archivistPosition,1,"Ione / Archivist");
             HubNpc(debtCollectorPosition,0,"Briggs / Debt Collector");
             art.Part("Merchant counter",PrimitiveType.Cube,merchantPosition+new Vector3(0,.25f,-1.4f),new Vector3(3,1.25f,.9f),new Color(.27f,.23f,.18f),world);
@@ -86,8 +95,8 @@ namespace NeonVault
             if(!VaultMobileInputBridge.Enabled&&move.sqrMagnitude>.01f){aim=move.normalized;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);}
             if(VaultMobileInputBridge.Enabled)ApplyMobileAim(VaultMobileInputBridge.Aim);
             if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)){
-                if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){debtPage=true;debtSkillTreePage=false;screen=Screen.Shop;}
-                else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){debtPage=false;debtSkillTreePage=false;shopSellingPage=false;pendingSaleKey=null;screen=Screen.Shop;}
+                if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){OpenBriggsDialogue();}
+                else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){OpenMerchantDialogue();}
                 else if(Vector3.Distance(PlayerPosition,portalPosition)<3){ExitCampToOverworld();return;}
                 else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)OpenCollector();
             }
@@ -99,7 +108,7 @@ namespace NeonVault
         {
             if(toastTimer>0){Panel(new Rect(270,130,880,90),Gold);Text(290,145,Toast,new GUIStyle(small){wordWrap=true},Gold,840);}
             string key=MobileTouchControls.Enabled?"":" [E]";
-            DrawWorldLabel(merchantPosition+Vector3.up*2,T("MARA / MERCHANT","マラ / 装備商人")+key,Gold);
+            DrawWorldLabel(merchantPosition+Vector3.up*2,T("SERA / MERCHANT","セラ / 装備商人")+key,Gold);
             DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONE / COLLECTOR","イオネ / コレクター")+key,Cyan);
             DrawWorldLabel(debtCollectorPosition+Vector3.up*2,T("BRIGGS / DEBT COLLECTOR","ブリッグス / 借金取り")+key,new Color(1,.35f,.24f));
             DrawWorldLabel(portalPosition+Vector3.up*2,T("EXIT TO ASHFALL","アッシュフォールへ出る")+key,Gold);

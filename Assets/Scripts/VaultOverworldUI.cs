@@ -585,7 +585,7 @@ namespace NeonVault
             WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,29);
             WorldLabel(new Rect(975,220,410,75),discovered?stage.Location+" / "+stage.Biome:"?",Mist,23);
             WorldLabel(new Rect(975,305,410,70),T("LEVEL ","レベル ")+stage.level,Cyan,25);
-            WorldLabel(new Rect(975,375,410,105),discovered?ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese):"?",UiPaper,26);
+            WorldLabel(new Rect(975,375,410,105),discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",UiPaper,26);
             WorldLabel(new Rect(975,490,410,80),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,22);
             WorldLabel(new Rect(975,575,410,40),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,21);
             bool tracking=OverworldWaypointKind==2&&OverworldWaypointId==stage.id;

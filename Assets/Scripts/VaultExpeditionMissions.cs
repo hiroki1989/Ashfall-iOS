@@ -33,7 +33,7 @@ namespace NeonVault
                     case ExpeditionMission.RecoverSupplies:
                     case ExpeditionMission.SalvageSweep: return MissionCacheCount;
                     case ExpeditionMission.SurveySectors: return SurveyedFloorCount;
-                    case ExpeditionMission.DestroyNest: return Mathf.Min(8,MissionKillCount)+Mathf.Min(2,MissionCacheCount);
+                    case ExpeditionMission.DestroyNest: return Mathf.Min(ExpeditionMap.KillTarget(stage.id,stage.mission),MissionKillCount)+Mathf.Min(2,MissionCacheCount);
                     default: return MissionKillCount;
                 }
             }
@@ -47,6 +47,32 @@ namespace NeonVault
         bool CurrentMissionFloorVisited => (MissionSurveyMask & (1 << Mathf.Clamp(room,0,3))) != 0;
         public bool MissionCompleted => missionCompleted;
 
+        int MinimumMissionEnemiesPerFloor()
+        {
+            var stage=SelectedExpeditionStage;
+            if(stage==null)return 0;
+            int target=ExpeditionMap.KillTarget(stage.id,stage.mission);
+            // Guarantee enough enemies even when the balance profile reduces spawns.
+            return target<=0?0:Mathf.CeilToInt(target/(float)Mathf.Max(1,CurrentDungeon.AreaCount-1));
+        }
+        bool MissionNeedsCaches => SelectedExpeditionStage!=null && !missionCompleted &&
+            (ExpeditionAllowsBypass || SelectedExpeditionStage.mission==ExpeditionMission.DestroyNest);
+        void DrawMissionCacheGuidance(Vector2 origin,float tile,bool mobile)
+        {
+            if(!MissionNeedsCaches || IsOverworld || Layout==null)return;
+            FieldAmmoCrate nearest=null;float best=float.MaxValue;
+            foreach(var crate in fieldAmmoCrates)
+            {
+                if(crate==null || !crate.visual)continue;
+                Vector2Int cell=Layout.ToCell(crate.position);
+                Vector2 point=new Vector2(origin.x+(cell.x+.5f)*tile,origin.y+(Layout.Rows-.5f-cell.y)*tile);
+                DrawWaypointPin(point);
+                float d=(crate.position-PlayerPosition).sqrMagnitude;
+                if(d<best){best=d;nearest=crate;}
+                if(cam){Vector3 p=cam.WorldToScreenPoint(crate.position+Vector3.up*.8f);if(p.z>0){float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);Vector2 pos=mobile?MobileCanvasPoint(p):new Vector2((p.x-(UnityEngine.Screen.width-1440*scale)*.5f)/scale,(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*scale)*.5f)/scale);if(pos.x>0&&pos.x<1440&&pos.y>0&&pos.y<900)DrawWaypointPin(pos);}}
+            }
+            if(nearest!=null)DrawScreenDirection(nearest.position,mobile);
+        }
         void ResetExpeditionMission(){missionKills=0;missionCompleted=false;}
 
         public void ExpeditionEnemyKilled(Foe foe)
@@ -82,11 +108,11 @@ namespace NeonVault
             switch(SelectedExpeditionStage.mission)
             {
                 case ExpeditionMission.ClearHostiles:
-                    if(MissionKillCount>=18)CompleteExpeditionMission("ZONE SECURED","区域制圧");break;
+                    if(MissionKillCount>=ExpeditionMap.KillTarget(SelectedStageId,ExpeditionMission.ClearHostiles))CompleteExpeditionMission("ZONE SECURED","区域制圧");break;
                 case ExpeditionMission.RecoverSupplies:
                     if(MissionCacheCount>=3&&SurveyedFloorCount>=2)CompleteExpeditionMission("SUPPLIES RECOVERED","物資回収完了");break;
                 case ExpeditionMission.DestroyNest:
-                    if(MissionKillCount>=8&&MissionCacheCount>=2)CompleteExpeditionMission("INFESTATION DISRUPTED","感染網を遮断");break;
+                    if(MissionKillCount>=ExpeditionMap.KillTarget(SelectedStageId,ExpeditionMission.DestroyNest)&&MissionCacheCount>=2)CompleteExpeditionMission("INFESTATION DISRUPTED","感染網を遮断");break;
                 case ExpeditionMission.SurveySectors:
                     if(SurveyedFloorCount>=2)CompleteExpeditionMission("SECTOR SURVEY COMPLETE","区域調査完了");break;
                 case ExpeditionMission.SalvageSweep:

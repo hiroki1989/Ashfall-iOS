@@ -109,6 +109,20 @@ namespace NeonVault
         }
         public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=0;id<StageCount;id++)if(Get(id).region==Mathf.Clamp(region,0,4)&&Get(id).mission==mission)count++;return count;}
         public static int RewardSeed(int stageId)=>unchecked(0x51A7D00D ^ (stageId+1)*7919);
+        // Stable random target per site keeps map, gameplay and checkpoint in agreement.
+        public static int KillTarget(int stageId, ExpeditionMission mission)
+        {
+            var roll=new System.Random(unchecked(0x1F287B ^ (stageId+1)*7919));
+            return mission==ExpeditionMission.ClearHostiles ? roll.Next(40,51) : mission==ExpeditionMission.DestroyNest ? roll.Next(30,41) : 0;
+        }
+        public static string MissionLabel(ExpeditionStage stage,bool japanese)
+        {
+            if(stage==null)return "";
+            int target=KillTarget(stage.id,stage.mission);
+            if(stage.mission==ExpeditionMission.ClearHostiles)return japanese?"敵を"+target+"体倒す":"Defeat "+target+" hostiles";
+            if(stage.mission==ExpeditionMission.DestroyNest)return japanese?"感染網を断つ：敵"+target+"体と物資2箱":"Break the infestation: "+target+" kills and 2 caches";
+            return MissionLabel(stage.mission,japanese);
+        }
         public static string MissionLabel(ExpeditionMission mission,bool japanese)=>japanese?missionJa[(int)mission]:missionEn[(int)mission];
         static string RewardLabel(int id,bool ja) { string[] en={"Credits cache","Unusual gear","Armor cache","Skill point"};string[] jp={"クレジット備蓄","異能装備","防具箱","スキルポイント"};int kind=new System.Random(RewardSeed(id)).Next(4);return (ja?jp:en)[kind]; }
     }

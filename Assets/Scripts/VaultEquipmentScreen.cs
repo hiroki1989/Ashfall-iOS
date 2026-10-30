@@ -149,7 +149,7 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),EqCanvas);
             Box(new Rect(28,12,44,3),EqAccent);
             Box(new Rect(28,103,1384,1),EqLine);
-            EqText(new Rect(28,18,950,44),merchant?T("MARA / SALVAGE EXCHANGE","マラ / 回収品交換所"):T("INVENTORY","インベントリ"),EqInk,new GUIStyle(eqCaption){fontSize=34});
+            EqText(new Rect(28,18,950,44),merchant?T("SERA / SALVAGE EXCHANGE","セラ / 回収品交換所"):T("INVENTORY","インベントリ"),EqInk,new GUIStyle(eqCaption){fontSize=34});
             if(merchant)EqText(new Rect(28,66,900,44),T("SCRAP ","所持スクラップ ")+Credits.ToString("N0"),EqMuted);
             if(EqButton(new Rect(1172,16,240,76),T("CLOSE","閉じる"))){if(merchant){screen=Screen.Hub;pendingSaleKey=null;}else ToggleInventory();return true;}
             if(merchant)

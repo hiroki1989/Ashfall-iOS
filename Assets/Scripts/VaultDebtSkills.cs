@@ -117,7 +117,10 @@ namespace NeonVault
         {
             if(requested<=0||Credits<=0||DebtRemaining<=0)return false;
             int amount=Mathf.Min(Mathf.Min(requested,Credits),DebtRemaining);
-            Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();PlayUserSound("transaction",.35f);return amount>0;
+            int before=DebtLevel;Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();PlayUserSound("transaction",.35f);
+            if(DebtRemaining==0)Notify("Briggs: Balance zero. Talk to Vale about the collar.","ブリッグス：残高、ゼロ。首輪の話はヴェイルにしろ。");
+            else if(DebtLevel>before)Notify("Briggs: Check your training points.","ブリッグス：次の段階に達した。訓練に使えるポイントを確認しておけ。");
+            else Notify("Briggs: Received "+amount.ToString("N0")+". Balance "+DebtRemaining.ToString("N0"),"ブリッグス："+amount.ToString("N0")+"スクラップ、受領。残りは"+DebtRemaining.ToString("N0")+"だ。");return amount>0;
         }
         public bool TryUnlockDebtSkill(string id)
         {

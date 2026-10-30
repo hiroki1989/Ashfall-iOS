@@ -27,13 +27,14 @@ namespace NeonVault
         bool DebtFinalConversationVisible => !smoke && screen == Screen.Hub && WorldStorySeen && DebtRemaining == 0 && PlayerPrefs.GetInt(DebtBossDefeatedKey, 0) == 0;
         void DrawDebtFinalConversation()
         {
-            string[] en={"A billion. Every last scrap. Now remove the collar.","You actually believed me? The cargo was never stolen. I needed a worker who couldn't walk away.","Then there's only one debt left to settle.","Come and collect it. Let's see what a billion bought me."};
-            string[] ja={"10億だ。一片残らず返した。首輪を外せ。","本気で信じていたのか？ 積み荷は盗まれていない。逃げられない働き手が欲しかっただけだ。","なら、残る借りは一つだ。","取り立てに来い。10億で何を買えたか見せてもらおう。"};
+            string[] en={"A billion. Every last scrap.","I know. Briggs keeps a meticulous ledger.","We had a deal. Take it off.","I never thought you'd make it. I bet you'd die in the first week.","Did you hear me? Take the collar off.","I heard you. I just can't see a reason to do it.","I paid for the cargo.","The cargo? Oh, that.","It was never stolen. I needed a worker who couldn't walk away. That's all.","...You set me up?","You exceeded expectations. Shame to waste that. I have another job for you.","The work is over. The only debt left is between us.","Is that so? Come and collect it.","Let's see what a billion bought me."};
+            string[] ja={"10億。最後の一枚まで払った。","知ってる。ブリッグスの帳簿は几帳面だ。","約束だ。外せ。","お前が本当にやり遂げるとはな。最初の一週間で死ぬ方に賭けてた。","聞こえなかったか。首輪を外せ。","聞こえたよ。ただ、外す理由が見当たらない。","積み荷の代金は払った。","積み荷？ ああ、あれか。","盗まれちゃいない。最初からな。逃げられない働き手が欲しかった。それだけだ。","……俺をはめたのは、お前か。","お前は期待以上に働いた。惜しいよ。だから次の仕事も用意した。","仕事は終わりだ。残ってるのは、お前との借りだけだ。","そうか。なら取り立てに来い。","10億で何を買えたのか、見せてもらおう。"};
+            bool[] reid={true,false,true,false,true,false,true,false,false,true,false,true,false,false};
             debtFinalBeat=Mathf.Clamp(debtFinalBeat,0,en.Length-1);
             Box(new Rect(0,0,1440,900),new Color(.01f,.015f,.02f,.9f));
             Panel(new Rect(100,470,1240,315),Gold);
-            Text(135,500,debtFinalBeat%2==0?T("REID","レイド"):T("MALCOLM VALE","マルコム・ヴェイル"),heading,Gold,1100);
-            Text(135,570,T(en[debtFinalBeat],ja[debtFinalBeat]),new GUIStyle(label){fontSize=29,wordWrap=true},Color.white,1100);
+            Text(135,500,reid[debtFinalBeat]?T("REID","レイド"):T("MALCOLM VALE","マルコム・ヴェイル"),heading,Gold,1100);
+            Text(135,570,T(en[debtFinalBeat],ja[debtFinalBeat]),new GUIStyle(label){fontSize=34,wordWrap=true},Color.white,1100);
             if(WorldButton(new Rect(920,700,370,65),debtFinalBeat==en.Length-1?T("FIGHT","戦う"):T("CONTINUE","続ける")))
             {
                 if(++debtFinalBeat>=en.Length)

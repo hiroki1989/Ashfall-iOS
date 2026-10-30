@@ -17,7 +17,7 @@ namespace NeonVault
             expeditionMapScroll=GUI.BeginScrollView(view,expeditionMapScroll,new Rect(0,0,size.x,size.y));DrawCityAtlas();GUI.EndScrollView();
             var stage=ExpeditionMap.Get(expeditionMapSelection,DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id);
             MobileCopyAt(42,640,(discovered?stage.Name:"?")+" / Lv "+(discovered?stage.level.ToString():"?"),Cyan);
-            MobileCopyAt(42,684,discovered?ExpeditionMap.MissionLabel(stage.mission,VaultLanguage.Japanese):"?",Mist,1350);
+            MobileCopyAt(42,684,discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",Mist,1350);
             bool done=clearedExpeditionStages.Contains(stage.id);
             MobileCopyAt(42,727,discovered?(done?T("CLEARED · REPLAY ","クリア済 · 再攻略 "):T("FIRST CLEAR ","初回 "))+ExpeditionRewardDescription(stage.id)+(done?"":" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id)):"?",Cyan,1350);
             if(MobileButton(new Rect(40,780,270,110),T("BACK","拠点へ"))){mobileMapEntered=false;screen=Screen.Hub;}
@@ -59,7 +59,7 @@ namespace NeonVault
         void DrawMobileShop()
         {
             if(debtPage){DrawMobileDebt();return;}
-            Box(new Rect(0,0,1440,900),PanelInk);MobileCopyAt(40,25,T("MARA / SCRAP ","マラ / スクラップ ")+Credits.ToString("N0"),Gold,950);
+            Box(new Rect(0,0,1440,900),PanelInk);MobileCopyAt(40,25,T("SERA / SCRAP ","セラ / スクラップ ")+Credits.ToString("N0"),Gold,950);
             if(MobileButton(new Rect(1110,10,290,110),T("SAFEHOUSE","拠点へ"))){screen=Screen.Hub;pendingSaleKey=null;}
             if(MobileButton(new Rect(40,135,410,110),T("BUY EQUIPMENT","装備を購入")))shopSellingPage=false;
             if(MobileButton(new Rect(465,135,410,110),T("SELL EQUIPMENT","装備を売却")))shopSellingPage=true;

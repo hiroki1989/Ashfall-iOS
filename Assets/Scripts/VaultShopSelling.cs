@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -53,7 +53,7 @@ namespace NeonVault
         void DrawShopSelling()
         {
             Box(new Rect(0,0,1440,900),PanelInk);
-            Text(65,52,T("MARA / FIELD RECOVERY DESK","マラ / 戦利品買取所"),heading,Gold,1050);
+            Text(65,52,T("SERA / FIELD RECOVERY DESK","セラ / 戦利品買取所"),heading,Gold,1050);
             Text(68,110,T("Scrap wallet ","所持スクラップ ")+Credits.ToString("N0")+T(" · unequip gear before selling · every sale needs confirmation"," · 装備中は売却不可 · 売却前に確認が必要"),small,Cyan,1200);
             if(Button(new Rect(1110,62,225,48),T("BUY STOCK","商品を見る"))){shopSellingPage=false;pendingSaleKey=null;}
             string[] en={"GUNS","ARMOR","MODULES","MELEE"},ja={"銃","防具","モジュール","近接武器"};
@@ -102,7 +102,7 @@ namespace NeonVault
             else if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(a=>a.id==entry.id);if(Armory.IsActiveArmor(item)&&!IsArmorEquipped(item)){DiscardArmor(item);removed=true;}}
             else if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(a=>a.id==entry.id);if(item!=null&&System.Array.IndexOf(EquippedArtifacts,item)<0){DiscardArtifact(item);removed=true;}}
             else if(entry.kind==SaleKind.Melee){var item=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(item!=null&&item!=EquippedMeleeWeapon&&MeleeWeaponInventory.Count>1){MeleeWeaponInventory.Remove(item);SaveInventory();removed=true;}}
-            if(removed){AwardCredits(entry.price);PlayUserSound("transaction",.35f);Notify("Sold "+entry.title+" for "+entry.price.ToString("N0")+" scrap.",entry.title+"を"+entry.price.ToString("N0")+"スクラップで売却。");}
+            if(removed){AwardCredits(entry.price);PlayUserSound("transaction",.35f);Notify("Sera: Got it. Bring something rare next time. / +"+entry.price.ToString("N0"),"セラ：確かに受け取った。次は珍しい物も頼むよ。 / +"+entry.price.ToString("N0"));}
             return removed;
         }
     }

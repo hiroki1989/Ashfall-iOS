@@ -186,7 +186,7 @@ namespace NeonVault
                         SpawnFoeInternal(aroundBoss,kind,true);
                     }
                 }
-                else for(int i=0;i<Mathf.Max(1,Mathf.RoundToInt(CurrentDungeon.EnemyCount(room)*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyCountMultiplier : 1f)));i++)
+                else for(int i=0;i<Mathf.Max(MinimumMissionEnemiesPerFloor(),Mathf.Max(1,Mathf.RoundToInt(CurrentDungeon.EnemyCount(room)*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyCountMultiplier : 1f))));i++)
                 {
                     Vector3 p; int attempts=0;
                     do {var cell=Layout.chambers[rng.Next(Layout.chambers.Count)];p=Layout.Center(cell)+new Vector3((float)rng.NextDouble()*6-3,0,(float)rng.NextDouble()*4-2);attempts++;} while((Blocked(p,.8f)||!Layout.SpawnSafe(p))&&attempts<200);
@@ -326,7 +326,7 @@ namespace NeonVault
                 return;
             }
             if(worldTransitionPending)return;
-            if(WorldBossConversationVisible||DebtFinalConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
+            if(WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(IsOverworld&&OverworldActivityChoiceOpen)

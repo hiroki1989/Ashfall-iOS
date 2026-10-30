@@ -26,7 +26,7 @@ namespace NeonVault
             Text(42,84,T("LEVEL ","レベル ")+DebtLevel+T("  SCRAP ","  スクラップ ")+Credits.ToString("N0"),new GUIStyle(label){fontSize=25},Cyan,595);
             if(MobileButton(new Rect(690,30,220,72),T("CITY MAP","都市マップ"),28))OpenOverworldMap();
             if(MobileButton(new Rect(930,30,220,72),T("MAKERS","製品図鑑"),28)){manufacturerRegistry=true;manufacturerKind=-1;}
-            string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: MARA / MERCHANT","調べる：マラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONE / COLLECTOR","調べる：イオネ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
+            string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONE / COLLECTOR","調べる：イオネ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
             Text(380,740,string.IsNullOrEmpty(hubDialogue)?hint:hubDialogue,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,680);
             if(toastTimer>0){Panel(new Rect(30,170,620,145),Gold);Text(50,185,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,580);}
             DrawCollectorDialog();
@@ -47,7 +47,7 @@ namespace NeonVault
             {
                 float tile=Mathf.Min(220f/Layout.Columns,122f/Layout.Rows);Vector2 origin=new Vector2(1180,179);
                 for(int x=0;x<Layout.Columns;x++)for(int z=0;z<Layout.Rows;z++)if(Layout.open[x,z]&&Layout.IsExplored(x,z))Box(new Rect(origin.x+x*tile,origin.y+(Layout.Rows-1-z)*tile,Mathf.Max(1,tile-.5f),Mathf.Max(1,tile-.5f)),Layout.IsVisible(x,z)?new Color(.28f,.44f,.46f):new Color(.13f,.2f,.22f));
-                DrawTacticalMapMarkers(origin,tile,7);MapPoint(PlayerPosition,origin,tile,Cyan,5);var exit=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exit.x,exit.y))MapPoint(ExitPosition,origin,tile,Gold,5);
+                DrawTacticalMapMarkers(origin,tile,7);DrawMissionCacheGuidance(origin,tile,true);MapPoint(PlayerPosition,origin,tile,Cyan,5);var exit=Layout.ToCell(ExitPosition);if(Layout.IsExplored(exit.x,exit.y))MapPoint(ExitPosition,origin,tile,Gold,5);
             }
             if(Active&&!InventoryOpen)
             {
