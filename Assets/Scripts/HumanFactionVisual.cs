@@ -14,7 +14,18 @@ namespace NeonVault
         Foe owner;
         DetailedHeroEquipment3D.WeaponSockets gun;
         bool handgun;
-        Mesh helmetMesh, trimmedHeadMesh;
+        static Mesh sharedHelmetMesh, sharedTrimmedHeadMesh;
+        static Material[] sharedHeadMaterials;
+        static Bounds sharedHeadBounds;
+        static SkinnedMeshRenderer CreateSharedHead(DetailedHero3D hero)
+        {
+            if(!sharedTrimmedHeadMesh || sharedHeadMaterials==null)return null;
+            var root=new GameObject("Faction shared head");root.transform.SetParent(hero.transform,false);
+            var skin=root.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=sharedTrimmedHeadMesh;
+            skin.bones=CharacterRigStandard.GetBones(hero);skin.rootBone=hero.chest;
+            skin.sharedMaterials=sharedHeadMaterials;skin.localBounds=sharedHeadBounds;
+            return skin;
+        }
         static readonly Mesh[] sharedArmorMeshes=new Mesh[5];
         static Material[] sharedArmorMaterials;
         static Bounds sharedArmorBounds;
@@ -41,15 +52,16 @@ namespace NeonVault
             visual.Faction=faction;
             visual.Body=DetailedHero3D.Create(root.transform,key=>Palette(faction,variant,key));
             var legacy=visual.Body.GetComponentsInChildren<Renderer>(true);
-            var common=GeneratedCommonBodyRig.Create(visual.Body);
+            bool sharedBodyReady=sharedTrimmedHeadMesh && sharedHeadMaterials!=null && sharedArmorMeshes[1] && sharedArmorMeshes[2] && sharedArmorMeshes[3] && sharedArmorMeshes[4];
+            var common=sharedBodyReady?CreateSharedHead(visual.Body):GeneratedCommonBodyRig.Create(visual.Body);
             var items=visual.BuildKit(faction,variant);
             if(common)
             {
 
-                bool replacesArms=GeneratedCommonBodyRig.ReplacesLegacyArms(common);
+                bool replacesArms=sharedBodyReady || GeneratedCommonBodyRig.ReplacesLegacyArms(common);
                 foreach(var renderer in legacy)
                     if(renderer&&(!GeneratedCommonBodyRig.IsLegacyArmRenderer(renderer,visual.Body)||replacesArms))renderer.enabled=false;
-                GeneratedCommonBodyRig.SetVisible(common,true);
+                if(!sharedBodyReady)GeneratedCommonBodyRig.SetVisible(common,true);
                 var covered=new bool[5];
                 var fallback=new ArmorItem[5];
                 // Use the player's articulated Warden equipment, not the
@@ -72,7 +84,7 @@ namespace NeonVault
                     covered[slot]=parts[slot] || fallback[slot]!=null;
                 }
                 root.AddComponent<HumanFactionArmorTextures>().Apply(parts,faction,variant);
-                GeneratedCommonBodyRig.SetCoveredSlots(common,covered);
+                if(!sharedBodyReady)GeneratedCommonBodyRig.SetCoveredSlots(common,covered);
                 DetailedHeroArsenal3D.ApplyArmor(visual.Body,fallback);
                 ManufacturerEquipment3D.ApplyArmor(visual.Body,fallback);
                 // ArmorVisuals.SetItems can re-enable the original trouser and seam
@@ -80,7 +92,7 @@ namespace NeonVault
                 // matching the player order, without hiding newly created equipment.
                 foreach(var renderer in legacy)
                     if(renderer&&(!GeneratedCommonBodyRig.IsLegacyArmRenderer(renderer,visual.Body)||replacesArms))renderer.enabled=false;
-                GeneratedCommonBodyRig.SetCoveredSlots(common,covered);
+                if(!sharedBodyReady)GeneratedCommonBodyRig.SetCoveredSlots(common,covered);
             }
             else
             {
@@ -88,7 +100,7 @@ namespace NeonVault
                 DetailedHeroArsenal3D.ApplyArmor(visual.Body,items);
                 ManufacturerEquipment3D.ApplyArmor(visual.Body,items);
             }
-            if(common)visual.TrimHeadUnderHelmet(common);
+            if(common&&!sharedBodyReady)visual.TrimHeadUnderHelmet(common);
             // ApplyArmor re-enables legacy hair when the head slot is empty,
             // even when the common body replaced the legacy head. Hide it after
             // both armor passes for both common and fallback body paths.
@@ -115,9 +127,14 @@ namespace NeonVault
             {
                 if(renderer.name!="Common body / approved shared head" || !renderer.sharedMesh)continue;
                 var source=renderer.sharedMesh;
+                if(sharedTrimmedHeadMesh){renderer.sharedMesh=sharedTrimmedHeadMesh;break;}
                 var positions=source.vertices;
-                trimmedHeadMesh=Instantiate(source);
-                trimmedHeadMesh.name="Human faction / helmet-trimmed head";
+                sharedTrimmedHeadMesh=Instantiate(source);
+                sharedTrimmedHeadMesh.name="Human faction / helmet-trimmed head";
+                sharedHeadBounds=renderer.localBounds;
+                var sourceMaterials=renderer.sharedMaterials;
+                sharedHeadMaterials=new Material[sourceMaterials.Length];
+                for(int i=0;i<sourceMaterials.Length;i++)if(sourceMaterials[i])sharedHeadMaterials[i]=new Material(sourceMaterials[i]){name="Faction shared head material"};
                 // Bound head vertices are in the hero's rest-space coordinates.
                 float cutoff=CharacterRigStandard.RestPositions[2].y+.14f;
                 for(int sub=0;sub<source.subMeshCount;sub++)
@@ -130,9 +147,9 @@ namespace NeonVault
                         if(positions[a].y>cutoff || positions[b].y>cutoff || positions[c].y>cutoff)continue;
                         kept.Add(a);kept.Add(b);kept.Add(c);
                     }
-                    trimmedHeadMesh.SetTriangles(kept,sub,false);
+                    sharedTrimmedHeadMesh.SetTriangles(kept,sub,false);
                 }
-                renderer.sharedMesh=trimmedHeadMesh;
+                renderer.sharedMesh=sharedTrimmedHeadMesh;
                 break;
             }
         }
@@ -163,12 +180,15 @@ namespace NeonVault
                 triangles[index++]=a;triangles[index++]=a+1;triangles[index++]=b;
                 triangles[index++]=a+1;triangles[index++]=b+1;triangles[index++]=b;
             }
-            helmetMesh=new Mesh{name="Human faction / helmet shell"};
-            helmetMesh.vertices=vertices;helmetMesh.triangles=triangles;
-            helmetMesh.RecalculateNormals();helmetMesh.RecalculateBounds();
+            if(!sharedHelmetMesh)
+            {
+                sharedHelmetMesh=new Mesh{name="Human faction / helmet shell"};
+                sharedHelmetMesh.vertices=vertices;sharedHelmetMesh.triangles=triangles;
+                sharedHelmetMesh.RecalculateNormals();sharedHelmetMesh.RecalculateBounds();
+            }
             var shell=new GameObject("Human faction / helmet");
             shell.transform.SetParent(Body.head,false);
-            shell.AddComponent<MeshFilter>().sharedMesh=helmetMesh;
+            shell.AddComponent<MeshFilter>().sharedMesh=sharedHelmetMesh;
             var helmetRenderer=shell.AddComponent<MeshRenderer>();
             helmetRenderer.sharedMaterial=DetailedHeroMaterials3D.Get("ProductSteel");
             var helmetTint=new MaterialPropertyBlock();
@@ -192,11 +212,6 @@ namespace NeonVault
                     new Vector3(side*.116f,.105f,-.035f),new Vector3(side*.116f,.115f,.075f),.004f);
             }
 
-        }
-        void OnDestroy()
-        {
-            if(helmetMesh)Destroy(helmetMesh);
-            if(trimmedHeadMesh)Destroy(trimmedHeadMesh);
         }
         static Material Palette(int faction,int variant,string key)
         {

@@ -20,10 +20,16 @@ namespace NeonVault
         static readonly Dictionary<string, Texture2D> loadedAtlases = new Dictionary<string, Texture2D>();
         static readonly Dictionary<Texture2D, string> atlasKeys = new Dictionary<Texture2D, string>();
 
-        static Texture2D LoadAtlas(string name)
+        readonly bool factionMobile;
+        public SharedArmorTextures(bool factionMobile = false) { this.factionMobile = factionMobile; }
+
+        static Texture2D LoadAtlas(string name, bool mobileFaction)
         {
-            if (loadedAtlases.TryGetValue(name, out var cached) && cached) return cached;
-            string path = Path.Combine(Application.streamingAssetsPath, "SharedArmorIllustration", name + ".png");
+            string key = mobileFaction ? "faction-mobile/" + name : name;
+            if (loadedAtlases.TryGetValue(key, out var cached) && cached) return cached;
+            string folder = Path.Combine(Application.streamingAssetsPath, "SharedArmorIllustration");
+            string path = mobileFaction ? Path.Combine(folder, "FactionMobile", name + ".png") : Path.Combine(folder, name + ".png");
+            if (mobileFaction && !File.Exists(path)) path = Path.Combine(folder, name + ".png");
             if (!File.Exists(path)) { Debug.LogError("Missing shared armor atlas: " + path); return null; }
             var texture = new Texture2D(2, 2, TextureFormat.RGB24, true, false);
             if (!ImageConversion.LoadImage(texture, File.ReadAllBytes(path), true))
@@ -37,8 +43,8 @@ namespace NeonVault
             texture.filterMode = FilterMode.Trilinear;
             texture.anisoLevel = 4;
             texture.wrapMode = TextureWrapMode.Clamp;
-            loadedAtlases[name] = texture;
-            atlasKeys[texture] = name;
+            loadedAtlases[key] = texture;
+            atlasKeys[texture] = key;
             return texture;
         }
 
@@ -114,7 +120,7 @@ namespace NeonVault
                     continue;
                 // Each item owns an illustrated atlas in the approved Warden UV layout.
                 // A palette LUT would retain the starter outfit's wrinkles and markings.
-                var texture = LoadAtlas(AtlasName(item.catalogId));
+                var texture = LoadAtlas(AtlasName(item.catalogId), factionMobile && Application.isMobilePlatform);
                 if (!texture) { renderer.sharedMaterials = source; assigned.Remove(renderer); continue; }
                 var next = new Material[source.Length];
                 for (int i = 0; i < source.Length; i++)

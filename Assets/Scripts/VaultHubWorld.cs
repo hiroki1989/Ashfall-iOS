@@ -102,7 +102,7 @@ namespace NeonVault
             DrawWorldLabel(merchantPosition+Vector3.up*2,T("MARA / MERCHANT","マラ / 装備商人")+key,Gold);
             DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONE / COLLECTOR","イオネ / コレクター")+key,Cyan);
             DrawWorldLabel(debtCollectorPosition+Vector3.up*2,T("BRIGGS / DEBT COLLECTOR","ブリッグス / 借金取り")+key,new Color(1,.35f,.24f));
-            DrawWorldLabel(portalPosition+Vector3.up*2,T("EXIT TO ASHFALL","アッシュフォールの街へ")+key,Gold);
+            DrawWorldLabel(portalPosition+Vector3.up*2,T("EXIT TO ASHFALL","アッシュフォールへ出る")+key,Gold);
             if(!string.IsNullOrEmpty(hubDialogue)){Panel(new Rect(250,595,940,112),Cyan);Text(270,613,hubDialogue,new GUIStyle(small){wordWrap=true},Mist,900);if(Button(new Rect(1050,658,116,35),T("CLOSE","閉じる")))hubDialogue="";}
         }
         void DrawWorldLabel(Vector3 position,string value,Color color)

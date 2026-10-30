@@ -169,14 +169,14 @@ namespace NeonVault
                 float normalized=stateTime/Mathf.Max(.01f,clip.length);
                 if(state=="death"||state=="attack")normalized=Mathf.Min(normalized,.999f);
                 nativeAnimator.Play(state,0,normalized);nativeAnimator.Update(0);RestoreScales();
-                model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);PoseFirearm(speed);return;
+                model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);PoseZombieWalk(speed,kind);PoseFirearm(speed);return;
             }
             if(nativeAnimator)nativeAnimator.enabled=false;
             // Generic clips preserve authored bone paths.
             if(clip&&!clip.humanMotion)
             {
                 float time=state=="death"||state=="attack"?Mathf.Min(stateTime,Mathf.Max(0,clip.length-.001f)):Mathf.Repeat(stateTime,Mathf.Max(.01f,clip.length));
-                clip.SampleAnimation(model.gameObject,time);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);PoseFirearm(speed);return;
+                clip.SampleAnimation(model.gameObject,time);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;ApplySecondaryMotion(speed,kind);PoseZombieWalk(speed,kind);PoseFirearm(speed);return;
             }
             model.localPosition=modelPosition;
             model.localRotation=modelRotation;
@@ -222,9 +222,24 @@ namespace NeonVault
                 if(limb.arm&&limb.end&&limb.tip)
                     Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(0,-.8f,.5f)));
             }
-            PoseFirearm(speed);
             ApplySecondaryMotion(speed,kind);
+            PoseZombieWalk(speed,kind);
+            PoseFirearm(speed);
             if(deathTime>=0)ApplyFallbackCollapse(heavy,kind);
+        }
+        void PoseZombieWalk(float speed,int kind)
+        {
+            if(!owner || owner.RaiderBoss || kind==3 || kind==5 || kind==10 || speed<.12f || deathTime>=0 || attackTime>0 || owner.IsTelegraphing)return;
+            float sway=Mathf.Sin(phase)*.08f;
+            foreach(var limb in limbs)
+            {
+                if(!limb.arm)continue;
+                Vector3 upper=new Vector3(limb.side*.18f,-.55f,.84f+limb.side*sway);
+                Vector3 lower=new Vector3(limb.side*.04f,-.84f,.50f-limb.side*sway);
+                Aim(limb.upper,limb.lower,actor.TransformDirection(upper));
+                Aim(limb.lower,limb.end,actor.TransformDirection(lower));
+                if(limb.end&&limb.tip)Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(0,-.94f,.25f)));
+            }
         }
         void PoseFirearm(float speed)
         {

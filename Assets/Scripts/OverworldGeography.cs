@@ -251,7 +251,7 @@ namespace NeonVault
             return false;
         }
         public string RegionName(Vector3 p,bool ja)
-        {if(!River(p)&&!Park(p)){int district=District(p);if(district==0)return ja?"崩壊した高層ビル街":"Fallen Downtown";if(district==1)return ja?"旧商店街":"Old Shopping Streets";if(district==2)return ja?"荒廃したモール地区":"Derelict Mall District";}if(River(p))return ja?"グレイウォーター河岸":"Graywater Riverfront";if(Park(p))return ja?"レッドウッド森林公園":"Redwood Forest Park";if(p.z<-1800)return ja?"南部工業地帯":"Southworks";if(p.x>1800)return ja?"旧市街・市庁舎地区":"Old Civic Quarter";return ja?"アッシュフォール住宅地区":"Ashfall Neighborhoods";}
+        {if(!River(p)&&!Park(p)){int district=District(p);if(district==0)return ja?"崩壊した高層ビル街":"Fallen Downtown";if(district==1)return ja?"旧商店街":"Old Shopping Streets";if(district==2)return ja?"荒廃したモール地区":"Derelict Mall District";}if(River(p))return ja?"グレイウォーター河岸":"Graywater Riverfront";if(Park(p))return ja?"レッドウッド森林公園":"Redwood Forest Park";if(p.z<-1800)return ja?"南部工業地帯":"Southworks";if(p.x>1800)return ja?"旧市街・市庁舎地区":"Old Civic Quarter";return ja?"旧住宅地区":"Old Residential District";}
     }
 }
 

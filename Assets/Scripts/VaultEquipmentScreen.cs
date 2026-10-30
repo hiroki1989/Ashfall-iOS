@@ -176,7 +176,16 @@ namespace NeonVault
             Box(new Rect(950,620,446,1),EqLine);
             DrawEquipmentHeroPreview(new Rect(494,top+8,422,merchant?452:526));
             DrawEquippedCategory(top);
-            if(!merchant&&EqButton(new Rect(650,24,240,60),T("ACTION SKILL","アクションスキル")))actionSkillInventoryOpen=true;
+            if(!merchant)
+            {
+                var previousActionStyle=eqButtonStyle;
+                var actionStyle=new GUIStyle(eqButtonStyle){wordWrap=false};
+                string actionCaption=T("ACTION SKILL","アクションスキル");
+                while(actionStyle.fontSize>14&&actionStyle.CalcSize(new GUIContent(actionCaption)).x>220)actionStyle.fontSize--;
+                eqButtonStyle=actionStyle;
+                if(EqButton(new Rect(650,24,240,60),actionCaption))actionSkillInventoryOpen=true;
+                eqButtonStyle=previousActionStyle;
+            }
             if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(900,24,164,60),T("STASH","倉庫")))VaultStorageOpen();
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
@@ -218,9 +227,7 @@ namespace NeonVault
                 EqText(new Rect(952,top+20,440,94),selected.name,EqInk,nameStyle);
                 Box(new Rect(952,top+104,64,3),selected.color);
                 EqPortrait(new Rect(978,top+116,390,124),selected.item,true);
-                // Reserve the lower part of the detail pane for the junk action.
-                // The inventory description remains scrollable and cannot sit under it.
-                float detailH=merchant?362-top:166;
+                float detailH=362-top;
                 string eqDetail=selected.fullDescription;
                 float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
                 eqDetailExtent=Mathf.Max(detailH,textHeight+16);
@@ -308,15 +315,15 @@ namespace NeonVault
         {
             if(merchant){if(c.offer>=0){var o=shopStock[c.offer];int cost=ShopOfferPrice(o);if(EqButton(new Rect(950,630,446,76),o.purchased?T("PURCHASED","購入済み"):T("BUY / ","購入 / ")+cost.ToString("N0"),false,!o.purchased&&Credits>=cost))PurchaseShop(c.offer);}else if(c.sale!=null){var s=c.sale;string caption=s.equipped?T("EQUIPPED / CHANGE LOADOUT TO SELL","装備中 / 装備を変更して売却"):s.lastRequired?T("KEEP LAST WEAPON","最後の武器は保持"):T("SELL / ","売却 / ")+s.price.ToString("N0");if(EqButton(new Rect(950,630,446,76),caption,false,!s.equipped&&!s.lastRequired)){saleCategory=eqCategory;pendingSaleKey=SaleKey(s);}if(s.equipped)EqEquipActions(c,712,false);}return;}
             string key=JunkItemKey(c.item);
-            if(EqButton(new Rect(1180,550,216,58),junkKeys.Contains(key)?T("UNMARK","不要解除"):T("JUNK","不要")))ToggleJunk(key);
+            if(EqButton(new Rect(1180,710,216,70),junkKeys.Contains(key)?T("UNMARK","不要解除"):T("JUNK","不要")))ToggleJunk(key);
             EqEquipActions(c,630,true);
         }
         void EqEquipActions(EqCard c,float y,bool discard)
         {
-            if(c.item is Gun g){for(int slot=0;slot<AvailableWeaponSlotCount;slot++){int index=slot;if(EqButton(new Rect(950+slot*112,y,106,72),T("SLOT ","枠 ")+(slot+1),EquippedWeaponSlot(g)==slot))EquipWeapon(Weapons.IndexOf(g),index);}if(discard&&!c.equipped&&Weapons.Count>1&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))QueueDiscard(c);}
-            else if(c.item is ArmorItem a){if(EqButton(new Rect(950,y,446,72),c.equipped?T("REMOVE","外す"):T("EQUIP","装備"))){if(c.equipped)UnequipArmor((int)a.slot);else EquipArmor(a);}if(discard&&!c.equipped&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))QueueDiscard(c);}
-            else if(c.item is ArtifactItem m){int current=Array.IndexOf(EquippedArtifacts,m);if(!discard&&current>=0){if(EqButton(new Rect(950,y,446,70),T("REMOVE","外す")))UnequipArtifact(current);return;}for(int slot=0;slot<2;slot++)if(EqButton(new Rect(950+slot*226,y,220,72),T("SLOT ","枠 ")+(slot+1),current==slot))EquipArtifact(m,slot);if(current>=0){if(EqButton(new Rect(950,y+80,446,70),T("REMOVE","外す")))UnequipArtifact(current);}else if(discard&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄")))QueueDiscard(c);}
-            else if(c.item is MeleeWeaponItem w){if(!c.equipped&&EqButton(new Rect(950,y,446,72),T("EQUIP","装備")))EquipMeleeWeapon(w);else if(c.equipped)EqText(new Rect(958,y,420,70),T("✓ EQUIPPED","✓ 装備中"),EqAccent);if(discard&&!c.equipped&&MeleeWeaponInventory.Count>1&&EqButton(new Rect(950,y+80,446,70),T("DISCARD","破棄"))){QueueDiscard(c);}}
+            if(c.item is Gun g){for(int slot=0;slot<AvailableWeaponSlotCount;slot++){int index=slot;if(EqButton(new Rect(950+slot*112,y,106,72),T("SLOT ","枠 ")+(slot+1),EquippedWeaponSlot(g)==slot))EquipWeapon(Weapons.IndexOf(g),index);}if(discard&&!c.equipped&&Weapons.Count>1&&EqButton(new Rect(950,y+80,discard?220:446,70),T("DISCARD","破棄")))QueueDiscard(c);}
+            else if(c.item is ArmorItem a){if(EqButton(new Rect(950,y,446,72),c.equipped?T("REMOVE","外す"):T("EQUIP","装備"))){if(c.equipped)UnequipArmor((int)a.slot);else EquipArmor(a);}if(discard&&!c.equipped&&EqButton(new Rect(950,y+80,discard?220:446,70),T("DISCARD","破棄")))QueueDiscard(c);}
+            else if(c.item is ArtifactItem m){int current=Array.IndexOf(EquippedArtifacts,m);if(!discard&&current>=0){if(EqButton(new Rect(950,y,446,70),T("REMOVE","外す")))UnequipArtifact(current);return;}for(int slot=0;slot<2;slot++)if(EqButton(new Rect(950+slot*226,y,220,72),T("SLOT ","枠 ")+(slot+1),current==slot))EquipArtifact(m,slot);if(current>=0){if(EqButton(new Rect(950,y+80,discard?220:446,70),T("REMOVE","外す")))UnequipArtifact(current);}else if(discard&&EqButton(new Rect(950,y+80,discard?220:446,70),T("DISCARD","破棄")))QueueDiscard(c);}
+            else if(c.item is MeleeWeaponItem w){if(!c.equipped&&EqButton(new Rect(950,y,446,72),T("EQUIP","装備")))EquipMeleeWeapon(w);else if(c.equipped)EqText(new Rect(958,y,420,70),T("✓ EQUIPPED","✓ 装備中"),EqAccent);if(discard&&!c.equipped&&MeleeWeaponInventory.Count>1&&EqButton(new Rect(950,y+80,discard?220:446,70),T("DISCARD","破棄"))){QueueDiscard(c);}}
         }
         void EqSaleConfirmation()
         {

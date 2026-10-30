@@ -15,6 +15,7 @@ namespace NeonVault
         public int StashCapacity=>50+10*StashTier;
         public int StashCount=>stash.guns.Count+stash.armor.Count+stash.modules.Count+stash.melee.Count;
         public bool VaultStorageVisible { get; private set; }
+        Vector2 stashDetailScroll;
         int stashCategory; bool stashViewingStored; Vector2 stashScroll; bool stashPointerDown,stashDragging; Vector2 stashPointerStart,stashPointerLast; object stashSelected;
         void SaveStash(){if(smoke)return;PlayerPrefs.SetString(StashKey,JsonUtility.ToJson(stash));PlayerPrefs.Save();}
         void LoadStash()
@@ -98,9 +99,14 @@ namespace NeonVault
             HandleStashTouch(Mathf.Max(550,items.Count*88));
             if(stashSelected!=null&&!items.Contains(stashSelected))stashSelected=null;
             stashScroll=GUI.BeginScrollView(new Rect(40,265,760,565),stashScroll,new Rect(0,0,730,Mathf.Max(550,items.Count*88)));
-            for(int i=0;i<items.Count;i++){var x=items[i];float y=i*88;Panel(new Rect(0,y,710,80),Cyan);string name=x is Gun g?VaultLanguage.GunName(g):x is ArmorItem a?Armory.Name(a):x is ArtifactItem m?m.Name:MeleeWeaponCatalog.Name((MeleeWeaponItem)x);if(Button(new Rect(10,y+8,690,64),name))stashSelected=x;}
+            for(int i=0;i<items.Count;i++){var x=items[i];float y=i*88;Panel(new Rect(0,y,710,80),Cyan);string name=x is Gun g?VaultLanguage.GunName(g):x is ArmorItem a?Armory.Name(a):x is ArtifactItem m?m.Name:MeleeWeaponCatalog.Name((MeleeWeaponItem)x);if(Button(new Rect(10,y+8,690,64),name)){stashSelected=x;stashDetailScroll=Vector2.zero;}}
             GUI.EndScrollView();
-            if(stashSelected!=null){var card=EqMake(stashSelected);Panel(new Rect(820,265,580,565),Gold);EqPortrait(new Rect(840,285,230,160),stashSelected,true);Text(1080,285,card.name,new GUIStyle(label){wordWrap=true},Gold,290);Text(845,470,card.fullDescription,new GUIStyle(small){wordWrap=true},UiPaper,525);if(Button(new Rect(845,740,500,65),stashViewingStored?T("WITHDRAW","取り出す"):T("DEPOSIT","預ける"))){if(!MoveStash(stashSelected,!stashViewingStored))Notify("Cannot move: equipped, full, or duplicate item ID.","装備中、移動先が満杯、または装備IDが重複しています。");else stashSelected=null;}}
+            if(stashSelected!=null){var card=EqMake(stashSelected);Panel(new Rect(820,265,580,565),Gold);EqPortrait(new Rect(840,285,230,160),stashSelected,true);Text(1080,285,card.name,new GUIStyle(label){wordWrap=true},Gold,290);var detailStyle=new GUIStyle(label){fontSize=MobileTouchControls.Enabled?31:23,fontStyle=FontStyle.Normal,wordWrap=true,richText=true};
+                detailStyle.normal.textColor=UiPaper;
+                float detailHeight=Mathf.Max(250,detailStyle.CalcHeight(new GUIContent(card.fullDescription),490)+16);
+                stashDetailScroll=GUI.BeginScrollView(new Rect(845,470,525,250),stashDetailScroll,new Rect(0,0,490,detailHeight));
+                GUI.Label(new Rect(0,0,490,detailHeight),card.fullDescription,detailStyle);
+                GUI.EndScrollView();if(Button(new Rect(845,740,500,65),stashViewingStored?T("WITHDRAW","取り出す"):T("DEPOSIT","預ける"))){if(!MoveStash(stashSelected,!stashViewingStored))Notify("Cannot move: equipped, full, or duplicate item ID.","装備中、移動先が満杯、または装備IDが重複しています。");else stashSelected=null;}}
         }
     }
 }

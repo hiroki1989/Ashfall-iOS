@@ -470,7 +470,7 @@ namespace NeonVault
         public void DrawOverworldAtlas()
         {
             EnsureOverworldAtlas();Box(new Rect(0,0,1440,900),new Color(.025f,.045f,.06f,.98f));
-            WorldLabel(new Rect(30,20,1090,55),T("THE WASTELAND / FIELD ATLAS","荒野 / 広域地図"),UiPaper,32);
+            WorldLabel(new Rect(30,20,1090,55),T("ASHFALL / REGIONAL MAP","アッシュフォール / 広域地図"),UiPaper,32);
             if(WorldButton(new Rect(1195,16,215,66),T("BACK","戻る")))CloseOverworldMap();
             if(overworldAtlasTexture==null)return;
             Rect map=new Rect(30,100,900,650);
@@ -491,7 +491,7 @@ namespace NeonVault
             DrawWorldBuildingAtlas(map,uv);
             if(!aerialAtlas)FieldUIArt.MapSurface(map);
             DrawAtlasDistrictLabels(map);
-            WorldLabel(new Rect(50,110,650,35),T("ASHFALL  /  CITY SURVEY","アッシュフォール / 都市調査図"),UiPaper,20);
+            WorldLabel(new Rect(50,110,650,35),T("ASHFALL  /  REGIONAL SURVEY","アッシュフォール / 地方調査図"),UiPaper,20);
             DrawWorldMapScale(map);
             FieldUIArt.Icon(new Rect(map.xMax-61,map.yMax-54,42,34),5,UiPaper);
             if(GUI.Button(new Rect(map.xMax-66,map.yMax-58,52,44),GUIContent.none,GUIStyle.none)){var pos=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];worldMapCenter=new Vector2(pos.x/10000f+.5f,pos.z/10000f+.5f);ClampWorldMapCenter();}

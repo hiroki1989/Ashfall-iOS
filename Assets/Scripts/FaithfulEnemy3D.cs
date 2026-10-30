@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -386,6 +386,8 @@ namespace NeonVault
                 else if(kind==8){armPitch=-30-w*8*moving-anticipate*27-strike*75;elbow=-25-strike*35;}
                 else if(kind==9){armPitch=-48+Mathf.Sin(Time.time*1.7f+side)*5-anticipate*42-strike*35;elbow=-70+breath*8-anticipate*15;abduction+=side*(anticipate*24+strike*16);}
                 if(ImportedShapeActive&&kind==8){armPitch=-5-w*8*moving-anticipate*27-strike*75;elbow=-10-strike*35;abduction=side*(38+anticipate*8);}
+                if(kind!=3&&kind!=5&&moving>.1f&&anticipate<.01f&&strike<.01f&&death<0)
+                {armPitch=-57-w*5*moving;elbow=24;abduction=side*13;}
                 arms[i].localRotation=Quaternion.Euler(armPitch,gun?side*-18:side*(kind==4?12:0),abduction);
                 forearms[i].localRotation=Quaternion.Euler(elbow,0,side*strike*(kind==4?15:0));
             }

@@ -28,8 +28,8 @@ namespace NeonVault
         void DrawExpeditionCityMap()
         {
             Box(new Rect(0, 0, 1440, 900), new Color(.018f, .027f, .032f));
-            Text(42, 30, T("ASHFALL / CITY OPERATIONS", "アッシュフォール / 都市全域作戦図"), heading, Gold, 1300);
-            Text(45, 93, T("200 SITES / THREATS ARE SCATTERED THROUGHOUT THE CITY", "全200地点 / 各レベルの危険地点が市内全域に点在"), small, Mist, 960);
+            Text(42, 30, T("ASHFALL / REGIONAL OPERATIONS", "アッシュフォール / 地方全域作戦図"), heading, Gold, 1300);
+            Text(45, 93, T("200 SITES / THREATS ARE SCATTERED ACROSS THE REGION", "全200地点 / 各レベルの危険地点が地方全域に点在"), small, Mist, 960);
             Panel(new Rect(1020, 150, 375, 663), Cyan);
             Rect view = new Rect(42, 150, 952, 663);
             Event e = Event.current;
@@ -74,7 +74,7 @@ namespace NeonVault
             CityLandmark(1153, 762, T("BOTANICAL RESERVE", "植物保護区跡"), 1);
             CityLandmark(1068, 117, T("RAIL TERMINAL", "中央貨物駅"), 2);
             CityLandmark(216, 810, T("COLLAPSED STADIUM", "崩落スタジアム"), 3);
-            CityText(38, 7, T("N ↑  / ASHFALL MUNICIPAL SURVEY", "北 ↑ / アッシュフォール都市測量図"), Mist, 650);
+            CityText(38, 7, T("N ↑  / ASHFALL REGIONAL SURVEY", "北 ↑ / アッシュフォール地方測量図"), Mist, 650);
             CityText(760, 960, T("CANAL / FLOOD BARRIER", "中央運河 / 防潮堤"), new Color(.4f,.72f,.76f), 420);
             for (int id = 0; id < ExpeditionMap.StageCount; id++) DrawCitySite(id);
         }

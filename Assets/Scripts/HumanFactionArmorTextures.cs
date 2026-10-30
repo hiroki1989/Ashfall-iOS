@@ -17,7 +17,7 @@ namespace NeonVault
               { "distinct.armor.068", "distinct.armor.074", "distinct.armor.080", "distinct.armor.086" } }  // Voltarc
         };
 
-        readonly SharedArmorTextures textures = new SharedArmorTextures();
+        readonly SharedArmorTextures textures = new SharedArmorTextures(true);
 
         public void Apply(SkinnedMeshRenderer[] parts, int faction, int variant)
         {
