@@ -14,6 +14,7 @@ namespace NeonVault
             public Transform root;
             public OverworldGeography geography;
             public Material[] materials;
+            public Material[] factionFlags;
             public readonly Dictionary<int,GameObject> active=new Dictionary<int,GameObject>();
         }
         static readonly Dictionary<Transform,SiteState> worlds=new Dictionary<Transform,SiteState>();
@@ -29,7 +30,17 @@ namespace NeonVault
             var weatheredConcrete=Resources.Load<Texture2D>("Art/WastelandFloor");
             var rust=Resources.Load<Texture2D>("Art/WastelandSurface");
             for(int i=0;i<mats.Length;i++){mats[i]=new Material(shader){name="Streamed entrance / "+i,color=palette[i],enableInstancing=true};if(i==0&&weatheredConcrete)mats[i].mainTexture=weatheredConcrete;else if((i==1||i==3)&&rust)mats[i].mainTexture=rust;materials.Add(mats[i]);}
-            worlds[id]=new SiteState{root=root,geography=geo,materials=mats};
+            var flagMaterials=new Material[3];
+            var flagAtlas=Resources.Load<Texture2D>("Art/Factions/FactionFlagsConcept");
+            var flagShader=Shader.Find("Unlit/Transparent")??Shader.Find("Sprites/Default");
+            if(flagAtlas&&flagShader)for(int i=0;i<flagMaterials.Length;i++)
+            {
+                var flagMaterial=new Material(flagShader){name="Faction banner / "+i,mainTexture=flagAtlas};
+                flagMaterial.mainTextureScale=new Vector2(1f/3f,1);
+                flagMaterial.mainTextureOffset=new Vector2(i/3f,0);
+                flagMaterials[i]=flagMaterial;materials.Add(flagMaterial);
+            }
+            worlds[id]=new SiteState{root=root,geography=geo,materials=mats,factionFlags=flagMaterials};
             // Initial focus is the nearby player; do not instantiate all 107 sites here.
         }
         public static void UpdateFocus(Transform root,Vector3 focus)
@@ -62,9 +73,17 @@ namespace NeonVault
             // Adapter contract: imported exterior fits the xﾂｱ6,z2..10 footprint. Threshold remains unobstructed.
             bool adapted;
             if(!camp){RuinedCityArchitecture.Place(site.transform,new Rect(-6,2,12,8),(key%5==0)?6:key%6);adapted=true;}
-            else { BuildShell(site.transform,state.materials,style,true); BuildCampFortification(site.transform,state.materials); adapted=true; }
+            else { BuildShell(site.transform,state.materials,style,true); BuildCampFortification(site.transform,state.materials,key==0); adapted=true; }
             if(!adapted)BuildShell(site.transform,state.materials,style,camp);
-            if(camp){DressCampExterior(site.transform,key);WeatherCampFacade(site.transform,state.materials,key);}
+            if(camp)
+            {
+                DressCampExterior(site.transform,key);WeatherCampFacade(site.transform,state.materials,key);
+                if(key==0)
+                {
+                    AddFactionFlag(site.transform,state.materials,state.factionFlags[0],-3.75f,9.1f,2.68f,2.4f,1.7f,"Warden HQ west banner");
+                    AddFactionFlag(site.transform,state.materials,state.factionFlags[0],3.75f,9.1f,2.68f,2.4f,1.7f,"Warden HQ east banner");
+                }
+            }
             // A readable dark doorway and recessed jambs are always present, including imported exteriors.
             Box(site.transform,state.materials, "Door recess",new Vector3(0,1.3f,2.03f),new Vector3(2.3f,2.6f,.12f),2);
             Box(site.transform,state.materials,"Door left jamb",new Vector3(-1.35f,1.5f,1.85f),new Vector3(.32f,3,.45f),1);
@@ -75,14 +94,8 @@ namespace NeonVault
             if(!camp)
             {
                 var faction=ExpeditionMap.FactionForStage(key-state.geography.Camps.Length);
-                var flags=Resources.Load<Texture2D>("Art/Factions/FactionFlagsConcept");
-                if(faction!=DungeonFaction.None&&flags)
-                {
-                    var pole=GameObject.CreatePrimitive(PrimitiveType.Cylinder);pole.name="Faction flag pole";pole.transform.SetParent(site.transform,false);pole.transform.localPosition=new Vector3(2.1f,3.15f,1.45f);pole.transform.localScale=new Vector3(.07f,1.5f,.07f);var collider=pole.GetComponent<Collider>();if(collider)UnityEngine.Object.Destroy(collider);pole.GetComponent<Renderer>().sharedMaterial=state.materials[1];
-                    var flag=GameObject.CreatePrimitive(PrimitiveType.Quad);flag.name="Faction flag";flag.transform.SetParent(site.transform,false);flag.transform.localPosition=new Vector3(2.95f,4.05f,1.4f);flag.transform.localScale=new Vector3(1.7f,1.2f,1);
-                    var fc=flag.GetComponent<Collider>();if(fc)UnityEngine.Object.Destroy(fc);
-                    var shader=Shader.Find("Unlit/Transparent")??Shader.Find("Sprites/Default");if(shader){var material=new Material(shader){name="Faction flag",mainTexture=flags};material.mainTextureScale=new Vector2(1f/3f,1);material.mainTextureOffset=new Vector2((faction==DungeonFaction.Raiders?1:2)/3f,0);flag.GetComponent<Renderer>().sharedMaterial=material;}
-                }
+                if(faction!=DungeonFaction.None)
+                    AddFactionFlag(site.transform,state.materials,state.factionFlags[faction==DungeonFaction.Raiders?1:2],3.55f,4.85f,1.4f,2.5f,1.75f,faction+" entrance banner");
             }
             var batch=site.GetComponent<ImportedWorldBatch>();if(!batch)batch=site.AddComponent<ImportedWorldBatch>();
             batch.RegisterSiteRenderers();
@@ -90,7 +103,20 @@ namespace NeonVault
         }
         // A complete roof, side walls and a raised lookout make the camp read as
         // a defended building from the quarter-view camera, even with no imported facade.
-        static void BuildCampFortification(Transform root,Material[] mats)
+        static void AddFactionFlag(Transform root,Material[] mats,Material flagMaterial,float x,float y,float z,float width,float height,string name)
+        {
+            if(!flagMaterial)return;
+            var pole=GameObject.CreatePrimitive(PrimitiveType.Cylinder);pole.name=name+" / pole";pole.transform.SetParent(root,false);
+            pole.transform.localPosition=new Vector3(x-width*.54f,y-height*.25f,z+.04f);
+            pole.transform.localScale=new Vector3(.075f,height*.9f,.075f);
+            var poleCollider=pole.GetComponent<Collider>();if(poleCollider)UnityEngine.Object.Destroy(poleCollider);
+            pole.GetComponent<Renderer>().sharedMaterial=mats[1];
+            var flag=GameObject.CreatePrimitive(PrimitiveType.Quad);flag.name=name;flag.transform.SetParent(root,false);
+            flag.transform.localPosition=new Vector3(x,y,z);flag.transform.localScale=new Vector3(width,height,1);
+            var collider=flag.GetComponent<Collider>();if(collider)UnityEngine.Object.Destroy(collider);
+            flag.GetComponent<Renderer>().sharedMaterial=flagMaterial;
+        }
+        static void BuildCampFortification(Transform root,Material[] mats,bool headquarters)
         {
             Box(root,mats,"HQ main roof",new Vector3(0,5.35f,6),new Vector3(11.5f,.35f,7.4f),1);
             Box(root,mats,"HQ broken front parapet west",new Vector3(-3.65f,5.75f,2.35f),new Vector3(4.4f,.8f,.38f),0);
@@ -102,6 +128,36 @@ namespace NeonVault
             Box(root,mats,"HQ lookout roof",new Vector3(3.3f,8.1f,7.2f),new Vector3(4.1f,.3f,3.9f),1);
             Box(root,mats,"HQ lookout slit front",new Vector3(3.3f,7,5.47f),new Vector3(2.3f,.35f,.08f),2);
             Box(root,mats,"HQ lookout slit side",new Vector3(5.12f,7,7.2f),new Vector3(.08f,.35f,2),2);
+            if(headquarters)
+            {
+                // The Warden headquarters gains a second fortified storey within
+                // the established footprint, keeping its entrance and collision clear.
+                for(int side=-1;side<=1;side+=2)
+                    for(int end=0;end<2;end++)
+                        Box(root,mats,"Warden command support",new Vector3(side*4.9f,6.55f,end==0?3.4f:8.6f),new Vector3(.75f,2.5f,.75f),0);
+                Box(root,mats,"Warden command floor",new Vector3(0,7.8f,6.3f),new Vector3(10.8f,.34f,6.4f),1);
+                Box(root,mats,"Warden command frontage",new Vector3(0,9.05f,3.1f),new Vector3(10.8f,2.3f,.55f),0);
+                Box(root,mats,"Warden command roof",new Vector3(0,10.35f,6.3f),new Vector3(11.3f,.36f,6.8f),1);
+                for(int i=-1;i<=1;i++)Box(root,mats,"Warden command window",new Vector3(i*3.05f,9.1f,2.79f),new Vector3(1.45f,.85f,.12f),2);
+                for(int side=-1;side<=1;side+=2)
+                    Box(root,mats,"Warden upper buttress",new Vector3(side*5.45f,8.9f,6.2f),new Vector3(.48f,2.9f,6.8f),0);
+                Box(root,mats,"Warden roof observation post",new Vector3(-3.4f,11.3f,7.4f),new Vector3(3.1f,1.8f,2.7f),0);
+                Box(root,mats,"Warden observation cap",new Vector3(-3.4f,12.3f,7.4f),new Vector3(3.5f,.26f,3.1f),1);
+                // Stack the command block above the existing entrance footprint,
+                // retaining the established street-level approach and collision.
+                for(int floor=0;floor<9;floor++)
+                {
+                    float y=12.6f+floor*3.3f;
+                    Box(root,mats,"Warden tower floor",new Vector3(0,y,6),new Vector3(11.4f,.3f,7),1);
+                    Box(root,mats,"Warden tower frontage",new Vector3(0,y+1.55f,2.65f),new Vector3(11,3,.45f),0);
+                    Box(root,mats,"Warden tower rear",new Vector3(0,y+1.55f,9.35f),new Vector3(11,3,.45f),0);
+                    for(int side=-1;side<=1;side+=2)
+                        Box(root,mats,"Warden tower side",new Vector3(side*5.3f,y+1.55f,6),new Vector3(.45f,3,6.7f),0);
+                    for(int window=-1;window<=1;window++)
+                        Box(root,mats,"Warden tower window",new Vector3(window*3.1f,y+1.65f,2.4f),new Vector3(1.5f,1.1f,.08f),2);
+                }
+                Box(root,mats,"Warden tower crown",new Vector3(0,42.5f,6),new Vector3(11.8f,.45f,7.4f),1);
+            }
             for(int side=-1;side<=1;side+=2)
             {
                 Box(root,mats,"HQ reinforced entrance pier",new Vector3(side*2.05f,1.8f,1.9f),new Vector3(.65f,3.6f,.8f),1);

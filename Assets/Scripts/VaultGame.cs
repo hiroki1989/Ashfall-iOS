@@ -226,21 +226,31 @@ namespace NeonVault
         {
             position=SeparateEnemySpawn(position,kind);
             if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
-            var f=art.Character(position,false,kind).gameObject.AddComponent<Foe>();
+            var faction=IsOverworld?DungeonFaction.None:ExpeditionMap.FactionForStage(SelectedStageId);
+            bool factionHuman=kind==10&&faction!=DungeonFaction.None;
+            // Faction humans use the articulated survivor mesh. The old path first
+            // constructed a complete FaithfulEnemy3D for every human, then hid it.
+            // On a crowded iOS floor that doubled mesh/material memory at entry.
+            Transform actor;
+            if(factionHuman)
+            {
+                actor=new GameObject("Faction enemy actor").transform;
+                actor.SetParent(world,false);
+                actor.position=position-Vector3.up*.62f;
+            }
+            else actor=art.Character(position,false,kind);
+            var f=actor.gameObject.AddComponent<Foe>();
             f.Init(this,kind,room);
             bool raiderBoss=kind==3&&(finalDebtBossFight||ExpeditionMap.FactionForStage(SelectedStageId)!=DungeonFaction.None);
             f.SetRaiderBoss(raiderBoss);
-            var faction=IsOverworld?DungeonFaction.None:ExpeditionMap.FactionForStage(SelectedStageId);
-            bool factionHuman=kind==10&&faction!=DungeonFaction.None;
             // The human model supplies its own weapon; all other actors retain the legacy visual path.
             if(kind==5||kind==10&&!factionHuman){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
-            f.GetComponent<FaithfulEnemy3D>().Init(f);
+            if(!factionHuman)f.GetComponent<FaithfulEnemy3D>().Init(f);
             if(factionHuman)
             {
-                foreach(var renderer in f.GetComponentsInChildren<Renderer>(true))renderer.enabled=false;
                 var human=HumanFactionVisual.Create(f.transform,faction==DungeonFaction.Raiders?1:2,f.UseAssaultRifle?0:1);
                 human.transform.localScale=Vector3.one*1.12f;
-                // FaithfulEnemy3D's actor origin is 0.03 m above the dungeon floor.
+            // Keep the existing actor origin and faction model floor alignment.
                 human.transform.localPosition=Vector3.down*.03f;
             }
             else ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);

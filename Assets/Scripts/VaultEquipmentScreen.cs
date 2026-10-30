@@ -218,7 +218,9 @@ namespace NeonVault
                 EqText(new Rect(952,top+20,440,94),selected.name,EqInk,nameStyle);
                 Box(new Rect(952,top+104,64,3),selected.color);
                 EqPortrait(new Rect(978,top+116,390,124),selected.item,true);
-                float detailH=362-top;
+                // Reserve the lower part of the detail pane for the junk action.
+                // The inventory description remains scrollable and cannot sit under it.
+                float detailH=merchant?362-top:166;
                 string eqDetail=selected.fullDescription;
                 float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
                 eqDetailExtent=Mathf.Max(detailH,textHeight+16);
@@ -227,7 +229,27 @@ namespace NeonVault
                 GUI.EndScrollView();
                 EqActions(selected,merchant);
             }
-            for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");var previous=eqButtonStyle;var fitted=new GUIStyle(previous){wordWrap=false};while(fitted.fontSize>12&&fitted.CalcSize(new GUIContent(shortLabel)).x>r.width-20)fitted.fontSize--;eqButtonStyle=fitted;if(EqButton(r,caption))BuyAmmo(type,1);eqButtonStyle=previous;}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
+            for(int i=0;i<ActiveAmmoTypeCount;i++)
+            {
+                var type=ActiveAmmoTypeAt(i);Rect r=new Rect(28+i*278,790,270,merchant?82:62);
+                string shortLabel=AmmoLabel(type);
+                string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);
+                if(merchant)
+                {
+                    caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");
+                    var previous=eqButtonStyle;
+                    var fitted=new GUIStyle(previous){fontSize=MobileTouchControls.Enabled?20:19,wordWrap=false,alignment=TextAnchor.MiddleCenter};
+                    string[] lines=caption.Split('\n');
+                    while(fitted.fontSize>13)
+                    {
+                        float widest=0;foreach(string line in lines)widest=Mathf.Max(widest,fitted.CalcSize(new GUIContent(line)).x);
+                        if(widest<=r.width-22&&fitted.CalcHeight(new GUIContent(caption),r.width-22)<=r.height-8)break;
+                        fitted.fontSize--;
+                    }
+                    eqButtonStyle=fitted;if(EqButton(r,caption))BuyAmmo(type,1);eqButtonStyle=previous;
+                }
+                else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}
+            }
             if(!merchant)EqText(new Rect(28,864,1384,32),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=18});
             GUI.enabled=eqPreviousEnabled;if(confirmJunkSale)DrawJunkConfirmation();else if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();else if(!merchant&&eqPendingDiscard!=null)EqDiscardConfirmation();return true;
         }

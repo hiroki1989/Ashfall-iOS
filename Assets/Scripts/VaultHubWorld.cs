@@ -71,6 +71,9 @@ namespace NeonVault
             art.Part("Exit wall left",PrimitiveType.Cube,new Vector3(-7,2,12),new Vector3(10,4,.45f),new Color(.25f,.25f,.23f),world);
             art.Part("Exit wall right",PrimitiveType.Cube,new Vector3(7,2,12),new Vector3(10,4,.45f),new Color(.25f,.25f,.23f),world);
             art.Part("Exit doorway lintel",PrimitiveType.Cube,new Vector3(0,3.6f,12),new Vector3(4,.8f,.45f),new Color(.25f,.25f,.23f),world);
+            // Restore the clear interaction marker at the doorway, without
+            // changing the hub's established interior layout.
+            art.Ring("Hub exit / yellow floor marker",new Vector3(0,.035f,10.9f),1.45f,.11f,VaultArt.Gold,true);
             player=art.Character(new Vector3(0,.65f,-3),true);barrel=art.Weapon(player,gun.color);VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));PlayerAppearance.ApplyArmor(EquippedArmor);
             foreach(var animation in world.GetComponentsInChildren<Animation>(true)){animation.Stop();animation.enabled=false;}foreach(var animator in world.GetComponentsInChildren<Animator>(true))if(!animator.GetComponentInParent<ImportedEnemyVisual>()){animator.Rebind();animator.Update(0);animator.enabled=false;}
             hp=maxHp;aim=Vector3.right;PlayerWeapon.Aim(aim);hubDialogue="";cam.orthographicSize=11/CameraZoom;UpdateCamera(true);

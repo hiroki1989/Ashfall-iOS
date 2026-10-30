@@ -41,7 +41,8 @@ namespace NeonVault
             if(tier>=10)return 0;
             int ammoIndex=AmmoIndex(category);
             int baseCost=ammoIndex>=0?2500+ammoIndex*350:category==StorageUpgrade.Stash?4000:category==StorageUpgrade.Weapons?4000:category==StorageUpgrade.Armor?3000:category==StorageUpgrade.Modules?3500:2500;
-            return baseCost*(tier+1)*ScrapLevelMultiplier;
+            long price=(long)baseCost*(tier+1)*ScrapLevelMultiplier*30;
+            return price>int.MaxValue?int.MaxValue:(int)price;
         }
 
         public bool BuyStorageUpgrade(StorageUpgrade category)

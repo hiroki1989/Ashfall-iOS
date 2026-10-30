@@ -197,7 +197,17 @@ namespace NeonVault
             if(kind==8&&hitPoint.HasValue){Vector3 approach=point-transform.position;approach.y=0;float facing=Vector3.Dot(transform.forward,approach.normalized);damage*=facing>.3f?.55f:facing<-.3f?1.35f:1;}
             CombatVisuals.DamageNumber(point,damage,numberColor??hitColor??new Color(1,.84f,.42f),game.GameCamera,transform.parent);
             hp-=damage;var painted=GetComponent<EnemyPainted2D>();painted?.NotifyHit(point);GetComponent<FaithfulEnemy3D>()?.NotifyHit(point);game.Burst(point,hitColor??(kind==3?new Color(.7f,.8f,.2f):new Color(.55f,.16f,.1f)),4);
-            if(hp<=0){dead=true;ClearWarning();painted?.BeginDeath();var meshLife=GetComponent<FaithfulEnemy3D>();meshLife?.BeginDeath();game.FoeKilled(this);Destroy(gameObject,meshLife!=null?FaithfulEnemy3D.DeathDuration:painted!=null&&painted.Ready?EnemyPainted2D.DeathDuration+.03f:0);}return true;
+            if(hp<=0)
+            {
+                dead=true;ClearWarning();painted?.BeginDeath();
+                var meshLife=GetComponent<FaithfulEnemy3D>();meshLife?.BeginDeath();
+                bool humanLife=GetComponentInChildren<HumanFactionVisual>()!=null;
+                game.FoeKilled(this);
+                float deathDuration=meshLife!=null||humanLife?FaithfulEnemy3D.DeathDuration
+                    :painted!=null&&painted.Ready?EnemyPainted2D.DeathDuration+.03f:0;
+                Destroy(gameObject,deathDuration);
+            }
+            return true;
         }
         void OnDestroy(){ClearWarning();}
     }

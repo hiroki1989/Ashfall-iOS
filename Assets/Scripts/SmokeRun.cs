@@ -1352,7 +1352,7 @@ namespace NeonVault
                 Check(Vector3.Angle(low,fifteen)<.2f,"low accuracy leaves a 15-degree miss unassisted");
                 Check(Vector3.Angle(outside,thirtyOne)<.2f,"even 100 accuracy does not snap past 30 degrees");
                 VerifyFieldEconomy(game);
-                game.AwardCredits(3000000);game.screen=VaultGame.Screen.Shop;
+                game.AwardCredits(1000000000);game.screen=VaultGame.Screen.Shop;
                 int[] baseAmmo=new int[VaultGame.AmmoTypeCount];
                 for(int i=0;i<baseAmmo.Length;i++)baseAmmo[i]=game.AmmoCapacity((AmmoType)i);
                 Check(game.BuyStorageUpgrade(StorageUpgrade.AmmoHandgun)&&game.AmmoCapacity(AmmoType.Handgun)>baseAmmo[0],"handgun reserve upgrade increases only handgun capacity");
