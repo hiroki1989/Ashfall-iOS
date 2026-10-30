@@ -16,9 +16,28 @@ namespace NeonVault
         public Vector3 LeftToeContact=>leftToe.TransformPoint(V(0,0,.075f));
         public Vector3 RightToeContact=>rightToe.TransformPoint(V(0,0,.075f));
         public const float UpperArmLength=.285f, ForearmLength=.265f;
-        Func<string,Material> palette; Transform rig; readonly List<Mesh> meshes=new List<Mesh>(); readonly List<Material> materials=new List<Material>(); readonly List<Texture2D> textures=new List<Texture2D>();
+        Func<string,Material> palette; [SerializeField] Transform rig; readonly List<Mesh> meshes=new List<Mesh>(); readonly List<Material> materials=new List<Material>(); readonly List<Texture2D> textures=new List<Texture2D>();
         readonly HashSet<Renderer> anatomyRenderers=new HashSet<Renderer>();
         public bool IsAnatomyRenderer(Renderer renderer)=>renderer&&anatomyRenderers.Contains(renderer);
+        // A faction template displays its skinned replacement, so the old rigid
+        // anatomy is never shown. Release only meshes owned by this body that
+        // are not referenced by an enabled renderer.
+        public void ReleaseHiddenOwnedMeshes()
+        {
+            var used=new HashSet<Mesh>();
+            foreach(var filter in GetComponentsInChildren<MeshFilter>(true))
+            {
+                var draw=filter.GetComponent<Renderer>();
+                if(draw && draw.enabled && filter.gameObject.activeInHierarchy && filter.sharedMesh) used.Add(filter.sharedMesh);
+            }
+            for(int i=meshes.Count-1;i>=0;i--)
+            {
+                var mesh=meshes[i];
+                if(!mesh || used.Contains(mesh)) continue;
+                meshes.RemoveAt(i);
+                Destroy(mesh);
+            }
+        }
         Material cloth,pants,skin,hair,hairHighlight,leather,seam,sole,metal;
         MeshRenderer seatRenderer;
         public void SetSeatFabric(Material value)
@@ -52,7 +71,7 @@ namespace NeonVault
             var m=new Material(shader){name=name,color=color};m.SetFloat("_Smoothness",smooth);m.SetFloat("_Glossiness",smooth);m.SetFloat("_Metallic",metallic);materials.Add(m);
             var tex=new Texture2D(128,128,TextureFormat.RGBA32,true){name=name+" / procedural grain",wrapMode=TextureWrapMode.Repeat};
             var pixels=new Color[128*128];for(int y=0;y<128;y++)for(int x=0;x<128;x++){float noise=Mathf.PerlinNoise(x*.61f+13,y*.61f+7);float weave=((x%4==0||y%4==0)?-.055f:.018f);float value=.88f+noise*.19f+weave;pixels[y*128+x]=new Color(value,value,value,1);}
-            tex.SetPixels(pixels);tex.Apply(true,true);textures.Add(tex);m.mainTexture=tex;m.mainTextureScale=new Vector2(5,5);return m;
+            tex.SetPixels(pixels);tex.Apply(true,!FactionPresetBakeSettings.Enabled);textures.Add(tex);m.mainTexture=tex;m.mainTextureScale=new Vector2(5,5);return m;
         }
         Transform Joint(string name,Transform p,Vector3 pos){var g=new GameObject(name).transform;g.SetParent(p,false);g.localPosition=pos;return g;}
         void Build()

@@ -32,7 +32,7 @@ namespace NeonVault
             if (mobileFaction && !File.Exists(path)) path = Path.Combine(folder, name + ".png");
             if (!File.Exists(path)) { Debug.LogError("Missing shared armor atlas: " + path); return null; }
             var texture = new Texture2D(2, 2, TextureFormat.RGB24, true, false);
-            if (!ImageConversion.LoadImage(texture, File.ReadAllBytes(path), true))
+            if (!ImageConversion.LoadImage(texture, File.ReadAllBytes(path), !FactionPresetBakeSettings.Enabled))
             {
                 if (Application.isPlaying) UnityEngine.Object.Destroy(texture);
                 else UnityEngine.Object.DestroyImmediate(texture);
@@ -120,7 +120,7 @@ namespace NeonVault
                     continue;
                 // Each item owns an illustrated atlas in the approved Warden UV layout.
                 // A palette LUT would retain the starter outfit's wrinkles and markings.
-                var texture = LoadAtlas(AtlasName(item.catalogId), factionMobile && Application.isMobilePlatform);
+                var texture = LoadAtlas(AtlasName(item.catalogId), factionMobile && (Application.isMobilePlatform || FactionPresetBakeSettings.Enabled));
                 if (!texture) { renderer.sharedMaterials = source; assigned.Remove(renderer); continue; }
                 var next = new Material[source.Length];
                 for (int i = 0; i < source.Length; i++)

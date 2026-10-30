@@ -37,8 +37,6 @@ namespace NeonVault
                 Detail("Faction mark diagonal",PrimitiveType.Cube,new Vector3(0,1.25f,-.06f),new Vector3(.10f,.55f,.025f),Stone*1.7f,g,new Vector3(0,0,42));
                 if(faction==DungeonFaction.Raiders)
                     Detail("Raider scrap blade",PrimitiveType.Cube,new Vector3(.48f,.55f,0),new Vector3(.14f,1.05f,.12f),Bronze,g,new Vector3(0,0,-23));
-                else
-                    Part("Gang signal lamp",PrimitiveType.Sphere,new Vector3(0,1.84f,0),Vector3.one*.18f,paint,g,true);
             }
         }
         void Detail(string name,PrimitiveType shape,Vector3 position,Vector3 scale,Color color,Transform parent,Vector3 rotation=default)

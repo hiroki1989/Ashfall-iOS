@@ -7,7 +7,7 @@ namespace NeonVault
     // All surfaces are modeled geometry. No imported model, billboard or Unity primitive is used.
     public static class DetailedHeroEquipment3D
     {
-        public sealed class WeaponSockets
+        [Serializable] public sealed class WeaponSockets
         {
             public Transform root, trigger, support, stock, muzzle;
         }
@@ -53,6 +53,16 @@ namespace NeonVault
         {
             public Mesh mesh;
             void OnDestroy() { if(mesh) UnityEngine.Object.Destroy(mesh); }
+        }
+        // A cloned faction template shares the template's combined weapon
+        // meshes. Only the template may release them on destruction.
+        public static void DisownSharedMeshes(Transform root)
+        {
+            foreach(var owner in root.GetComponentsInChildren<MeshOwner>(true))
+            {
+                owner.mesh=null;
+                UnityEngine.Object.Destroy(owner);
+            }
         }
         static Transform Group(string n, Transform p, Vector3 v)
         { var t=new GameObject(n).transform; t.SetParent(p,false);t.localPosition=v;return t; }
@@ -385,5 +395,3 @@ namespace NeonVault
         }
     }
 }
-
-

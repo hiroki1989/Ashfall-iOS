@@ -6,15 +6,18 @@ namespace NeonVault
     // Six human silhouettes share the survivor skeleton and its articulated gait.
     public sealed class HumanFactionVisual : MonoBehaviour
     {
-        public DetailedHero3D Body { get; private set; }
-        public Transform Muzzle { get; private set; }
-        public int Faction { get; private set; }
+        [field: SerializeField] public DetailedHero3D Body { get; private set; }
+        [field: SerializeField] public Transform Muzzle { get; private set; }
+        [field: SerializeField] public int Faction { get; private set; }
         Vector3 previous;
         float phase, deathTime=-1;
         Foe owner;
-        DetailedHeroEquipment3D.WeaponSockets gun;
-        bool handgun;
-        static Mesh sharedHelmetMesh, sharedTrimmedHeadMesh;
+        [SerializeField] DetailedHeroEquipment3D.WeaponSockets gun;
+        [SerializeField] bool handgun;
+        // Templates own their meshes, materials and textures for the lifetime of
+        // the process; instances share those resources and only clone the hierarchy.
+        static readonly HumanFactionVisual[,] templates=new HumanFactionVisual[3,2];
+        static Mesh sharedHelmetMesh, sharedHelmetRimMesh, sharedTrimmedHeadMesh;
         static Material[] sharedHeadMaterials;
         static Bounds sharedHeadBounds;
         static SkinnedMeshRenderer CreateSharedHead(DetailedHero3D hero)
@@ -46,6 +49,49 @@ namespace NeonVault
         public static HumanFactionVisual Create(Transform parent, int faction, int variant)
         {
             faction=Mathf.Clamp(faction,0,2); variant=Mathf.Clamp(variant,0,1);
+            if(!Application.isPlaying) return Build(parent,faction,variant);
+            var baked=FactionPresetBakeSettings.Enabled ? null : Resources.Load<HumanFactionVisual>("FactionPresets/faction_"+faction+"_"+variant);
+            if(baked)
+            {
+                var ready=Instantiate(baked,parent,false);
+                DetailedHeroEquipment3D.DisownSharedMeshes(ready.transform);
+                ready.owner=parent ? parent.GetComponentInParent<Foe>() : null;
+                ready.previous=ready.transform.position; ready.phase=0; ready.deathTime=-1;
+                if(Application.isMobilePlatform) foreach(var skin in ready.GetComponentsInChildren<SkinnedMeshRenderer>(true)) {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;}
+                ready.gameObject.SetActive(true); return ready;
+            }
+            var template=templates[faction,variant];
+            if(!template)
+            {
+                template=Build(null,faction,variant);
+                template.gameObject.name="Faction template " + faction + " / " + variant;
+                // The legacy procedural body schedules thousands of combined
+                // mesh fragments for end-of-frame destruction. Do not clone
+                // those already hidden leaves into every enemy in the same frame.
+                foreach(var filter in template.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if(!filter || filter.transform.childCount!=0) continue;
+                    var draw=filter.GetComponent<MeshRenderer>();
+                    if(!filter.gameObject.activeSelf || (draw && !draw.enabled))
+                        DestroyImmediate(filter.gameObject);
+                }
+                template.Body.ReleaseHiddenOwnedMeshes();
+                template.gameObject.SetActive(false);
+                DontDestroyOnLoad(template.gameObject);
+                templates[faction,variant]=template;
+            }
+            var instance=Instantiate(template,parent,false);
+            DetailedHeroEquipment3D.DisownSharedMeshes(instance.transform);
+            instance.gameObject.name="Human faction " + faction + " / " + variant;
+            instance.owner=parent ? parent.GetComponentInParent<Foe>() : null;
+            instance.previous=instance.transform.position;
+            instance.phase=0;
+            instance.deathTime=-1;
+            instance.gameObject.SetActive(true);
+            return instance;
+        }
+        static HumanFactionVisual Build(Transform parent, int faction, int variant)
+        {
             var root=new GameObject("Human faction " + faction + " / " + variant);
             root.transform.SetParent(parent,false);
             var visual=root.AddComponent<HumanFactionVisual>();
@@ -115,7 +161,7 @@ namespace NeonVault
             if(Application.isMobilePlatform)
                 foreach(var skin in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
                 {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;}
-            visual.owner=parent.GetComponentInParent<Foe>();
+            visual.owner=parent ? parent.GetComponentInParent<Foe>() : null;
             visual.previous=root.transform.position;
             return visual;
         }
@@ -198,11 +244,41 @@ namespace NeonVault
             var hardware=DetailedHeroMaterials3D.Get("ProductSteel");
             // Thin rolled perimeter and side hardware make the dome read as
             // a protective helmet, while staying above the fitted face mask.
-            for(int i=0;i<segments;i++)
+            // One shared ring replaces 24/64 separate rod objects per enemy.
+            // Its vertices are created only once and all actors reuse the mesh.
+            if (!sharedHelmetRimMesh)
             {
-                Vector3 a=vertices[rows*(segments+1)+i], b=vertices[rows*(segments+1)+i+1];
-                DetailedHeroArsenal3D.Rod("Helmet rolled rim",shell.transform,rim,a,b,.003f);
+                const int sides = 6;
+                var ringVertices = new Vector3[(segments + 1) * sides];
+                var ringTriangles = new int[segments * sides * 6];
+                for (int i = 0; i <= segments; i++)
+                {
+                    Vector3 center = vertices[rows * (segments + 1) + i];
+                    Vector3 radial = new Vector3(center.x, 0, center.z - .018f).normalized;
+                    for (int j = 0; j < sides; j++)
+                    {
+                        float angle = j * Mathf.PI * 2 / sides;
+                        ringVertices[i * sides + j] = center + .003f * (radial * Mathf.Cos(angle) + Vector3.up * Mathf.Sin(angle));
+                    }
+                }
+                int t = 0;
+                for (int i = 0; i < segments; i++) for (int j = 0; j < sides; j++)
+                {
+                    int a = i * sides + j, b = i * sides + (j + 1) % sides;
+                    int c = (i + 1) * sides + j, d = (i + 1) * sides + (j + 1) % sides;
+                    ringTriangles[t++] = a; ringTriangles[t++] = c; ringTriangles[t++] = b;
+                    ringTriangles[t++] = b; ringTriangles[t++] = c; ringTriangles[t++] = d;
+                }
+                sharedHelmetRimMesh = new Mesh { name = "Human faction / shared helmet rim" };
+                sharedHelmetRimMesh.vertices = ringVertices;
+                sharedHelmetRimMesh.triangles = ringTriangles;
+                sharedHelmetRimMesh.RecalculateNormals();
+                sharedHelmetRimMesh.RecalculateBounds();
             }
+            var rimObject = new GameObject("Helmet rolled rim");
+            rimObject.transform.SetParent(shell.transform, false);
+            rimObject.AddComponent<MeshFilter>().sharedMesh = sharedHelmetRimMesh;
+            rimObject.AddComponent<MeshRenderer>().sharedMaterial = rim;
             for(int side=-1;side<=1;side+=2)
             {
                 var mount=DetailedHeroArsenal3D.Tube("Helmet side fastener",shell.transform,hardware,Vector3.zero,.010f,.004f,.05f,-1,12);
@@ -231,14 +307,11 @@ namespace NeonVault
             if(faction==1)
             {
                 // Riveted irregular scrap plates make the raiders asymmetric.
-                var shoulder=variant==0?Body.leftUpperArm:Body.rightUpperArm;
-                DetailedHeroArsenal3D.Shell("Raider salvaged shoulder",shoulder,accent,new Vector3(0,-.07f,.09f),new Vector2(.19f,.17f),.055f);
                 DetailedHeroArsenal3D.Shell("Raider salvaged chest",Body.chest,steel,new Vector3(variant==0?-.08f:.08f,.015f,.16f),new Vector2(.20f,.25f),.045f);
             }
             else if(faction==2)
             {
                 // Bright shoulder patch and diagonal webbing remain legible overhead.
-                DetailedHeroArsenal3D.Shell("Gang shoulder colors",Body.leftUpperArm,accent,new Vector3(0,-.075f,.085f),new Vector2(.16f,.16f),.035f);
                 DetailedHeroArsenal3D.Line("Gang diagonal harness",Body.chest,accent,.014f,new Vector3(-.17f,.17f,.15f),new Vector3(.13f,-.19f,.15f));
                 if(variant==1)DetailedHeroArsenal3D.Shell("Gang back emblem",Body.chest,accent,new Vector3(0,.02f,-.18f),new Vector2(.22f,.24f),-.02f);
             }

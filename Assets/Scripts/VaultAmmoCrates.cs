@@ -70,13 +70,7 @@ namespace NeonVault
             var type=ActiveAmmoTypeAt(rng.Next(ActiveAmmoTypeCount));
             int amount=AmmoPackSize(type);
             var visual=CreateLootPresentation(AmmoPickupName(type,amount),new Vector3(p.x,.31f,p.z),new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,amount);
-            if(MissionNeedsCaches)
-            {
-                var marker=GameObject.CreatePrimitive(PrimitiveType.Cylinder);marker.name="Mission cache highlight";
-                marker.transform.SetParent(visual.transform,false);marker.transform.localPosition=new Vector3(0,1.4f,0);marker.transform.localScale=new Vector3(.12f,1.1f,.12f);
-                var collider=marker.GetComponent<Collider>();if(collider)Destroy(collider);
-                marker.GetComponent<Renderer>().sharedMaterial=Mat(new Color(1f,.55f,.12f),true);
-            }
+            if(MissionNeedsCaches) ObjectiveGroundRing.Create(visual.transform, p, 1.0f);
             fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,type=type,amount=amount,visual=visual});
             return true;
         }

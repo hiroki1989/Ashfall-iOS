@@ -83,28 +83,45 @@ namespace NeonVault
                 // handles interaction, so imported colliders cannot trap the player.
                 foreach (var collider in marker.GetComponentsInChildren<Collider>()) collider.enabled = false;
                 if (source[kind] == null) marker.transform.localScale = new Vector3(.8f, .4f, .8f);
-                // A shared unlit beacon distinguishes interactive events from scenery.
-                var beacon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                beacon.name = "Event beacon"; beacon.transform.SetParent(marker.transform, false);
-                beacon.transform.position = new Vector3(site.position.x, 2.35f, site.position.z);
-                beacon.transform.localScale = Vector3.one * (.32f / Mathf.Max(.01f, marker.transform.lossyScale.x));
-                var beaconCollider = beacon.GetComponent<Collider>(); if (beaconCollider) Destroy(beaconCollider);
-                beacon.GetComponent<Renderer>().sharedMaterial = EventBeaconMaterial();
+                ObjectiveGroundRing.Create(marker.transform, site.position, 1.15f);
                 visible.Add(site.id, marker);
             }
             expired.Clear();
             foreach (var pair in visible) if (!wanted.Contains(pair.Key)) expired.Add(pair.Key);
             foreach (int id in expired) { Destroy(visible[id]); visible.Remove(id); visibleTypes.Remove(id); }
         }
-        static Material beaconMaterial;
-        static Material EventBeaconMaterial()
+    }
+
+    // A single ground-level circular line marks interactive objectives without
+    // obscuring the prop or adding a bright vertical object to the scene.
+    static class ObjectiveGroundRing
+    {
+        static Material material;
+        public static void Create(Transform parent, Vector3 center, float radius)
         {
-            if (!beaconMaterial)
+            if (!material)
             {
-                var shader = Shader.Find("Unlit/Color") ?? Shader.Find("Sprites/Default");
-                beaconMaterial = new Material(shader) { name = "Event beacon / amber", color = new Color(1f,.58f,.12f) };
+                var shader = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
+                if (!shader) return;
+                material = new Material(shader) { name = "Objective ring / orange" };
             }
-            return beaconMaterial;
+            var go = new GameObject("Objective ground ring");
+            go.transform.SetParent(parent, false);
+            var line = go.AddComponent<LineRenderer>();
+            line.useWorldSpace = true;
+            line.loop = true;
+            line.positionCount = 64;
+            line.widthMultiplier = .07f;
+            line.sharedMaterial = material;
+            line.startColor = line.endColor = new Color(1f, .43f, .055f, .9f);
+            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            line.receiveShadows = false;
+            for (int i = 0; i < line.positionCount; i++)
+            {
+                float angle = i * Mathf.PI * 2f / line.positionCount;
+                line.SetPosition(i, new Vector3(center.x + Mathf.Cos(angle) * radius,
+                    center.y + .08f, center.z + Mathf.Sin(angle) * radius));
+            }
         }
     }
 }
