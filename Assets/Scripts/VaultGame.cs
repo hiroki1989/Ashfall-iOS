@@ -239,6 +239,7 @@ namespace NeonVault
             {
                 foreach(var renderer in f.GetComponentsInChildren<Renderer>(true))renderer.enabled=false;
                 var human=HumanFactionVisual.Create(f.transform,faction==DungeonFaction.Raiders?1:2,f.UseAssaultRifle?0:1);
+                human.transform.localScale=Vector3.one*1.12f;
                 // FaithfulEnemy3D's actor origin is 0.03 m above the dungeon floor.
                 human.transform.localPosition=Vector3.down*.03f;
             }
@@ -370,7 +371,7 @@ namespace NeonVault
             Vector3 movement=ReadPlayerMovement();
             if(VaultMobileInputBridge.Pressed(MobileAction.Dodge,KeyCode.Space)&&dodgeCooldown<=0) { dodgeTimer=.19f; dodgeCooldown=EffectiveDodgeCooldown/(1+runDash); invincible=.3f; dodgeDirection=movement.sqrMagnitude>0?movement.normalized:aim; Burst(player.position,Cyan,8);ArtifactOnDash();RunDashPulse(); }
             if(dodgeTimer>0) { dodgeTimer-=Time.deltaTime; movement=dodgeDirection*3.3f; }
-            player.position=MoveWithinRoom(player.position,movement*EffectiveMoveSpeed*Time.deltaTime,.45f);
+            Vector3 previousPosition=player.position;player.position=MoveWithinRoom(player.position,movement*EffectiveMoveSpeed*Time.deltaTime,.45f);TickFootsteps(previousPosition,player.position);
             TickFieldEconomy();
             if(NearbyAmmoCrate)OpenNearbyAmmoCrate(true);
             if(reload>0) { reload-=Time.deltaTime; if(reload<=0)CompleteAmmoReload(); }
@@ -504,6 +505,14 @@ namespace NeonVault
         MeleeDrop NearMeleeDrop()
         {MeleeDrop best=null;float distance=2.6f;foreach(var drop in meleeDrops){float d=Vector3.Distance(PlayerPosition,drop.position);if(d<distance){distance=d;best=drop;}}return best;}
         public MeleeWeaponItem NearbyMeleeWeapon=>NearMeleeDrop()?.item;
+        public bool HasNearbyPickup=>player!=null&&(NearbySupplyChest||NearDrop()!=null||NearArmor()!=null||NearMeleeDrop()!=null||NearArtifact()!=null);
+        public bool MobileActionAvailable(MobileAction action)
+        {
+            if(action==MobileAction.Dodge)return dodgeCooldown<=0;
+            if(action==MobileAction.Melee)return EquippedMeleeWeapon!=null&&meleeAttack!=null&&meleeAttack.CooldownRemaining<=0;
+            if(action==MobileAction.Fire)return gun!=null&&reload<=0&&ammo>0&&fireTimer<=0;
+            return true;
+        }
         public bool NearbySupplyChest
         {get{foreach(var chest in chests)if(chest!=null&&!chest.opened&&Vector3.Distance(PlayerPosition,chest.position)<2.4f)return true;return false;}}
         public bool NearbyAmmoCrate

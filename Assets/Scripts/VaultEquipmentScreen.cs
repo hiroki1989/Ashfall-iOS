@@ -45,6 +45,7 @@ namespace NeonVault
         static readonly Color EqMuted=new Color(.65f,.65f,.62f);
         static readonly Color EqLine=new Color(.25f,.26f,.26f);
         static readonly Color EqAccent=new Color(.77f,.49f,.30f);
+        Texture2D junkBinIcon;
         bool EqButton(Rect r,string caption,bool selected=false,bool enabled=true)
         {
             bool hover=enabled&&r.Contains(Event.current.mousePosition);
@@ -55,7 +56,7 @@ namespace NeonVault
             style.normal.textColor=!enabled?new Color(.42f,.43f,.42f):EqInk;
             style.hover.textColor=style.normal.textColor;style.active.textColor=style.normal.textColor;
             bool previous=GUI.enabled;GUI.enabled=previous&&enabled;
-            bool clicked=GUI.Button(r,caption,style);GUI.enabled=previous;return clicked;
+            bool clicked=GUI.Button(r,caption,style);GUI.enabled=previous;if(clicked)PlayUserSound("skill",.09f);return clicked;
         }
         bool EqNavigation(Rect r,string caption,bool selected)
         {
@@ -63,7 +64,7 @@ namespace NeonVault
             if(hover)Box(r,new Color(.16f,.17f,.17f));
             Box(new Rect(r.x,r.yMax-2,r.width,selected?3:1),selected?EqAccent:EqLine);
             EqText(new Rect(r.x+4,r.y+4,r.width-8,r.height-8),caption,selected?EqAccent:EqMuted,eqButtonStyle);
-            return GUI.Button(r,GUIContent.none,GUIStyle.none);
+            bool clicked=GUI.Button(r,GUIContent.none,GUIStyle.none);if(clicked)PlayUserSound("skill",.09f);return clicked;
         }
         EqCard EqMake(object item)
         {
@@ -81,9 +82,8 @@ namespace NeonVault
                 c.fullDescription=string.IsNullOrEmpty(a.legendaryKey)?EqAppend(c.description,LegendaryDescription(a,Armory.Description(a))):c.description;}
             else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
-                c.description=T("TYPE Module","種別 モジュール")+"\n"+shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
-                string moduleDetail=m.Description;int separator=moduleDetail.IndexOf(" / ",StringComparison.Ordinal);if(separator>=0)moduleDetail=moduleDetail.Substring(separator+3);
-                c.fullDescription=T("TYPE Module","種別 モジュール")+"\n"+LegendaryDescription(m,moduleDetail);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
+                c.description=shortEffect;c.description=EqAppend(c.description,GearScoring.AffixSummary(m));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
+                c.fullDescription=LegendaryDescription(m,m.Description);c.fullDescription=EqAppend(c.fullDescription,GearScoring.AffixSummary(m));}
             else if(item is MeleeWeaponItem w){c.key="w:"+w.id;c.name=MeleeWeaponCatalog.Name(w);c.color=w.color;c.equipped=w==EquippedMeleeWeapon;score=MeleeWeaponCatalog.Score(w);reference=MobileMeleeComparison(w,out has);level=w.level;rarity=w.rarity;maker=ManufacturerBranding.Maker(w);c.description=T("TYPE ","種別 ")+MeleeWeaponCatalog.Name(w.family)+"\n"+T("DMG ","威力 ")+MeleeDamageMin(w).ToString("0.0")+"-"+MeleeDamageMax(w).ToString("0.0")+T("\nRATE ","\n速度 ")+(1/Mathf.Max(.01f,w.interval)).ToString("0.0")+"/s\n"+T("RANGE ","射程 ")+w.effectiveRange.ToString("0.0")+"m / "+w.arcDegrees.ToString("0")+"°"+MeleeLegendaryDetail(w);c.description=EqAppend(c.description,GearScoring.AffixSummary(w));c.fullDescription=c.description;}
             c.color=Arsenal.Colors[(int)rarity];c.summary="Lv "+level+" · "+VaultLanguage.RarityName(rarity);c.comparison=!c.equipped&&has?EqComparison(score,reference):"";
             string comparison=!c.equipped&&has?EqComparison(score,reference):"";
@@ -145,7 +145,7 @@ namespace NeonVault
             int copyFontSize=MobileTouchControls.Enabled?31:23;
             eqCopy=new GUIStyle(label){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip,richText=true};eqCaption=new GUIStyle(eqCopy){font=this.font,fontSize=MobileTouchControls.Enabled?30:27,fontStyle=FontStyle.Normal};eqButtonStyle=new GUIStyle(centered){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};eqButtonStyle.normal.textColor=Color.white;eqButtonStyle.hover.textColor=Color.white;eqButtonStyle.active.textColor=Color.white;
             if(eqLastMerchant!=merchant||eqLastSelling!=shopSellingPage){eqSelectedKey=null;eqShowFullDetails=false;eqPendingDiscard=null;eqGridScroll=eqDetailScroll=Vector2.zero;eqLastMerchant=merchant;eqLastSelling=shopSellingPage;if(!merchant)eqUpgradePage=false;}
-            bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey)&&eqPendingDiscard==null;
+            LoadJunk();bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey)&&eqPendingDiscard==null&&!confirmJunkSale;
             Box(new Rect(0,0,1440,900),EqCanvas);
             Box(new Rect(28,12,44,3),EqAccent);
             Box(new Rect(28,103,1384,1),EqLine);
@@ -157,6 +157,7 @@ namespace NeonVault
                 if(EqNavigation(new Rect(28,112,212,72),T("BUY","購入"),!shopSellingPage&&!eqUpgradePage)){shopSellingPage=false;eqUpgradePage=false;pendingSaleKey=null;}
                 if(EqNavigation(new Rect(250,112,212,72),T("SELL","売却"),shopSellingPage&&!eqUpgradePage)){shopSellingPage=true;eqUpgradePage=false;pendingSaleKey=null;}
                 if(EqNavigation(new Rect(472,112,252,72),T("CAPACITY","所持枠拡張"),eqUpgradePage)){eqUpgradePage=true;pendingSaleKey=null;}
+                if(shopSellingPage&&!eqUpgradePage&&EqButton(new Rect(730,112,220,72),T("SELL JUNK","不要品売却")))confirmJunkSale=true;
                 if(EqButton(new Rect(958,112,454,72),T("DEBT / SKILLS","返済 / スキル"))){debtPage=true;debtSkillTreePage=false;return true;}
                 if(eqUpgradePage){DrawEquipmentCapacityShop();GUI.enabled=eqPreviousEnabled;return true;}
             }
@@ -195,6 +196,11 @@ namespace NeonVault
                 var c=cards[i];Rect r=new Rect(0,i*rowStep,408,210);bool chosen=c.key==eqSelectedKey;
                 FieldUIArt.Plate(r,chosen);
                 EqPortrait(new Rect(r.x+16,r.y+16,122,122),c.item);
+                if(junkKeys.Contains(JunkItemKey(c.item)))
+                {
+                    if(!junkBinIcon)junkBinIcon=Resources.Load<Texture2D>("Art/UI/junk-bin");
+                    if(junkBinIcon)GUI.DrawTexture(new Rect(r.x+108,r.y+6,36,36),junkBinIcon,ScaleMode.ScaleToFit,true);
+                }
                 Box(new Rect(r.x+16,r.y+150,32,3),c.color);
                 string cardName=c.name.Trim().Replace("\n ","\n").Replace("\n　","\n");var nameStyle=new GUIStyle(cardText);
                 while(nameStyle.fontSize>20&&nameStyle.CalcHeight(new GUIContent(cardName),244)>118)nameStyle.fontSize--;
@@ -223,7 +229,7 @@ namespace NeonVault
             }
             for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);float width=270;Rect r=new Rect(28+i*278,790,width,merchant?82:62);string shortLabel=AmmoLabel(type);string caption=shortLabel+"\n"+AmmoReserve(type)+" / "+AmmoCapacity(type);if(merchant){caption+="\n"+T("BUY ","購入 ")+AmmoPackSize(type)+" / "+AmmoPackCost(type).ToString("N0");var previous=eqButtonStyle;var fitted=new GUIStyle(previous){wordWrap=false};while(fitted.fontSize>12&&fitted.CalcSize(new GUIContent(shortLabel)).x>r.width-20)fitted.fontSize--;eqButtonStyle=fitted;if(EqButton(r,caption))BuyAmmo(type,1);eqButtonStyle=previous;}else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}}
             if(!merchant)EqText(new Rect(28,864,1384,32),RunBuffSummary(),EqMuted,new GUIStyle(eqCopy){fontSize=18});
-            GUI.enabled=eqPreviousEnabled;if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();else if(!merchant&&eqPendingDiscard!=null)EqDiscardConfirmation();return true;
+            GUI.enabled=eqPreviousEnabled;if(confirmJunkSale)DrawJunkConfirmation();else if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();else if(!merchant&&eqPendingDiscard!=null)EqDiscardConfirmation();return true;
         }
         void DrawEquippedTotals()
         {
@@ -279,6 +285,8 @@ namespace NeonVault
         void EqActions(EqCard c,bool merchant)
         {
             if(merchant){if(c.offer>=0){var o=shopStock[c.offer];int cost=ShopOfferPrice(o);if(EqButton(new Rect(950,630,446,76),o.purchased?T("PURCHASED","購入済み"):T("BUY / ","購入 / ")+cost.ToString("N0"),false,!o.purchased&&Credits>=cost))PurchaseShop(c.offer);}else if(c.sale!=null){var s=c.sale;string caption=s.equipped?T("EQUIPPED / CHANGE LOADOUT TO SELL","装備中 / 装備を変更して売却"):s.lastRequired?T("KEEP LAST WEAPON","最後の武器は保持"):T("SELL / ","売却 / ")+s.price.ToString("N0");if(EqButton(new Rect(950,630,446,76),caption,false,!s.equipped&&!s.lastRequired)){saleCategory=eqCategory;pendingSaleKey=SaleKey(s);}if(s.equipped)EqEquipActions(c,712,false);}return;}
+            string key=JunkItemKey(c.item);
+            if(EqButton(new Rect(1180,550,216,58),junkKeys.Contains(key)?T("UNMARK","不要解除"):T("JUNK","不要")))ToggleJunk(key);
             EqEquipActions(c,630,true);
         }
         void EqEquipActions(EqCard c,float y,bool discard)

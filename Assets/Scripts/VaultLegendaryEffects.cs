@@ -68,7 +68,7 @@ namespace NeonVault
         {
             if(variant==0)return ja?"頭装備は一時停止中":"Head equipment is retired";
             string[] triggerEn={"","On kill (4s cooldown): ","On reload (4s cooldown): ","On dash (4s cooldown): ","Every 5s in combat: "};
-            string[] triggerJa={"","撃破時（待機4秒）：","リロード時（待機4秒）：","ダッシュ時（待機4秒）：","戦闘中5秒ごと："};
+            string[] triggerJa={"","撃破時（クールダウン4秒）：","リロード時（クールダウン4秒）：","ダッシュ時（クールダウン4秒）：","戦闘中5秒ごと："};
             string[,] en={
                 {"","tag the nearest survivor with a precision strike; accurate shots for 2s","intercept close hostile rounds and steady shots for 2s","fire two short cover shots at the nearest foe","delay the farthest visible foe's next attack"},
                 {"","gain barrier and shove foes away from the fallen enemy","reload shockwave pushes nearby foes away","dash-start impact pushes nearby foes away","stagger a nearby foe and gain barrier"},
@@ -78,11 +78,11 @@ namespace NeonVault
                 {"","gain barrier and counterstrike nearby foes","intercept hostile rounds and reinforce barrier","briefly phase through damage and push nearby foes","spend barrier to release a defensive counterburst"}};
             string[,] jp={
                 {"","最寄の生存敵に精密追撃し、2秒間射撃を安定化","近くの敵弾を迎撃し、2秒間射撃を安定化","最寄の敵へ短命の援護弾を2発発射","視界内で最も遠い敵の次の攻撃を遅らせる"},
-                {"","障壁を得て、撃破地点の周囲の敵を押し出す","リロード時の衝撃波で近くの敵を押す","ダッシュ開始地点の敵を押し出す","近くの敵をひるませ、障壁を得る"},
+                {"","シールドを得て、撃破地点の周囲の敵を押し出す","リロード時の衝撃波で近くの敵を押す","ダッシュ開始地点の敵を押し出す","近くの敵をひるませ、シールドを得る"},
                 {"","生存する2体へ電撃を連鎖させ攻撃を遅らせる","周囲の敵弾を迎撃する","ダッシュで近くの2体を感電・妨害する","最寄の敵弾を迎撃する"},
-                {"","HPを3回復し、撃破地点に攻撃胞子を設置","HP半分以下なら回復し、最寄の敵をひるませる","敵に囲まれた時に回復し、周囲を押し返す","障壁をHPに変換。障壁がなければ少量生成"},
+                {"","HPを3回復し、撃破地点に攻撃胞子を設置","HP半分以下なら回復し、最寄の敵をひるませる","敵に囲まれた時に回復し、周囲を押し返す","シールドをHPに変換。シールドがなければ少量生成"},
                 {"","撃破地点に遅延地雷を設置","前方の扇形範囲を爆破","ダッシュ後方に遅延炎域を2つ残す","最寄の敵の周囲を爆破"},
-                {"","障壁を獲得し近くの敵へ反撃","敵弾を迎撃し障壁を補強","短時間ダメージをかわし近くの敵を押す","障壁を消費して防衛反撃を放つ"}};
+                {"","シールドを獲得し近くの敵へ反撃","敵弾を迎撃しシールドを補強","短時間ダメージをかわし近くの敵を押す","シールドを消費して防衛反撃を放つ"}};
             return (ja?triggerJa:triggerEn)[variant]+(ja?jp:en)[maker,variant];
         }
         void ResolveArmorLegendary(int maker,int variant,Vector3 origin)

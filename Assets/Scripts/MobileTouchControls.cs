@@ -108,6 +108,7 @@ namespace NeonVault
         bool Visible(int i)
         {
             if(i==(int)MobileAction.Interact && (game==null||!game.HasNearbyInteraction))return false;
+            if(i==(int)MobileAction.Pickup && (game==null||!game.HasNearbyPickup))return false;
             if (combat) return true;
             if (hub) return i == (int)MobileAction.Interact || i == (int)MobileAction.Inventory || i == (int)MobileAction.Pause;
             if (modal) return false; // Full-screen menus provide their own large close/resume buttons.
@@ -194,8 +195,10 @@ namespace NeonVault
                     if (i == (int)MobileAction.Skill) continue; // Drawn by the action skill HUD.
                     Rect r = buttons[i]; bool down = fingers.ContainsValue(i) || Time.unscaledTime < feedback[i];
                     bool primary=i==(int)MobileAction.Fire;
-                    Circle(r, down, primary);
+                    float opacity=Opacity;if(game!=null&&!game.MobileActionAvailable((MobileAction)i))Opacity=opacity*.45f;
+                    Circle(r, down, primary);Opacity=opacity;
                     Color ink=primary?new Color(.08f,.11f,.14f):new Color(.96f,.96f,.91f);
+                    if(game!=null&&!game.MobileActionAvailable((MobileAction)i))ink.a=.45f;
                     ActionIcon(new Rect(r.x+r.width*.24f,r.y+r.height*.17f,r.width*.52f,r.height*.47f),(MobileAction)i,ink);
                     textStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(r.width * .15f, 12, 28));
                     textStyle.normal.textColor=ink;GUI.color=Color.white;

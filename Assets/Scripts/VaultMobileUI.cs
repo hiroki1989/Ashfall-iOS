@@ -74,7 +74,7 @@ namespace NeonVault
             if(screen==Screen.Reward)
             {
                 MobileCopyAt(50,70,T("CHOOSE YOUR AUGMENT","強化を選択"),Gold);
-                string[] names={T("OVERCHARGE / Damage +25%","威力 +25%"),T("REINFORCED / HP +30, heal 35","最大HP +30 / HP35回復"),T("RAPID CYCLER / Fire rate +22%","連射速度 +22%"),T("REPAIR / Restore all HP","HPを全回復"),T("SHOCK / Dash cooldown +35%","回避待機短縮 +35% / 衝撃波"),T("TESLA / 30% chain damage","威力30%の連鎖攻撃"),T("BIO / Heal 3 HP per kill","撃破ごとにHP3回復"),T("BALANCED / Damage +12%, fire +10%","威力 +12% / 連射 +10%"),T("MEDIC / HP +20, heal 45","最大HP +20 / HP45回復"),T("MOBILE / Dash +20%, heal on kill","回避短縮 +20% / 撃破時HP1回復"),T("ARC / Chain +20%, fire +10%","連鎖 +20% / 連射 +10%"),T("STRIKE / Damage +15%, dash +15%","威力 +15% / 回避短縮 +15%"),T("RESUPPLY / Heal 50%, ammunition","HP50%回復 / 全弾薬補給")};
+                string[] names={T("OVERCHARGE / Damage +25%","威力 +25%"),T("REINFORCED / HP +30, heal 35","最大HP +30 / HP35回復"),T("RAPID CYCLER / Fire rate +22%","連射速度 +22%"),T("REPAIR / Restore all HP","HPを全回復"),T("SHOCK / Dash cooldown +35%","回避クールダウン短縮 +35% / 衝撃波"),T("TESLA / 30% chain damage","威力30%の連鎖攻撃"),T("BIO / Heal 3 HP per kill","撃破ごとにHP3回復"),T("BALANCED / Damage +12%, fire +10%","威力 +12% / 連射 +10%"),T("MEDIC / HP +20, heal 45","最大HP +20 / HP45回復"),T("MOBILE / Dash +20%, heal on kill","回避短縮 +20% / 撃破時HP1回復"),T("ARC / Chain +20%, fire +10%","連鎖 +20% / 連射 +10%"),T("STRIKE / Damage +15%, dash +15%","威力 +15% / 回避短縮 +15%"),T("RESUPPLY / Heal 50%, ammunition","HP50%回復 / 全弾薬補給")};
                 for(int i=0;i<3;i++)if(MobileButton(new Rect(50,220+i*195,1340,155),names[choices[i]])){int c=choices[i];RecordRunUpgrade(c);ChooseReward(i);}
                 return;
             }

@@ -79,7 +79,7 @@ namespace NeonVault
             if(amount<=0)return false;
             int cost=PriceAfterDiscount(Mathf.CeilToInt(AmmoPackCosts[(int)type]*(amount/(float)AmmoPackSizes[(int)type])));
             if(!TrySpendCredits(cost))return false;
-            ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();return true;
+            ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();PlayUserSound("transaction",.35f);return true;
         }
         public void AddAmmo(AmmoType type,int amount)
         {type=NormalizeAmmoType(type);if(!ValidAmmo(type)||amount<=0)return;ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+amount);SaveInventory();}

@@ -49,7 +49,7 @@ namespace NeonVault
             if((int)category<0||(int)category>9||screen!=Screen.Shop)return false;
             int cost=StorageUpgradeCost(category);
             if(cost<=0||Credits<cost)return false;
-            if(category==StorageUpgrade.Stash)return BuyStashCapacity(cost);
+            if(category==StorageUpgrade.Stash){bool bought=BuyStashCapacity(cost);if(bought)PlayUserSound("transaction",.35f);return bought;}
             if(!TrySpendCredits(cost))return false;
             int ammoIndex=AmmoIndex(category);
             if(ammoIndex>=0)ammoCapacityTiers[ammoIndex]++;
@@ -61,7 +61,7 @@ namespace NeonVault
                 case StorageUpgrade.Melee:MeleeCapacityTier++;break;
                 case StorageUpgrade.Stash:StashTier++;SaveStash();break;
             }
-            SaveInventory();SaveProgression();
+            SaveInventory();SaveProgression();PlayUserSound("transaction",.35f);
             return true;
         }
     }

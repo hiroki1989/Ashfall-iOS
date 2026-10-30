@@ -8,12 +8,27 @@ namespace NeonVault
     {
         public DetailedHero3D Body { get; private set; }
         public Transform Muzzle { get; private set; }
+        public int Faction { get; private set; }
         Vector3 previous;
         float phase, deathTime=-1;
         Foe owner;
         DetailedHeroEquipment3D.WeaponSockets gun;
         bool handgun;
         Mesh helmetMesh, trimmedHeadMesh;
+        static readonly Mesh[] sharedArmorMeshes=new Mesh[5];
+        static Material[] sharedArmorMaterials;
+        static Bounds sharedArmorBounds;
+        static SkinnedMeshRenderer[] CreateSharedArmor(DetailedHero3D hero)
+        {
+            var parts=new SkinnedMeshRenderer[5];var bones=CharacterRigStandard.GetBones(hero);
+            for(int slot=1;slot<5;slot++)if(sharedArmorMeshes[slot])
+            {
+                var go=new GameObject("Faction shared armor / "+(ArmorSlot)slot);go.transform.SetParent(hero.transform,false);
+                var skin=go.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=sharedArmorMeshes[slot];skin.bones=bones;skin.rootBone=hero.chest;
+                skin.sharedMaterials=sharedArmorMaterials;skin.localBounds=sharedArmorBounds;parts[slot]=skin;
+            }
+            return parts;
+        }
 
         // faction: 0 military, 1 raiders, 2 gang. variant: 0 or 1.
         // Parent origin is the ground contact point; caller owns actor positioning.
@@ -23,6 +38,7 @@ namespace NeonVault
             var root=new GameObject("Human faction " + faction + " / " + variant);
             root.transform.SetParent(parent,false);
             var visual=root.AddComponent<HumanFactionVisual>();
+            visual.Faction=faction;
             visual.Body=DetailedHero3D.Create(root.transform,key=>Palette(faction,variant,key));
             var legacy=visual.Body.GetComponentsInChildren<Renderer>(true);
             var common=GeneratedCommonBodyRig.Create(visual.Body);
@@ -38,11 +54,17 @@ namespace NeonVault
                 var fallback=new ArmorItem[5];
                 // Use the player's articulated Warden equipment, not the
                 // older procedural armor geometry, on the same survivor skeleton.
-                var armor=GeneratedWardenPreviewAssets.CreateCharacterPart("armor",visual.Body);
-                var scan=GeneratedWardenRig.Bind(armor,visual.Body,false,true,true);
-                var parts=GeneratedWardenRig.SplitArmorBySlot(scan,visual.Body.transform);
-                if(scan)scan.enabled=false;
-                else if(armor)armor.SetActive(false);
+                SkinnedMeshRenderer[] parts;
+                if(sharedArmorMeshes[1]&&sharedArmorMeshes[2]&&sharedArmorMeshes[3]&&sharedArmorMeshes[4])parts=CreateSharedArmor(visual.Body);
+                else
+                {
+                    var armor=GeneratedWardenPreviewAssets.CreateCharacterPart("armor",visual.Body);
+                    var scan=GeneratedWardenRig.Bind(armor,visual.Body,false,true,true);
+                    parts=GeneratedWardenRig.SplitArmorBySlot(scan,visual.Body.transform);
+                    if(scan){scan.enabled=false;sharedArmorMaterials=scan.sharedMaterials;sharedArmorBounds=scan.localBounds;}
+                    else if(armor)armor.SetActive(false);
+                    for(int slot=1;slot<parts.Length;slot++)if(parts[slot])sharedArmorMeshes[slot]=parts[slot].sharedMesh;
+                }
                 for(int slot=1;slot<parts.Length;slot++)
                 {
                     if(parts[slot])parts[slot].enabled=true;
@@ -76,6 +98,11 @@ namespace NeonVault
                     renderer.enabled=false;
             visual.AddHelmet(faction);
             GeneratedWardenPreviewAssets.CreateFittedMask(visual.Body.head);
+            // The same articulated character and outfit are used on iOS. Limit
+            // per-vertex skinning work and avoid animating offscreen renderers.
+            if(Application.isMobilePlatform)
+                foreach(var skin in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;}
             visual.owner=parent.GetComponentInParent<Foe>();
             visual.previous=root.transform.position;
             return visual;
@@ -113,7 +140,7 @@ namespace NeonVault
         // full-face respirator, so the fitted Warden mask remains visible.
         void AddHelmet(int faction)
         {
-            const int rows=28, segments=64;
+            int rows=Application.isMobilePlatform?12:28, segments=Application.isMobilePlatform?24:64;
             var vertices=new Vector3[(rows+1)*(segments+1)];
             var triangles=new int[rows*segments*6];
             for(int row=0;row<=rows;row++)for(int i=0;i<=segments;i++)
@@ -220,8 +247,8 @@ namespace NeonVault
             if(deathTime>=0)
             {
                 float fall=Mathf.SmoothStep(0,1,Mathf.Clamp01(deathTime/.55f));
-                Body.transform.localRotation=Quaternion.Euler(0,0,fall*85);
-                Body.transform.localPosition=Vector3.up*(fall*.04f);
+                Body.transform.localRotation=Quaternion.Euler(fall*75,0,fall*18);
+                Body.transform.localPosition=Vector3.down*(fall*.12f);
             }
         }
     }

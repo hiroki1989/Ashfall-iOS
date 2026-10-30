@@ -77,6 +77,7 @@ namespace NeonVault
             style.normal.textColor=primary?Ink:UiPaper;style.hover.textColor=primary?Ink:UiPaper;style.active.textColor=primary?Ink:UiPaper;
             style.normal.textColor=UiPaper;style.hover.textColor=Color.white;style.active.textColor=Color.white;
             bool clicked=GUI.Button(r,value,style);
+            if(clicked)PlayUserSound("skill",.09f);
             Text(r.xMax-31,r.center.y-15,"›",new GUIStyle(label){fontSize=25},primary?Ink:accent,26);
             return clicked;
         }
@@ -156,7 +157,7 @@ namespace NeonVault
         {
             Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));Panel(new Rect(55,125,1330,660),new Color(1,.27f,.19f));
             Text(95,160,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),new GUIStyle(heading){fontSize=42,wordWrap=true},new Color(1,.39f,.28f),1230);
-            Text(95,245,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Raider Boss owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはレイダーボス、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=31,wordWrap=true},Mist,1220);
+            Text(95,245,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=31,wordWrap=true},Mist,1220);
             Text(95,480,T("Repayment earns levels and skill points. Choose an action skill and upgrade its branches.","返済でレベルとスキルポイントを獲得する。アクションスキルと強化の方向を選ぼう。"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,1220);
             if(MobileButton(new Rect(300,640,840,120),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")))MarkDebtIntroSeen();
         }
@@ -165,7 +166,7 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));
             Panel(new Rect(205,150,1030,600),new Color(1,.27f,.19f));
             Text(250,190,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),heading,new Color(1,.39f,.28f),930);
-            Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Raider Boss owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはレイダーボス、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
+            Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
             Text(255,490,T("Repayment grants levels and skill points. The first level costs 1,000,000 scrap. Visit Briggs to repay and upgrade action skills.","返済でレベルとスキルポイントを獲得。最初のレベルは100万スクラップ。拠点のブリッグスに話しかけて返済と強化を進めよう。"),small,Cyan,900);
             if(MobileTouchControls.Enabled?MobileButton(new Rect(350,620,740,115),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")):Button(new Rect(505,640,430,64),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃"),true))MarkDebtIntroSeen();
         }
@@ -182,7 +183,7 @@ namespace NeonVault
                 Text(162,195,T("CHOOSE YOUR AUGMENT","強化を選択"),heading,Gold);
                 Text(165,260,T("Take one field upgrade into zone "+(room+2)+".","現地改造をひとつ選び、区域 "+(room+2)+" へ。"),label,Mist);
                 string[] names={T("OVERCHARGE","オーバーチャージ"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復プロトコル"),T("SHOCK BOOSTER","衝撃ブースター"),T("TESLA BRIDGE","テスラ導線"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
-                string[] desc={T("Run damage +25%","周回の威力 +25%"),T("Run max HP +30 / heal 35","周回HP +30 / HP35回復"),T("Run fire rate +22%","周回の連射 +22%"),T("Restore all HP","HPを全回復"),T("Dash cooldown bonus +35% / dash pulse","回避待機短縮 +35% / ダッシュ波動"),T("Hits chain 30% damage to a nearby target","命中で近くの敵へ威力30%の連鎖"),T("Heal 3 HP per kill this run","撃破ごとにHP3回復"),T("Damage +12% / fire rate +10%","威力 +12% / 連射 +10%"),T("Max HP +20 / heal 45","最大HP +20 / HP45回復"),T("Dash cooldown +20% / heal 1 per kill","回避短縮 +20% / 撃破時HP1回復"),T("Chain damage +20% / fire rate +10%","連鎖 +20% / 連射 +10%"),T("Damage +15% / dash cooldown +15%","威力 +15% / 回避短縮 +15%"),T("Heal 50% and replenish ammunition","HP50%回復 / 全弾薬を補給")};
+                string[] desc={T("Run damage +25%","周回の威力 +25%"),T("Run max HP +30 / heal 35","周回HP +30 / HP35回復"),T("Run fire rate +22%","周回の連射 +22%"),T("Restore all HP","HPを全回復"),T("Dash cooldown bonus +35% / dash pulse","回避クールダウン短縮 +35% / ダッシュ波動"),T("Hits chain 30% damage to a nearby target","命中で近くの敵へ威力30%の連鎖"),T("Heal 3 HP per kill this run","撃破ごとにHP3回復"),T("Damage +12% / fire rate +10%","威力 +12% / 連射 +10%"),T("Max HP +20 / heal 45","最大HP +20 / HP45回復"),T("Dash cooldown +20% / heal 1 per kill","回避短縮 +20% / 撃破時HP1回復"),T("Chain damage +20% / fire rate +10%","連鎖 +20% / 連射 +10%"),T("Damage +15% / dash cooldown +15%","威力 +15% / 回避短縮 +15%"),T("Heal 50% and replenish ammunition","HP50%回復 / 全弾薬を補給")};
                 for(int i=0;i<3;i++)
                 {
                     int c=choices[i];Rect r=new Rect(165+i*375,345,350,306);Panel(r,c==1?Cyan:Gold);
@@ -252,7 +253,9 @@ namespace NeonVault
         string EnemyHealthLabel(Foe foe)
         {
             int level=IsOverworld?GetOverworldEnemyLevel(foe):SelectedExpeditionStage!=null?SelectedExpeditionStage.level:CurrentDungeon.minLevel;
-            return "Lv."+Mathf.Max(1,level)+" "+Foe.Name(foe.kind);
+            var human=foe.GetComponentInChildren<HumanFactionVisual>();
+            string name=human&&human.Faction==1?T("RED CLAW","レッドクロウ"):human&&human.Faction==2?T("COYOTES","コヨーテ"):Foe.Name(foe.kind);
+            return "Lv."+Mathf.Max(1,level)+" "+name;
         }
         void DrawCompactLootCard(object item,Rarity rarity,int level,int score)
         {

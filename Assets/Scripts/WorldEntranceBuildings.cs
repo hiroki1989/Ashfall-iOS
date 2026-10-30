@@ -72,6 +72,18 @@ namespace NeonVault
             Box(site.transform,state.materials,"Door header",new Vector3(0,3,1.85f),new Vector3(3,.32f,.45f),1);
             Box(site.transform,state.materials,"Door threshold",new Vector3(0,.08f,1),new Vector3(2.8f,.12f,1.9f),0);
             Box(site.transform,state.materials,"Entrance lamp",new Vector3(0,3.3f,1.64f),new Vector3(.65f,.16f,.18f),4);
+            if(!camp)
+            {
+                var faction=ExpeditionMap.FactionForStage(key-state.geography.Camps.Length);
+                var flags=Resources.Load<Texture2D>("Art/Factions/FactionFlagsConcept");
+                if(faction!=DungeonFaction.None&&flags)
+                {
+                    var pole=GameObject.CreatePrimitive(PrimitiveType.Cylinder);pole.name="Faction flag pole";pole.transform.SetParent(site.transform,false);pole.transform.localPosition=new Vector3(2.1f,3.15f,1.45f);pole.transform.localScale=new Vector3(.07f,1.5f,.07f);var collider=pole.GetComponent<Collider>();if(collider)UnityEngine.Object.Destroy(collider);pole.GetComponent<Renderer>().sharedMaterial=state.materials[1];
+                    var flag=GameObject.CreatePrimitive(PrimitiveType.Quad);flag.name="Faction flag";flag.transform.SetParent(site.transform,false);flag.transform.localPosition=new Vector3(2.95f,4.05f,1.4f);flag.transform.localScale=new Vector3(1.7f,1.2f,1);
+                    var fc=flag.GetComponent<Collider>();if(fc)UnityEngine.Object.Destroy(fc);
+                    var shader=Shader.Find("Unlit/Transparent")??Shader.Find("Sprites/Default");if(shader){var material=new Material(shader){name="Faction flag",mainTexture=flags};material.mainTextureScale=new Vector2(1f/3f,1);material.mainTextureOffset=new Vector2((faction==DungeonFaction.Raiders?1:2)/3f,0);flag.GetComponent<Renderer>().sharedMaterial=material;}
+                }
+            }
             var batch=site.GetComponent<ImportedWorldBatch>();if(!batch)batch=site.AddComponent<ImportedWorldBatch>();
             batch.RegisterSiteRenderers();
             return site;

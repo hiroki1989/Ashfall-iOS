@@ -3,8 +3,8 @@ namespace NeonVault {
  public partial class VaultGame {
   int bossIntroBeat;
   void DrawCinematicBossIntro(){
-   string[] speakersEn={"","RAIDER BOSS","YOU","RAIDER BOSS","YOU","RAIDER BOSS","RAIDER BOSS"};
-   string[] speakersJa={"","レイダーのボス","主人公","レイダーのボス","主人公","レイダーのボス","レイダーのボス"};
+   string[] speakersEn={"","MALCOLM VALE","REID","MALCOLM VALE","REID","MALCOLM VALE","MALCOLM VALE"};
+   string[] speakersJa={"","マルコム・ヴェイル","レイド","マルコム・ヴェイル","レイド","マルコム・ヴェイル","マルコム・ヴェイル"};
    string[] linesEn={
     "A low hum. Cold concrete. You wake with a steel collar locked around your neck.",
     "Look who's back from the dead. Easy there. The collar's got a temper, and I'm holding the switch.",

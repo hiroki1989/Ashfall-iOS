@@ -68,7 +68,7 @@ namespace NeonVault
             var k=ActionSkillKind.Mechanic;
             float fire=ASPath(k,0),movement=ASPath(k,1),area=ASPath(k,2);
             actionSkillDuration=12+movement*1.5f+ASRank(k,1,4)*5;
-            actionSkillPower=Mathf.Max(12,EffectiveDamage)*(.65f+fire*.13f+ASRank(k,0,4)*.55f);
+            actionSkillPower=EffectiveDamage*(.5f+fire*.13f+ASRank(k,0,4)*.55f);
             actionSkillRadius=14+area*1.5f;
             actionSkillFollows=ASRank(k,1,4)>0;
             actionSkillMultitarget=ASRank(k,2,4)>0;
@@ -102,7 +102,8 @@ namespace NeonVault
             var k=ActionSkillKind.Bomber;
             int count=1+Mathf.FloorToInt(ASPath(k,0))+3*ASRank(k,0,4);
             float radius=2.7f+ASPath(k,1)*.35f+ASRank(k,1,4)*1.25f;
-            float damage=Mathf.Max(18,EffectiveDamage)*(9.0f+ASPath(k,2)*1.0f+ASRank(k,2,4)*3.0f);
+            float weaponDps=gun!=null?EffectiveDamage*Mathf.Max(1,gun.pellets)*EffectiveFireRate:EffectiveDamage*7.7f;
+            float damage=Mathf.Max(18,weaponDps/7.7f)*(9.0f+ASPath(k,2)*1.0f+ASRank(k,2,4)*3.0f);
             Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:player.forward;forward.y=0;
             for(int i=0;i<count;i++)
             {
@@ -192,18 +193,20 @@ namespace NeonVault
             {Vector3 d=foe.transform.position-actionSkillHead.position;d.y=0;float distance=d.sqrMagnitude;if(distance<best&&LineOfSight(actionSkillHead.position,foe.transform.position)){best=distance;target=foe;}}
             if(!target){actionSkillFireTimer=.25f;return;}
             Vector3 direction=target.transform.position-actionSkillHead.position;direction.y=0;if(direction.sqrMagnitude<.001f)return;
+            actionSkillPower=EffectiveDamage*(.5f+ASPath(ActionSkillKind.Mechanic,0)*.13f+ASRank(ActionSkillKind.Mechanic,0,4)*.55f);
             direction.Normalize();actionSkillHead.rotation=Quaternion.LookRotation(direction);
             Vector3 muzzle=actionSkillHead.position+direction*.64f;
-            SpawnBullet(muzzle,direction,true,actionSkillPower,25,new Color(.9f,.67f,.32f),GunEffect.Normal);
+            int pellets=gun!=null?Mathf.Max(1,gun.pellets):1;float speed=gun!=null?gun.speed:25;
+            for(int i=0;i<pellets;i++){float spread=pellets==1?0:Mathf.Lerp(-8,8,(float)i/(pellets-1));SpawnBullet(muzzle,Quaternion.Euler(0,spread,0)*direction,true,actionSkillPower,speed,new Color(.9f,.67f,.32f),GunEffect.Normal);}
             PlayActionSound(false);
             CombatVisuals.Muzzle(muzzle,direction,new Color(.9f,.67f,.32f),GunEffect.Normal,world);
             if(actionSkillMultitarget)
             {
                 Foe second=null;float next=actionSkillRadius*actionSkillRadius;
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&foe!=target){Vector3 d=foe.transform.position-actionSkillHead.position;d.y=0;if(d.sqrMagnitude<next&&LineOfSight(actionSkillHead.position,foe.transform.position)){next=d.sqrMagnitude;second=foe;}}
-                if(second){Vector3 d=second.transform.position-muzzle;d.y=0;if(d.sqrMagnitude>.001f)SpawnBullet(muzzle,d.normalized,true,actionSkillPower*.8f,25,new Color(.9f,.67f,.32f),GunEffect.Normal);}
+                if(second){Vector3 d=second.transform.position-muzzle;d.y=0;if(d.sqrMagnitude>.001f)SpawnBullet(muzzle,d.normalized,true,actionSkillPower*.8f,speed,new Color(.9f,.67f,.32f),GunEffect.Normal);}
             }
-            actionSkillFireTimer=Mathf.Max(.2f,.65f-ASPath(ActionSkillKind.Mechanic,2)*.06f);
+            actionSkillFireTimer=Mathf.Max(.04f,(gun!=null?1/Mathf.Max(.01f,EffectiveFireRate):.65f)/(1+ASPath(ActionSkillKind.Mechanic,2)*.1f));
         }
 
         void ExplodeActionGrenade(ActionGrenade grenade)

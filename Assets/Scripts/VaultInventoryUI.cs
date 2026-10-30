@@ -65,7 +65,7 @@ namespace NeonVault
         {
             Box(new Rect(0,0,1440,900),new Color(.027f,.028f,.023f,.97f));
             Text(48,32,T("FIELD MODULES / TWO SLOTS","拡張モジュール / 2枠"),heading,Gold,1050);
-            Text(50,95,T("Permanent equipment. Trigger conditions and cooldowns reset each run.","恒久装備。発動条件と待機時間は周回開始でリセット。"),small,Mist,1100);
+            Text(50,95,T("Permanent equipment. Trigger conditions and cooldowns reset each run.","恒久装備。発動条件とクールダウンは周回開始でリセット。"),small,Mist,1100);
             DrawRunBuffLine(118);
             if(Button(new Rect(1190,80,225,48),T("CLOSE [I / ESC]","閉じる [I / ESC]")))ToggleInventory();
             if(Button(new Rect(48,145,340,45),T("WEAPONS / ARMOR","銃 / 防具"))){artifactPage=false;meleeInventoryPage=false;}
@@ -184,7 +184,7 @@ namespace NeonVault
             if(runDash>.001f)parts.Add(T("DASH ","回避 ")+"+"+(runDash*100).ToString("0")+"%");
             if(runChain>.001f)parts.Add(T("CHAIN ","連鎖 ")+"+"+(runChain*100).ToString("0")+"%");
             if(runHarvest>.01f)parts.Add(T("KILL HEAL ","撃破回復 ")+"+"+runHarvest.ToString("0.#"));
-            if(ArtifactShield>.01f)parts.Add(T("BARRIER ","障壁 ")+ArtifactShield.ToString("0.#"));
+            if(ArtifactShield>.01f)parts.Add(T("BARRIER ","シールド ")+ArtifactShield.ToString("0.#"));
             if(ArtifactDamageMultiplier>1.001f)parts.Add(T("MOD DMG ","モジュール威力 ")+"×"+ArtifactDamageMultiplier.ToString("0.00"));
             if(reloadSurge>0)parts.Add(T("RELOAD ","リロード強化 ")+reloadSurge.ToString("0.0")+T("s","秒"));
             string[] augments={T("OVERCHARGE","過負荷"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復手順"),T("SHOCK BOOSTER","衝撃増幅"),T("TESLA BRIDGE","電弧連鎖"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
@@ -198,10 +198,10 @@ namespace NeonVault
         }
         string MeleeArtifactState(ArtifactItem item)
         {
-            if(item.effect==ArtifactEffect.KillShield)return ArtifactShield>0?T("barrier active","障壁発動中"):T("on kill","敵撃破で発動");
+            if(item.effect==ArtifactEffect.KillShield)return ArtifactShield>0?T("barrier active","シールド発動中"):T("on kill","敵撃破で発動");
             if(item.effect==ArtifactEffect.DashPulse)return T("on dash","ダッシュで発動");
             if(item.effect==ArtifactEffect.ReloadSurge)return ArtifactReloadSurgeRemaining(item)>0?T("surge active","強化発動中"):T("on reload","リロード完了で発動");
-            return ArtifactShield>0?T("conversion active","変換効果発動中"):T("requires barrier","障壁が必要");
+            return ArtifactShield>0?T("conversion active","変換効果発動中"):T("requires barrier","シールドが必要");
         }
         void DrawAmmoInventoryStrip(float y)
         {

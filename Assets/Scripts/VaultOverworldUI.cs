@@ -132,8 +132,8 @@ namespace NeonVault
         float worldMapPinchDistance;
         public static string OverworldCampName(int index,bool japanese)
         {
-            string[] en={"Boss Hideout","Iron Rest","Canal Refuge","Green Shelter","Ash Post","North Watch","Wayfarer Camp","Rail Refuge","Foundry Rest","Lake Watch","Pine Shelter","Old Mill","South Haven","Ridge Camp"};
-            string[] ja={"ボスのアジト","鉄の休息所","運河の避難所","緑陰のシェルター","灰の前哨地","北の監視所","旅人の野営地","鉄路の避難所","鋳造所の休息所","湖の監視所","松林のシェルター","古い製粉所","南の安息所","尾根の野営地"};
+            string[] en={"Wardens Headquarters","Iron Rest","Canal Refuge","Green Shelter","Ash Post","North Watch","Wayfarer Camp","Rail Refuge","Foundry Rest","Lake Watch","Pine Shelter","Old Mill","South Haven","Ridge Camp"};
+            string[] ja={"ウォーデンズ本拠地","鉄の休息所","運河の避難所","緑陰のシェルター","灰の前哨地","北の監視所","旅人の野営地","鉄路の避難所","鋳造所の休息所","湖の監視所","松林のシェルター","古い製粉所","南の安息所","尾根の野営地"};
             return (japanese?ja:en)[Mathf.Clamp(index,0,13)];
         }
         GUIStyle WorldCopy(int size=22)=>new GUIStyle(label){fontSize=size,wordWrap=true,clipping=TextClipping.Clip};
@@ -207,6 +207,8 @@ namespace NeonVault
             WorldLabel(new Rect(456,51,550,27),T("LEVEL ","レベル ")+DebtLevel+"   /   "+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),UiPaper,19);
             if(!mobile&&WorldButton(new Rect(1240,20,180,74),T("EQUIPMENT","装備")))ToggleInventory();
             DrawWorldLocalMap(new Rect(1165,165,250,180));
+            if(TryFirstStepsWaypoint(out Vector3 tutorialTarget))DrawScreenDirection(tutorialTarget,mobile);
+            else if(OverworldWaypointKind!=0)DrawScreenDirection(OverworldWaypointPosition,mobile);
             if(gun!=null)
             {
                 DrawHeldWeaponHUD(mobile?new Rect(350,797,280,80):new Rect(1190,812,226,64));
@@ -218,7 +220,7 @@ namespace NeonVault
             if(entrance>=0)
             {
                 var stage=ExpeditionMap.Get(entrance,DebtLevel);
-                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+T(mobile?"ENTER":"ENTER / E",mobile?"入場":"入場 / E")))EnterNearbyWorldDungeon(entrance);
+                if(WorldButton(mobile?new Rect(440,325,570,60):new Rect(940,625,475,86),stage.Name+" / Lv."+stage.level+"\n"+T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E")))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
             {
@@ -342,7 +344,13 @@ namespace NeonVault
         void DrawDungeonMapArt(Rect rect,int stageId,Color tint)
         {
             DungeonFaction faction=ExpeditionMap.FactionForStage(stageId);
-            if(faction==DungeonFaction.None){DrawMapArt(rect,1,tint);return;}
+            if(faction==DungeonFaction.None)
+            {
+                Box(rect,new Color(.36f,.12f,.08f,.96f));
+                Box(new Rect(rect.x+2,rect.y+2,rect.width-4,rect.height-4),new Color(.12f,.055f,.04f,.97f));
+                DrawMapArt(new Rect(rect.x+3,rect.y+3,rect.width-6,rect.height-6),1,new Color(1f,.56f,.34f,tint.a));
+                return;
+            }
             if(!factionFlagsArt)factionFlagsArt=Resources.Load<Texture2D>("Art/Factions/FactionFlagsConcept");
             if(!factionFlagsArt){DrawMapArt(rect,1,tint);return;}
             // Reuse the actual faction flags. The source atlas has three equal cells:
@@ -372,8 +380,12 @@ namespace NeonVault
         }
         void DrawDungeonExitDirection(bool mobile)
         {
+            DrawScreenDirection(ExitPosition,mobile);
+        }
+        void DrawScreenDirection(Vector3 target,bool mobile)
+        {
             if(!cam||!player)return;
-            Vector3 from=cam.WorldToScreenPoint(PlayerPosition+Vector3.up),to=cam.WorldToScreenPoint(ExitPosition+Vector3.up);
+            Vector3 from=cam.WorldToScreenPoint(PlayerPosition+Vector3.up),to=cam.WorldToScreenPoint(target+Vector3.up);
             if(from.z<=0||to.z<=0)return;
             float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             Vector2 Canvas(Vector3 p)=>mobile?MobileCanvasPoint(p):new Vector2((p.x-(UnityEngine.Screen.width-1440*scale)*.5f)/scale,(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*scale)*.5f)/scale);

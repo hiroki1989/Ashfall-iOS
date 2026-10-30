@@ -225,8 +225,8 @@ namespace NeonVault
         static string DistinctLegendaryGunDescription(int maker,int variant,bool ja)
         {
             if(maker<0||maker>=6||variant<0||variant>=15)return "";
-            if(variant>=5){int s=variant-5;string[] mechanismEn={"Three crossing projectiles fan through a narrow prism lane.","Two guided rounds seek separate nearby targets.","Four diagonal rounds form a crossfire.","A delayed impact echoes twice at offset positions.","A thin long lane hits harder at greater distance.","One heavy round seeks the farthest visible enemy.","Two rounds cross in from opposite flanks.","The impact rebounds toward another survivor.","A quiet precision follow-up delays the target attack.","A compact heavy blast ripples outward a moment later."};string[] mechanismJa={"狭い交差射線へ3発の分光弾。","別々の近くの敵を追う誘導弾2発。","斜め4方向へ交差射撃。","命中地点とその先で遅延衝撃が2回発生。","遠い敵ほど強い細い長距離射線。","見えている最遠の敵を狙う重弾1発。","左右から2発の弾が交差。","命中地点から別の生存者へ跳弾。","静かな追撃が敵の攻撃を遅らせる。","小さな重爆発のあと外側へ衝撃が広がる。"};string[] makerEn={" Precise sight for 1.2s."," Push the first target."," Interrupt the first target."," Siphon a little HP."," Scatter fragments at the first target."," Gain a small barrier."};string[] makerJa={" 1.2秒間、照準を強化。"," 最初の敵を押し出す。"," 最初の敵の攻撃を遅らせる。"," 少量のHPを吸収。"," 最初の敵に破片を散らす。"," 少量の障壁を得る。"};return (ja?mechanismJa:mechanismEn)[s]+(ja?makerJa:makerEn)[maker];}
-            string[] trigger=ja?new[]{"3射ごと（待機1秒）：","銃弾命中時（待機2秒）：","撃破時（待機2秒）：","リロード時（待機3秒）：","ダッシュ時（待機3秒）："}:new[]{"Every third shot (1s cooldown): ","On bullet hit (2s cooldown): ","On kill (2s cooldown): ","On reload (3s cooldown): ","On dash (3s cooldown): "};
+            if(variant>=5){int s=variant-5;string[] mechanismEn={"Three crossing projectiles fan through a narrow prism lane.","Two guided rounds seek separate nearby targets.","Four diagonal rounds form a crossfire.","A delayed impact echoes twice at offset positions.","A thin long lane hits harder at greater distance.","One heavy round seeks the farthest visible enemy.","Two rounds cross in from opposite flanks.","The impact rebounds toward another survivor.","A quiet precision follow-up delays the target attack.","A compact heavy blast ripples outward a moment later."};string[] mechanismJa={"狭い交差射線へ3発の分光弾。","別々の近くの敵を追う誘導弾2発。","斜め4方向へ交差射撃。","命中地点とその先で遅延衝撃が2回発生。","遠い敵ほど強い細い長距離射線。","見えている最遠の敵を狙う重弾1発。","左右から2発の弾が交差。","命中地点から別の生存者へ跳弾。","静かな追撃が敵の攻撃を遅らせる。","小さな重爆発のあと外側へ衝撃が広がる。"};string[] makerEn={" Precise sight for 1.2s."," Push the first target."," Interrupt the first target."," Siphon a little HP."," Scatter fragments at the first target."," Gain a small barrier."};string[] makerJa={" 1.2秒間、照準を強化。"," 最初の敵を押し出す。"," 最初の敵の攻撃を遅らせる。"," 少量のHPを吸収。"," 最初の敵に破片を散らす。"," 少量のシールドを得る。"};return (ja?mechanismJa:mechanismEn)[s]+(ja?makerJa:makerEn)[maker];}
+            string[] trigger=ja?new[]{"3射ごと（クールダウン1秒）：","銃弾命中時（クールダウン2秒）：","撃破時（クールダウン2秒）：","リロード時（クールダウン3秒）：","ダッシュ時（クールダウン3秒）："}:new[]{"Every third shot (1s cooldown): ","On bullet hit (2s cooldown): ","On kill (2s cooldown): ","On reload (3s cooldown): ","On dash (3s cooldown): "};
             string[] en={
                 "Strike the nearest foe for 150% bonus damage; shots gain 25% damage and perfect accuracy for 3s.",
                 "Aim up to three short-lived shots at separate nearby foes, each for 42% bonus damage.",
@@ -270,8 +270,8 @@ namespace NeonVault
                 "前方7mの扇内へ追加威力70%の追撃、外向きに1.4m押す。",
                 "前方1.4m間隔で半径0.8mの強打を3回。各追加威力50%と押し出し。",
                 "近くの最大3体へ追加威力100%・80%・60%の連鎖追撃。",
-                "命中した敵へ追加威力55%の追撃、待機中の攻撃タイマーを最低1.3秒にする。",
-                "生存する最大2体へ追加威力90%の追撃、待機中の攻撃タイマーを最低0.7秒にする。",
+                "命中した敵へ追加威力55%の追撃、クールダウン中の攻撃タイマーを最低1.3秒にする。",
+                "生存する最大2体へ追加威力90%の追撃、クールダウン中の攻撃タイマーを最低0.7秒にする。",
                 "全周6方向へ短命の電撃弾。各追加威力30%。",
                 "前方9mの細い直線内の敵すべてへ追加威力85%の追撃。",
                 "最寄の敵へ追加威力90%の吸命追撃、命中時HP3回復。",
@@ -284,11 +284,11 @@ namespace NeonVault
                 "撃破地点から半径3mを追加威力80%で爆破。",
                 "追加威力150%の短命特異弾を1発発射。着弾か寿命切れで重力渦を作る。",
                 "ダッシュ後方へ重なった火種領域3つを設置。各2回脈動。",
-                "障壁5獲得、半径1.8mの敵へ追加威力40%の追撃。",
-                "命中時に障壁4獲得、その敵へ追加威力65%の追撃。",
-                "障壁7獲得、プレイヤー周囲1.7mへ2回の守護波。",
-                "障壁6獲得、左右22°へ短命の援護弾2発。各追加威力45%。",
-                "障壁3獲得、ダッシュ両側から短命の前方援護弾2発。各追加威力45%。"};
+                "シールド5獲得、半径1.8mの敵へ追加威力40%の追撃。",
+                "命中時にシールド4獲得、その敵へ追加威力65%の追撃。",
+                "シールド7獲得、プレイヤー周囲1.7mへ2回の守護波。",
+                "シールド6獲得、左右22°へ短命の援護弾2発。各追加威力45%。",
+                "シールド3獲得、ダッシュ両側から短命の前方援護弾2発。各追加威力45%。"};
             return trigger[variant]+(ja?jp:en)[maker*5+variant];
         }
     }

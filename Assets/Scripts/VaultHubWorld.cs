@@ -4,7 +4,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         public float runDamage,runFire,runVitality,runDash,runChain,runHarvest;
-        readonly Vector3 merchantPosition=new Vector3(-7,.65f,2),archivistPosition=new Vector3(6,.65f,2),portalPosition=new Vector3(0,.65f,10);
+        readonly Vector3 merchantPosition=new Vector3(-8,.65f,6),archivistPosition=new Vector3(8,.65f,5),portalPosition=new Vector3(0,.65f,12);
         public bool HasNearbyInteraction
         {
             get
@@ -31,11 +31,20 @@ namespace NeonVault
             art=new VaultArt(world,materials,new System.Random(17017));art.Floor(16,15,0);
             for(int i=0;i<8;i++){float a=i*Mathf.PI/4;art.Column(new Vector3(Mathf.Sin(a)*12.5f,0,Mathf.Cos(a)*12.5f),2.5f);}
             art.Cover(merchantPosition+Vector3.back*2);art.Brazier(merchantPosition+Vector3.left*2);art.Cover(archivistPosition+Vector3.back*2);
-            var merchant=art.Character(merchantPosition,true,1);merchant.name="Mara / Salvage Merchant";
-            var archivist=art.Character(archivistPosition,true,9);archivist.name="Ione / Archivist";
-            var collector=art.Character(debtCollectorPosition,true,4);collector.name="Briggs / Debt Collector";
-            if(LastVisitedCamp==0&&!WorldStorySeen){var boss=ImportedEnemyVisual.TryCreateBossNPC(world,new Vector3(-3,0,7))??art.Character(new Vector3(-3,.65f,7),true,8);boss.rotation=Quaternion.Euler(0,180,0);boss.name="Raider Boss / explosive collar contract";departingRaiderBoss=boss;}
-            ImportedWorldAssets.DressInterior(world,Layout,true);art.Gate(portalPosition.z);art.Ring("Extraction pad",portalPosition-Vector3.up*.6f,1.8f,.12f,Cyan,true);
+            Transform HubNpc(Vector3 p,int variant,string name){var root=new GameObject(name).transform;root.SetParent(world,false);root.position=new Vector3(p.x,0,p.z);root.rotation=Quaternion.LookRotation(Vector3.back);var visual=HumanFactionVisual.Create(root,0,variant);visual.enabled=false;return root;}
+            HubNpc(merchantPosition,0,"Mara / Salvage Merchant");
+            HubNpc(archivistPosition,1,"Ione / Archivist");
+            HubNpc(debtCollectorPosition,0,"Briggs / Debt Collector");
+            art.Part("Merchant counter",PrimitiveType.Cube,merchantPosition+new Vector3(0,.25f,-1.4f),new Vector3(3,1.25f,.9f),new Color(.27f,.23f,.18f),world);
+            art.Part("Merchant shelf",PrimitiveType.Cube,merchantPosition+new Vector3(0,1.2f,1.2f),new Vector3(3.4f,.18f,.7f),new Color(.25f,.23f,.19f),world);
+            for(int n=0;n<4;n++)art.Part("Merchant stock",PrimitiveType.Cube,merchantPosition+new Vector3(-1.1f+n*.72f,1.45f,1.15f),new Vector3(.48f,.45f,.48f),new Color(.38f,.35f,.27f),world);
+            art.Part("Debt office counter",PrimitiveType.Cube,debtCollectorPosition+new Vector3(0,.25f,-1.4f),new Vector3(2.8f,1.25f,.8f),new Color(.22f,.23f,.22f),world);
+            art.Part("Archivist counter",PrimitiveType.Cube,archivistPosition+new Vector3(0,.25f,-1.4f),new Vector3(2.8f,1.25f,.8f),new Color(.26f,.25f,.21f),world);
+            if(LastVisitedCamp==0&&!WorldStorySeen){var boss=ImportedEnemyVisual.TryCreateBossNPC(world,new Vector3(-3,0,7))??art.Character(new Vector3(-3,.65f,7),true,8);boss.rotation=Quaternion.Euler(0,180,0);boss.name="Malcolm Vale / explosive collar contract";departingRaiderBoss=boss;}
+            ImportedWorldAssets.DressInterior(world,Layout,true);
+            art.Part("Exit wall left",PrimitiveType.Cube,new Vector3(-7,2,12),new Vector3(10,4,.45f),new Color(.25f,.25f,.23f),world);
+            art.Part("Exit wall right",PrimitiveType.Cube,new Vector3(7,2,12),new Vector3(10,4,.45f),new Color(.25f,.25f,.23f),world);
+            art.Part("Exit doorway lintel",PrimitiveType.Cube,new Vector3(0,3.6f,12),new Vector3(4,.8f,.45f),new Color(.25f,.25f,.23f),world);
             player=art.Character(new Vector3(0,.65f,-3),true);barrel=art.Weapon(player,gun.color);VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));PlayerAppearance.ApplyArmor(EquippedArmor);
             foreach(var animation in world.GetComponentsInChildren<Animation>(true)){animation.Stop();animation.enabled=false;}foreach(var animator in world.GetComponentsInChildren<Animator>(true))if(!animator.GetComponentInParent<ImportedEnemyVisual>()){animator.Rebind();animator.Update(0);animator.enabled=false;}
             hp=maxHp;aim=Vector3.right;PlayerWeapon.Aim(aim);hubDialogue="";cam.orthographicSize=11/CameraZoom;UpdateCamera(true);
@@ -43,8 +52,8 @@ namespace NeonVault
         void UpdateHub()
         {
             toastTimer=Mathf.Max(0,toastTimer-Time.deltaTime);
-            if(bossDeparting&&departingRaiderBoss){var target=new Vector3(-14,departingRaiderBoss.position.y,9);var delta=target-departingRaiderBoss.position;delta.y=0;if(delta.sqrMagnitude<.04f){Destroy(departingRaiderBoss.gameObject);departingRaiderBoss=null;bossDeparting=false;}else{departingRaiderBoss.rotation=Quaternion.LookRotation(delta);departingRaiderBoss.position=Vector3.MoveTowards(departingRaiderBoss.position,target,2.5f*Time.deltaTime);}}
-            var move=ReadPlayerMovement();player.position=MoveWithinRoom(player.position,move*EffectiveMoveSpeed*Time.deltaTime,.45f);
+            if(bossDeparting&&departingRaiderBoss){var target=new Vector3(portalPosition.x,departingRaiderBoss.position.y,portalPosition.z+1);var delta=target-departingRaiderBoss.position;delta.y=0;if(delta.sqrMagnitude<.04f){Destroy(departingRaiderBoss.gameObject);departingRaiderBoss=null;bossDeparting=false;}else{departingRaiderBoss.rotation=Quaternion.LookRotation(delta);departingRaiderBoss.position=Vector3.MoveTowards(departingRaiderBoss.position,target,2.5f*Time.deltaTime);}}
+            var move=ReadPlayerMovement();var previousPosition=player.position;player.position=MoveWithinRoom(player.position,move*EffectiveMoveSpeed*Time.deltaTime,.45f);TickFootsteps(previousPosition,player.position);
             if(!VaultMobileInputBridge.Enabled&&move.sqrMagnitude>.01f){aim=move.normalized;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);}
             if(VaultMobileInputBridge.Enabled)ApplyMobileAim(VaultMobileInputBridge.Aim);
             if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)){
@@ -85,7 +94,7 @@ namespace NeonVault
             Text(42,191,T("Damage +","威力 +")+(runDamage*100).ToString("0")+T("%   Fire +","%   連射 +")+(runFire*100).ToString("0")+"%",small,Mist,310);
             Text(42,218,T("Health +","HP +")+runVitality+T("   Dash +","   回避 +")+(runDash*100).ToString("0")+"%",small,Mist,310);
             Text(42,245,T("Chain ","連鎖 ")+(runChain*100).ToString("0")+T("% / Kill heal ","% / 撃破回復 ")+runHarvest,tiny,Mist,310);
-            Text(42,272,T("Module barrier ","モジュール障壁 ")+ArtifactShield.ToString("0")+T(" / Conditional ×"," / 条件火力 ×")+ArtifactDamageMultiplier.ToString("0.00"),tiny,Cyan,310);
+            Text(42,272,T("Module barrier ","モジュールシールド ")+ArtifactShield.ToString("0")+T(" / Conditional ×"," / 条件火力 ×")+ArtifactDamageMultiplier.ToString("0.00"),tiny,Cyan,310);
         }
     }
 }

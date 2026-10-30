@@ -13,6 +13,23 @@ namespace NeonVault
         bool shopSellingPage;
         int saleCategory;
         string pendingSaleKey;
+        const string JunkKey="Vault.Junk.v1";
+        [System.Serializable] sealed class JunkSave { public List<string> keys=new List<string>(); }
+        HashSet<string> junkKeys; bool confirmJunkSale;
+        void LoadJunk(){if(junkKeys!=null)return;junkKeys=new HashSet<string>();if(smoke||!PlayerPrefs.HasKey(JunkKey))return;try{var data=JsonUtility.FromJson<JunkSave>(PlayerPrefs.GetString(JunkKey));if(data?.keys!=null)foreach(var key in data.keys)junkKeys.Add(key);}catch(System.Exception e){Debug.LogWarning("Junk tags: "+e.GetType().Name);}}
+        void ToggleJunk(string key){LoadJunk();if(!junkKeys.Add(key))junkKeys.Remove(key);SaveJunk();}
+        void SaveJunk(){if(smoke)return;PlayerPrefs.SetString(JunkKey,JsonUtility.ToJson(new JunkSave{keys=new List<string>(junkKeys)}));PlayerPrefs.Save();}
+        string JunkItemKey(object item)=>item is Gun g?"Gun:"+g.id:item is ArmorItem a?"Armor:"+a.id:item is ArtifactItem m?"Module:"+m.id:item is MeleeWeaponItem w?"Melee:"+w.id:"";
+        void DrawJunkConfirmation()
+        {
+            LoadJunk();var eligible=new List<SaleEntry>();long total=0;
+            for(int category=0;category<4;category++)foreach(var e in SaleEntries(category))if(junkKeys.Contains(SaleKey(e))&&!e.equipped&&!e.lastRequired){eligible.Add(e);total+=e.price;}
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.85f));Panel(new Rect(310,220,820,450),Gold);
+            Text(350,260,T("SELL MARKED ITEMS","不要品を一括売却"),heading,Gold,740);
+            Text(350,340,T("Items: ","対象：")+eligible.Count+T("  /  Scrap: ","点  /  売却額：")+total.ToString("N0"),label,UiPaper,740);
+            if(Button(new Rect(350,520,330,80),T("CONFIRM SALE","売却を確定"))){foreach(var e in eligible)if(CompleteSale(e))junkKeys.Remove(SaleKey(e));SaveJunk();confirmJunkSale=false;}
+            if(Button(new Rect(740,520,330,80),T("CANCEL","キャンセル")))confirmJunkSale=false;
+        }
         Vector2 saleScroll;
 
         public int SaleValue(Gun item)=>item==null?0:LegendarySaleValue(item.rarity,ScaleScrap(Mathf.Clamp(90000+item.level*35000+(int)item.rarity*180000+GearScoring.Score(item)*1800,100000,5000000)));
@@ -85,7 +102,7 @@ namespace NeonVault
             else if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(a=>a.id==entry.id);if(Armory.IsActiveArmor(item)&&!IsArmorEquipped(item)){DiscardArmor(item);removed=true;}}
             else if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(a=>a.id==entry.id);if(item!=null&&System.Array.IndexOf(EquippedArtifacts,item)<0){DiscardArtifact(item);removed=true;}}
             else if(entry.kind==SaleKind.Melee){var item=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(item!=null&&item!=EquippedMeleeWeapon&&MeleeWeaponInventory.Count>1){MeleeWeaponInventory.Remove(item);SaveInventory();removed=true;}}
-            if(removed){AwardCredits(entry.price);Notify("Sold "+entry.title+" for "+entry.price.ToString("N0")+" scrap.",entry.title+"を"+entry.price.ToString("N0")+"スクラップで売却。");}
+            if(removed){AwardCredits(entry.price);PlayUserSound("transaction",.35f);Notify("Sold "+entry.title+" for "+entry.price.ToString("N0")+" scrap.",entry.title+"を"+entry.price.ToString("N0")+"スクラップで売却。");}
             return removed;
         }
     }

@@ -38,7 +38,7 @@ namespace NeonVault
             return paid;
         }
         Vector2 debtSkillScroll;
-        readonly Vector3 debtCollectorPosition = new Vector3(0,.65f,5);
+        readonly Vector3 debtCollectorPosition = new Vector3(-3,.65f,8);
 
         public int DebtLevel
         {
@@ -117,7 +117,7 @@ namespace NeonVault
         {
             if(requested<=0||Credits<=0||DebtRemaining<=0)return false;
             int amount=Mathf.Min(Mathf.Min(requested,Credits),DebtRemaining);
-            Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();return amount>0;
+            Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();PlayUserSound("transaction",.35f);return amount>0;
         }
         public bool TryUnlockDebtSkill(string id)
         {
@@ -202,7 +202,7 @@ namespace NeonVault
                 if(Button(new Rect(850,409,270,58),T("PAY SELECTED","指定額を返済"),true)&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(Button(new Rect(850,476,270,50),T("SELECT ALL","全額を指定")))debtPaymentAmount=paymentLimit;
                 Text(68,556,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
-                Text(68,602,T("The collar detonator stays with the Raider Boss. Clearing your balance is the only way out.","起爆装置はレイダーのボスが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
+                Text(68,602,T("The collar detonator stays with the Malcolm Vale. Clearing your balance is the only way out.","起爆装置はマルコム・ヴェイルが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
                 if(Button(new Rect(68,694,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
                 if(Button(new Rect(480,694,550,54),T("RESET SKILLS / ","スキル振り直し / ")+ActionSkillRespecCost.ToString("N0"),ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost))TryRespecActionSkills();
             }

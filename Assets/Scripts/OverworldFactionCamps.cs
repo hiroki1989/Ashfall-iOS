@@ -137,6 +137,7 @@ namespace NeonVault
                     if (foe == null || foe.GetComponentInChildren<HumanFactionVisual>() != null) continue;
                     foreach (var renderer in foe.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
                     var human = HumanFactionVisual.Create(foe.transform, camp.faction, foe.UseAssaultRifle ? 0 : 1);
+                    human.transform.localScale=Vector3.one*1.12f;
                     human.transform.localPosition = Vector3.down * .03f;
                 }
                 if (allDefeated)

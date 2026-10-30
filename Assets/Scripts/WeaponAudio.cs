@@ -7,6 +7,24 @@ namespace NeonVault
     {
         readonly Dictionary<string, AudioClip> weaponClips = new Dictionary<string, AudioClip>();
         AudioSource reloadAudioSource;
+        AudioClip footstepClip,transactionClip,skillClip;
+        float footstepNext;
+        void PlayUserSound(string name,float volume)
+        {
+            if(!audioSource)return;
+            AudioClip clip;
+            if(name=="footsteps")clip=footstepClip?footstepClip:footstepClip=Resources.Load<AudioClip>("UserSFX/footsteps");
+            else if(name=="transaction")clip=transactionClip?transactionClip:transactionClip=Resources.Load<AudioClip>("UserSFX/transaction");
+            else clip=skillClip?skillClip:skillClip=Resources.Load<AudioClip>("UserSFX/skill");
+            if(clip)audioSource.PlayOneShot(clip,volume);
+        }
+        void TickFootsteps(Vector3 before,Vector3 after)
+        {
+            if((after-before).sqrMagnitude<.000001f)return;
+            if(Time.time<footstepNext)return;
+            PlayUserSound("footsteps",.12f);
+            footstepNext=Time.time+Mathf.Max(.4f,footstepClip?footstepClip.length:.7f);
+        }
 
         void StopReloadSound() { if (reloadAudioSource != null) reloadAudioSource.Stop(); }
 

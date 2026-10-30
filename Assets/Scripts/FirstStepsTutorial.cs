@@ -32,7 +32,7 @@ namespace NeonVault
             debtFinalBeat=Mathf.Clamp(debtFinalBeat,0,en.Length-1);
             Box(new Rect(0,0,1440,900),new Color(.01f,.015f,.02f,.9f));
             Panel(new Rect(100,470,1240,315),Gold);
-            Text(135,500,debtFinalBeat%2==0?T("YOU","主人公"):T("RAIDER BOSS","レイダーのボス"),heading,Gold,1100);
+            Text(135,500,debtFinalBeat%2==0?T("REID","レイド"):T("MALCOLM VALE","マルコム・ヴェイル"),heading,Gold,1100);
             Text(135,570,T(en[debtFinalBeat],ja[debtFinalBeat]),new GUIStyle(label){fontSize=29,wordWrap=true},Color.white,1100);
             if(WorldButton(new Rect(920,700,370,65),debtFinalBeat==en.Length-1?T("FIGHT","戦う"):T("CONTINUE","続ける")))
             {
@@ -48,7 +48,7 @@ namespace NeonVault
             finalDebtBossFight=false;
             PlayerPrefs.SetInt(DebtBossDefeatedKey,1);PlayerPrefs.Save();
             ClearRunCheckpoint();SaveInventory();screen=Screen.Victory;
-            Notify("THE RAIDER BOSS IS DOWN / The debt is settled.","レイダーのボスを撃破 / 借りは返した。");
+            Notify("THE MALCOLM VALE IS DOWN / The debt is settled.","マルコム・ヴェイルを撃破 / 借りは返した。");
         }
         int FirstStepsStage => PlayerPrefs.GetInt(FirstStepsKey, 0);
         bool TryFirstStepsWaypoint(out Vector3 target)
