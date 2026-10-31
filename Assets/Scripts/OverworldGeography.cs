@@ -130,13 +130,8 @@ namespace NeonVault
             for(int i=100;i<103;i++)
                 Entrances[i]=NewSite(Camps[0]+new Vector3((i-101)*180,0,220),false,Camps[0]);
             var extraRandom=new System.Random(Seed^0x5A17);
-            for(int i=103;i<Entrances.Length;i++)
+            for(int i=103;i<ExpeditionMap.RegularStageCount;i++)
             {
-                if(i==196||i==197)
-                {
-                    Entrances[i]=NewSite(i==196?new Vector3(-3900,.65f,-3600):new Vector3(3900,.65f,3600),true);
-                    continue;
-                }
                 Vector3 chosen=Vector3.zero;float best=-1;
                 for(int trial=0;trial<40;trial++)
                 {
@@ -146,10 +141,22 @@ namespace NeonVault
                 }
                 Entrances[i]=NewSite(chosen);
             }
+            Vector3[] bossDesired={
+                new Vector3(-2500,.65f,-2100), new Vector3(-3200,.65f,-2850), new Vector3(-3900,.65f,-3600),
+                new Vector3(2500,.65f,2100), new Vector3(3200,.65f,2850), new Vector3(3900,.65f,3600)
+            };
+            for(int i=ExpeditionMap.RegularStageCount;i<Entrances.Length;i++)
+                Entrances[i]=NewSite(bossDesired[i-ExpeditionMap.RegularStageCount],true);
             AddResidentialRoads();
             var levels=new int[Entrances.Length];
             for(int i=0;i<levels.Length;i++)
             {
+                if(i>=ExpeditionMap.RegularStageCount)
+                {
+                    int tier=(i-ExpeditionMap.RegularStageCount)%3;
+                    levels[i]=tier==0?4:tier==1?7:10;
+                    continue;
+                }
                 float distance=Vector3.Distance(Camps[0],Entrances[i]);
                 // Nearby expeditions stay gentle; farther rings vary by one level.
                 int variation=i==0?0:(i*37%3)-1;

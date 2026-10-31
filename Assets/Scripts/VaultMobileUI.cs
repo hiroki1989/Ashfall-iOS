@@ -26,7 +26,7 @@ namespace NeonVault
             Text(42,84,T("LEVEL ","レベル ")+DebtLevel+T("  SCRAP ","  スクラップ ")+Credits.ToString("N0"),new GUIStyle(label){fontSize=25},Cyan,595);
             if(MobileButton(new Rect(690,30,220,72),T("CITY MAP","都市マップ"),28))OpenOverworldMap();
             if(MobileButton(new Rect(930,30,220,72),T("MAKERS","製品図鑑"),28)){manufacturerRegistry=true;manufacturerKind=-1;}
-            string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONE / COLLECTOR","調べる：イオネ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
+            string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: DR. GIDEON / COLLECTOR","調べる：ギデオン博士 / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
             Text(380,740,string.IsNullOrEmpty(hubDialogue)?hint:hubDialogue,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,680);
             if(toastTimer>0){Panel(new Rect(30,170,620,145),Gold);Text(50,185,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,580);}
             DrawCollectorDialog();

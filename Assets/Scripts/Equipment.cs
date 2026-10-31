@@ -47,7 +47,7 @@ namespace NeonVault
         static ArmorItem Create(ArmorSlot slot,Rarity rarity,int level,System.Random random,ArmorProduct product=null)
         {
             var recipe=product==null?null:DistinctEquipmentDesigns.Find(product.id);if(recipe!=null&&recipe.legendary)rarity=Rarity.Legendary;
-            float power=1+.16f*((int)rarity+Mathf.Max(1,level)-1);
+            float power=GearBalance.LevelPower(rarity,level);
             if(product==null)product=random==null?ArmorProductCatalog.Default(slot):ArmorProductCatalog.Roll(random,slot);
             var a=new ArmorItem{ id=System.Guid.NewGuid().ToString("N"),slot=slot,rarity=rarity,level=level,color=ArmorColor(slot,rarity,random),visualVariant=product.visualVariant,catalogId=product.id,manufacturerId=product.manufacturerId,designVariant=product.designVariant };
             if(recipe!=null&&recipe.legendary)a.legendaryKey=LegendaryCatalog.Key(true,recipe.index);
@@ -73,7 +73,7 @@ namespace NeonVault
         {
             if(random==null){item.affixes=System.Array.Empty<GearAffix>();return;}
             int count=Mathf.Clamp((int)item.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage"};
-            float scale=1+.16f*((int)item.rarity+item.level-1);var used=new HashSet<int>();item.affixes=new GearAffix[count];
+            float scale=GearBalance.LevelPower(item.rarity,item.level);var used=new HashSet<int>();item.affixes=new GearAffix[count];
             for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while((p==7&&random.NextDouble()>=.15)||!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f,.015f,.06f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*scale*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
         }
         static void ApplyAffix(ArmorItem a,GearAffix x){switch(x.type){case "damage":a.damageBonus+=x.value;break;case "health":a.maxHealth+=x.value;break;case "fireRate":a.fireBonus+=x.value;break;case "reload":a.reloadBonus+=x.value;break;case "accuracy":a.accuracyBonus+=x.value;break;case "ammo":a.ammoBonus+=x.value;break;case "mitigation":a.damageReduction=Mathf.Min(.65f,a.damageReduction+x.value);break;case "moveSpeed":a.moveBonus+=x.value;break;case "regen":a.regenBonus+=x.value;break;}}

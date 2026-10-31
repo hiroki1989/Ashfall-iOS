@@ -239,10 +239,18 @@ namespace NeonVault
             text.font=numberFont;text.GetComponent<MeshRenderer>().sharedMaterial=numberFont.material;
             text.fontSize=48;text.fontStyle=FontStyle.Normal;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;
             text.GetComponent<MeshRenderer>().sortingOrder=20010;
-            text.text=healing?"+"+damage.ToString("0.#",CultureInfo.InvariantCulture):Mathf.Max(1,Mathf.RoundToInt(damage)).ToString(CultureInfo.InvariantCulture);
+            text.text=healing?"+"+damage.ToString("0.#",CultureInfo.InvariantCulture):FormatDamageNumber(damage);
             text.color=Color.Lerp(color,Color.white,.55f);
             text.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.Off;
             obj.AddComponent<DamageFloat>().Init(text,camera);
+        }
+        public static string FormatDamageNumber(float damage)
+        {
+            if(float.IsNaN(damage)||float.IsInfinity(damage))return "∞";
+            float magnitude=Mathf.Abs(damage);
+            if(magnitude>=999950f)return (damage/1000000f).ToString("0.#",CultureInfo.InvariantCulture)+"M";
+            if(magnitude>=1000f)return (damage/1000f).ToString(magnitude>=10000f?"0":"0.#",CultureInfo.InvariantCulture)+"K";
+            return Mathf.Max(1,Mathf.RoundToInt(damage)).ToString(CultureInfo.InvariantCulture);
         }
         public static void EvadeNumber(Vector3 p,Camera camera,Transform parent=null)
         {

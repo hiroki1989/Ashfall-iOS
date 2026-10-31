@@ -7,6 +7,19 @@ namespace NeonVault
     public static class GearBalance
     {
         public const int Version=1;
+        // Item stats and enemy health use proportional level curves. Raising both
+        // together preserves roughly the same hits-to-kill across the level range.
+        public const float LevelGrowthPerStep=.24f;
+        // A convex curve makes each level add more than the level before it.
+        // The per-level gain is about five times its initial value at cap 123.
+        public const int LevelCurveHorizon=122;
+        public const float LevelCurveBend=2f;
+        public static float LevelGrowthSteps(int level)
+        {
+            float steps=Mathf.Max(0,level-1);
+            return steps+LevelCurveBend*steps*steps/LevelCurveHorizon;
+        }
+        public static float LevelPower(Rarity rarity,int level)=>1f+LevelGrowthPerStep*(LevelGrowthSteps(level)+(int)rarity);
         static int Seed(string id){unchecked{uint h=2166136261;foreach(char c in id??""){h^=c;h*=16777619;}return (int)(h&0x7fffffff);}}
         public static void Migrate(Gun g)
         {
@@ -21,7 +34,7 @@ namespace NeonVault
                 if(g.affixes!=null)for(int i=0;i<g.affixes.Length;i++)if(g.affixes[i]!=null&&g.affixes[i].type=="regen")
                 {
                     int p;do{p=random.Next(types.Length);}while(!used.Add(types[p]));
-                    var x=new GearAffix{type=types[p],value=Arsenal.Range(random,lo[p],hi[p])*(1+.16f*((int)g.rarity+Mathf.Max(1,g.level)-1))};g.affixes[i]=x;
+                    var x=new GearAffix{type=types[p],value=Arsenal.Range(random,lo[p],hi[p])*LevelPower(g.rarity,g.level)};g.affixes[i]=x;
                     switch(x.type){case "damage":g.damage*=1+x.value;break;case "health":g.bonusHealth+=x.value;break;case "fireRate":g.interval/=1+x.value;break;case "reload":g.reloadSeconds/=1+x.value;break;case "accuracy":g.accuracy=Mathf.Min(100,g.accuracy*(1+x.value));break;case "mitigation":g.damageReductionBonus+=x.value;break;case "moveSpeed":g.movementBonus+=x.value;break;case "ammo":g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*(1+x.value)));break;}
                 }
             }
@@ -41,7 +54,7 @@ namespace NeonVault
         internal static void RebalanceArmorBase(ArmorItem a,System.Random random)
         {
             if(a.balanceVersion>=Version)return;
-            float power=1+.16f*((int)a.rarity+Mathf.Max(1,a.level)-1);
+            float power=LevelPower(a.rarity,a.level);
             // Product tuning is deterministic; subtracting it exposes the original serialized base rolls.
             var product=new ArmorItem{slot=a.slot,catalogId=a.catalogId,manufacturerId=a.manufacturerId,designVariant=a.designVariant,visualVariant=a.visualVariant};
             ArmorProductCatalog.Apply(product,power);

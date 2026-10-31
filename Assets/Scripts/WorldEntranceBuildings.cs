@@ -68,7 +68,7 @@ namespace NeonVault
         static GameObject CreateSite(SiteState state,int key)
         {
             bool camp=key<state.geography.Camps.Length;int entranceId=key-state.geography.Camps.Length;
-            bool factionHeadquarters=!camp&&(entranceId==196||entranceId==197);
+            bool factionHeadquarters=!camp&&VaultGame.IsFactionHeadquarters(entranceId);
             int style=camp||factionHeadquarters?4:entranceId%4;
             var site=new GameObject(camp?"Raider headquarters / camp "+key:"Dungeon building / "+(key-state.geography.Camps.Length));
             site.transform.SetParent(state.root,false);Vector3 threshold=SitePosition(state.geography,key);threshold.y=0;site.transform.localPosition=threshold;
@@ -89,7 +89,7 @@ namespace NeonVault
             if(factionHeadquarters)
             {
                 DressCampExterior(site.transform,key);WeatherCampFacade(site.transform,state.materials,key);
-                int flag=entranceId==196?1:2;
+                int flag=ExpeditionMap.FactionForStage(entranceId)==DungeonFaction.Raiders?1:2;
                 AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],-3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ west banner");
                 AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ east banner");
             }

@@ -45,7 +45,7 @@ namespace NeonVault
             EnterHub();
         }
         public void CompleteWorldBossConversation()
-        {CompleteOverworldStory();MarkDebtIntroSeen();bossDeparting=departingRaiderBoss!=null;BeginFirstStepsTutorial();Notify("BOSS: Bring me a billion scrap. Briggs will collect.","ボス：10億スクラップ、稼いでこい。返済はブリッグスに渡せ。");}
+        {CompleteOverworldStory();MarkDebtIntroSeen();bossDeparting=departingRaiderBoss!=null;BeginFirstStepsTutorial();Notify("BOSS: Bring me a billion scrap and crush the faction strongholds. Briggs will collect.","ボス：10億スクラップを稼ぎ、各勢力の拠点も制圧しろ。返済はブリッグスに渡せ。");}
         public void ExitCampToOverworld()
         {
             EnsureOverworldState();if(!WorldStorySeen)return;
@@ -82,7 +82,7 @@ namespace NeonVault
         public bool EnterNearbyWorldDungeon(int stage)
         {
             if(!IsOverworld||stage<0||stage>=ExpeditionMap.StageCount||(WorldGeography.Entrances[stage]-PlayerPosition).sqrMagnitude>3.5f*3.5f)return false;
-            if(!FactionHeadquartersUnlocked(stage)){Notify("STRONGHOLD LOCKED","この本拠地はまだ発見できない");return false;}
+            if(!FactionHeadquartersUnlocked(stage)){Notify(FactionBossUnlockRequirementLabel(stage,false),FactionBossUnlockRequirementLabel(stage,true));return false;}
             DiscoverOverworldDungeon(stage);
             SaveInventory();RememberOverworldPosition(WorldGeography.Entrances[stage]+Vector3.back*2,true);SetOverworldReturnStage(stage);
             return EnterExpeditionStage(stage);
@@ -261,7 +261,7 @@ namespace NeonVault
         void ConfigureOverworldFoe(Foe foe)
         {
             int level=spawningWorldEnemy!=null?spawningWorldEnemy.level:Mathf.Max(1,DebtLevel+rng.Next(-1,2));worldEnemyLevels[foe]=level;
-            float hpScale=1.5f*(1+(level-1)*.14f),damageScale=1+(level-1)*.065f;
+            float hpScale=1.5f*Foe.LevelHealthScale(level),damageScale=Foe.LevelDamageScale(level);
             var balance=VaultBalanceProfile.Current;
             foe.ConfigureDifficulty(hpScale*(balance!=null?Mathf.Max(.01f,balance.enemyHpMultiplier):1),damageScale*(balance!=null?Mathf.Max(.01f,balance.enemyDamageMultiplier):1),Mathf.Min(.25f,(level-1)*.005f));
         }

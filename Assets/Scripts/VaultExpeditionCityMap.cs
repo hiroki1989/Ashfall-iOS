@@ -152,7 +152,7 @@ namespace NeonVault
         {
             ExpeditionStage stage = ExpeditionMap.Get(id,DebtLevel);
             Vector2 p = CityScale(ExpeditionMap.CityPoint(id));
-            bool unlocked = stage.level <= DebtLevel, selected = id == expeditionMapSelection, done = clearedExpeditionStages.Contains(id);
+            bool unlocked = stage.level <= DebtLevel && FactionHeadquartersUnlocked(id), selected = id == expeditionMapSelection, done = clearedExpeditionStages.Contains(id);
             Color mark = selected ? Gold : done ? Cyan : unlocked ? new Color(.83f,.86f,.69f) : new Color(.43f,.47f,.47f);
             float w=CitySiteWidth,h=CitySiteHeight;
             Rect r = new Rect(p.x-w*.5f,p.y-h*.5f,w,h);

@@ -25,21 +25,29 @@ namespace NeonVault
     /// <summary>Stable, content-only expedition catalog. Stage ids and rolls must not depend on runtime RNG.</summary>
     public static class ExpeditionMap
     {
-        public const int StageCount = 200;
-        // Stable per-stage assignment: 50 raider hideouts, 50 gang hideouts, 100 original sites.
+        public const int RegularStageCount = 200;
+        public const int StageCount = 206;
+        // Stable per-stage assignment: 50 raider hideouts, 50 gang hideouts, 100 original sites, plus 6 faction boss strongholds (200..205).
         // The first contract is the infected tutorial. Keep its authored mission and
         // low-cost enemy roster; move its Red Claw allocation to site 03 so the
         // faction totals remain 50 / 50 without loading a crowd of full human rigs
         // during the first transition on memory-constrained phones.
         public static DungeonFaction FactionForStage(int id) => id < 0 || id >= StageCount ? DungeonFaction.None
+            : id >= 200 && id <= 202 ? DungeonFaction.Raiders
+            : id >= 203 && id <= 205 ? DungeonFaction.Gang
             : id == 0 ? DungeonFaction.None : id == 2 ? DungeonFaction.Raiders
             : id % 4 == 0 ? DungeonFaction.Raiders : id % 4 == 1 ? DungeonFaction.Gang : DungeonFaction.None;
         public static readonly Vector2 CityCanvasSize = new Vector2(1440, 1000);
+        static readonly Vector2[] BossCityPoints = {
+            new Vector2(210, 745), new Vector2(165, 840), new Vector2(115, 920),
+            new Vector2(1230, 255), new Vector2(1285, 165), new Vector2(1335, 85)
+        };
         // A coprime permutation scatters stable stage IDs
         // across the city without changing progression, rewards, or claimed contracts.
         public static Vector2 CityPoint(int id)
         {
             id = Mathf.Clamp(id, 0, StageCount - 1);
+            if (id >= RegularStageCount) return BossCityPoints[id - RegularStageCount];
             int slot = ((id % 100) * 37 + 17) % 100;
             int column = slot % 10, row = slot / 10;
             return new Vector2(88 + column * 140 + Mathf.Sin(slot * 2.31f) * 12,
@@ -92,22 +100,41 @@ namespace NeonVault
         static readonly string[] missionEn = {"Defeat 18 hostiles","Defeat the boss","Recover 3 supplies across 2 floors","Break the infestation: 8 kills and 2 supplies","Recover supplies on each of 2 floors","Recover 5 supplies across 3 floors"};
         static readonly string[] missionJa = {"敵を18体倒す","ボスを倒す","2フロア以上で物資を3つ回収","感染網を断つ：敵8体と物資2つを回収","別々の2フロアで物資を1つずつ回収","3フロア以上で物資を5つ回収"};
         static readonly Color[] colors = {new Color(.31f,.63f,.55f),new Color(.84f,.43f,.23f),new Color(.23f,.62f,.72f),new Color(.48f,.68f,.35f),new Color(.86f,.28f,.20f)};
+        static readonly string[] bossNamesEn = {"RED CLAW OUTPOST","RED CLAW WAR CAMP","RED CLAW STRONGHOLD","COYOTE OUTPOST","COYOTE WAR DEN","COYOTE STRONGHOLD"};
+        static readonly string[] bossNamesJa = {"レッドクロウ前線基地","レッドクロウ軍事拠点","レッドクロウ本拠地","コヨーテ前線基地","コヨーテ軍事拠点","コヨーテ本拠地"};
         public static ExpeditionStage Get(int id,int playerLevel=1)
         {
-            id=Mathf.Clamp(id,0,StageCount-1); int region=(id%100)/20, n=id%20, place=n/4, variant=n%4+(id/100)*4;
-            string loc=places[region][place], locJa=placesJa[region][place]; int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-3);
-            int mission=id==197?1:id==198?0:id%2==0?1:new[]{0,2,3,4,5}[(id/2)%5];
+            id=Mathf.Clamp(id,0,StageCount-1);
+            int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-3);
+            if(id>=RegularStageCount)
+            {
+                int bossIndex=id-RegularStageCount;
+                bool red=bossIndex<3;
+                int tier=bossIndex%3;
+                int bossRegion=tier==0?1:tier==1?2:4;
+                string bossLoc=places[bossRegion][red?0:4], bossLocJa=placesJa[bossRegion][red?0:4];
+                return new ExpeditionStage { id=id,region=bossRegion,level=danger,legacyDungeonIndex=tier,
+                    englishName=bossNamesEn[bossIndex],japaneseName=bossNamesJa[bossIndex],
+                    englishLocation=regions[bossRegion]+" — "+bossLoc,japaneseLocation=regionsJa[bossRegion]+" — "+bossLocJa,
+                    englishBiome=red?"RED CLAW COMMAND":"DUSK COYOTES COMMAND",japaneseBiome=red?"レッドクロウ司令部":"ダスク・コヨーテ司令部",
+                    mission=ExpeditionMission.HuntTarget,
+                    englishTarget=red?"RAVEN":"VEX",japaneseTarget=red?"レイヴン":"ヴェックス",
+                    englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[bossRegion] };
+            }
+            int region=(id%100)/20, n=id%20, place=n/4, variant=n%4+(id/100)*4;
+            string loc=places[region][place], locJa=placesJa[region][place];
+            int mission=id%2==0?1:new[]{0,2,3,4,5}[(id/2)%5];
             var faction=FactionForStage(id);
             string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==3?"Infestation network":"Supply cache";
             string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==3?"感染網":"補給物資";
             return new ExpeditionStage { id=id,region=region,level=danger,legacyDungeonIndex=region==0?0:region<3?1:2,
-                englishName=id==196?"RED CLAW STRONGHOLD":id==197?"COYOTE STRONGHOLD":loc+" / " + (variant+1).ToString("00"), japaneseName=id==196?"レッドクロウ本拠地":id==197?"コヨーテ本拠地":locJa+"・"+(variant+1).ToString("00"),
+                englishName=loc+" / " + (variant+1).ToString("00"), japaneseName=locJa+"・"+(variant+1).ToString("00"),
                 englishLocation=regions[region]+" — "+loc,japaneseLocation=regionsJa[region]+" — "+locJa,
                 englishBiome=faction==DungeonFaction.Raiders?"RED CLAW HIDEOUT":faction==DungeonFaction.Gang?"DUSK COYOTES HIDEOUT":biomes[region][place],japaneseBiome=faction==DungeonFaction.Raiders?"レッドクロウのアジト":faction==DungeonFaction.Gang?"ダスク・コヨーテのアジト":biomesJa[region][place],mission=(ExpeditionMission)mission,
-                englishTarget=id==196?"RAVEN":id==197?"VEX":mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"Raider commander":"Gang leader"):target,japaneseTarget=id==196?"レイヴン":id==197?"ヴェックス":mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"レイダーの指揮官":"ギャングのリーダー"):targetJa,
+                englishTarget=mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"Raider commander":"Gang leader"):target,japaneseTarget=mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"レイダーの指揮官":"ギャングのリーダー"):targetJa,
                 englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[region] };
         }
-        public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=0;id<StageCount;id++)if(Get(id).region==Mathf.Clamp(region,0,4)&&Get(id).mission==mission)count++;return count;}
+        public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=0;id<RegularStageCount;id++)if(Get(id).region==Mathf.Clamp(region,0,4)&&Get(id).mission==mission)count++;return count;}
         public static int RewardSeed(int stageId)=>unchecked(0x51A7D00D ^ (stageId+1)*7919);
         // Stable random target per site keeps map, gameplay and checkpoint in agreement.
         public static int KillTarget(int stageId, ExpeditionMission mission)

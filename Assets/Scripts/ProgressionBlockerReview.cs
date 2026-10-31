@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +11,7 @@ namespace NeonVault
     {
         const string Flag="--progression-blocker-review",Checkpoint="Vault.ExpeditionCheckpoint.v1";
         static readonly string[] StringKeys={"Vault.Progression.v1","Vault.Loadout.v1","Vault.DebtSkills.v1","Vault.Overworld.v1",Checkpoint};
-        static readonly string[] IntKeys={"Vault.Language","Vault.Cores","Vault.Rank","Vault.FirstBossLegendaryD0","Vault.DebtBoss.defeated.v1","Vault.FactionBoss.Intro.196","Vault.FactionBoss.Intro.197","Vault.BossRelic.Defeated.0","Vault.BossRelic.Defeated.1","Vault.BossRelic.Defeated.2"};
+        static readonly string[] IntKeys={"Vault.Language","Vault.Cores","Vault.Rank","Vault.FirstBossLegendaryD0","Vault.DebtBoss.defeated.v1","Vault.FactionBoss.Intro.196","Vault.FactionBoss.Intro.197","Vault.FactionBoss.Intro.200","Vault.FactionBoss.Intro.201","Vault.FactionBoss.Intro.202","Vault.FactionBoss.Intro.203","Vault.FactionBoss.Intro.204","Vault.FactionBoss.Intro.205","Vault.BossRelic.Defeated.0","Vault.BossRelic.Defeated.1","Vault.BossRelic.Defeated.2"};
         static readonly Dictionary<string,string> strings=new Dictionary<string,string>();
         static readonly Dictionary<string,int> ints=new Dictionary<string,int>();
         readonly List<string> lines=new List<string>();int checks,failures;VaultGame game;bool restored;
@@ -57,6 +57,8 @@ namespace NeonVault
             Set("factionBossConversation",false);Time.timeScale=1;
             string relicFlag="Vault.BossRelic.Defeated."+bossId;PlayerPrefs.DeleteKey(relicFlag);
             if(boss!=null)boss.Hit(float.MaxValue,null,null,1000);
+            bool expectedEscape=VaultGame.IsFactionBossEscapeStage(stage);
+            Check(boss!=null&&boss.dead&&boss.Escaping==expectedEscape,(expectedEscape?"30%/60% faction boss escapes on defeat / ":"100% faction boss dies on defeat / ")+stage);
             int category=ExtractBossRelicCategory(game,bossId);
             Check(PlayerPrefs.GetInt(relicFlag,0)==1&&category>=0,"first faction boss kill emits a boss-exclusive legendary / "+stage);
             foreach(var foe in new List<Foe>(game.Enemies))if(foe!=null&&!foe.dead)foe.Hit(float.MaxValue,null,null,1000);
@@ -117,15 +119,47 @@ namespace NeonVault
                 game.EnterHub();Check(game.screen==VaultGame.Screen.Hub&&Time.timeScale==1&&!game.Blocked(game.PlayerPosition,.45f),"hub return movable");
                 game.StartRun(917+variant);game.invincible=0;game.Hurt(float.MaxValue);Check(game.screen==VaultGame.Screen.Dead,"real death path");game.EnterHub();Check(game.screen==VaultGame.Screen.Hub&&Time.timeScale==1,"death returns to hub");yield return null;
             }
-            Set("debtPaid",299999999);Check(!game.FactionHeadquartersUnlocked(VaultGame.RedClawHeadquarters),"Red Claw remains locked below 300 million paid");
-            Set("debtPaid",300000000);Check(game.FactionHeadquartersUnlocked(VaultGame.RedClawHeadquarters)&&!game.FactionHeadquartersUnlocked(VaultGame.CoyoteHeadquarters),"Red Claw unlocks at 300 million before Coyote");
-            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{299999999});
-            Check(game.OverworldWaypointKind==2&&game.OverworldWaypointId==VaultGame.RedClawHeadquarters,"300 million milestone marks Red Claw on the map");
-            Set("debtPaid",599999999);Check(!game.FactionHeadquartersUnlocked(VaultGame.CoyoteHeadquarters),"Coyote remains locked below 600 million paid");
-            Set("debtPaid",600000000);Check(game.FactionHeadquartersUnlocked(VaultGame.CoyoteHeadquarters),"Coyote unlocks at 600 million paid");
-            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{599999999});
-            Check(game.OverworldWaypointId==VaultGame.CoyoteHeadquarters,"600 million milestone marks Coyote on the map");
+            var clearedStages=Field("clearedExpeditionStages").GetValue(game) as List<int>;
+            clearedStages.Clear();
+            var raiderStages=new List<int>();var gangStages=new List<int>();
+            for(int id=0;id<ExpeditionMap.RegularStageCount;id++)
+            {
+                if(ExpeditionMap.FactionForStage(id)==DungeonFaction.Raiders)raiderStages.Add(id);
+                else if(ExpeditionMap.FactionForStage(id)==DungeonFaction.Gang)gangStages.Add(id);
+            }
+            Check(raiderStages.Count==50&&gangStages.Count==50,"50 regular Raider and 50 regular Gang dungeons exist");
+            Check(!game.FactionHeadquartersUnlocked(VaultGame.RedClawBoss30)&&!game.FactionHeadquartersUnlocked(VaultGame.CoyoteBoss30)&&!game.EnterExpeditionStage(VaultGame.RedClawBoss30),"faction boss dungeons remain locked before 30% faction clear");
+            for(int i=0;i<14;i++)clearedStages.Add(raiderStages[i]);
+            Check(!game.FactionHeadquartersUnlocked(VaultGame.RedClawBoss30),"Red Claw 30% boss stays locked at 14/50 clears");
+            clearedStages.Add(raiderStages[14]);
+            Check(game.FactionHeadquartersUnlocked(VaultGame.RedClawBoss30)&&!game.FactionHeadquartersUnlocked(VaultGame.RedClawBoss60),"Red Claw 30% boss unlocks at 15/50 clears (30%)");
+            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{14,0});
+            Check(game.OverworldWaypointKind==2&&game.OverworldWaypointId==VaultGame.RedClawBoss30,"30% Red Claw milestone marks stage 200 on the map");
+            yield return ReviewFactionBoss(VaultGame.RedClawBoss30,0);
+            for(int i=15;i<30;i++)clearedStages.Add(raiderStages[i]);
+            Check(game.FactionHeadquartersUnlocked(VaultGame.RedClawBoss60)&&!game.FactionHeadquartersUnlocked(VaultGame.RedClawHeadquarters),"Red Claw 60% boss unlocks at 30/50 clears (60%)");
+            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{29,0});
+            Check(game.OverworldWaypointId==VaultGame.RedClawBoss60,"60% Red Claw milestone marks stage 201 on the map");
+            yield return ReviewFactionBoss(VaultGame.RedClawBoss60,0);
+            for(int i=30;i<50;i++)clearedStages.Add(raiderStages[i]);
+            Check(game.FactionHeadquartersUnlocked(VaultGame.RedClawHeadquarters),"Red Claw 100% stronghold unlocks at 50/50 clears (100%)");
+            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{49,0});
+            Check(game.OverworldWaypointId==VaultGame.RedClawHeadquarters,"100% Red Claw milestone marks stage 202 on the map");
             yield return ReviewFactionBoss(VaultGame.RedClawHeadquarters,0);
+            for(int i=0;i<15;i++)clearedStages.Add(gangStages[i]);
+            Check(game.FactionHeadquartersUnlocked(VaultGame.CoyoteBoss30)&&!game.FactionHeadquartersUnlocked(VaultGame.CoyoteBoss60),"Coyote 30% boss unlocks at 15/50 clears (30%)");
+            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{50,14});
+            Check(game.OverworldWaypointId==VaultGame.CoyoteBoss30,"30% Coyote milestone marks stage 203 on the map");
+            yield return ReviewFactionBoss(VaultGame.CoyoteBoss30,1);
+            for(int i=15;i<30;i++)clearedStages.Add(gangStages[i]);
+            Check(game.FactionHeadquartersUnlocked(VaultGame.CoyoteBoss60)&&!game.FactionHeadquartersUnlocked(VaultGame.CoyoteHeadquarters),"Coyote 60% boss unlocks at 30/50 clears (60%)");
+            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{50,29});
+            Check(game.OverworldWaypointId==VaultGame.CoyoteBoss60,"60% Coyote milestone marks stage 204 on the map");
+            yield return ReviewFactionBoss(VaultGame.CoyoteBoss60,1);
+            for(int i=30;i<50;i++)clearedStages.Add(gangStages[i]);
+            Check(game.FactionHeadquartersUnlocked(VaultGame.CoyoteHeadquarters),"Coyote 100% stronghold unlocks at 50/50 clears (100%)");
+            typeof(VaultGame).GetMethod("UpdateFactionBossUnlocks",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,new object[]{50,49});
+            Check(game.OverworldWaypointId==VaultGame.CoyoteHeadquarters,"100% Coyote milestone marks stage 205 on the map");
             yield return ReviewFactionBoss(VaultGame.CoyoteHeadquarters,1);
             Set("debtPaid",1000000000);PlayerPrefs.SetInt("Vault.DebtBoss.defeated.v1",1);
             typeof(VaultGame).GetMethod("StartValeRematch",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,null);
@@ -137,6 +171,11 @@ namespace NeonVault
             game.Advance();Check(game.screen==VaultGame.Screen.Victory,"Vale defeat reaches the completion screen");
             game.EnterHub();typeof(VaultGame).GetMethod("StartValeRematch",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(game,null);
             Check((bool)Field("finalDebtBossFight").GetValue(game)&&game.room==game.CurrentDungeon.AreaCount-1,"Vale can be challenged again after victory");
+            foreach(string key in new[]{"knox","vale","raven","vex","sera","briggs","gideon"})
+            {
+                var tex=VaultGame.LoadDialoguePortrait(key);
+                Check(tex!=null&&tex.width>=512&&tex.height>=512,"dialogue portrait loaded / "+key);
+            }
         }
         void Restore(){if(restored)return;restored=true;if(game)game.enabled=false;foreach(string key in StringKeys){if(strings.TryGetValue(key,out string value))PlayerPrefs.SetString(key,value);else PlayerPrefs.DeleteKey(key);}foreach(string key in IntKeys){if(ints.TryGetValue(key,out int value))PlayerPrefs.SetInt(key,value);else PlayerPrefs.DeleteKey(key);}PlayerPrefs.Save();Time.timeScale=1;}
         void OnApplicationQuit(){Restore();}

@@ -61,7 +61,7 @@ namespace NeonVault
                 case 4:d*=1.08f;t*=1.16f;a*=1.2f;r*=.94f;break;
                 case 5:d*=.94f;t*=.94f;a*=1.08f;break;
             }
-            float scale=1+.16f*((int)rarity+level-1);
+            float scale=GearBalance.LevelPower(rarity,level);
             var item=new MeleeWeaponItem{id=Guid.NewGuid().ToString("N"),catalogId="melee-"+i.ToString("00")+"-"+design.ToString("00"),manufacturerId=maker,designVariant=design,family=(MeleeWeaponFamily)i,rarity=rarity,uniqueEffect=rarity==Rarity.Legendary,level=level,damage=Mathf.Max(1,Mathf.RoundToInt(d*scale)),interval=t/(1+.025f*(int)rarity),range=r+.025f*(level-1),arcDegrees=Mathf.Clamp(a,30,170)};
             RollAffixes(item,random??new System.Random(index*397+level*17+(int)rarity));return item;
         }
@@ -80,7 +80,7 @@ namespace NeonVault
             float[] low={.025f,.025f,.01f,.04f},high={.06f,.06f,.025f,.10f};
             int count=Mathf.Clamp((int)item.rarity,0,4);
             item.affixes=new GearAffix[count];var used=new System.Collections.Generic.HashSet<int>();
-            float scale=1+.16f*((int)item.rarity+Mathf.Max(1,item.level)-1);
+            float scale=GearBalance.LevelPower(item.rarity,item.level);
             for(int i=0;i<count;i++)
             {
                 int pick;do{pick=random.Next(types.Length);}while(!used.Add(pick));

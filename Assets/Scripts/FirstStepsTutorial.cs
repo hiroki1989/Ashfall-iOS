@@ -38,8 +38,9 @@ namespace NeonVault
             bool[] reid={true,false,true,false,true,false,true,false,false,true,false,true,false,false};
             debtFinalBeat=Mathf.Clamp(debtFinalBeat,0,en.Length-1);
             Box(new Rect(0,0,1440,900),new Color(.01f,.015f,.02f,.9f));
+            DrawDialoguePortraits("vale",reid[debtFinalBeat],new Rect(100,470,1240,315),Gold);
             Panel(new Rect(100,470,1240,315),Gold);
-            Text(135,500,reid[debtFinalBeat]?T("REID","レイド"):T("MALCOLM VALE","マルコム・ヴェイル"),heading,Gold,1100);
+            Text(135,500,reid[debtFinalBeat]?T("KNOX","ノックス"):T("MALCOLM VALE","マルコム・ヴェイル"),heading,Gold,1100);
             Text(135,570,T(en[debtFinalBeat],ja[debtFinalBeat]),new GUIStyle(label){fontSize=34,wordWrap=true},Color.white,1100);
             if(WorldButton(new Rect(920,700,370,65),debtFinalBeat==en.Length-1?T("FIGHT","戦う"):T("CONTINUE","続ける")))
             {

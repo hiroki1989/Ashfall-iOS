@@ -26,30 +26,33 @@ namespace NeonVault
         void DrawCollectorDialog()
         {
             if(!collectorOpen)return;
-            Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));Panel(new Rect(190,190,1060,520),Gold);
-            string[] en={"Hey. Don't move.","...What?","Your gun. Let me see it. Strange scar beside the trigger.","Caught a bullet.","Huh. The gun took the hit and you walked away. That's a good scar.","Is that a compliment?","For the gun. I'm Ione. I keep a catalog: guns, armor, anything I haven't seen before.","What do you collect them for?","To remember before they disappear. Who made them, how they were used, what scars they earned.","Find something interesting, come back. New gear goes in the catalog. Report every fifty kinds and I'll give you a skill point.","What about fifty copies of the same gun?","Bring those and I'll throw you out before I start counting."};
-            string[] ja={"おい、動くな。","……何だ？","その銃だよ。見せてみな。引き金の脇に妙な傷がある。","撃たれた時についた。","へえ。銃が先に食らって、あんたが生き残ったのか。いい傷じゃないか。","褒められてるのか？","銃をね。私はイオネ。ここで装備の図鑑を作ってる。銃も防具も、初めて見る代物なら何でも記録する。","集めてどうする。","消えちまう前に覚えておきたいのさ。誰が作って、どう使って、どんな傷をつけたか。","面白い物を見つけたら、また顔を出しな。手に入れた装備は図鑑に記録される。50種類ごとに報告してくれりゃ、スキルポイントを一つやるよ。","同じ銃を50丁じゃ駄目か。","そんなもん持ってきたら、数える前に追い返すよ。"};
             bool[] isReid={false,true,false,true,false,true,false,true,false,false,true,false};
+            bool knoxTalking=collectorPage<12&&isReid[collectorPage];
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));
+            DrawDialoguePortraits("gideon",knoxTalking,new Rect(190,340,1060,370),Gold);
+            Panel(new Rect(190,340,1060,370),Gold);
+            string[] en={"Hold it! Don't move a muscle.","...What?","Your firearm. Let me examine it. Fascinating—a ballistic deflection scar right beside the trigger housing.","Caught a bullet.","Remarkable! The receiver absorbed the kinetic impact and you walked away. An exquisite specimen.","Is that a compliment?","To the metallurgy, yes. I'm Dr. Gideon. I compile a complete ordnance taxonomy: firearms, armor, any field specimen I haven't documented.","What do you study them for?","To preserve their engineering before this wasteland erases them. Who forged them, how they functioned, what battle scars they earned.","Encounter an undocumented specimen, bring it to my lab. Every fifty distinct entries in the catalog, I'll grant you a skill point.","What about fifty copies of the same gun?","Bring me redundant samples and I'll throw you out before I calibrate my calipers."};
+            string[] ja={"待て、動くな！ そのままじっとしていろ。","……何だ？","その銃だ。少し観察させろ。引き金の機関部脇に、実に興味深い弾痕がある。","撃たれた時についた。","ほほう！ 機関部が運動エネルギーを吸収して、君が生き残ったわけか。実に素晴らしい標本だ。","褒められてるのか？","冶金学的な意味でね。ワシはギデオン博士。ここで装備の分類図鑑を編纂しておる。銃も防具も、未確認の標本なら何でも記録するぞ。","集めて何を研究してるんだ。","この荒野で失われる前に、技術と歴史を保存するのさ。どこの廠が造り、どう運用され、どんな傷を刻まれたかをな。","珍しい標本を見つけたらまた見せに来たまえ。図鑑に50種類記録されるごとに、研究協力としてスキルポイントを一つ進呈しよう。","同じ銃を50丁じゃ駄目か。","重複標本なんぞ持ち込んだら、ノギスを当てる前に追い出すぞ。"};
             if(collectorPage<12)
             {
-                Text(235,220,isReid[collectorPage]?T("REID","レイド"):T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
-                Text(235,305,(VaultLanguage.Japanese?ja:en)[collectorPage],new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
-                if(Button(new Rect(900,580,290,75),T("NEXT","次へ"))){collectorPage++;if(collectorPage==12){collectorIntroSeen=true;SaveProgression();}}
+                Text(235,368,isReid[collectorPage]?T("KNOX","ノックス"):T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),heading,Gold,970);
+                Text(235,435,(VaultLanguage.Japanese?ja:en)[collectorPage],new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
+                if(Button(new Rect(900,615,290,75),T("NEXT","次へ"))){collectorPage++;if(collectorPage==12){collectorIntroSeen=true;SaveProgression();}}
             }
             else if(collectorPage==13)
             {
-                Text(235,220,T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
-                Text(235,305,T("Let's see... now that's a find. Here's your point. Bring me something stranger next time.","見せてごらん……へえ、こいつはいい。約束のポイントだ。次はもっと変わった物を期待してるよ。"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
-                if(Button(new Rect(900,580,290,75),T("CLOSE","閉じる")))collectorOpen=false;
+                Text(235,368,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),heading,Gold,970);
+                Text(235,435,T("Let me see... fascinating craftsmanship! Here is your point. Bring me an even rarer specimen next time.","どれ、見せてみたまえ……ふむ、見事な造りだ！ 約束のポイントだぞ。次はさらに珍しい標本を期待しておるよ。"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
+                if(Button(new Rect(900,615,290,75),T("CLOSE","閉じる")))collectorOpen=false;
             }
             else
             {
-                Text(235,220,T("IONE / COLLECTOR","イオネ / コレクター"),heading,Gold,970);
-                Text(235,305,T("Back already? Your catalog has "+collectorKnown+" kinds. Find anything interesting?","お、帰ってきたね。図鑑は今、"+collectorKnown+"種類だ。何か面白い物は見つかったかい？"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
+                Text(235,368,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),heading,Gold,970);
+                Text(235,435,T("Ah, you're back. Your ordnance catalog stands at "+collectorKnown+" specimens. Any new discoveries?","おお、戻ったか。現在の図鑑記録は"+collectorKnown+"種類だ。何か興味深い標本は見つかったかね？"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
                 int available=Mathf.Max(0,collectorKnown/50-collectorClaims);
-                Text(235,475,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available,new GUIStyle(label){fontSize=25},Cyan,700);
-                if(available>0&&Button(new Rect(235,580,360,75),T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);collectorPage=13;}
-                if(Button(new Rect(900,580,290,75),T("CLOSE","閉じる")))collectorOpen=false;
+                Text(235,545,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available,new GUIStyle(label){fontSize=25},Cyan,700);
+                if(available>0&&Button(new Rect(235,615,360,75),T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);collectorPage=13;}
+                if(Button(new Rect(900,615,290,75),T("CLOSE","閉じる")))collectorOpen=false;
             }
         }
         Transform departingRaiderBoss; bool bossDeparting;
@@ -68,7 +71,7 @@ namespace NeonVault
             art.Cover(merchantPosition+Vector3.back*2);art.Brazier(merchantPosition+Vector3.left*2);art.Cover(archivistPosition+Vector3.back*2);
             Transform HubNpc(Vector3 p,int variant,string name){var root=new GameObject(name).transform;root.SetParent(world,false);root.position=new Vector3(p.x,0,p.z);root.rotation=Quaternion.LookRotation(Vector3.back);var visual=HumanFactionVisual.Create(root,0,variant);visual.enabled=false;return root;}
             HubNpc(merchantPosition,0,"Sera / Salvage Merchant");
-            HubNpc(archivistPosition,1,"Ione / Archivist");
+            HubNpc(archivistPosition,1,"Gideon / Archivist");
             HubNpc(debtCollectorPosition,0,"Briggs / Debt Collector");
             art.Part("Merchant counter",PrimitiveType.Cube,merchantPosition+new Vector3(0,.25f,-1.4f),new Vector3(3,1.25f,.9f),new Color(.27f,.23f,.18f),world);
             art.Part("Merchant shelf",PrimitiveType.Cube,merchantPosition+new Vector3(0,1.2f,1.2f),new Vector3(3.4f,.18f,.7f),new Color(.25f,.23f,.19f),world);
@@ -109,7 +112,7 @@ namespace NeonVault
             if(toastTimer>0){Panel(new Rect(270,130,880,90),Gold);Text(290,145,Toast,new GUIStyle(small){wordWrap=true},Gold,840);}
             string key=MobileTouchControls.Enabled?"":" [E]";
             DrawWorldLabel(merchantPosition+Vector3.up*2,T("SERA / MERCHANT","セラ / 装備商人")+key,Gold);
-            DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONE / COLLECTOR","イオネ / コレクター")+key,Cyan);
+            DrawWorldLabel(archivistPosition+Vector3.up*2,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター")+key,Cyan);
             DrawWorldLabel(debtCollectorPosition+Vector3.up*2,T("BRIGGS / DEBT COLLECTOR","ブリッグス / 借金取り")+key,new Color(1,.35f,.24f));
             DrawWorldLabel(portalPosition+Vector3.up*2,T("EXIT TO ASHFALL","アッシュフォールへ出る")+key,Gold);
             if(!string.IsNullOrEmpty(hubDialogue)){Panel(new Rect(250,595,940,112),Cyan);Text(270,613,hubDialogue,new GUIStyle(small){wordWrap=true},Mist,900);if(Button(new Rect(1050,658,116,35),T("CLOSE","閉じる")))hubDialogue="";}

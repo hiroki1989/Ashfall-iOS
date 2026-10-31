@@ -242,9 +242,9 @@ namespace NeonVault
             int cratesPerFloor=Mathf.Clamp(VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.ammoCratesPerFloor:10,0,30);
             Check(game.AmmoCratesPlannedThisRun==DungeonCatalog.Get(game.DungeonIndex).AreaCount*cratesPerFloor,"each floor plans the configured number of ammunition crates");
             Check(game.AmmoCratesNearbyCount==cratesPerFloor,"current floor actually places its configured ammunition crates / "+game.AmmoCratesNearbyCount+" of "+cratesPerFloor);
-            bool mapValid=ExpeditionMap.StageCount==200 && ExpeditionMap.Get(0,20).level==17 && ExpeditionMap.Get(0,1).level==1;
+            bool mapValid=ExpeditionMap.RegularStageCount==200 && ExpeditionMap.StageCount==206 && ExpeditionMap.Get(0,20).level==17 && ExpeditionMap.Get(0,1).level==1;
             int[] missionKinds=new int[6];
-            for(int region=0;region<5;region++){int regional=0;for(int id=0;id<ExpeditionMap.StageCount;id++){var stage=ExpeditionMap.Get(id);if(stage.region==region){regional++;mapValid&=stage.level>=1&&stage.level<=10&&stage.legacyDungeonIndex>=0&&stage.legacyDungeonIndex<3&&stage.Target.Length>0&&ExpeditionMap.MissionLabel(stage.mission,false).Length>0&&ExpeditionMap.MissionLabel(stage.mission,true).Length>0;missionKinds[(int)stage.mission]++;}}mapValid&=regional==40;}
+            for(int region=0;region<5;region++){int regional=0;for(int id=0;id<ExpeditionMap.RegularStageCount;id++){var stage=ExpeditionMap.Get(id);if(stage.region==region){regional++;mapValid&=stage.level>=1&&stage.level<=10&&stage.legacyDungeonIndex>=0&&stage.legacyDungeonIndex<3&&stage.Target.Length>0&&ExpeditionMap.MissionLabel(stage.mission,false).Length>0&&ExpeditionMap.MissionLabel(stage.mission,true).Length>0;missionKinds[(int)stage.mission]++;}}mapValid&=regional==40;}
             foreach(int count in missionKinds)mapValid&=count>=10;
             Check(mapValid,"expedition catalog has 100 level-gated sites across five 20-site regions");
             var rewardRandom=new System.Random(24680);int[] normalRewardRarities=new int[5],firstRewardRarities=new int[5];

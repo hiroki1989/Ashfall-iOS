@@ -341,7 +341,7 @@ namespace NeonVault
             float dt=Time.deltaTime;Vector3 delta=transform.position-previous;delta.y=0;previous=transform.position;
             float speed=dt>0?delta.magnitude/dt:0;
             if(speed>.05f)phase+=dt*Mathf.Clamp(speed*.55f,.5f,2.5f);
-            if(owner&&owner.dead&&deathTime<0)deathTime=0;
+            if(owner&&owner.dead&&!owner.Escaping&&deathTime<0)deathTime=0;
             if(deathTime>=0)deathTime+=dt;
             Vector3 direction=transform.forward;
             DetailedHeroPlayer3D.Pose(Body,gun,handgun,true,direction,speed>.05f?phase:-1,

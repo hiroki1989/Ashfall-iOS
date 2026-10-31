@@ -151,7 +151,7 @@ namespace NeonVault
         {
             if(random==null)throw new System.ArgumentNullException(nameof(random));
             gun.level=Mathf.Max(1,level);
-            float outputScale=1+.16f*((int)gun.rarity+Mathf.Max(1,gun.level)-1);
+            float outputScale=GearBalance.LevelPower(gun.rarity,gun.level);
             gun.damage*= outputScale*Range(random,.92f,1.08f);
             gun.interval*=Range(random,.93f,1.07f);
             gun.speed*=Range(random,.85f,1.2f);
@@ -169,7 +169,7 @@ namespace NeonVault
             for(int i=0;i<count;i++)
             {
                 int pick;do{pick=random.Next(types.Length);}while((gun.rarity!=Rarity.Legendary&&pick==7)||!used.Add(pick));
-                float scale=1+.16f*((int)gun.rarity+gun.level-1);
+                float scale=GearBalance.LevelPower(gun.rarity,gun.level);
                 float[] lo={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.01f,.04f},hi={.06f,10,.06f,.06f,.05f,.025f,.05f,.4f,.12f,.025f,.10f};
                 var x=new GearAffix{type=types[pick],value=Range(random,lo[pick],hi[pick])*scale};gun.affixes[i]=x;
                 switch(x.type)

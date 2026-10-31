@@ -259,7 +259,7 @@ namespace NeonVault
             else
             {
                 int stageLevel=finalDebtBossFight?Mathf.Max(1,DebtLevel):SelectedExpeditionStage?.level??1;
-                float levelHealth=1+(stageLevel-1)*.14f,levelDamage=1+(stageLevel-1)*.065f;
+                float levelHealth=Foe.LevelHealthScale(stageLevel),levelDamage=Foe.LevelDamageScale(stageLevel);
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
             if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
@@ -478,8 +478,14 @@ namespace NeonVault
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
             if(finalBoss&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)))
             {
-                DropBossRelic(f,finalDebtBossFight?2:SelectedStageId==RedClawHeadquarters?0:1);
+                DropBossRelic(f,finalDebtBossFight?2:IsRedClawBossStage(SelectedStageId)?0:1);
                 if(finalDebtBossFight){PlayerPrefs.SetInt(DebtBossDefeatedKey,1);PlayerPrefs.Save();}
+                else if(f.Escaping)
+                {
+                    bool red=IsRedClawBossStage(SelectedStageId);
+                    Notify(red?"RAVEN: \"Tch... Fall back! Next time you're dead!\"":"VEX: \"Not bad... We're pulling back for now!\"",
+                           red?"レイヴン：「チッ……退くぞ！ 次はこうはいかねえ！」":"ヴェックス：「やるね……ここは一旦引かせてもらうよ！」");
+                }
             }
             if(!IsOverworld&&!smoke&&finalBoss&&SelectedStageId==0&&!clearedExpeditionStages.Contains(0)&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
@@ -502,7 +508,18 @@ namespace NeonVault
             if(!alive)
             {
                 cleared=true; hp=Mathf.Min(maxHp,hp+8);
-                if(room==CurrentDungeon.AreaCount-1) {Notify("ALPHA MUTANT DOWN / Loot [F] / Extraction [E]","変異体の主を撃破 / 戦利品 [F] / 脱出 [E]");return;}
+                if(room==CurrentDungeon.AreaCount-1)
+                {
+                    if(IsFactionHeadquarters(SelectedStageId))
+                    {
+                        bool red=IsRedClawBossStage(SelectedStageId),escape=IsFactionBossEscapeStage(SelectedStageId);
+                        string bossEn=red?"RAVEN":"VEX",bossJa=red?"レイヴン":"ヴェックス";
+                        Notify(bossEn+(escape?" RETREATED / Loot [F] / Extraction [E]":" SLAIN / Loot [F] / Extraction [E]"),
+                               bossJa+(escape?"は逃走した / 戦利品 [F] / 脱出 [E]":"を討ち取った / 戦利品 [F] / 脱出 [E]"));
+                    }
+                    else Notify("ALPHA MUTANT DOWN / Loot [F] / Extraction [E]","変異体の主を撃破 / 戦利品 [F] / 脱出 [E]");
+                    return;
+                }
                 if(rng.Next(3)==0)AddDrop(RollExpeditionGun(rng),player.position+Vector3.forward*.5f);
                 if(rng.Next(3)==0)AddArmorDrop(RollExpeditionArmor(rng),player.position+Vector3.left*.8f);
                 Notify("ZONE CLEAR / +8 HP / Loot [F] / Exit [E]","区域制圧 / HP +8 / 戦利品 [F] / 出口 [E]");

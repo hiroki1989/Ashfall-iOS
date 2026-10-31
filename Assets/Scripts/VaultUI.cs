@@ -160,7 +160,7 @@ namespace NeonVault
         {
             Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));Panel(new Rect(55,125,1330,660),new Color(1,.27f,.19f));
             Text(95,160,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),new GUIStyle(heading){fontSize=42,wordWrap=true},new Color(1,.39f,.28f),1230);
-            Text(95,245,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=31,wordWrap=true},Mist,1220);
+            Text(95,245,T("You wake to a live explosive collar and a contract stamped with one billion scrap. Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Conquer the rival faction strongholds across Ashfall, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。アッシュフォール各地の勢力拠点を制圧しながら戦利品を持ち帰り、首輪が外れるまで返済しろ。最後にボスへ借りを返す。"),new GUIStyle(label){fontSize=31,wordWrap=true},Mist,1220);
             Text(95,480,T("Repayment earns levels and skill points. Choose an action skill and upgrade its branches.","返済でレベルとスキルポイントを獲得する。アクションスキルと強化の方向を選ぼう。"),new GUIStyle(label){fontSize=29,wordWrap=true},Cyan,1220);
             if(MobileButton(new Rect(300,640,840,120),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")))MarkDebtIntroSeen();
         }
@@ -169,7 +169,7 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.012f,.018f,.024f,.985f));
             Panel(new Rect(205,150,1030,600),new Color(1,.27f,.19f));
             Text(250,190,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),heading,new Color(1,.39f,.28f),930);
-            Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. The Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Run the contaminated zones, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。汚染区域へ出撃し、戦利品を持ち帰って返済しろ。首輪を外したら、ボスに借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
+            Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Conquer the rival faction strongholds across Ashfall, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。アッシュフォール各地の勢力拠点を制圧しながら戦利品を持ち帰り、首輪が外れるまで返済しろ。最後にボスへ借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
             Text(255,490,T("Repayment grants levels and skill points. The first level costs 1,000,000 scrap. Visit Briggs to repay and upgrade action skills.","返済でレベルとスキルポイントを獲得。最初のレベルは100万スクラップ。拠点のブリッグスに話しかけて返済と強化を進めよう。"),small,Cyan,900);
             if(MobileTouchControls.Enabled?MobileButton(new Rect(350,620,740,115),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")):Button(new Rect(505,640,430,64),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃"),true))MarkDebtIntroSeen();
         }
@@ -263,6 +263,7 @@ namespace NeonVault
         string EnemyHealthLabel(Foe foe)
         {
             int level=IsOverworld?GetOverworldEnemyLevel(foe):SelectedExpeditionStage!=null?SelectedExpeditionStage.level:CurrentDungeon.minLevel;
+            if(foe.kind==3&&foe.MajorBoss&&IsFactionHeadquarters(SelectedStageId))return "Lv."+Mathf.Max(1,level)+" "+(IsRedClawBossStage(SelectedStageId)?T("RAVEN","レイヴン"):T("VEX","ヴェックス"));
             var human=foe.GetComponentInChildren<HumanFactionVisual>();
             string name=human&&human.Faction==1?T("RED CLAW","レッドクロウ"):human&&human.Faction==2?T("COYOTES","コヨーテ"):Foe.Name(foe.kind);
             return "Lv."+Mathf.Max(1,level)+" "+name;
@@ -300,7 +301,7 @@ namespace NeonVault
         }
         void DrawExpeditionBriefing()
         {
-            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool unlocked=true;bool cleared=clearedExpeditionStages.Contains(stage.id);
+            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool unlocked=FactionHeadquartersUnlocked(stage.id);bool cleared=clearedExpeditionStages.Contains(stage.id);
             Text(1042,174,T("FIELD DOSSIER / ","現地記録 / ")+stage.Name,label,Gold,330);
             Text(1042,219,stage.Location,new GUIStyle(small){wordWrap=true},stage.regionColor,330);
             Line(new Vector2(1042,270),new Vector2(1374,270),new Color(.55f,.72f,.72f,.38f));
@@ -314,8 +315,8 @@ namespace NeonVault
             Text(1042,548,cleared?T("REPEAT CLEAR REWARD","再攻略報酬"):T("FIRST CLEAR CACHE","初回クリア報酬"),tiny,Mist,320);
             Text(1042,572,ExpeditionRewardDescription(stage.id),small,Cyan,330);
             Text(1042,609,cleared?T("MISSION PAYOUT CLAIMED","任務報酬は受取済み"):T("MISSION PAYOUT / ","任務達成報酬 / ")+MissionRewardDescription(stage.id),tiny,Gold,330);
-            Text(1042,640,cleared?T("SITE CLEARED","制圧済み"):unlocked?T("CONTRACT AVAILABLE","出撃可能"):T("CLEARANCE TOO LOW","許可レベル不足"),tiny,cleared?Cyan:unlocked?Gold:new Color(1,.40f,.31f),330);
-            if(Button(new Rect(1040,680,335,62),unlocked?T("DEPLOY TO SITE","地点へ出撃"):T("LOCKED / REPAY TO LEVEL UP","ロック中 / 返済で成長"),unlocked)&&unlocked)EnterExpeditionStage(stage.id);
+            Text(1042,640,cleared?T("SITE CLEARED","制圧済み"):unlocked?T("CONTRACT AVAILABLE","出撃可能"):FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese),tiny,cleared?Cyan:unlocked?Gold:new Color(1,.40f,.31f),330);
+            if(Button(new Rect(1040,680,335,62),unlocked?T("DEPLOY TO SITE","地点へ出撃"):FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese),unlocked)&&unlocked)EnterExpeditionStage(stage.id);
             Text(1042,757,T("SKILL POINTS: FIRST CLEAR ONLY. REPLAYS GIVE GEAR OR SCRAP.","スキルポイントは初回のみ。再攻略は装備かスクラップ。"),tiny,Mist,330);
         }
         void DrawMap()

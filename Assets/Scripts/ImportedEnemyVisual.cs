@@ -150,7 +150,7 @@ namespace NeonVault
             if(animationAccumulator<interval)return;float dt=animationAccumulator;animationAccumulator=0;
             Vector3 delta=actor.position-previous;previous=actor.position;delta.y=0;
             if(owner&&owner.game&&!owner.game.Active)return;
-            if(owner&&owner.dead&&deathTime<0)deathTime=0;
+            if(owner&&owner.dead&&!owner.Escaping&&deathTime<0)deathTime=0;
             if(owner){bool charging=owner.IsTelegraphing;if(wasCharging&&!charging&&!owner.dead)attackTime=.5f;wasCharging=charging;}
             if(deathTime>=0)deathTime+=dt;attackTime=Mathf.Max(0,attackTime-dt);
             Animate(dt,dt>0?delta.magnitude/dt:0);

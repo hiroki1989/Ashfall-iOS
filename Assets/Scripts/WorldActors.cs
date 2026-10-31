@@ -1,15 +1,21 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace NeonVault
 {
     public class Foe : MonoBehaviour
     {
+        public const float HealthGrowthPerLevel=.21f;
+        public static float LevelHealthScale(int level)=>1f+HealthGrowthPerLevel*GearBalance.LevelGrowthSteps(level);
+        public static float LevelDamageScale(int level)=>1f+HealthGrowthPerLevel*GearBalance.LevelGrowthSteps(level);
         public VaultGame game;
         public bool elite;
         public Color HealthBarColor=>elite?new Color(.72f,.28f,1f):kind==3?new Color(1f,.58f,.12f):new Color(.92f,.12f,.16f);
         public float hp, maxHp, speed, timer, contact;
         public int kind;
         public bool dead;
+        public bool Escaping { get; private set; }
+        float escapeTimer, escapeSmokeTimer;
+        Vector3 escapeDirection;
         public AimedWeapon weapon;
         public bool IsTelegraphing=>charging;
         public float TelegraphProgress=>charging?Mathf.Clamp01(1-charge/TelegraphSeconds):0;
@@ -49,7 +55,17 @@ namespace NeonVault
         float visibilityNext;bool cachedVisible;
         void Update()
         {
-            if(game==null||dead)return;
+            if(game==null)return;
+            if(Escaping)
+            {
+                if(!game.Active)return;
+                escapeTimer+=Time.deltaTime;escapeSmokeTimer-=Time.deltaTime;
+                if(escapeDirection.sqrMagnitude>.001f)transform.rotation=Quaternion.LookRotation(escapeDirection);
+                transform.position+=escapeDirection*14f*Time.deltaTime;
+                if(escapeSmokeTimer<=0){escapeSmokeTimer=.18f;CombatVisuals.Burst(transform.position+Vector3.up*.8f,new Color(.75f,.78f,.82f),8,transform.parent);}
+                return;
+            }
+            if(dead)return;
             if(!game.Active){ClearWarning();charging=false;dash=0;burstShots=0;timer=Mathf.Max(timer,.8f);return;}
             if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=MajorBoss?.14f:RaiderBoss?.22f:.16f;}}
             Vector3 delta=game.PlayerPosition-transform.position;delta.y=0;float distance=delta.magnitude;Vector3 direction=delta.normalized;
@@ -200,13 +216,28 @@ namespace NeonVault
             hp-=damage;var painted=GetComponent<EnemyPainted2D>();painted?.NotifyHit(point);GetComponent<FaithfulEnemy3D>()?.NotifyHit(point);game.Burst(point,hitColor??(kind==3?new Color(.7f,.8f,.2f):new Color(.55f,.16f,.1f)),4);
             if(hp<=0)
             {
-                dead=true;ClearWarning();painted?.BeginDeath();
-                var meshLife=GetComponent<FaithfulEnemy3D>();meshLife?.BeginDeath();
-                bool humanLife=GetComponentInChildren<HumanFactionVisual>()!=null;
-                game.FoeKilled(this);
-                float deathDuration=meshLife!=null||humanLife?FaithfulEnemy3D.DeathDuration
-                    :painted!=null&&painted.Ready?EnemyPainted2D.DeathDuration+.03f:0;
-                Destroy(gameObject,deathDuration);
+                dead=true;ClearWarning();charging=false;dash=0;burstShots=0;
+                bool escape=kind==3&&MajorBoss&&game!=null&&!game.IsOverworld&&VaultGame.IsFactionBossEscapeStage(game.SelectedStageId);
+                if(escape)
+                {
+                    Escaping=true;
+                    Vector3 away=transform.position-game.PlayerPosition;away.y=0;
+                    escapeDirection=away.sqrMagnitude>.01f?away.normalized:Vector3.forward;
+                    transform.rotation=Quaternion.LookRotation(escapeDirection);
+                    CombatVisuals.Burst(transform.position+Vector3.up*.9f,new Color(.85f,.88f,.92f),18,transform.parent);
+                    game.FoeKilled(this);
+                    Destroy(gameObject,1.25f);
+                }
+                else
+                {
+                    painted?.BeginDeath();
+                    var meshLife=GetComponent<FaithfulEnemy3D>();meshLife?.BeginDeath();
+                    bool humanLife=GetComponentInChildren<HumanFactionVisual>()!=null;
+                    game.FoeKilled(this);
+                    float deathDuration=meshLife!=null||humanLife?FaithfulEnemy3D.DeathDuration
+                        :painted!=null&&painted.Ready?EnemyPainted2D.DeathDuration+.03f:0;
+                    Destroy(gameObject,deathDuration);
+                }
             }
             return true;
         }

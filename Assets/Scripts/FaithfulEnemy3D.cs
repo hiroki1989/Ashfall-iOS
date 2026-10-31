@@ -334,7 +334,7 @@ namespace NeonVault
         {
             if(!Ready)return;float dt=Time.deltaTime;
             if(death>=0){AnimateDeath(dt);return;}
-            if(owner&&owner.dead){BeginDeath();return;}
+            if(owner&&owner.dead&&!owner.Escaping){BeginDeath();return;}
             if(owner&&owner.game&&!owner.game.Active){previous=transform.position;return;}
             Vector3 delta=transform.position-previous;previous=transform.position;delta.y=0;
             float speed=dt>.0001f?delta.magnitude/dt:0,moving=Mathf.Clamp01(speed/.7f);

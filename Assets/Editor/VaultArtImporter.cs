@@ -33,6 +33,18 @@ namespace NeonVault.Editor
                 importer.SetPlatformTextureSettings(mobile);
                 return;
             }
+            if(assetPath.StartsWith("Assets/Resources/Art/Portraits/"))
+            {
+                importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;
+                importer.npotScale=TextureImporterNPOTScale.None;importer.maxTextureSize=1024;
+                importer.isReadable=false;importer.mipmapEnabled=false;importer.alphaIsTransparency=false;
+                importer.wrapMode=UnityEngine.TextureWrapMode.Clamp;importer.filterMode=UnityEngine.FilterMode.Bilinear;
+                importer.textureCompression=TextureImporterCompression.CompressedHQ;
+                var ios=importer.GetPlatformTextureSettings("iPhone");ios.name="iPhone";ios.overridden=true;
+                ios.maxTextureSize=1024;ios.format=TextureImporterFormat.ASTC_6x6;ios.compressionQuality=100;
+                importer.SetPlatformTextureSettings(ios);
+                return;
+            }
             if(assetPath.StartsWith("Assets/Resources/Art/GeneratedWarden/"))
             {
                 importer.textureType=TextureImporterType.Default;importer.textureShape=TextureImporterShape.Texture2D;

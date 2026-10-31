@@ -220,8 +220,10 @@ namespace NeonVault
             if(entrance>=0)
             {
                 var stage=ExpeditionMap.Get(entrance,DebtLevel);
-                string briefing=stage.Name+" / Lv."+stage.level+"\n"+ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese)+"\n"+ExpeditionRewardDescription(stage.id);
-                if(WorldButton(mobile?new Rect(440,285,570,150):new Rect(940,550,475,160),briefing+"\n"+T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E")))EnterNearbyWorldDungeon(entrance);
+                bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);
+                string status=hqUnlocked?ExpeditionRewardDescription(stage.id):FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese);
+                string briefing=stage.Name+" / Lv."+stage.level+"\n"+ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese)+"\n"+status;
+                if(WorldButton(mobile?new Rect(440,285,570,150):new Rect(940,550,475,160),briefing+"\n"+(hqUnlocked?T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E"):T("LOCKED","未解放")),hqUnlocked))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
             {
@@ -582,17 +584,18 @@ namespace NeonVault
         }
         void DrawWorldStageBriefing()
         {
-            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id);
+            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id)||IsFactionHeadquarters(stage.id);
+            bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);
             WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,29);
             WorldLabel(new Rect(975,220,410,75),discovered?stage.Location+" / "+stage.Biome:"?",Mist,23);
             WorldLabel(new Rect(975,305,410,70),T("LEVEL ","レベル ")+stage.level,Cyan,25);
-            WorldLabel(new Rect(975,375,410,105),discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",UiPaper,26);
+            WorldLabel(new Rect(975,375,410,105),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",!hqUnlocked?UiDanger:UiPaper,26);
             WorldLabel(new Rect(975,490,410,80),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,22);
             WorldLabel(new Rect(975,575,410,40),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,21);
             bool tracking=OverworldWaypointKind==2&&OverworldWaypointId==stage.id;
             if(WorldButton(new Rect(975,615,410,60),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:2,stage.id);
-            bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id;
-            if(WorldButton(new Rect(975,685,410,55),nearby?T("ENTER DUNGEON","ダンジョンに入る"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
+            bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id&&hqUnlocked;
+            if(WorldButton(new Rect(975,685,410,55),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):nearby?T("ENTER DUNGEON","ダンジョンに入る"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
         }
         public void DrawWorldBossConversation()
         {
