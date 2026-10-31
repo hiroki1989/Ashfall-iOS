@@ -12,11 +12,11 @@ namespace NeonVault
         readonly Dictionary<Chest,int> worldChestIds=new Dictionary<Chest,int>();
         readonly Dictionary<Foe,int> worldEnemyLevels=new Dictionary<Foe,int>();
         float worldSpawnTimer,worldSaveTimer;
-        public static int MaxActiveOverworldEnemies=>Application.isMobilePlatform?18:28;
+        public static int MaxActiveOverworldEnemies=>Application.isMobilePlatform?12:28;
         sealed class WorldEnemySpawn
         {
             public Vector3 position;
-            public int kind,level;
+            public int kind,level,faction;
             public float hp=-1;
             public bool defeated,elite;
             public Foe active;
@@ -192,7 +192,8 @@ namespace NeonVault
                 // Avoid fragmented pairs/triples at rivers and camp safety boundaries.
                 if(positions.Count!=count)continue;
                 int level=Mathf.Max(1,DebtLevel+random.Next(-1,2));
-                foreach(var p in positions)worldEnemySpawns.Add(new WorldEnemySpawn{position=p,kind=roster[random.Next(roster.Length)],level=level,elite=random.NextDouble()<.0225});
+                int patrolFaction=(Mathf.Abs(x*31+z*17)%4==0)?(x+z<0?1:2):0;
+                foreach(var p in positions)worldEnemySpawns.Add(new WorldEnemySpawn{position=p,kind=patrolFaction>0?10:roster[random.Next(roster.Length)],level=level,faction=patrolFaction,elite=random.NextDouble()<.0225});
             }
         }
 
@@ -243,6 +244,7 @@ namespace NeonVault
                     SpawnFoe(nearest.position,nearest.kind);
                     var foe=Enemies[Enemies.Count-1];nearest.position=foe.transform.position;nearest.position.y=.65f;nearest.active=foe;worldEnemyInstances.Add(foe,nearest);
                     if(nearest.hp>=0)foe.hp=Mathf.Clamp(nearest.hp,.001f,foe.maxHp);
+                    if(nearest.faction>0&&foe.GetComponentInChildren<HumanFactionVisual>()==null){foreach(var renderer in foe.GetComponentsInChildren<Renderer>(true))renderer.enabled=false;var human=HumanFactionVisual.Create(foe.transform,nearest.faction,foe.UseAssaultRifle?0:1);human.transform.localScale=Vector3.one*1.12f;human.transform.localPosition=Vector3.down*.03f;}
                 }
                 finally{spawningWorldEnemy=null;}
             }

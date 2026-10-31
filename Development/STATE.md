@@ -1,3 +1,36 @@
+## 2026-11-01 / iOS版の電池消費・発熱軽減（GPU/CPU/メモリ帯域最適化）
+- 原因分析と対策実装:
+  1. **フル画面マルチパスポストプロセス（`VaultPost`）・`DepthNormals`・HDR・4x MSAAの廃止（`VaultGame.cs`）**:
+     - 従来はiOSでも `cam.allowHDR = true`、`DepthTextureMode.Depth | DepthNormals`、`QualitySettings.antiAliasing = 4`、および毎フレーム5パスの `Graphics.Blit`＋5タップ深度輪郭検出を行う `VaultPost`（`OnRenderImage`）が常時稼働しており、iOS（Metal TBDR）でタイルメモリのフラッシュと深度法線プリパスによる膨大なGPU負荷・発熱を引き起こしていた。
+     - モバイル環境（`Application.isMobilePlatform || MobileTouchControls.Enabled`）では `VaultPost`・`DepthNormals`・HDR・MSAAを無効化し、タイルメモリ内で1パス描画が完結するよう変更。
+  2. **Retina動的解像度スケーリングとフルスクリーン2D画面での3D描画停止・アイドル時省電力制御（`VaultGame.cs`, `ImportedWorldBatch.cs`）**:
+     - `Application.isMobilePlatform` 時に `ScalableBufferManager.ResizeBuffers(0.78f, 0.78f)` を適用し、高密度Retinaディスプレイでの3Dピクセルシェーダ負荷（面積比約60%）を大幅に削減（2D UIの解像度・鮮明さは維持）。
+     - `UpdateMobilePowerState()` を新設し、2D全画面UI（タイトルメニュー、広域地図・作戦地図、インベントリ、ショップ、メーカー図鑑、倉庫、導入画面）の表示中はメインカメラの `cullingMask = 0` に切り替えて背後の3Dシーン描画および `ImportedWorldBatch.DrawNow()` のインスタンス描画・遮蔽レイキャストを完全停止。
+     - さらにポーズ・会話・モーダル画面等で1.5秒以上タッチ操作がないアイドル時は、`Application.targetFrameRate = 15` および `OnDemandRendering.renderFrameInterval = 2` へ自動的に落として待機中の電池消費と発熱を抑制（タッチ操作や3D戦闘再開時は即座に30fps・`renderFrameInterval = 1` へ復帰）。
+  3. **リアルタイム影（シャドウ）とライト数のモバイル最適化（`VaultGame.cs`, `OverworldScenery.cs`, `FaithfulEnemy3D.cs`, `HumanFactionVisual.cs`, `ImportedEnemyVisual.cs`）**:
+     - モバイル時は `ShadowQuality.HardOnly`、`ShadowResolution.Low`、`shadowCascades = 1`、`shadowDistance = 52`（従来の145mから短縮）、`pixelLightCount = 1`（従来の4から削減）とし、副ディレクショナルライト（`Cool sky fill`）を省略。
+     - 全体マップチャンク（`OverworldScenery.cs`）では建物メッシュ（`mat == 0 || mat == 4`）のみ影を落とし、地面・道路・水・草木バッチの影投影をオフ化。人間勢力モデル（`HumanFactionVisual`）・インポート敵（`ImportedEnemyVisual`）・通常変異体（`FaithfulEnemy3D` の非ボス）のシャドウ投影・受影もモバイル時はオフ化。
+  4. **敵アニメーション・2本腕IK・スキニング更新と全体マップ密度の負荷削減（`HumanFactionVisual.cs`, `FaithfulEnemy3D.cs`, `ImportedEnemyVisual.cs`, `OverworldScenery.cs`, `VaultOverworld.cs`）**:
+     - `HumanFactionVisual.LateUpdate()`（15ボーン回転＋銃器2本腕IK計算）および `FaithfulEnemy3D.LateUpdate()`（20関節以上のプロシージャル計算）において、ポーズ・会話中や死亡完了後（`deathTime > 1.1f`）、およびプレイヤーから遠距離（30〜32m以遠）の個体の毎フレーム計算をスキップし、モバイル時・中距離（16m以遠）・静止時のポーズ更新周期を間引くスロットリングを実装。
+     - `ImportedEnemyVisual` の `updateWhenOffscreen` をモバイル時は `false`、`SkinQuality.Bone2` に制限。
+     - モバイル時の全体マップ同時アクティブ敵上限（`MaxActiveOverworldEnemies`）を `18` から `12` へ引き下げ、チャンクあたりの地表草（400→160）・街路小物/瓦礫（240→100）のインスタンス数および建物遮蔽チェック周期（0.12s→0.25s、敵判定距離50m→20m）を軽量化。
+- 検証: Unity 6000.6.0f1同梱のRoslyn `csc` による `Assembly-CSharp` のコンパイル成功（エラー0 / `CSC_EXIT=0`）、`git diff --check` 通過。Unity Editor本体（PID 40372）が稼働中のため、実機iOSでのバッテリー消費計測・サーマル確認は未実施。
+
+## 2026-11-01 / 全体マップの樹木・密集森・公園・ランドマーク増強、勢力制圧率の横棒グラフUI、屋外勢力野営地・巡回部隊
+- 樹木・密集森・市街地街路樹の大幅増量（`OverworldGeography.cs`, `OverworldScenery.cs`, `AerialCityMapBaker.cs`）:
+  - 市街地（ビル街・商店街・モール・住宅街）での樹木試行数を従来の45回から220回（道路沿いの街路樹帯は380回）へ引き上げ、最小間隔も緩和して市街地全域と大通り沿いに街路樹・中庭の木々を多数配置。
+  - 既存の森林公園に加え、新たに12箇所の密集森林地帯（`DenseForest`）とパーリンノイズによる自然林クラスターを追加し、試行数最大960回・最小間隔2.4m・樹高と枝葉ボリュームを増やした鬱蒼とした森エリアを各地に形成。
+- 都市ポケットパーク（公園広場）と大型ランドマークの追加（`OverworldGeography.cs`, `OverworldScenery.cs`, `VaultOverworldUI.cs`）:
+  - 無効化されていた `PocketPark` を有効化し、各地区の拠点広場16箇所＋250mグリッドごとのポケットパークを配置（既存の50mナビゲーション経路・保護サイトはすべて回避）。公園内には十字遊歩道・ベンチ8基に加えて中央噴水モニュメント・4方向の花壇・街灯柱を配置。
+  - 各地区の象徴となる6種類の3Dランドマーク構造物（0: 時計塔・通信塔跡、1: 凱旋記念門、2: 記念大噴水広場、3: 市庁舎ロタンダ円堂跡、4: 鉄骨給水塔・サイロ広場、5: オベリスク記念碑と列柱）を実装し、広域地図にも地区・ランドマーク名ラベルを追加。
+- 広域地図の敵2勢力ダンジョン制圧率・横向き棒グラフUI（`VaultOverworldUI.cs`, `VaultExpeditionCityMap.cs`）:
+  - 広域地図（`DrawOverworldAtlas`）および作戦地図（`DrawExpeditionCityMap`）の上部に `DrawFactionConquestBars` パネルを追加。
+  - レッドクロウ（`RED CLAW`）とコヨーテ（`COYOTES`）それぞれのダンジョン制圧率（`0〜100%`、クリア数/50）を横向きの棒グラフで表示し、ボス戦解放ラインである **30%・60%** の位置に縦の区切り印とパーセント目盛り（30% / 60% / 100%）を表示。
+- 全体マップの敵勢力・屋外野営地の可視化と巡回部隊の追加（`OverworldFactionCamps.cs`, `VaultOverworld.cs`, `VaultOverworldUI.cs`）:
+  - 既存の屋外勢力野営地（`OverworldFactionCamps.cs`：全50箇所候補、レッドクロウの赤旗・鉄バリケード陣地／コヨーテの黄土色天幕・木箱陣地、各10〜20体の人間勢力兵が守備し全滅でオレンジ色の報酬チェストが出現）の位置を、広域地図および200m周辺ミニマップ上に勢力色のひし形マーカーで表示。
+  - さらに屋外の道路網を巡回する敵グループ（`GenerateOverworldEnemies`）にも、感染者だけでなく約25%の割合でレッドクロウ／コヨーテの人間勢力パトロール部隊（`HumanFactionVisual` 適用）が出現するよう拡張。
+- 検証: Unity 6000.6.0f1同梱のRoslyn `csc` による `Assembly-CSharp` および `Assembly-CSharp-Editor` のコンパイル成功（`CSC_EXIT=0`, `CSC_EDITOR_EXIT=0`）、`git diff --check` 通過。Unity Editor本体（PID 40372）が稼働中のため、実画面およびiOS実機での目視確認は未実施。
+
 ## 2026-11-01 / ボス・NPC会話の立ち絵実装（MGS風筆ペンタッチ・カラー・共通マスク）
 - 全7キャラクターの立ち絵（1024×1024 PNG）をMGS風の渋い筆ペンタッチ＋彩色、かつ全員がノックスと同系統の二連フィルター＋ゴーグル型ガスマスクを着用したデザインで新規生成し、`Assets/Resources/Art/Portraits/`（原本は `D:/Unity/PortraitsOriginal/`）に保存。
   - 右側配置（左向き）: `portrait-knox.png`（メニュー画面キービジュアル準拠のノックス）

@@ -330,14 +330,22 @@ namespace NeonVault
         static readonly float[] GaitStride={1.42f,1.18f,1.65f,2.65f,1.08f,1.36f,1.95f,1.17f,2.05f,1.22f};
         static readonly float[] GaitHunch={18,26,11,13,46,23,18,8,16,27};
         static readonly float[] GaitRoll={4,9,3,5,7,3,6,12,4,8};
+        float nextAnimAt;
         void LateUpdate()
         {
             if(!Ready)return;float dt=Time.deltaTime;
-            if(death>=0){AnimateDeath(dt);return;}
+            if(death>=0){if(death<=DeathDuration+.1f)AnimateDeath(dt);return;}
             if(owner&&owner.dead&&!owner.Escaping){BeginDeath();return;}
             if(owner&&owner.game&&!owner.game.Active){previous=transform.position;return;}
             Vector3 delta=transform.position-previous;previous=transform.position;delta.y=0;
             float speed=dt>.0001f?delta.magnitude/dt:0,moving=Mathf.Clamp01(speed/.7f);
+            if(owner&&owner.game&&attack<=0&&hit<=0&&!owner.IsTelegraphing)
+            {
+                float distSq=(transform.position-owner.game.PlayerPosition).sqrMagnitude;
+                if(distSq>30f*30f)return;
+                if((Application.isMobilePlatform||distSq>16f*16f)&&Time.time<nextAnimAt)return;
+                if(Application.isMobilePlatform||distSq>16f*16f)nextAnimAt=Time.time+(distSq>16f*16f?.08f:moving<.05f?.08f:.033f);
+            }
 
             phase+=delta.magnitude/GaitStride[kind];float wave=Mathf.Sin(phase*Mathf.PI*2),beat=Mathf.Sin(phase*Mathf.PI*4);
             float breath=Mathf.Sin(Time.time*(kind==7?.9f:kind==4?3.3f:1.4f)+kind);
@@ -457,7 +465,7 @@ namespace NeonVault
             }
             var mesh=new Mesh{name=name};if(verts.Count>65535)mesh.indexFormat=IndexFormat.UInt32;mesh.SetVertices(verts);mesh.SetTriangles(ix,0);
             var uv=new Vector2[verts.Count];for(int i=0;i<uv.Length;i++)uv[i]=new Vector2(verts[i].x*4,verts[i].y*4);mesh.uv=uv;mesh.RecalculateNormals();mesh.RecalculateTangents();mesh.RecalculateBounds();meshes.Add(mesh);
-            var t=Joint(name,p,Vector3.zero);t.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;var r=t.gameObject.AddComponent<MeshRenderer>();r.sharedMaterial=mat;r.shadowCastingMode=ShadowCastingMode.On;
+            var t=Joint(name,p,Vector3.zero);t.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;var r=t.gameObject.AddComponent<MeshRenderer>();r.sharedMaterial=mat;r.shadowCastingMode=Application.isMobilePlatform&&kind!=3?ShadowCastingMode.Off:ShadowCastingMode.On;if(Application.isMobilePlatform)r.receiveShadows=false;
         }
         static void Quad(List<int> ix,int a,int b,int c,int d,bool reverse)
         {if(reverse)ix.AddRange(new[]{a,c,b,c,d,b});else ix.AddRange(new[]{a,b,c,c,b,d});}
@@ -557,7 +565,7 @@ namespace NeonVault
                 if(pair.Value.Count<2)continue;var instances=new CombineInstance[pair.Value.Count];int count=0;
                 for(int j=0;j<instances.Length;j++){var f=pair.Value[j];count+=f.sharedMesh.vertexCount;instances[j]=new CombineInstance{mesh=f.sharedMesh,transform=joint.worldToLocalMatrix*f.transform.localToWorldMatrix};}
                 var merged=new Mesh{name=joint.name+" / "+pair.Key.name};if(count>65535)merged.indexFormat=IndexFormat.UInt32;merged.CombineMeshes(instances,true,true);meshes.Add(merged);
-                var node=Joint(merged.name,joint,Vector3.zero);node.gameObject.AddComponent<MeshFilter>().sharedMesh=merged;node.gameObject.AddComponent<MeshRenderer>().sharedMaterial=pair.Key;
+                var node=Joint(merged.name,joint,Vector3.zero);node.gameObject.AddComponent<MeshFilter>().sharedMesh=merged;var mr=node.gameObject.AddComponent<MeshRenderer>();mr.sharedMaterial=pair.Key;mr.shadowCastingMode=Application.isMobilePlatform&&kind!=3?ShadowCastingMode.Off:ShadowCastingMode.On;if(Application.isMobilePlatform)mr.receiveShadows=false;
                 foreach(var f in pair.Value){meshes.Remove(f.sharedMesh);Destroy(f.sharedMesh);f.gameObject.SetActive(false);Destroy(f.gameObject);}
             }
         }

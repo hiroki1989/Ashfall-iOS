@@ -64,7 +64,7 @@ namespace NeonVault
             void Box(Vector3 p,Vector3 size,int mat,float yaw=0,bool round=false){batches[mat].Add(new CombineInstance{mesh=round?sphere:cube,transform=Matrix4x4.TRS(p,Quaternion.Euler(0,yaw,0),size)});}
             // Exact curved ribbons are clipped into each 100m batch, not rasterized into nav cells.
             for(float a=x*100;a<(x+1)*100;a+=20)for(float b=z*100;b<(z+1)*100;b+=20)
-            {var p=new Vector3(a+10,-.12f,b+10);Box(p,new Vector3(20,.2f,20),geography.Park(p)?1:0);}
+            {var p=new Vector3(a+10,-.12f,b+10);Box(p,new Vector3(20,.2f,20),geography.Park(p)||geography.PocketPark(p)||geography.DenseForest(p)?1:0);}
             void Ribbon(Func<float,Vector3> center,float from,float to,float width,int mat,float level,Func<float,float> variableWidth=null)
             {
                 for(float t=from;t<to;t+=5)
@@ -112,22 +112,59 @@ namespace NeonVault
             }
             foreach(var tree in data.Trees)
             {
-                int seed=unchecked(x*1973+z*9277+index++*101);if(OverworldScenery.AssetAdapter?.Invoke("tree",obj.transform,tree,seed)==true)continue;
-                float h=5+Mathf.Abs(seed%5)*.6f;Box(tree+Vector3.up*h*.4f,new Vector3(.38f,h*.8f,.38f),6);
-                for(int lobe=0;lobe<6;lobe++){float a=lobe*2.399f+seed;var offset=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a));Box(tree+offset*.7f+Vector3.up*(h*.53f+lobe*.23f),new Vector3(2,.17f,.17f),6,-a*Mathf.Rad2Deg);Box(tree+offset*(1.1f+lobe%2*.4f)+Vector3.up*(h*.65f+lobe*.23f),new Vector3(2.3f,1.7f,2),lobe%2==0?1:5,seed+lobe*37,true);}
+                int seed=unchecked(x*1973+z*9277+index++*101);bool dense=geography.DenseForest(tree);if((!dense||Mathf.Abs(seed)%3!=0)&&OverworldScenery.AssetAdapter?.Invoke("tree",obj.transform,tree,seed)==true)continue;
+                float h=(dense?6.2f:5f)+Mathf.Abs(seed%6)*.7f;Box(tree+Vector3.up*h*.4f,new Vector3(dense?.46f:.38f,h*.8f,dense?.46f:.38f),6);
+                for(int lobe=0;lobe<(dense?8:6);lobe++){float a=lobe*2.399f+seed;var offset=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a));Box(tree+offset*.75f+Vector3.up*(h*.5f+lobe*.22f),new Vector3(2.1f,.18f,.18f),6,-a*Mathf.Rad2Deg);Box(tree+offset*(1.15f+lobe%2*.45f)+Vector3.up*(h*.62f+lobe*.22f),new Vector3(dense?2.7f:2.3f,dense?2.0f:1.7f,dense?2.4f:2f),lobe%2==0?1:5,seed+lobe*37,true);}
             }
             foreach(var car in data.Cars)
             {if(OverworldScenery.AssetAdapter?.Invoke("car",obj.transform,car,index++)==true)continue;Box(car+Vector3.up*.4f,new Vector3(1.8f,.6f,4.8f),6);Box(car+Vector3.up*.95f,new Vector3(1.55f,.55f,2),2);for(int side=-1;side<=1;side+=2)for(int end=-1;end<=1;end+=2)Box(car+new Vector3(side*.85f,.3f,end*1.5f),new Vector3(.22f,.6f,.65f),2,0,true);}
             var rng=new System.Random(unchecked(OverworldGeography.Seed+x*331+z*7741));
             // Passable ankle-height plants replace upright primitive grass. No unregistered rocks.
-            for(int i=0;i<400;i++){
+            for(int i=0;i<(Application.isMobilePlatform?160:400);i++){
                 var p=new Vector3(x*100+(float)rng.NextDouble()*100,0,z*100+(float)rng.NextDouble()*100);
                 if(!geography.River(p)&&geography.RoadClearance(p)>1.5f&&!geography.SiteProtected(p,2))ImportedWorldAssets.PlaceGroundcover(obj.transform,p,i+x*47+z*11);
             }
             for(int parkX=Mathf.FloorToInt(x*100/250f)-1;parkX<=Mathf.FloorToInt((x+1)*100/250f);parkX++)for(int parkZ=Mathf.FloorToInt(z*100/250f)-1;parkZ<=Mathf.FloorToInt((z+1)*100/250f);parkZ++){
                 var centre=new Vector3(parkX*250+150,0,parkZ*250+150);if(centre.x<x*100||centre.x>=(x+1)*100||centre.z<z*100||centre.z>=(z+1)*100||!geography.PocketPark(centre)||geography.SiteProtected(centre,10))continue;
                 Box(centre+Vector3.down*.005f,new Vector3(24,.015f,2.5f),7);Box(centre+Vector3.down*.004f,new Vector3(2.5f,.015f,24),7);
-                for(int seat=0;seat<8;seat++){float a=seat*Mathf.PI*.25f;var bench=Resources.Load<GameObject>("ImportedWorld/props/bench");if(bench)ImportedWorldBatch.Add(obj.transform,bench,centre+new Vector3(Mathf.Cos(a)*10,0,Mathf.Sin(a)*10),Quaternion.Euler(0,-a*Mathf.Rad2Deg-90,0),Vector3.one);}
+                for(int seat=0;seat<8;seat++){float a=seat*Mathf.PI*.25f;var bench=Resources.Load<GameObject>("ImportedWorld/props/bench");if(bench)ImportedWorldBatch.Add(obj.transform,bench,centre+new Vector3(Mathf.Cos(a)*10,0,Mathf.Sin(a)*10),Quaternion.Euler(0,-a*Mathf.Rad2Deg-90,0),Vector3.one);Box(centre+new Vector3(Mathf.Cos(a)*11.6f,1.6f,Mathf.Sin(a)*11.6f),new Vector3(.14f,3.2f,.14f),2);Box(centre+new Vector3(Mathf.Cos(a)*11.6f,3.3f,Mathf.Sin(a)*11.6f),new Vector3(.45f,.35f,.45f),7,0,true);}
+                Box(centre+Vector3.up*.04f,new Vector3(6.4f,.08f,6.4f),0,45);Box(centre+Vector3.up*.18f,new Vector3(3.6f,.28f,3.6f),3,0,true);Box(centre+Vector3.up*1.1f,new Vector3(.65f,2.1f,.65f),0);Box(centre+Vector3.up*2.2f,new Vector3(1.5f,.35f,1.5f),7,0,true);
+                for(int bed=0;bed<4;bed++){float ba=bed*Mathf.PI*.5f+Mathf.PI*.25f;var bp=centre+new Vector3(Mathf.Cos(ba)*7.5f,.06f,Mathf.Sin(ba)*7.5f);Box(bp,new Vector3(3.2f,.12f,3.2f),7,ba*Mathf.Rad2Deg);Box(bp+Vector3.up*.18f,new Vector3(2.6f,.25f,2.6f),1,ba*Mathf.Rad2Deg,true);}
+            }
+            int landmarkKind=geography.LandmarkKind(new Vector2Int(x,z),out Vector3 lPos);
+            if(landmarkKind>=0&&!geography.River(lPos)&&geography.RoadClearance(lPos)>4f&&!geography.SiteProtected(lPos,12))
+            {
+                Box(lPos+Vector3.up*.06f,new Vector3(16,.12f,16),7);Box(lPos+Vector3.up*.14f,new Vector3(12,.16f,12),0,45);
+                if(landmarkKind==0)
+                {
+                    Box(lPos+Vector3.up*6.5f,new Vector3(3.2f,13f,3.2f),4);Box(lPos+Vector3.up*13.4f,new Vector3(3.8f,1.2f,3.8f),0);Box(lPos+Vector3.up*15.2f,new Vector3(2.2f,2.4f,2.2f),2,45);Box(lPos+Vector3.up*17.5f,new Vector3(.3f,3.5f,.3f),2);
+                    for(int face=0;face<4;face++){float a=face*Mathf.PI*.5f;Box(lPos+new Vector3(Mathf.Cos(a)*1.68f,11.2f,Mathf.Sin(a)*1.68f),new Vector3(1.5f,1.5f,.18f),7,a*Mathf.Rad2Deg,true);}
+                }
+                else if(landmarkKind==1)
+                {
+                    for(int side=-1;side<=1;side+=2){Box(lPos+new Vector3(side*3.8f,4.2f,0),new Vector3(2.1f,8.4f,2.4f),0);Box(lPos+new Vector3(side*3.8f,.6f,0),new Vector3(2.8f,1.2f,3.1f),4);}
+                    Box(lPos+Vector3.up*9.1f,new Vector3(10.2f,1.8f,2.8f),0);Box(lPos+Vector3.up*10.4f,new Vector3(7.6f,1.1f,2.2f),4);
+                }
+                else if(landmarkKind==2)
+                {
+                    Box(lPos+Vector3.up*.3f,new Vector3(9.5f,.6f,9.5f),0,0,true);Box(lPos+Vector3.up*.5f,new Vector3(7.6f,.45f,7.6f),3,0,true);
+                    Box(lPos+Vector3.up*2.4f,new Vector3(1.8f,4.2f,1.8f),0);Box(lPos+Vector3.up*4.8f,new Vector3(3.4f,.5f,3.4f),7,0,true);Box(lPos+Vector3.up*6.2f,new Vector3(1.1f,2.6f,1.1f),2,25);
+                }
+                else if(landmarkKind==3)
+                {
+                    for(int col=0;col<8;col++){float a=col*Mathf.PI*.25f;Box(lPos+new Vector3(Mathf.Cos(a)*4.8f,3.2f,Mathf.Sin(a)*4.8f),new Vector3(.75f,6.4f,.75f),0);}
+                    Box(lPos+Vector3.up*6.6f,new Vector3(10.8f,.6f,10.8f),0,0,true);Box(lPos+Vector3.up*8.2f,new Vector3(8.4f,3.8f,8.4f),2,0,true);
+                }
+                else if(landmarkKind==4)
+                {
+                    for(int leg=0;leg<4;leg++){float a=leg*Mathf.PI*.5f+Mathf.PI*.25f;Box(lPos+new Vector3(Mathf.Cos(a)*2.6f,4.5f,Mathf.Sin(a)*2.6f),new Vector3(.45f,9f,.45f),2,leg*15);}
+                    Box(lPos+Vector3.up*9f,new Vector3(5.8f,.4f,5.8f),2);Box(lPos+Vector3.up*11.6f,new Vector3(5.2f,4.8f,5.2f),6,0,true);Box(lPos+Vector3.up*14.5f,new Vector3(1.8f,1.2f,1.8f),4);
+                }
+                else
+                {
+                    Box(lPos+Vector3.up*1.1f,new Vector3(3.6f,2.2f,3.6f),0);Box(lPos+Vector3.up*6.8f,new Vector3(1.6f,10.5f,1.6f),7,15);Box(lPos+Vector3.up*12.5f,new Vector3(1.1f,1.8f,1.1f),0,45,true);
+                    for(int p=0;p<6;p++){float a=p*Mathf.PI/3f;Box(lPos+new Vector3(Mathf.Cos(a)*5.6f,1.8f,Mathf.Sin(a)*5.6f),new Vector3(.9f,3.6f,.6f),4,a*Mathf.Rad2Deg);}
+                }
             }
             // Broken masonry gathers along ruined foundations instead of uniform scattering.
             foreach(var building in data.Buildings)for(int corner=0;corner<4;corner++){
@@ -142,7 +179,7 @@ namespace NeonVault
                 if(buildingBatch)buildingBatch.EndBuildingDecoration();
             }
             // Imported street furniture sits off the roadway; low debris remains passable.
-            for(int i=0;i<240;i++){
+            for(int i=0;i<(Application.isMobilePlatform?100:240);i++){
                 var p=new Vector3(x*100+(float)rng.NextDouble()*100,0,z*100+(float)rng.NextDouble()*100);
                 if(geography.River(p)||geography.SiteProtected(p,2))continue;
                 bool occupied=false;foreach(var building in data.Buildings)if(new Rect(building.xMin-1,building.yMin-1,building.width+2,building.height+2).Contains(new Vector2(p.x,p.z))){occupied=true;break;}if(occupied)continue;
@@ -151,7 +188,7 @@ namespace NeonVault
                 else if(clearance>3.5f)OverworldScenery.AssetAdapter?.Invoke("debris",obj.transform,p,i+x*57+z*31);
             }
             for(int mat=0;mat<batches.Length;mat++)
-            {if(batches[mat].Count==0)continue;var mesh=new Mesh{name="Stream mesh",indexFormat=IndexFormat.UInt32};mesh.CombineMeshes(batches[mat].ToArray(),true,true);if(mat==0||mat==1||mat==2||mat==7){var vertices=mesh.vertices;var uv=new Vector2[vertices.Length];for(int v=0;v<vertices.Length;v++)uv[v]=new Vector2(vertices[v].x/4,vertices[v].z/4);mesh.uv=uv;}mesh.RecalculateBounds();life.Meshes.Add(mesh);var child=new GameObject("Material "+mat);child.transform.SetParent(obj.transform,false);child.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=child.AddComponent<MeshRenderer>();renderer.sharedMaterial=materials[mat];renderer.shadowCastingMode=mat==3?ShadowCastingMode.Off:ShadowCastingMode.On;}
+            {if(batches[mat].Count==0)continue;var mesh=new Mesh{name="Stream mesh",indexFormat=IndexFormat.UInt32};mesh.CombineMeshes(batches[mat].ToArray(),true,true);if(mat==0||mat==1||mat==2||mat==7){var vertices=mesh.vertices;var uv=new Vector2[vertices.Length];for(int v=0;v<vertices.Length;v++)uv[v]=new Vector2(vertices[v].x/4,vertices[v].z/4);mesh.uv=uv;}mesh.RecalculateBounds();life.Meshes.Add(mesh);var child=new GameObject("Material "+mat);child.transform.SetParent(obj.transform,false);child.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=child.AddComponent<MeshRenderer>();renderer.sharedMaterial=materials[mat];bool castShadow=Application.isMobilePlatform?(mat==0||mat==4):mat!=3;renderer.shadowCastingMode=castShadow?ShadowCastingMode.On:ShadowCastingMode.Off;}
             return obj;
         }
     }

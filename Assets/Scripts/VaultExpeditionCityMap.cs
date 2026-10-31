@@ -29,7 +29,8 @@ namespace NeonVault
         {
             Box(new Rect(0, 0, 1440, 900), new Color(.018f, .027f, .032f));
             Text(42, 30, T("ASHFALL / REGIONAL OPERATIONS", "アッシュフォール / 地方全域作戦図"), heading, Gold, 1300);
-            Text(45, 93, T("200 SITES / THREATS ARE SCATTERED ACROSS THE REGION", "全200地点 / 各レベルの危険地点が地方全域に点在"), small, Mist, 960);
+            Text(45, 93, T("200 SITES / THREATS ARE SCATTERED ACROSS THE REGION", "全200地点 / 各レベルの危険地点が地方全域に点在"), small, Mist, 740);
+            DrawFactionConquestBars(new Rect(810, 26, 585, 82));
             Panel(new Rect(1020, 150, 375, 663), Cyan);
             Rect view = new Rect(42, 150, 952, 663);
             Event e = Event.current;

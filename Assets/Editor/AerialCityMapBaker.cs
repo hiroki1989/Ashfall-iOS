@@ -76,7 +76,7 @@ namespace NeonVault.Editor
             if(!details)for(int y=y0;y<=y1;y+=2)for(int x=x0;x<=x1;x+=2)
             {
                 var p=new Vector3(World(x),0,World(y,true));float river=Mathf.Abs(p.x-geo.RiverX(p.z))-geo.RiverWidth(p.z)*.5f;
-                float road=geo.RoadClearance(p);bool park=geo.Park(p);
+                float road=geo.RoadClearance(p);bool park=geo.Park(p)||geo.PocketPark(p)||geo.DenseForest(p);
                 Color32 color;
                 int broad=(int)((Mathf.PerlinNoise(p.x*.004f+33,p.z*.004f+51)-.5f)*27);
                 if(river<0&&!geo.Bridge(p.z))color=Shade(34,58,61,Grain(x,y,1)/2+(int)Mathf.Clamp(river*.075f,-11,0)+(int)(3*Mathf.Sin(y*.11f+x*.04f)));
@@ -127,7 +127,7 @@ namespace NeonVault.Editor
             }
             foreach(var tree in chunk.Trees)
             {
-                int tx=Pixel(tree.x),ty=Pixel(tree.z,true),hash=Noise(tx,ty);float radius=(geo.Park(tree)?3.1f:2.1f)+(hash%4)*.4f;
+                int tx=Pixel(tree.x),ty=Pixel(tree.z,true),hash=Noise(tx,ty);float radius=(geo.Park(tree)||geo.PocketPark(tree)||geo.DenseForest(tree)?3.1f:2.1f)+(hash%4)*.4f;
                 int reach=Mathf.CeilToInt(radius);
                 for(int y=ty-reach-2;y<=ty+reach;y++)for(int x=tx-reach;x<=tx+reach+2;x++)
                 {

@@ -71,7 +71,11 @@ namespace NeonVault
                 DetailedHeroEquipment3D.DisownSharedMeshes(ready.transform);
                 ready.owner=parent ? parent.GetComponentInParent<Foe>() : null;
                 ready.previous=ready.transform.position; ready.phase=0; ready.deathTime=-1;
-                if(Application.isMobilePlatform) foreach(var skin in ready.GetComponentsInChildren<SkinnedMeshRenderer>(true)) {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;}
+                if(Application.isMobilePlatform)
+            {
+                foreach(var skin in ready.GetComponentsInChildren<SkinnedMeshRenderer>(true)) {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;skin.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;skin.receiveShadows=false;}
+                foreach(var r in ready.GetComponentsInChildren<MeshRenderer>(true)) {r.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;r.receiveShadows=false;}
+            }
                 ready.gameObject.SetActive(true); return ready;
             }
             var template=templates[faction,variant];
@@ -174,7 +178,7 @@ namespace NeonVault
             // per-vertex skinning work and avoid animating offscreen renderers.
             if(Application.isMobilePlatform)
                 foreach(var skin in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;}
+                {skin.quality=SkinQuality.Bone2;skin.updateWhenOffscreen=false;skin.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;skin.receiveShadows=false;}foreach(var mr in root.GetComponentsInChildren<MeshRenderer>(true)){mr.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;mr.receiveShadows=false;}
             visual.owner=parent ? parent.GetComponentInParent<Foe>() : null;
             visual.previous=root.transform.position;
             return visual;
@@ -335,14 +339,15 @@ namespace NeonVault
             Muzzle=gun.muzzle;
             return items;
         }
+        float nextPoseAt;
         void LateUpdate()
         {
-            if(!Body)return;
+            if(!Body)return;if(owner&&owner.game&&!owner.game.Active){previous=transform.position;return;}
             float dt=Time.deltaTime;Vector3 delta=transform.position-previous;delta.y=0;previous=transform.position;
             float speed=dt>0?delta.magnitude/dt:0;
             if(speed>.05f)phase+=dt*Mathf.Clamp(speed*.55f,.5f,2.5f);
             if(owner&&owner.dead&&!owner.Escaping&&deathTime<0)deathTime=0;
-            if(deathTime>=0)deathTime+=dt;
+            if(deathTime>=0){deathTime+=dt;if(deathTime>1.1f)return;}else if(owner&&owner.game){float distSq=(transform.position-owner.game.PlayerPosition).sqrMagnitude;if(distSq>32f*32f)return;if((Application.isMobilePlatform||distSq>16f*16f)&&Time.time<nextPoseAt)return;if(Application.isMobilePlatform||distSq>16f*16f)nextPoseAt=Time.time+(distSq>16f*16f?.08f:speed<=.05f?.12f:.033f);}
             Vector3 direction=transform.forward;
             DetailedHeroPlayer3D.Pose(Body,gun,handgun,true,direction,speed>.05f?phase:-1,
                 dt>0?delta/dt:Vector3.zero,Mathf.Clamp01(speed/2));

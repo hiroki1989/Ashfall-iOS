@@ -80,12 +80,16 @@ namespace NeonVault
             // Without one, all weapon AudioSources are silent on device.
             if (UnityEngine.Object.FindFirstObjectByType<AudioListener>() == null) cam.gameObject.AddComponent<AudioListener>();
             AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat("Ashfall.MasterVolume", 1f));
-            cam.transform.rotation=Quaternion.Euler(35.264f,45,0);cam.allowHDR=true;cam.depthTextureMode=DepthTextureMode.Depth|DepthTextureMode.DepthNormals;cam.gameObject.AddComponent<VaultPost>();
-            QualitySettings.antiAliasing=4;QualitySettings.shadows=ShadowQuality.All;QualitySettings.shadowResolution=ShadowResolution.High;QualitySettings.shadowDistance=145;QualitySettings.pixelLightCount=4;
+            bool mobile=Application.isMobilePlatform||MobileTouchControls.Enabled;
+            if(Application.isMobilePlatform)ScalableBufferManager.ResizeBuffers(.78f,.78f);
+            cam.transform.rotation=Quaternion.Euler(35.264f,45,0);cam.allowHDR=!mobile;cam.allowMSAA=!mobile;
+            cam.depthTextureMode=mobile?DepthTextureMode.None:(DepthTextureMode.Depth|DepthTextureMode.DepthNormals);
+            if(!mobile)cam.gameObject.AddComponent<VaultPost>();
+            QualitySettings.antiAliasing=mobile?0:4;QualitySettings.shadows=mobile?ShadowQuality.HardOnly:ShadowQuality.All;QualitySettings.shadowResolution=mobile?ShadowResolution.Low:ShadowResolution.High;QualitySettings.shadowCascades=mobile?1:2;QualitySettings.shadowDistance=mobile?52:145;QualitySettings.pixelLightCount=mobile?1:4;
             RenderSettings.ambientMode=UnityEngine.Rendering.AmbientMode.Trilight;RenderSettings.ambientSkyColor=new Color(.32f,.37f,.43f);RenderSettings.ambientEquatorColor=new Color(.25f,.27f,.23f);RenderSettings.ambientGroundColor=new Color(.13f,.11f,.085f);
             RenderSettings.fog=true;RenderSettings.fogColor=new Color(.11f,.12f,.095f);RenderSettings.fogMode=FogMode.Exponential;RenderSettings.fogDensity=.009f;
-            var light=new GameObject("Ash-filtered sunlight / shadow casting").AddComponent<Light>();light.type=LightType.Directional;light.color=new Color(1,.95f,.84f);light.intensity=1.2f;light.shadows=LightShadows.Soft;light.shadowStrength=.78f;light.transform.rotation=Quaternion.Euler(48,-25,0);
-            var fill=new GameObject("Cool sky fill").AddComponent<Light>();fill.type=LightType.Directional;fill.color=new Color(.57f,.72f,.89f);fill.intensity=.38f;fill.transform.rotation=Quaternion.Euler(28,145,0);
+            var light=new GameObject("Ash-filtered sunlight / shadow casting").AddComponent<Light>();light.type=LightType.Directional;light.color=new Color(1,.95f,.84f);light.intensity=1.2f;light.shadows=mobile?LightShadows.Hard:LightShadows.Soft;light.shadowStrength=.78f;light.transform.rotation=Quaternion.Euler(48,-25,0);
+            if(!mobile){var fill=new GameObject("Cool sky fill").AddComponent<Light>();fill.type=LightType.Directional;fill.color=new Color(.57f,.72f,.89f);fill.intensity=.38f;fill.transform.rotation=Quaternion.Euler(28,145,0);fill.shadows=LightShadows.None;}
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
             audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=Resources.Load<AudioClip>("SoundEffects/player-hit");if(!hitSound)hitSound=GunReport(true,true);pickupSound=Resources.Load<AudioClip>("WeaponSFX/Handgun_equip");if(pickupSound==null)pickupSound=Tone(620,.16f);ammoPickupSound=Resources.Load<AudioClip>("WeaponSFX/Ammo_pickup");if(ammoPickupSound==null)ammoPickupSound=pickupSound;
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
@@ -313,10 +317,29 @@ namespace NeonVault
             next=p+new Vector3(0,0,delta.z); if(!Blocked(next,radius))p=next;
             return p;
         }
-        float deathReturnAt;
+        float deathReturnAt, mobileIdleUntil;
         int deathScrapLost, deathScrapRemaining;
+        void UpdateMobilePowerState()
+        {
+            if(!Application.isMobilePlatform&&!MobileTouchControls.Enabled)return;
+            bool touched=Input.touchCount>0||Input.GetMouseButton(0)||MobileTouchControls.Movement.sqrMagnitude>.001f||MobileTouchControls.Firing;
+            if(touched||worldTransitionPending||screen==Screen.Dead||toastTimer>0)mobileIdleUntil=Time.unscaledTime+1.5f;
+            bool modalOrStatic=screen!=Screen.Playing&&screen!=Screen.Hub||InventoryOpen||manufacturerRegistry||collectorOpen||VaultStorageVisible||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||(IsOverworld&&OverworldActivityChoiceOpen);
+            bool active3D= !modalOrStatic && (screen==Screen.Playing||screen==Screen.Hub);
+            if(cam!=null)
+            {
+                bool fullScreen2D=screen==Screen.Menu||screen==Screen.DungeonSelect||screen==Screen.Shop||InventoryOpen||manufacturerRegistry||VaultStorageVisible||DebtIntroVisible;
+                int desiredMask=fullScreen2D&&!smoke?0:-1;
+                if(cam.cullingMask!=desiredMask)cam.cullingMask=desiredMask;
+            }
+            int desiredFps=active3D?30:(Time.unscaledTime<mobileIdleUntil?30:15);
+            if(Application.targetFrameRate!=desiredFps)Application.targetFrameRate=desiredFps;
+            int interval=(!active3D&&Time.unscaledTime>=mobileIdleUntil)?2:1;
+            if(UnityEngine.Rendering.OnDemandRendering.renderFrameInterval!=interval)UnityEngine.Rendering.OnDemandRendering.renderFrameInterval=interval;
+        }
         void Update()
         {
+            UpdateMobilePowerState();
             if(screen==Screen.Dead)
             {
                 if(Time.unscaledTime>=deathReturnAt)

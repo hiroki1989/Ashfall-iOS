@@ -182,7 +182,7 @@ namespace NeonVault
             var colors=new Color[resolution*resolution];
             for(int y=0;y<resolution;y++)for(int x=0;x<resolution;x++){
                 var p=new Vector3((x+.5f-resolution*.5f)*10000/resolution,0,(y+.5f-resolution*.5f)*10000/resolution);
-                bool river=geo.River(p)&&!geo.Bridge(p.z);float road=geo.RoadClearance(p);bool park=geo.Park(p);
+                bool river=geo.River(p)&&!geo.Bridge(p.z);float road=geo.RoadClearance(p);bool park=geo.Park(p)||geo.PocketPark(p)||geo.DenseForest(p);
                 int sx=Mathf.RoundToInt(p.x/100),sz=Mathf.RoundToInt(p.z/100);bool arterial=road<0&&((sx%3==0&&Mathf.Abs(p.x-geo.StreetX(sx,p.z))<9)||(sz%3==0&&Mathf.Abs(p.z-geo.StreetZ(sz,p.x))<9));
                 Color color=river?new Color(.10f,.23f,.27f):arterial?new Color(.52f,.49f,.40f):road<0?new Color(.31f,.32f,.29f):road<2?new Color(.28f,.34f,.33f):park?new Color(.18f,.27f,.21f):new Color(.12f,.16f,.17f);
                 if(!river&&road>3&&!park){float district=Mathf.PerlinNoise(p.x*.0018f+11,p.z*.0018f+7);color=Color.Lerp(color,new Color(.28f,.30f,.29f),district*.3f);}
@@ -309,6 +309,13 @@ namespace NeonVault
                 var p=Local(site.position);
                 if(inside.Contains(p))DrawMapArt(new Rect(p.x-15,p.y-15,30,30),site.type==1?2:site.type==2?4:3,Color.white);
             }
+            for(int i=0;i<factionCamps.Count;i++)
+            {
+                var camp=factionCamps[i];if(IsOverworldActivityCompleted(FactionCampReadyBase+camp.id))continue;
+                var p=Local(camp.position);if(!inside.Contains(p))continue;
+                Color c=camp.faction==1?new Color(.96f,.34f,.26f):new Color(.94f,.72f,.30f);
+                Diamond(p.x,p.y,6,c);Box(new Rect(p.x-2,p.y-2,4,4),c);
+            }
             void LootDot(Vector3 position)
             {
                 var p=Local(position);if(!inside.Contains(p))return;
@@ -406,7 +413,7 @@ namespace NeonVault
             for(int z=0;z<150;z++)for(int x=0;x<200;x++)
             {
                 var p=new Vector3(origin.x+x+.5f,0,origin.y+z+.5f);
-                worldLocalPixels[z*200+x]=geo.River(p)&&!geo.Bridge(p.z)?new Color(.12f,.23f,.26f):LocalMapBuilding(geo,p)?new Color(.38f,.36f,.31f):geo.RoadClearance(p)<0?new Color(.62f,.58f,.48f):geo.Park(p)?new Color(.22f,.29f,.23f):new Color(.16f,.19f,.19f);
+                worldLocalPixels[z*200+x]=geo.River(p)&&!geo.Bridge(p.z)?new Color(.12f,.23f,.26f):LocalMapBuilding(geo,p)?new Color(.38f,.36f,.31f):geo.RoadClearance(p)<0?new Color(.62f,.58f,.48f):geo.Park(p)||geo.PocketPark(p)||geo.DenseForest(p)?new Color(.22f,.29f,.23f):new Color(.16f,.19f,.19f);
             }
             worldLocalTexture.SetPixels(worldLocalPixels);worldLocalTexture.Apply(false,false);
         }
@@ -473,7 +480,8 @@ namespace NeonVault
         public void DrawOverworldAtlas()
         {
             EnsureOverworldAtlas();Box(new Rect(0,0,1440,900),new Color(.025f,.045f,.06f,.98f));
-            WorldLabel(new Rect(30,20,1090,55),T("ASHFALL / REGIONAL MAP","アッシュフォール / 広域地図"),UiPaper,32);
+            WorldLabel(new Rect(30,20,560,55),T("ASHFALL / REGIONAL MAP","アッシュフォール / 広域地図"),UiPaper,32);
+            DrawFactionConquestBars(new Rect(590,10,590,82));
             if(WorldButton(new Rect(1195,16,215,66),T("BACK","戻る")))CloseOverworldMap();
             if(overworldAtlasTexture==null)return;
             Rect map=new Rect(30,100,900,650);
@@ -513,6 +521,13 @@ namespace NeonVault
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;DrawMapArt(new Rect(p.x-21,p.y-21,42,42),0,IsCampVisited(i)?Color.white:Color.gray);
                 if(OverworldWaypointKind==1&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+15,p.y-24,28,28),"▲",Gold,20);
                 if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none))overworldSelectedCamp=i;
+            }
+            for(int i=0;i<factionCamps.Count;i++)
+            {
+                var camp=factionCamps[i];if(IsOverworldActivityCompleted(FactionCampReadyBase+camp.id))continue;
+                Vector2 p=WorldAtlasPoint(map,camp.position);if(!map.Contains(p))continue;
+                Color c=camp.faction==1?new Color(.96f,.34f,.26f):new Color(.94f,.72f,.30f);
+                Diamond(p.x,p.y,7,c);Box(new Rect(p.x-3,p.y-3,6,6),c);
             }
             if(IsOverworld)foreach(var site in NearbyOverworldActivitySites)
             {
@@ -563,16 +578,47 @@ namespace NeonVault
         }
         void DrawAtlasDistrictLabels(Rect map)
         {
-            Vector2[] sites={new Vector2(-1350,-2100),new Vector2(-1700,-650),new Vector2(-700,-500),new Vector2(700,400),new Vector2(3650,650),new Vector2(2900,2800)};
-            string[] en={"SOUTH MARKET","OLD CITY","RIVERFRONT PARK","CIVIC QUARTER","EAST MARKET","NORTH COMMON"};
-            string[] ja={"南部市場","旧市街","河岸公園","市庁舎地区","東部市場","北の公園"};
+            Vector2[] sites={new Vector2(-1350,-2100),new Vector2(-1700,-650),new Vector2(-700,-500),new Vector2(700,400),new Vector2(3650,650),new Vector2(2900,2800),new Vector2(-2350,2300),new Vector2(1400,-1950),new Vector2(-2850,-1450),new Vector2(2350,1550)};
+            string[] en={"SOUTH MARKET / CLOCK TOWER","OLD CITY / MEMORIAL ARCH","RIVERFRONT PARK / FOUNTAIN","CIVIC QUARTER / ROTUNDA","EAST MARKET / WATER TOWER","NORTH COMMON / OBELISK","WESTWOOD / RADIO SPIRE","SOUTHWORKS / SILO PLAZA","DEEPWOOD FOREST","EASTERN WOODS"};
+            string[] ja={"南部市場・時計塔跡","旧市街・記念門","河岸公園・大噴水","市庁舎地区・円堂跡","東部市場・給水塔","北の公園・記念碑","西の森・通信塔","南部工業・サイロ広場","西部密林地帯","東部密林地帯"};
             for(int i=0;i<sites.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,new Vector3(sites[i].x,0,sites[i].y));
-                if(p.x<map.x+16||p.x>map.xMax-170||p.y<map.y+50||p.y>map.yMax-30)continue;
+                if(p.x<map.x+16||p.x>map.xMax-190||p.y<map.y+50||p.y>map.yMax-30)continue;
                 var title=VaultLanguage.Japanese?ja[i]:en[i];
-                Box(new Rect(p.x-5,p.y+5,4,4),new Color(.72f,.76f,.71f,.85f));
-                WorldLabel(new Rect(p.x+5,p.y-5,170,24),title,new Color(.79f,.83f,.79f,.88f),worldMapZoom>4?18:15);
+                Box(new Rect(p.x-5,p.y+5,5,5),i<8?Gold:new Color(.48f,.82f,.52f,.9f));
+                WorldLabel(new Rect(p.x+5,p.y-5,210,24),title,new Color(.85f,.89f,.84f,.92f),worldMapZoom>4?17:14);
+            }
+        }
+        public void DrawFactionConquestBars(Rect bounds)
+        {
+            Panel(bounds,Gold);
+            for(int row=0;row<2;row++)
+            {
+                bool red=row==0;
+                DungeonFaction faction=red?DungeonFaction.Raiders:DungeonFaction.Gang;
+                int cleared=ClearedFactionDungeonCount(faction),total=Mathf.Max(1,FactionRegularDungeonCount(faction));
+                int pct=FactionClearPercent(faction);
+                float ratio=Mathf.Clamp01(cleared/(float)total);
+                float y=bounds.y+8+row*36;
+                Color fill=red?new Color(.88f,.26f,.22f,.95f):new Color(.88f,.66f,.22f,.95f);
+                DrawDungeonMapArt(new Rect(bounds.x+10,y,28,28),red?2:1,Color.white);
+                string name=red?T("RED CLAW","レッドクロウ"):T("COYOTES","コヨーテ");
+                WorldLabel(new Rect(bounds.x+44,y+2,136,26),name,UiPaper,16);
+                Rect bar=new Rect(bounds.x+182,y+6,290,16);
+                Box(new Rect(bar.x-1,bar.y-1,bar.width+2,bar.height+2),new Color(.35f,.44f,.46f,.85f));
+                Box(bar,new Color(.04f,.07f,.09f,.96f));
+                if(ratio>0)Box(new Rect(bar.x,bar.y,bar.width*ratio,bar.height),fill);
+                float x30=bar.x+bar.width*.30f,x60=bar.x+bar.width*.60f;
+                Box(new Rect(x30-1,bar.y-4,2,bar.height+8),pct>=30?Gold:UiPaper);
+                Box(new Rect(x60-1,bar.y-4,2,bar.height+8),pct>=60?Gold:UiPaper);
+                if(row==0)
+                {
+                    WorldLabel(new Rect(x30-16,bar.y-14,38,16),"30%",pct>=30?Gold:Mist,11);
+                    WorldLabel(new Rect(x60-16,bar.y-14,38,16),"60%",pct>=60?Gold:Mist,11);
+                    WorldLabel(new Rect(bar.xMax-28,bar.y-14,42,16),"100%",pct>=100?Gold:Mist,11);
+                }
+                WorldLabel(new Rect(bar.xMax+10,y+2,102,26),pct+"% ("+cleared+"/"+total+")",pct>=100?Gold:Cyan,15);
             }
         }
         void DrawWorldMapScale(Rect map)

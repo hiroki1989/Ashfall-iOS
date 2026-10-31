@@ -50,7 +50,50 @@ namespace NeonVault
         public float RiverWidth(float z)=>2*(RiverWidthParameters.x+RiverWidthParameters.y*Mathf.Sin(z*RiverWidthFrequencyParameters.x+RiverWidthFrequencyParameters.z)+RiverWidthParameters.z*Mathf.Sin(z*RiverWidthFrequencyParameters.y+RiverWidthFrequencyParameters.w));
         public bool Bridge(float z)=>Mathf.Abs(z-Mathf.Round(z/1000)*1000)<BridgeHalfLength&&Mathf.Abs(z)<4500;
         public bool River(Vector3 p)=>Mathf.Abs(p.x-RiverX(p.z))<RiverWidth(p.z)*.5f;
-        public bool PocketPark(Vector3 p)=>false;
+        public bool PocketPark(Vector3 p)
+        {
+            if(River(p)||SiteProtected(p,25))return false;
+            var parks=new[]{new Vector2(-1350,-2100),new Vector2(-1700,-650),new Vector2(-1350,1050),new Vector2(-2350,2300),new Vector2(-200,2400),new Vector2(1500,2500),new Vector2(3650,650),new Vector2(2300,-650),new Vector2(1400,-1950),new Vector2(3000,-2800),new Vector2(800,-3600),new Vector2(700,400),new Vector2(-450,-1350),new Vector2(450,1350),new Vector2(1950,650),new Vector2(-2300,-3300)};
+            for(int i=0;i<parks.Length;i++)
+            {
+                float r=78f+(i%3)*18f;
+                if((new Vector2(p.x,p.z)-parks[i]).sqrMagnitude<r*r)return true;
+            }
+            int gx=Mathf.FloorToInt((p.x+5000)/250f),gz=Mathf.FloorToInt((p.z+5000)/250f);
+            int hash=Mathf.Abs(unchecked(gx*73856093^gz*19349663));
+            if(hash%5!=0)return false;
+            Vector2 centre=new Vector2(gx*250-5000+150,gz*250-5000+150);
+            return (new Vector2(p.x,p.z)-centre).sqrMagnitude<58f*58f;
+        }
+        public bool DenseForest(Vector3 p)
+        {
+            if(River(p)||RoadClearance(p)<4f||SiteProtected(p,18))return false;
+            var woods=new[]{new Vector3(-2850,0,-1450),new Vector3(-3100,0,950),new Vector3(-1850,0,3050),new Vector3(-950,0,-3150),new Vector3(450,0,3150),new Vector3(2350,0,1550),new Vector3(3350,0,-1550),new Vector3(1850,0,-3250),new Vector3(-550,0,150),new Vector3(1150,0,-650),new Vector3(-2050,0,-1550),new Vector3(2650,0,3200)};
+            for(int i=0;i<woods.Length;i++)
+            {
+                float rad=210f+(i%4)*45f;
+                float dx=p.x-woods[i].x,dz=p.z-woods[i].z;
+                if(dx*dx+dz*dz<rad*rad)return true;
+            }
+            float n=Mathf.PerlinNoise(p.x*.0019f+41.3f,p.z*.0019f+83.7f);
+            return Park(p)?n>.36f:n>.66f;
+        }
+        public int LandmarkKind(Vector2Int chunkKey,out Vector3 position)
+        {
+            var landmarks=new[]{(new Vector2Int(-14,-21),0,new Vector3(-1348,0,-2048)),(new Vector2Int(-17,-7),1,new Vector3(-1648,0,-648)),(new Vector2Int(-7,-5),2,new Vector3(-648,0,-448)),(new Vector2Int(7,4),3,new Vector3(752,0,452)),(new Vector2Int(36,6),4,new Vector3(3652,0,652)),(new Vector2Int(29,28),5,new Vector3(2952,0,2852)),(new Vector2Int(-24,23),6,new Vector3(-2348,0,2352)),(new Vector2Int(14,-20),7,new Vector3(1452,0,-1948)),(new Vector2Int(-3,-14),2,new Vector3(-248,0,-1348)),(new Vector2Int(19,7),4,new Vector3(1952,0,752))};
+            for(int i=0;i<landmarks.Length;i++)if(landmarks[i].Item1==chunkKey){position=landmarks[i].Item3;return landmarks[i].Item2;}
+            int h=Mathf.Abs(unchecked(chunkKey.x*49999^chunkKey.y*81919));
+            if(h%14==0)
+            {
+                var candidate=new Vector3(chunkKey.x*100+52,0,chunkKey.y*100+52);
+                if(!River(candidate)&&RoadClearance(candidate)>6f&&!SiteProtected(candidate,18))
+                {
+                    position=candidate;
+                    return h%6;
+                }
+            }
+            position=default;return -1;
+        }
         bool CityPark(Vector3 p,float x,float z,float rx,float rz,float phase)
         {
             float dx=(p.x-x)/rx,dz=(p.z-z)/rz;
@@ -88,7 +131,8 @@ namespace NeonVault
         bool ParcelClear(Rect rect)
         {
             // Sample the whole footprint so curves and river banks cannot cut through a house.
-            for(float x=rect.xMin;x<=rect.xMax+4;x+=4)for(float z=rect.yMin;z<=rect.yMax+4;z+=4){var p=new Vector3(Mathf.Min(x,rect.xMax),0,Mathf.Min(z,rect.yMax));if(River(p)||RoadClearance(p)<4.5f||SiteProtected(p,3)||Park(p))return false;}
+            for(float x=rect.xMin;x<=rect.xMax+4;x+=4)for(float z=rect.yMin;z<=rect.yMax+4;z+=4){var p=new Vector3(Mathf.Min(x,rect.xMax),0,Mathf.Min(z,rect.yMax));if(River(p)||RoadClearance(p)<4.5f||SiteProtected(p,3)||Park(p)||PocketPark(p)||DenseForest(p))return false;}
+            if(LandmarkKind(new Vector2Int(Mathf.FloorToInt(rect.center.x/100),Mathf.FloorToInt(rect.center.y/100)),out Vector3 lPos)>=0&&(new Vector2(rect.center.x,rect.center.y)-new Vector2(lPos.x,lPos.z)).sqrMagnitude<22*22)return false;
             return true;
         }
         public OverworldGeography()
@@ -237,13 +281,19 @@ namespace NeonVault
             for(int i=0;i<140;i++){var p=new Vector3(left+10+(float)rng.NextDouble()*80,0,bottom+10+(float)rng.NextDouble()*80);if(RoadClearance(p)>1.5f&&RoadClearance(p)<4&&!River(p)&&!SiteProtected(p,5)&&Mathf.Abs(Mathf.Repeat(p.x,50)-25)>5&&Mathf.Abs(Mathf.Repeat(p.z,50)-25)>7){bool clear=true;foreach(var b in data.Buildings)if(new Rect(b.xMin-2,b.yMin-4,b.width+4,b.height+8).Contains(new Vector2(p.x,p.z))){clear=false;break;}if(clear){foreach(var car in data.Cars)if((car-p).sqrMagnitude<30){clear=false;break;}if(clear)data.Cars.Add(p);}}}
             // Separate RNG preserves existing buildings and cars; navigation spines stay clear.
             var forest=new System.Random(unchecked(Seed+x*92821+z*68917));
-            for(int i=0;i<650;i++){
+            for(int i=0;i<960;i++){
                 var p=new Vector3(left+3+(float)forest.NextDouble()*94,0,bottom+3+(float)forest.NextDouble()*94);
-                bool park=Park(p);if(!park&&i>=45)continue;
-                if(River(p)||RoadClearance(p)<2.5f||SiteProtected(p,8)||Mathf.Abs(p.x)>4990||Mathf.Abs(p.z)>4990)continue;
+                bool park=Park(p)||PocketPark(p),dense=DenseForest(p);
+                float clear=RoadClearance(p);
+                bool boulevard=!park&&!dense&&clear>=2.1f&&clear<=6.2f;
+                int limit=dense?960:park?680:boulevard?380:220;
+                if(i>=limit)continue;
+                if(River(p)||clear<2.1f||SiteProtected(p,8)||Mathf.Abs(p.x)>4990||Mathf.Abs(p.z)>4990)continue;
                 if(Mathf.Abs(Mathf.Repeat(p.x,50)-25)<4||Mathf.Abs(Mathf.Repeat(p.z,50)-25)<4)continue;
                 bool occupied=false;foreach(var b in data.Buildings)if(new Rect(b.xMin-2,b.yMin-2,b.width+4,b.height+4).Contains(new Vector2(p.x,p.z))){occupied=true;break;}foreach(var car in data.Cars)if((car-p).sqrMagnitude<16)occupied=true;if(occupied)continue;
-                bool near=false;foreach(var tree in data.Trees)if((tree-p).sqrMagnitude<12.25f){near=true;break;}
+                float minSpacingSq=dense?5.76f:park?8.5f:9.6f;
+                if(LandmarkKind(key,out Vector3 lPos)>=0&&(p-lPos).sqrMagnitude<15*15)continue;
+                bool near=false;foreach(var tree in data.Trees)if((tree-p).sqrMagnitude<minSpacingSq){near=true;break;}
                 if(!near)data.Trees.Add(p);
             }
             while(cache.Count>=49){var oldest=cacheOrder.Dequeue();cache.Remove(oldest);}cache.Add(key,data);cacheOrder.Enqueue(key);return data;

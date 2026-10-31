@@ -66,7 +66,12 @@ namespace NeonVault
             for(int i=0;i<scaleTransforms.Length;i++)authoredScales[i]=scaleTransforms[i].localScale;
             foreach(var animator in GetComponentsInChildren<Animator>())animator.enabled=animator==nativeAnimator;
             foreach(var animation in GetComponentsInChildren<Animation>())animation.enabled=false;
-            foreach(var skin in GetComponentsInChildren<SkinnedMeshRenderer>()){skin.updateWhenOffscreen=true;skin.localBounds=new Bounds(Vector3.zero,Vector3.one*10);}
+            foreach(var skin in GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                skin.updateWhenOffscreen=!Application.isMobilePlatform;
+                skin.localBounds=new Bounds(Vector3.zero,Vector3.one*10);
+                if(Application.isMobilePlatform){skin.quality=SkinQuality.Bone2;skin.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;skin.receiveShadows=false;}
+            }
             if(idleClip&&!idleClip.humanMotion){idleClip.SampleAnimation(model.gameObject,0);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;}
             CacheLimbs();
             if(owner&&owner.RaiderBoss)BuildRaiderBossRifle();

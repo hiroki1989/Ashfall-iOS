@@ -124,7 +124,7 @@ namespace NeonVault
                         float radius = 5f + (member % 2) * 3f;
                         var p = camp.position + new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
                         if (WorldGeography.Blocked(p, .8f) || WorldEntranceBuildings.Blocked(p, .8f, WorldGeography)) p = camp.position;
-                        var spawn = new WorldEnemySpawn { position = p, kind = 10, level = Mathf.Max(1, DebtLevel) };
+                        var spawn = new WorldEnemySpawn { position = p, kind = 10, level = Mathf.Max(1, DebtLevel), faction = camp.faction };
                         camp.guards.Add(spawn); worldEnemySpawns.Add(spawn);
                     }
                 }
