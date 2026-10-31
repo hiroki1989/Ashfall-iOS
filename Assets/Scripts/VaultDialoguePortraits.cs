@@ -32,18 +32,33 @@ namespace NeonVault
             return tex;
         }
 
+        public static readonly Rect UnifiedDialogueBox = new Rect(110f, 470f, 1220f, 340f);
+        public static readonly Rect UnifiedDialoguePrimaryButton = new Rect(920f, 725f, 370f, 65f);
+        public static readonly Rect UnifiedDialogueSecondaryButton = new Rect(520f, 725f, 380f, 65f);
+
         // Draws the counterpart character portrait on the LEFT and Knox's portrait on the RIGHT
-        // just above the given dialogue panel rect, highlighting the active speaker.
+        // at fixed, identical positions just above the unified dialogue box across all conversations.
         void DrawDialoguePortraits(string leftPortraitKey, bool knoxSpeaking, Rect dialogBox, Color leftAccent)
         {
             Texture2D leftTex = LoadDialoguePortrait(leftPortraitKey);
             Texture2D knoxTex = LoadDialoguePortrait("knox");
-            float size = Mathf.Min(336f, Mathf.Max(240f, dialogBox.y - 36f));
-            float y = Mathf.Max(28f, dialogBox.y - size + 6f);
-            Rect leftRect = new Rect(dialogBox.x + 18f, y, size, size);
-            Rect rightRect = new Rect(dialogBox.xMax - 18f - size, y, size, size);
+            const float size = 324f;
+            const float y = 152f;
+            Rect leftRect = new Rect(UnifiedDialogueBox.x + 18f, y, size, size);
+            Rect rightRect = new Rect(UnifiedDialogueBox.xMax - 18f - size, y, size, size);
             DrawSingleDialoguePortrait(leftRect, leftTex, !knoxSpeaking, leftAccent);
             DrawSingleDialoguePortrait(rightRect, knoxTex, knoxSpeaking, Cyan);
+        }
+
+        void DrawUnifiedDialogueScene(string leftPortraitKey, bool knoxSpeaking, string speakerName, string bodyText, Color leftAccent, string footerNote = null)
+        {
+            DrawDialoguePortraits(leftPortraitKey, knoxSpeaking, UnifiedDialogueBox, leftAccent);
+            Panel(UnifiedDialogueBox, knoxSpeaking ? Cyan : leftAccent);
+            Color speakerColor = knoxSpeaking ? Cyan : leftAccent;
+            Text(UnifiedDialogueBox.x + 35f, UnifiedDialogueBox.y + 26f, speakerName, heading, speakerColor, UnifiedDialogueBox.width - 70f);
+            Text(UnifiedDialogueBox.x + 35f, UnifiedDialogueBox.y + 92f, bodyText, new GUIStyle(label) { fontSize = 33, wordWrap = true }, UiPaper, UnifiedDialogueBox.width - 70f);
+            if (!string.IsNullOrEmpty(footerNote))
+                Text(UnifiedDialogueBox.x + 35f, UnifiedDialogueBox.y + 272f, footerNote, new GUIStyle(label) { fontSize = 23 }, Cyan, 700f);
         }
 
         void DrawSingleDialoguePortrait(Rect r, Texture2D tex, bool active, Color accent)

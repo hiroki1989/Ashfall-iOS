@@ -96,25 +96,71 @@ namespace NeonVault
         {
             bool red=IsRedClawBossStage(SelectedStageId);
             int tier=FactionBossTier(SelectedStageId);
-            string boss=red?T("RAVEN","レイヴン"):T("VEX","ヴェックス");
-            string[] ja=red?(tier==0?new[]{"ヴェイルの犬が、俺たちの前線基地まで嗅ぎつけてきたか。","3割ばかりアジトを潰した程度で、いい気になるなよ。","少し遊んでやる。生き残れたらな。"}
-                :tier==1?new[]{"またお前か、ノックス。俺たちの拠点を半分以上も荒らしやがって。","だが、ここで終わりだ。本拠地に近づく前に始末する。","来い！ レッドクロウの牙を思い知らせてやる！"}
-                :new[]{"ここまで来たか。ヴェイルの鎖につながれた犬が。","首輪は外す。だが、その前にお前を倒す。","いいだろう。赤い街の代償を教えてやる。"})
-                :(tier==0?new[]{"足音が聞こえた時から、お前だと思ったよ。","コヨーテの縄張りを荒らしてる首輪付きっていうのは、あんたか。","前線基地で迎え撃つ。生きて帰れると思うな。"}
-                :tier==1?new[]{"しつこい奴だ。コヨーテの拠点を6割も潰すとはね。","これ以上好き勝手はさせない。ここで足を止めてもらう。","本拠地へは一歩も近づけさせないよ！"}
-                :new[]{"足音が聞こえた時から、お前だと思った。","コヨーテの縄張りで好き勝手はさせない。","生きて帰れたら、ヴェイルに伝えろ。次はあいつだ。"});
-            string[] en=red?(tier==0?new[]{"So Vale's hound sniffed out our forward outpost.","Clear thirty percent of our hideouts and you think you own the streets?","Let's see how long you last against me."}
-                :tier==1?new[]{"You again, Knox. You've wrecked over half our territory.","That ends here. I'll bury you before you ever reach our stronghold.","Come on! Taste Red Claw's fangs!"}
-                :new[]{"Vale's chained dog made it this far.","The collar comes off. First, I deal with you.","Then learn what this city costs."})
-                :(tier==0?new[]{"I knew it was you by the footsteps.","So you're the collared stray hitting Coyote turf.","This outpost is as far as you go."}
-                :tier==1?new[]{"Persistent, aren't you? Taking down sixty percent of Coyote territory.","You won't take another step toward our stronghold.","Let's end this right here!"}
-                :new[]{"I knew it was you by the footsteps.","Nobody walks through Coyote territory unchallenged.","If you survive, tell Vale he's next."});
+            bool knoxSpeaking=factionBossConversationBeat==1;
+            string speaker=knoxSpeaking?T("KNOX","ノックス"):red?T("RAVEN","レイヴン"):T("VEX","ヴェックス");
+            string[] ja=red?(tier==0?new[]{
+                    "臭いで分かったぜ。ヴェイルが新しく飼い始めた首輪付きの猟犬ってのは、お前だな。",
+                    "お前たちの縄張りに恨みはない。ただ、あんたの首にいい値がついてる。",
+                    "ハッ、3割ばかり前線を荒らした程度で調子に乗るなよ。その首輪ごと頭蓋骨を砕いてやる！"
+                }
+                :tier==1?new[]{
+                    "またお前か、ノックス。俺たちのシマを半分以上も灰にしやがって……いい度胸だ。",
+                    "ヴェイルへの返済がまだ残ってる。悪いが、ここも更地にさせてもらう。",
+                    "ふざけるなよ、薄汚い犬が！ 本拠地の門は絶対に踏ませねえ……ここで挽き肉にしてやる！"
+                }
+                :new[]{
+                    "……とうとう本丸まで来やがったか。ヴェイルの鎖につながれたまま、よくそこまで吠えられるもんだ。",
+                    "今日でレッドクロウは終わりだ。あの男に払う手切れ金の足しになってもらう。",
+                    "抜かせ！ 俺たちが血を流して築いた赤い街だ。貴様の骨も残さず溶鉱炉に叩き込んでやる！"
+                })
+                :(tier==0?new[]{
+                    "足音が重すぎるよ、よそ者。コヨーテの狩場を嗅ぎ回ってる首輪付きっていうのは、あんたかい。",
+                    "道を開けろ。俺が用があるのは、ここの金庫と物資だけだ。",
+                    "威勢がいいじゃないか。だがコヨーテの縄張りに入った獲物は、骨までしゃぶり尽くすのがうちの流儀でね！"
+                }
+                :tier==1?new[]{
+                    "しぶとい野郎だね。うちの拠点を6割も潰してくれた礼は、たっぷり鉛で返させてもらうよ。",
+                    "恨むならヴェイルを恨め。俺はただ、首の爆弾を外すために仕事をしてるだけだ。",
+                    "他人の都合なんか知るもんかい！ これ以上うちの家族に手を出させはしない……ここで死にな！"
+                }
+                :new[]{
+                    "……最後の隠れ家まで踏み込んでくるとはね。あんた、ヴェイルの駒で終わるには惜しい目をしてるよ。",
+                    "駒で終わるつもりはない。ここを片付けたら、次はあいつの番だ。",
+                    "気に入ったよ、ノックス。もし私を倒して生き残れたら、ヴェイルの喉笛も噛み千切ってやりな！"
+                });
+            string[] en=red?(tier==0?new[]{
+                    "Smelled the gunpowder a mile off. So you're the new collared hound Vale let off the chain.",
+                    "Nothing personal with Red Claw. Your outpost just happens to be worth a lot of scrap.",
+                    "Cute. Wreck thirty percent of our front line and you think you're bulletproof? Let's test that collar!"
+                }
+                :tier==1?new[]{
+                    "You again, Knox. Over half our turf is burning because of you.",
+                    "Take it up with Vale's ledger. I'm not done collecting yet.",
+                    "You don't take another step toward our stronghold! Boys—tear him apart!"
+                }
+                :new[]{
+                    "All the way to the throne room... and still wearing another man's leash.",
+                    "Red Claw ends tonight. Your vault's paying off the last of my tab.",
+                    "Over my dead body! This city was built in our blood—you're dying on this floor!"
+                })
+                :(tier==0?new[]{
+                    "Heavy boots, stranger. You must be the collared stray tearing up Coyote territory.",
+                    "Step aside. I'm only here for the safe and the salvage.",
+                    "Wrong answer. Nothing walks into a Coyote den and leaves with its hide intact!"
+                }
+                :tier==1?new[]{
+                    "You're a hard man to kill, Knox. Sixty percent of our dens gone—you've cost me a fortune.",
+                    "Blame Vale. I'm just working off a bomb around my neck.",
+                    "Your neck isn't my problem! Nobody backs the Coyotes into a corner and walks away!"
+                }
+                :new[]{
+                    "Right to the last den. Shame a killer with your eyes is still running errands for Malcolm Vale.",
+                    "Not for much longer. Once your stronghold falls, Vale's next on my list.",
+                    "Now that I'd pay to see. Come on then, Knox—earn the right to kill him!"
+                });
             Box(new Rect(0,0,1440,900),new Color(0,0,0,.8f));
-            DrawDialoguePortraits(red?"raven":"vex",false,new Rect(110,425,1220,350),Gold);
-            Panel(new Rect(110,425,1220,350),Gold);
-            Text(145,455,boss,heading,Gold,1100);
-            Text(145,525,VaultLanguage.Japanese?ja[factionBossConversationBeat]:en[factionBossConversationBeat],new GUIStyle(label){fontSize=34,wordWrap=true},Color.white,1100);
-            if(WorldButton(new Rect(910,685,370,65),factionBossConversationBeat==2?T("FIGHT","戦う"):T("NEXT","次へ")))
+            DrawUnifiedDialogueScene(red?"raven":"vex",knoxSpeaking,speaker,VaultLanguage.Japanese?ja[factionBossConversationBeat]:en[factionBossConversationBeat],Gold,(factionBossConversationBeat+1)+" / 3");
+            if(WorldButton(UnifiedDialoguePrimaryButton,factionBossConversationBeat==2?T("FIGHT","戦う"):T("NEXT","次へ")))
             {if(++factionBossConversationBeat>=3){factionBossConversation=false;Time.timeScale=1;PlayerPrefs.SetInt("Vault.FactionBoss.Intro."+SelectedStageId,1);PlayerPrefs.Save();}}
         }
     }

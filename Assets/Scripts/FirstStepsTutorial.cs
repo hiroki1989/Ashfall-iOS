@@ -47,16 +47,45 @@ namespace NeonVault
         bool DebtFinalConversationVisible => !smoke && screen == Screen.Hub && WorldStorySeen && DebtRemaining == 0 && PlayerPrefs.GetInt(DebtBossDefeatedKey, 0) == 0;
         void DrawDebtFinalConversation()
         {
-            string[] en={"A billion. Every last scrap.","I know. Briggs keeps a meticulous ledger.","We had a deal. Take it off.","I never thought you'd make it. I bet you'd die in the first week.","Did you hear me? Take the collar off.","I heard you. I just can't see a reason to do it.","I paid for the cargo.","The cargo? Oh, that.","It was never stolen. I needed a worker who couldn't walk away. That's all.","...You set me up?","You exceeded expectations. Shame to waste that. I have another job for you.","The work is over. The only debt left is between us.","Is that so? Come and collect it.","Let's see what a billion bought me."};
-            string[] ja={"10億。最後の一枚まで払った。","知ってる。ブリッグスの帳簿は几帳面だ。","約束だ。外せ。","お前が本当にやり遂げるとはな。最初の一週間で死ぬ方に賭けてた。","聞こえなかったか。首輪を外せ。","聞こえたよ。ただ、外す理由が見当たらない。","積み荷の代金は払った。","積み荷？ ああ、あれか。","盗まれちゃいない。最初からな。逃げられない働き手が欲しかった。それだけだ。","……俺をはめたのは、お前か。","お前は期待以上に働いた。惜しいよ。だから次の仕事も用意した。","仕事は終わりだ。残ってるのは、お前との借りだけだ。","そうか。なら取り立てに来い。","10億で何を買えたのか、見せてもらおう。"};
-            bool[] reid={true,false,true,false,true,false,true,false,false,true,false,true,false,false};
+            string[] en={
+                "One billion. Down to the last rusted bolt.",
+                "So I heard. Briggs said his counting fingers cramped up.",
+                "A deal's a deal, Vale. Unlock the collar.",
+                "Honestly? I had twenty grand riding on you dying in the first week.",
+                "Save the small talk. The key.",
+                "Funny thing about keys, Knox. Once you turn 'em, your best dog runs off the porch.",
+                "I paid for your missing cargo.",
+                "Cargo? Come on. Look around you.",
+                "That convoy was hauling empty crates. I didn't lose a damn thing—I just needed one man hungry enough to clear this city for me.",
+                "...The ambush on the ridge. That was your crew.",
+                "Best investment I ever made. Now the Red Claws and the Coyotes are bleeding out, and Ashfall is mine. Why would I let my top earner retire?",
+                "Contract's finished. The only balance left is the one I'm taking out of your hide.",
+                "Big talk with five pounds of C4 around your windpipe. Come try your luck.",
+                "Keep your finger on that button, Vale. Let's see who's faster."
+            };
+            string[] ja={
+                "10億だ。錆びたボルト一本まで、きっちり払ったぞ。",
+                "聞いてるよ。ブリッグスが帳簿をつけながら腱鞘炎だとボヤいてた。",
+                "契約通りだ、ヴェイル。首輪の鍵を回せ。",
+                "正直に言おうか。お前が最初の一週間で野垂れ死ぬ方に、俺は賭けてたんだ。",
+                "世間話はいい。鍵を出せ。",
+                "鍵ってのは不思議なもんでな、ノックス。一度回すと、せっかく飼い慣らした最高の猟犬が逃げていく。",
+                "消えた積み荷の代金は完済したはずだ。",
+                "積み荷？ おいおい、まだそんなおとぎ話を信じてたのか。",
+                "あのトラックの荷台は最初から空っぽだったんだよ。俺が欲しかったのは荷じゃない。この街の邪魔者を掃除してくれる、逃げられない働き手だ。",
+                "……尾根で俺の車を襲ったのは、てめえの手下か。",
+                "最高の投資だったよ。おかげでレッドクロウもコヨーテもボロボロ、街は俺のものだ。そんな稼ぎ頭を、みすみす手放す馬鹿がいるか？",
+                "仕事はここまでだ。あとは、俺とてめえの個人的な精算だけが残ってる。",
+                "首に爆薬を巻いたままよく吠える。やれるもんなら、その鍵を俺の懐から奪ってみろ。",
+                "起爆スイッチから指を離すなよ、ヴェイル。どっちが早いか勝負だ。"
+            };
+            bool[] reid={true,false,true,false,true,false,true,false,false,true,false,true,false,true};
             debtFinalBeat=Mathf.Clamp(debtFinalBeat,0,en.Length-1);
             Box(new Rect(0,0,1440,900),new Color(.01f,.015f,.02f,.9f));
-            DrawDialoguePortraits("vale",reid[debtFinalBeat],new Rect(100,470,1240,315),Gold);
-            Panel(new Rect(100,470,1240,315),Gold);
-            Text(135,500,reid[debtFinalBeat]?T("KNOX","ノックス"):T("MALCOLM VALE","マルコム・ヴェイル"),heading,Gold,1100);
-            Text(135,570,T(en[debtFinalBeat],ja[debtFinalBeat]),new GUIStyle(label){fontSize=34,wordWrap=true},Color.white,1100);
-            if(WorldButton(new Rect(920,700,370,65),debtFinalBeat==en.Length-1?T("FIGHT","戦う"):T("CONTINUE","続ける")))
+            bool knoxSpeaking=reid[debtFinalBeat];
+            string speaker=knoxSpeaking?T("KNOX","ノックス"):T("MALCOLM VALE","マルコム・ヴェイル");
+            DrawUnifiedDialogueScene("vale",knoxSpeaking,speaker,T(en[debtFinalBeat],ja[debtFinalBeat]),Gold,(debtFinalBeat+1)+" / "+en.Length);
+            if(WorldButton(UnifiedDialoguePrimaryButton,debtFinalBeat==en.Length-1?T("FIGHT","戦う"):T("CONTINUE","続ける")))
             {
                 if(++debtFinalBeat>=en.Length)
                 {

@@ -5,8 +5,54 @@ namespace NeonVault {
   void DrawCinematicBossIntro(){
    string[] speakersEn={"MALCOLM VALE","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","KNOX","MALCOLM VALE","MALCOLM VALE"};
    string[] speakersJa={"マルコム・ヴェイル","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","ノックス","マルコム・ヴェイル","マルコム・ヴェイル"};
-   string[] linesEn={"...You awake?","Easy. That collar gets touchy with guests who wake up too fast.","...What is this?","A collar. Surely you can see that.","Take it off.","Impatient, aren't you? We haven't even been introduced.","I'm Vale. I run this place.","Where am I? What happened to the convoy?","Ashfall. The city and the wasteland beyond it all go by that name. Your vehicle burned. Spectacularly.","And the cargo?","Gone. The story is that you ran off with it.","That's nonsense. I was just the driver.","I thought you'd say that. Dead men tell no tales; survivors get the bill. Convenient for somebody.","Who set this up?","Who knows? All I picked up was you and this ledger.","...A billion?","Cargo, trouble, inconvenience. Ask Briggs about the arithmetic.","You expect me to pay a debt I never made?","Want to try skipping out on it?","...One day I'll get this off and get answers from you.","There's that look, Knox. Go earn that billion in Ashfall—and crush the Red Claw and Coyote strongholds while you're out there. Briggs takes the payments.","Look for the culprit if you like. First, try living until tomorrow."};
-   string[] linesJa={"……起きたか。","おっと。急に動くな。そいつ、寝起きの客には少し敏感でな。","……何だ、これ。","首輪だ。見れば分かるだろ。","外せ。","せっかちなやつだな。まだ自己紹介も済んでない。","俺はヴェイル。ここを仕切ってる。","ここはどこだ。輸送車は？","アッシュフォールだ。街も、その外の荒れ地も、まとめてそう呼んでる。お前の車は……燃えてたよ。派手にな。","積み荷は？","消えた。で、お前が持ち逃げしたことになってる。","馬鹿を言うな。俺は運んでただけだ。","ああ、そう言うと思った。死人に口なし。生き残りには借金あり。誰かにとっては、ずいぶん都合のいい話だ。","誰が仕組んだ？","さあな。俺が拾ったのはお前と、この帳簿だけだ。","……10億？","積み荷の値段に、手間賃やら迷惑料やらを足した。細かい計算はブリッグスに聞け。","身に覚えのない借金を払えってのか。","嫌なら踏み倒してみるか？","……いずれ、これを外して、お前に答えを聞く。","いいね、その顔だノックス。アッシュフォールで10億稼いでこい。それと、街にはびこるレッドクロウとコヨーテの各拠点も片っ端から制圧してこい。返済はブリッグスが受け付ける。","真犯人を探したけりゃ好きにしろ。まずは明日まで生き延びることだな。"};
+   string[] linesEn={
+    "...Eyes open.",
+    "Easy on the neck. The detonator's got a hair trigger for guys who jump out of bed.",
+    "...What the hell is on my throat?",
+    "Five pounds of stamped steel and a shaped charge. Keep your hands off it.",
+    "Take it off.",
+    "Not even a 'good morning'? You've got terrible manners for a dead man.",
+    "Name's Vale. Whatever still breathes in this sector answers to me.",
+    "Where's my rig? What happened to the convoy?",
+    "You're in Ashfall. As for your rig—she's a smear of black glass on the north highway. Burned for three hours.",
+    "And the crates in the back?",
+    "Cleaned out. Funny thing is, the client's saying the driver took the loot and lit the match himself.",
+    "Bullshit. We were ambushed—heavy caliber from the ridge.",
+    "Maybe. Doesn't change the math. Dead men get buried; the guy who crawls out of the wreck gets the tab.",
+    "Who sold me out?",
+    "Don't know, don't care. All that landed on my desk was you and an unpaid ledger.",
+    "...One billion scrap?",
+    "Principal, salvage recovery, plus my personal inconvenience. Briggs has the itemized receipt.",
+    "You're charging me for a heist I was on the wrong end of.",
+    "You're welcome to contest the bill. Just tap that red light under your chin.",
+    "...When this thing comes off, you and I are having a different conversation.",
+    "Hold onto that spite, Knox—it'll keep you warm out there. Bleed the Red Claw and Coyote strongholds dry, and bring every scrap to Briggs.",
+    "Go find your ghost if it helps you sleep. Just make sure you pay your rent first."
+   };
+   string[] linesJa={
+    "……目が覚めたか。",
+    "おい、首は急に動かすな。そいつは寝起きの悪い客には、ちっとばかり過敏でな。",
+    "……なんだ、この首の鉄塊は。",
+    "鉛と成形炸薬だ。指はかけるなよ。お前の首が飛ぶだけならいいが、床が汚れる。",
+    "外せ。",
+    "つれないな。死に損ないのわりには、挨拶ひとつ知らんらしい。",
+    "俺はヴェイルだ。この界隈で息をしてる連中は、だいたい俺の帳簿に載ってる。",
+    "俺の輸送車は？ 護衛の連中どうなった。",
+    "ここはアッシュフォールだ。お前のトラックなら、北の幹線道路で黒い鉄くずになってるよ。三時間はよく燃えてた。",
+    "荷台のコンテナは。",
+    "もぬけの殻だ。面白いことに、依頼主は『運転手が積み荷を抜いて車に火をつけた』と触れ回ってる。",
+    "ふざけるな。尾根から重火器で待ち伏せされたんだ。",
+    "だろうな。だが世間の算盤は単純だ。死んだ奴は墓に入り、這いずり出た奴がツケを払う。",
+    "誰が俺を売った。",
+    "さあな。俺の手元に転がり込んできたのは、半死にの運び屋と、桁外れの請求書だけだ。",
+    "……10億スクラップだと？",
+    "消えた荷の代金に、回収の手間賃、それから俺の不機嫌代だ。内訳が知りたけりゃブリッグスに聞け。",
+    "襲われた側に、盗まれた荷の弁償をしろってのか。",
+    "不服なら踏み倒してもいいんだぜ。顎の下の赤いランプを、指で強く叩いてみな。",
+    "……この首輪が外れたら、てめえから先に鉛をくれてやる。",
+    "いい目だ、ノックス。その殺気を忘れるな。外でレッドクロウとコヨーテの根城を片っ端から潰し、10億耳を揃えてブリッグスに渡せ。",
+    "黒幕探しは趣味でやれ。まずは明日の朝まで、その首が胴体についてることだな。"
+   };
    bossIntroBeat=Mathf.Clamp(bossIntroBeat,0,linesEn.Length-1);
    if(Event.current.type==EventType.Repaint&&cam&&player)
    {
@@ -15,20 +61,15 @@ namespace NeonVault {
     cam.orthographicSize=(bossIntroBeat==0?7.2f:6.2f)/CameraZoom;
     cam.transform.position=Vector3.Lerp(cam.transform.position,focus-cam.transform.forward*distance,Mathf.Clamp01(Time.unscaledDeltaTime*2.8f));
    }
-   Box(new Rect(0,0,1440,900),new Color(.015f,.025f,.035f,bossIntroBeat==0?.92f:.56f));
+   Box(new Rect(0,0,1440,900),new Color(.015f,.025f,.035f,bossIntroBeat==0?.92f:.64f));
    Box(new Rect(0,0,1440,42),new Color(.01f,.015f,.02f,.98f));
    Box(new Rect(0,858,1440,42),new Color(.01f,.015f,.02f,.98f));
-   Box(new Rect(88,72,1264,4),Gold);
-   Text(94,92,T("ASHFALL REGION  /  THE COLLAR","アッシュフォール地方 / 首輪"),heading,Gold,1200);
-   Text(96,158,T("A debt you never made.","身に覚えのない負債。"),small,Mist,900);
-   DrawDialoguePortraits("vale",speakersEn[bossIntroBeat]=="KNOX",new Rect(88,570,1264,245),Gold);
-   Box(new Rect(88,570,1264,245),new Color(.035f,.06f,.075f,.97f));
-   Box(new Rect(88,570,6,245),speakersEn[bossIntroBeat]=="KNOX"?Cyan:Gold);
+   Text(110,64,T("ASHFALL REGION  /  THE COLLAR","アッシュフォール地方 / 首輪"),heading,Gold,1200);
+   Text(112,116,T("A debt you never made.","身に覚えのない負債。"),small,Mist,900);
+   bool knoxSpeaking=speakersEn[bossIntroBeat]=="KNOX";
    string speaker=VaultLanguage.Japanese?speakersJa[bossIntroBeat]:speakersEn[bossIntroBeat];
-   Text(120,590,string.IsNullOrEmpty(speaker)?T("PROLOGUE","序章"):speaker,new GUIStyle(label){fontSize=28,fontStyle=FontStyle.Normal},speakersEn[bossIntroBeat]=="KNOX"?Cyan:Gold,1000);
-   Text(120,642,VaultLanguage.Japanese?linesJa[bossIntroBeat]:linesEn[bossIntroBeat],new GUIStyle(label){fontSize=32,wordWrap=true},Color.white,1190);
-   Text(112,832,(bossIntroBeat+1)+" / "+linesEn.Length,tiny,Mist,190);
-   if(WorldButton(new Rect(960,822,380,64),bossIntroBeat==linesEn.Length-1?T("ENTER ASHFALL","アッシュフォールへ"):T("CONTINUE","続ける"))){
+   DrawUnifiedDialogueScene("vale",knoxSpeaking,speaker,VaultLanguage.Japanese?linesJa[bossIntroBeat]:linesEn[bossIntroBeat],Gold,(bossIntroBeat+1)+" / "+linesEn.Length);
+   if(WorldButton(UnifiedDialoguePrimaryButton,bossIntroBeat==linesEn.Length-1?T("ENTER ASHFALL","アッシュフォールへ"):T("CONTINUE","続ける"))){
     if(++bossIntroBeat>=linesEn.Length){bossIntroBeat=0;CompleteWorldBossConversation();if(cam){cam.orthographicSize=11/CameraZoom;UpdateCamera(true);}}
    }
   }

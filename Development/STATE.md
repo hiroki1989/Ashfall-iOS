@@ -1,3 +1,13 @@
+## 2026-11-01 / 会話ダイアログ・立ち絵レイアウトの完全統一、クリア報酬説明文の日本語化修正、ボス・NPC会話の映画調リライト
+- **全会話のダイアログ枠・立ち絵イラスト配置の完全統一（`VaultDialoguePortraits.cs`, `VaultBossIntro.cs`, `FirstStepsTutorial.cs`, `FactionBossProgression.cs`, `VaultNpcConversations.cs`, `VaultHubWorld.cs`）**:
+  - 従来はヴェイル冒頭（`y=570, h=245`）、ヴェイル10億決戦（`y=470, h=315`）、勢力ボス・セラ・ブリッグス（`y=425, h=350`）、ギデオン博士（`x=190, y=340, w=1060, h=370`）でダイアログ枠の座標・幅・高さが異なり、それに連動して立ち絵のサイズと表示位置も相手ごとにズレていた問題を解消。
+  - `VaultDialoguePortraits.cs` に共通レイアウト定数（`UnifiedDialogueBox = Rect(110, 470, 1220, 340)`、立ち絵サイズ `324×324`・`y=152`・左右 `x=128 / 988` 固定、ボタン `UnifiedDialoguePrimaryButton = Rect(920, 725, 370, 65)`）と共通描画メソッド `DrawUnifiedDialogueScene` を実装し、すべてのボス・NPC会話で立ち絵・ダイアログ枠・話者名・本文・進行ボタンが完全に同一の座標・サイズで表示されるよう統一。
+- **ダンジョンクリア後の獲得報酬説明文の日本語化修正（`VaultCompletedRewardUI.cs`）**:
+  - `DrawCompletedGearReward` で英語固定フィールドの `weapon.subtitle` / `armor.subtitle` を参照していたため日本語設定でも英語の説明文が表示されていた不具合を修正し、`VaultLanguage.GunDescription(weapon)` および `Armory.Description(armor)`（レジェンダリ効果の赤字リッチテキスト `LegendaryDescription` 対応）を使用するよう変更。
+- **ボス・NPC会話の映画調（ハードボイルド・クライムスリラー調）への全面リライト（`VaultBossIntro.cs`, `FirstStepsTutorial.cs`, `FactionBossProgression.cs`, `VaultNpcConversations.cs`, `VaultHubWorld.cs`, `VaultGame.cs`）**:
+  - ヴェイル（冒頭・10億完済決戦）、レイヴン（30%・60%・100%）、ヴェックス（30%・60%・100%）、セラ、ブリッグス、ギデオン博士の全会話を日英ともにAI翻訳調の不自然さを排し、映画のような渋い掛け合いと余韻のある台詞回しへ全面刷新。勢力ボス会話では3ビートの進行仕様を維持しつつ、2ビート目にノックスの返答を入れて双方向の掛け合いとして演出。
+- **検証**: Unity 6000.6.0f1同梱のRoslyn `csc` による `Assembly-CSharp` 全体のコンパイル成功（エラー0 / `CSC_EXIT=0`）、`git diff --check` 通過。Unity Editor本体が稼働中のため、実画面およびiOS実機での表示確認は未実施。
+
 ## 2026-11-01 / バージョン37・敵/ボス攻撃と人間敵移動バリエーション・放物線唾弾・フォント/赤字修正・初回伝説武器チュートリアル・目的地リセット・レア率-3%・ダンジョンボス固有レジェンダリ(上位1/3・50%・図鑑番号表示)
 - **バージョン・ビルド番号更新 (`37`)**:
   - `ProjectSettings/ProjectSettings.asset` および `Assets/Editor/IOSProjectBuilder.cs` の `bundleVersion` / `buildNumber.iPhone` を `36` から `37` に更新。

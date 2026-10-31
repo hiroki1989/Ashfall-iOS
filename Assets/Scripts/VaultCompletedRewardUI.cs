@@ -13,10 +13,10 @@ namespace NeonVault {
    if(weapon!=null)ItemPortraits.Draw(picture,weapon);else ItemPortraits.Draw(picture,armor);
    float textX=picture.xMax+14;
    string name=weapon!=null?VaultLanguage.GunName(weapon):Armory.Name(armor);
-   string detail=weapon!=null?weapon.subtitle:armor.subtitle;
+   string detail=weapon!=null?LegendaryDescription(weapon,VaultLanguage.GunDescription(weapon)):LegendaryDescription(armor,Armory.Description(armor));
    Text(textX,area.y+8,name,new GUIStyle(label){fontSize=22},accent,area.xMax-textX-10);
-   Text(textX,area.y+39,VaultLanguage.RarityName(rarity)+"  ·  Lv "+(weapon!=null?weapon.level:armor.level),tiny,Mist,area.xMax-textX-10);
-   if(!string.IsNullOrEmpty(detail))Text(textX,area.y+65,detail,new GUIStyle(tiny){wordWrap=true},Color.white,area.xMax-textX-10);
+   Text(textX,area.y+36,VaultLanguage.RarityName(rarity)+"  ·  Lv "+(weapon!=null?weapon.level:armor.level),tiny,Mist,area.xMax-textX-10);
+   if(!string.IsNullOrEmpty(detail))Text(textX,area.y+58,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Color.white,area.xMax-textX-10);
   }
  }
 }

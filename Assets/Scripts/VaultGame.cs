@@ -506,8 +506,8 @@ namespace NeonVault
                 else if(f.Escaping)
                 {
                     bool red=IsRedClawBossStage(SelectedStageId);
-                    Notify(red?"RAVEN: \"Tch... Fall back! Next time you're dead!\"":"VEX: \"Not bad... We're pulling back for now!\"",
-                           red?"レイヴン：「チッ……退くぞ！ 次はこうはいかねえ！」":"ヴェックス：「やるね……ここは一旦引かせてもらうよ！」");
+                    Notify(red?"RAVEN: \"Smoke out! Fall back—next time I take his head!\"":"VEX: \"Tch, he fights like a devil... Pull back for now!\"",
+                           red?"レイヴン：「煙幕を張れ、退くぞ！ 次は必ずその首をねじ切ってやる！」":"ヴェックス：「チッ、なんてしぶとい奴だい……ここは一旦退くよ！」");
                 }
             }
             if(!IsOverworld&&!smoke&&finalBoss&&SelectedStageId==0&&!clearedExpeditionStages.Contains(0)&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)

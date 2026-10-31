@@ -29,30 +29,56 @@ namespace NeonVault
             bool[] isReid={false,true,false,true,false,true,false,true,false,false,true,false};
             bool knoxTalking=collectorPage<12&&isReid[collectorPage];
             Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));
-            DrawDialoguePortraits("gideon",knoxTalking,new Rect(190,340,1060,370),Gold);
-            Panel(new Rect(190,340,1060,370),Gold);
-            string[] en={"Hold it! Don't move a muscle.","...What?","Your firearm. Let me examine it. Fascinating—a ballistic deflection scar right beside the trigger housing.","Caught a bullet.","Remarkable! The receiver absorbed the kinetic impact and you walked away. An exquisite specimen.","Is that a compliment?","To the metallurgy, yes. I'm Dr. Gideon. I compile a complete ordnance taxonomy: firearms, armor, any field specimen I haven't documented.","What do you study them for?","To preserve their engineering before this wasteland erases them. Who forged them, how they functioned, what battle scars they earned.","Encounter an undocumented specimen, bring it to my lab. Every fifty distinct entries in the catalog, I'll grant you a skill point.","What about fifty copies of the same gun?","Bring me redundant samples and I'll throw you out before I calibrate my calipers."};
-            string[] ja={"待て、動くな！ そのままじっとしていろ。","……何だ？","その銃だ。少し観察させろ。引き金の機関部脇に、実に興味深い弾痕がある。","撃たれた時についた。","ほほう！ 機関部が運動エネルギーを吸収して、君が生き残ったわけか。実に素晴らしい標本だ。","褒められてるのか？","冶金学的な意味でね。ワシはギデオン博士。ここで装備の分類図鑑を編纂しておる。銃も防具も、未確認の標本なら何でも記録するぞ。","集めて何を研究してるんだ。","この荒野で失われる前に、技術と歴史を保存するのさ。どこの廠が造り、どう運用され、どんな傷を刻まれたかをな。","珍しい標本を見つけたらまた見せに来たまえ。図鑑に50種類記録されるごとに、研究協力としてスキルポイントを一つ進呈しよう。","同じ銃を50丁じゃ駄目か。","重複標本なんぞ持ち込んだら、ノギスを当てる前に追い出すぞ。"};
+            string[] en={
+                "Hold it right there! Don't move an inch.",
+                "...You got a problem, old man?",
+                "Not with you—with that receiver in your hands! Look at that gouge beside the trigger housing. High-velocity ricochet, thirty-caliber at least.",
+                "Took a round in the dark. Gun held together.",
+                "Held together? My boy, that stamped steel alloy deflected a kill shot! Magnificent metallurgy!",
+                "So you're not robbing me. Just staring at my iron.",
+                "Rob you? Heaven forbid! I'm Dr. Gideon. While the rest of this city shoots each other over scrap, I catalog every firearm, armor plate, and field module still functioning in Ashfall.",
+                "Doesn't sound like a lucrative hobby out here.",
+                "Someone has to keep a record of pre-collapse engineering before the rust eats it all. Every manufacturer had a signature—a rifling twist, a weld seam, a temper.",
+                "Bring any unfamiliar gear past my bench so I can log the serials. For every fifty distinct specimens you add to my registry, I'll trade you a combat training token.",
+                "What if I haul in fifty of the exact same rifle?",
+                "Then I'll chase you out with a torque wrench. Distinct models only—now get out there and find me something rare!"
+            };
+            string[] ja={
+                "待て、そのまま動くな！ 指一本動かすんじゃないぞ。",
+                "……なんだじいさん、喧嘩なら他所でやれ。",
+                "貴様じゃない、その手に持ってる銃だ！ 機関部の脇を見ろ、大口径弾を弾いた見事な跳弾痕がついとる。",
+                "暗がりで一発食らった。銃が身代わりになっただけだ。",
+                "ただの身代わりなものか！ プレス鋼の機関部が致命傷を逸らしてなお作動しておる……実に惚れ惚れする冶金技術だ！",
+                "物取りじゃないならいいが、人の得物をジロジロ見るな。",
+                "物取りとは人聞きの悪い！ ワシはギデオン博士だ。街の連中がスクラップの奪い合いにうつつを抜かす中、このアッシュフォールに残る銃器・防具・モジュールの全型式を図鑑に記録しておる。",
+                "こんな吹き溜まりじゃ、腹の足しにもならない道楽だな。",
+                "誰かが記録せねば、旧時代の職人たちが遺した技術が錆と一緒に消えてしまうからな。メーカーごとのライフリングの刻み、溶接の癖、焼き入れの色……すべてが歴史なのだよ。",
+                "外で珍しい装備を拾ったら、ワシの机へ見せに来たまえ。図鑑の記録が50種類増えるごとに、礼として訓練用のスキルポイントを融通してやろう。",
+                "同じ型のライフルを50丁並べてもいいのか。",
+                "そんな手抜きを持ち込んだらトルクレンチで追い返すぞ。別型式の標本だけだ、分かったらさっさと探してこい！"
+            };
             if(collectorPage<12)
             {
-                Text(235,368,isReid[collectorPage]?T("KNOX","ノックス"):T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),heading,Gold,970);
-                Text(235,435,(VaultLanguage.Japanese?ja:en)[collectorPage],new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
-                if(Button(new Rect(900,615,290,75),T("NEXT","次へ"))){collectorPage++;if(collectorPage==12){collectorIntroSeen=true;SaveProgression();}}
+                string speaker=knoxTalking?T("KNOX","ノックス"):T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター");
+                DrawUnifiedDialogueScene("gideon",knoxTalking,speaker,(VaultLanguage.Japanese?ja:en)[collectorPage],Gold,(collectorPage+1)+" / 12");
+                if(WorldButton(UnifiedDialoguePrimaryButton,T("NEXT","次へ"))){collectorPage++;if(collectorPage==12){collectorIntroSeen=true;SaveProgression();}}
             }
             else if(collectorPage==13)
             {
-                Text(235,368,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),heading,Gold,970);
-                Text(235,435,T("Let me see... fascinating craftsmanship! Here is your point. Bring me an even rarer specimen next time.","どれ、見せてみたまえ……ふむ、見事な造りだ！ 約束のポイントだぞ。次はさらに珍しい標本を期待しておるよ。"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
-                if(Button(new Rect(900,615,290,75),T("CLOSE","閉じる")))collectorOpen=false;
+                DrawUnifiedDialogueScene("gideon",false,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),
+                    T("Let me put the calipers on that... exquisite stamping! Here's the skill point I promised. Keep your eyes open for rarer serials out there.",
+                      "どれ、ノギスを当てさせてみろ……うむ、実に精巧なプレス加工だ！ 約束のスキルポイントだぞ。次も珍しい刻印の標本を頼むぞ。"),Gold);
+                if(WorldButton(UnifiedDialoguePrimaryButton,T("CLOSE","閉じる")))collectorOpen=false;
             }
             else
             {
-                Text(235,368,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),heading,Gold,970);
-                Text(235,435,T("Ah, you're back. Your ordnance catalog stands at "+collectorKnown+" specimens. Any new discoveries?","おお、戻ったか。現在の図鑑記録は"+collectorKnown+"種類だ。何か興味深い標本は見つかったかね？"),new GUIStyle(label){fontSize=34,wordWrap=true},UiPaper,970);
                 int available=Mathf.Max(0,collectorKnown/50-collectorClaims);
-                Text(235,545,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available,new GUIStyle(label){fontSize=25},Cyan,700);
-                if(available>0&&Button(new Rect(235,615,360,75),T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);collectorPage=13;}
-                if(Button(new Rect(900,615,290,75),T("CLOSE","閉じる")))collectorOpen=false;
+                DrawUnifiedDialogueScene("gideon",false,T("DR. GIDEON / COLLECTOR","ギデオン博士 / コレクター"),
+                    T("Back in one piece, eh? My registry stands at "+collectorKnown+" documented specimens. Did you drag anything interesting out of the ash?",
+                      "おお、五体満足で戻ったか。現在の図鑑記録は"+collectorKnown+"種類だ。灰の中から何か面白い標本は掘り出してきたかね？"),
+                    Gold,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available);
+                if(available>0&&WorldButton(UnifiedDialogueSecondaryButton,T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);collectorPage=13;}
+                if(WorldButton(UnifiedDialoguePrimaryButton,T("CLOSE","閉じる")))collectorOpen=false;
             }
         }
         Transform departingRaiderBoss; bool bossDeparting;
