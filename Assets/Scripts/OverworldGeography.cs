@@ -132,6 +132,11 @@ namespace NeonVault
             var extraRandom=new System.Random(Seed^0x5A17);
             for(int i=103;i<Entrances.Length;i++)
             {
+                if(i==196||i==197)
+                {
+                    Entrances[i]=NewSite(i==196?new Vector3(-3900,.65f,-3600):new Vector3(3900,.65f,3600),true);
+                    continue;
+                }
                 Vector3 chosen=Vector3.zero;float best=-1;
                 for(int trial=0;trial<40;trial++)
                 {

@@ -3,7 +3,7 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
+        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
         public static Matrix4x4 MobileCanvasMatrix
         {
             get
@@ -84,8 +84,10 @@ namespace NeonVault
                 for(int i=0;i<3;i++)if(MobileButton(new Rect(50,220+i*195,1340,155),names[choices[i]])){int c=choices[i];RecordRunUpgrade(c);ChooseReward(i);}
                 return;
             }
-            MobileCopyAt(260,220,screen==Screen.Victory?T("ZONE SECURED","汚染区域を制圧"):T("SIGNAL LOST","生存信号を喪失"),Gold);
-            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(260,335,920,150));else MobileCopyAt(260,340,Toast,Mist,940);
-            if(MobileButton(new Rect(260,550,920,140),T("RETURN TO SAFEHOUSE","拠点へ帰還")))EnterHub();
+            MobileCopyAt(260,220,screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失"),Gold);
+            if(screen==Screen.Victory&&SelectedExpeditionStage!=null)MobileCopyAt(260,295,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),Mist,940);
+            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(260,365,920,150));else MobileCopyAt(260,380,Toast,Mist,940);
+            if(screen==Screen.Victory)MobileCopyAt(260,525,CompletedPayoutLabel(),Gold,940);
+            if(MobileButton(new Rect(260,590,920,140),screen==Screen.Victory?T("CONFIRM","確認"):T("RETURN TO SAFEHOUSE","拠点へ帰還"))){if(screen==Screen.Victory&&PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}
         }    }
 }

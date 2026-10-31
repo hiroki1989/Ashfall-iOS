@@ -54,14 +54,14 @@ namespace NeonVault
                     type == 1 ? VaultLanguage.T("A survivor needs the area secured. Clear the attackers or defend the signal to unlock a rare or better equipment chest.", "生存者が周辺の安全確保を求めている。敵を倒すか信号を守ると、レア以上の装備箱が解放される。") :
                     type == 2 ? VaultLanguage.T("Follow the marks to a guarded cache, or fight here to secure the coordinates. Both routes lead to a rare or better equipment chest.", "印を辿って守られた物資箱を目指すか、この場で戦い座標を確保する。どちらもレア以上の装備箱に通じる。") :
                     type == 3 ? VaultLanguage.T("The cache is guarded. Defeat the attackers before time runs out to unlock it.", "物資箱は敵に守られている。制限時間内に敵を倒して解放しよう。") :
-                    type == 4 ? VaultLanguage.T("Survive the attacking enemies for 45 seconds to unlock a rare or better equipment chest. Leaving the area ends the challenge.", "45秒間、敵の攻撃を生き延びるとレア以上の装備箱が開きます。エリアを離れると挑戦終了。") :
+                    type == 4 ? VaultLanguage.T("Survive the attacking enemies for 90 to 180 seconds to unlock a rare or better equipment chest. Leaving the area ends the challenge.", "90-180秒間、敵の攻撃を生き延びるとレア以上の装備箱が開きます。エリアを離れると挑戦終了。") :
                     type == 5 ? VaultLanguage.T("Open the unlocked equipment chest.", "解放された装備箱を開けよう。") : "";
             }
         }
         public string OverworldActivityChoiceLabel(int choice)
         {
             int type = selectedOverworldActivity != null ? selectedOverworldActivity.type : NearbyOverworldActivity;
-            if (type == 4) return choice == 0 ? VaultLanguage.T("Start / survive 45 seconds", "開始 / 45秒間生き延びる") : VaultLanguage.T("Leave", "立ち去る");
+            if (type == 4) return choice == 0 ? VaultLanguage.T("Start / survive 90 to 180 seconds", "開始 / 90-180秒間生き延びる") : VaultLanguage.T("Leave", "立ち去る");
             int target=selectedOverworldActivity!=null?ActivityKillTarget(selectedOverworldActivity.id):15;
             if (type == 0 || type == 1) return choice == 0 ? VaultLanguage.T("Clear / defeat ", "殲滅 / ")+target+VaultLanguage.T(" enemies in 100 seconds", "体を100秒以内に倒す") : VaultLanguage.T("Defend / hold the site for 30 seconds", "防衛 / 地点を30秒間守る");
             if (type == 3) return choice == 0 ? VaultLanguage.T("Clear / defeat ", "殲滅 / ")+target+VaultLanguage.T(" enemies in 100 seconds", "体を100秒以内に倒す") : VaultLanguage.T("Leave", "立ち去る");
@@ -128,43 +128,29 @@ namespace NeonVault
             }
             return Vector3.zero;
         }
+        OverworldActivitySite randomActivity;
+        float nextRandomActivity;
         void RefreshOverworldActivities()
         {
             nearbyOverworldActivities.Clear();
             if (!IsOverworld || player == null) return;
-            int cx = Mathf.FloorToInt(PlayerPosition.x / 100f), cz = Mathf.FloorToInt(PlayerPosition.z / 100f);
-            for (int x = cx - 1; x <= cx + 1; x++) for (int z = cz - 1; z <= cz + 1; z++)
+            if (randomActivity != null && (IsOverworldActivityCompleted(randomActivity.id) || (randomActivity.position-PlayerPosition).sqrMagnitude>220f*220f))
+            { randomActivity=null; nextRandomActivity=Time.time+UnityEngine.Random.Range(35f,90f); }
+            if(randomActivity==null && selectedOverworldActivity==null && overworldRushSite==null && Time.time>=nextRandomActivity)
             {
-                if (x < -50 || x >= 50 || z < -50 || z >= 50) continue;
-                // One stable activity per 300 x 300 m district cell.
-                if ((x + 51) % 3 != 0 || (z + 51) % 3 != 0) continue;
-                var chunk = WorldGeography.GetChunk(x, z);
-                int type = ActivityHash(x, z, 7) % 3;
-                    int id = ((x + 50) * 100 + (z + 50)) * 3 + type;
-                    int hash = ActivityHash(x, z, type);
-                    Vector3 p = Vector3.zero;
-                    if (type == 0)
-                    {
-                        if (chunk.Cars.Count == 0) continue;
-                        var car = chunk.Cars[hash % chunk.Cars.Count];
-                        p = car + new Vector3(2.8f, .65f, 0);
-                    }
-                    else if (type == 1)
-                    {
-                        float atX = x * 100 + 25, atZ = z * 100 + 25;
-                        p = new Vector3(WorldGeography.StreetX(x, atZ), .65f, atZ);
-                    }
-                    else
-                    {
-                        if (chunk.Buildings.Count == 0) continue;
-                        var building = chunk.Buildings[hash % chunk.Buildings.Count];
-                        p = new Vector3(building.xMax + 2.3f, .65f, building.center.y);
-                    }
-                    if (WorldGeography.Blocked(p, .55f)) continue;
-                    if (ActivityHash(x, z, 11) % 5 == 0) type = 4;
-                    if (overworldRushSite != null && overworldRushSite.id == id) continue;
-                    nearbyOverworldActivities.Add(new OverworldActivitySite { id = id, type = type, position = p, completed = IsOverworldActivityCompleted(id) });
+                for(int attempt=0;attempt<60;attempt++)
+                {
+                    float angle=UnityEngine.Random.value*Mathf.PI*2f, distance=UnityEngine.Random.Range(35f,110f);
+                    var p=PlayerPosition+new Vector3(Mathf.Cos(angle)*distance,0,Mathf.Sin(angle)*distance);p.y=.65f;
+                    if(Mathf.Abs(p.x)>4950||Mathf.Abs(p.z)>4950||WorldGeography.Blocked(p,1.5f)||WorldEntranceBuildings.Blocked(p,2f,WorldGeography))continue;
+                    int id=UnityEngine.Random.Range(200000000,2000000000);
+                    int type=UnityEngine.Random.Range(0,4); if(type==3)type=4;
+                    randomActivity=new OverworldActivitySite{id=id,type=type,position=p};
+                    nextRandomActivity=Time.time+UnityEngine.Random.Range(120f,240f);break;
+                }
+                if(randomActivity==null)nextRandomActivity=Time.time+15f;
             }
+            if(randomActivity!=null && (overworldRushSite==null || randomActivity.id!=overworldRushSite.id)) nearbyOverworldActivities.Add(randomActivity);
             if (overworldRushRewardReady && overworldRushSite != null)
                 nearbyOverworldActivities.Add(new OverworldActivitySite { id = overworldRushSite.id, type = 5, position = overworldRushSite.position });
             AddFactionCampRewards();

@@ -11,7 +11,7 @@ namespace NeonVault
     public class Gun
     {
         public string name, subtitle, id, visualSet;
-        public string catalogId, manufacturerId, legendaryKey;
+        public string catalogId, manufacturerId, legendaryKey, bossRelicId;
         public int designVariant;
         public int balanceVersion;
         public int level = 1, modelVariant;

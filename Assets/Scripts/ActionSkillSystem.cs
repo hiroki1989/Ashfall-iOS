@@ -48,7 +48,7 @@ namespace NeonVault
             LoadActionSkills();if(!ValidActionSkill(kind,branch,tier)||ActionSkillAvailablePoints<=0)return false;
             int index=ActionSkillIndex(kind,branch,tier);if(actionSkillRanks[index]>=ActionSkillMaxRank(tier))return false;
             if(!ActionSkillTierAvailable(kind,branch,tier))return false;
-            actionSkillRanks[index]++;SaveActionSkills();RefreshPermanentStats();PlayUserSound("skill",.35f);return true;
+            actionSkillRanks[index]++;SaveActionSkills();RefreshPermanentStats();FirstStepsSkillUpgraded();PlayUserSound("skill",.35f);return true;
         }
         public void SelectActionSkill(ActionSkillKind kind)
         {

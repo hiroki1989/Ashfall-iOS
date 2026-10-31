@@ -117,7 +117,7 @@ namespace NeonVault
         {
             if(requested<=0||Credits<=0||DebtRemaining<=0)return false;
             int amount=Mathf.Min(Mathf.Min(requested,Credits),DebtRemaining);
-            int before=DebtLevel;Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();PlayUserSound("transaction",.35f);
+            int before=DebtLevel;int paidBefore=InitialDebt-DebtRemaining;Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();FirstStepsDebtPaid();UpdateFactionBossUnlocks(paidBefore);PlayUserSound("transaction",.35f);
             if(DebtRemaining==0)Notify("Briggs: Balance zero. Talk to Vale about the collar.","ブリッグス：残高、ゼロ。首輪の話はヴェイルにしろ。");
             else if(DebtLevel>before)Notify("Briggs: Check your training points.","ブリッグス：次の段階に達した。訓練に使えるポイントを確認しておけ。");
             else Notify("Briggs: Received "+amount.ToString("N0")+". Balance "+DebtRemaining.ToString("N0"),"ブリッグス："+amount.ToString("N0")+"スクラップ、受領。残りは"+DebtRemaining.ToString("N0")+"だ。");return amount>0;
@@ -208,6 +208,7 @@ namespace NeonVault
                 Text(68,602,T("The collar detonator stays with the Malcolm Vale. Clearing your balance is the only way out.","起爆装置はマルコム・ヴェイルが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
                 if(Button(new Rect(68,694,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
                 if(Button(new Rect(480,694,550,54),T("RESET SKILLS / ","スキル振り直し / ")+ActionSkillRespecCost.ToString("N0"),ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost))TryRespecActionSkills();
+                if(DebtRemaining==0&&PlayerPrefs.GetInt(DebtBossDefeatedKey,0)!=0&&Button(new Rect(1040,694,300,54),T("VALE REMATCH","ヴェイル再戦")))StartValeRematch();
             }
             if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る")))screen=Screen.Hub;
         }

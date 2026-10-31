@@ -17,9 +17,10 @@ namespace NeonVault
                 string prefix=ArmorProductCatalog.Description(legacyArmor,VaultLanguage.Japanese);
                 return description.StartsWith(prefix)?prefix+LegendaryRedOpen+description.Substring(prefix.Length)+LegendaryRedClose:LegendaryRedOpen+description+LegendaryRedClose;
             }
-            bool legendary=item is Gun gun&&!string.IsNullOrEmpty(gun.legendaryKey)
+            bool legendary=item is Gun gun&&(!string.IsNullOrEmpty(gun.legendaryKey)||BossRelicFoundation.Decode(gun.bossRelicId,out _,out _))
                 ||item is ArmorItem armor&&!string.IsNullOrEmpty(armor.legendaryKey)
-                ||item is ArtifactItem module&&(module.rarity==Rarity.Legendary||module.uniqueEffect>0);
+                ||item is ArtifactItem module&&(module.rarity==Rarity.Legendary||module.uniqueEffect>0||BossRelicFoundation.Decode(module.bossRelicId,out _,out _))
+                ||item is MeleeWeaponItem melee&&(melee.uniqueEffect||BossRelicFoundation.Decode(melee.bossRelicId,out _,out _));
             if(!legendary)return description;
             int split=item is ArtifactItem?description.LastIndexOf('\n'):description.IndexOf('\n');
             if(split<0)return LegendaryRedOpen+description+LegendaryRedClose;
@@ -106,6 +107,7 @@ namespace NeonVault
             if(screen!=Screen.Shop)debtPage=false;
             if(worldTransitionPending){DrawWorldLoading();return;}
             if(DebtFinalConversationVisible){DrawDebtFinalConversation();return;}
+            if(FactionBossConversationVisible){DrawFactionBossConversation();return;}
             if(NpcConversationVisible){DrawNpcConversation();return;}
             if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(VaultStorageVisible){DrawVaultStorage();return;}
@@ -194,14 +196,14 @@ namespace NeonVault
                 }
                 return;
             }
-            string text=screen==Screen.Pause?T("EXPEDITION PAUSED","探索一時停止"):screen==Screen.Victory?T("ZONE SECURED","汚染区域を制圧"):T("SIGNAL LOST","生存信号を喪失");
+            string text=screen==Screen.Pause?T("EXPEDITION PAUSED","探索一時停止"):screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失");
             Panel(new Rect(350,171,740,554),screen==Screen.Victory?Gold:Cyan);
             Diamond(720,205,12,Gold);Text(390,249,text,heading,screen==Screen.Victory?Gold:Color.white,680);
             Text(390,320,CurrentDungeon.Name+" / "+(room+1)+" / "+CurrentDungeon.AreaCount+T("  ·  Scrap ","  ·  スクラップ ")+Credits,small,Mist,660);
             if(screen==Screen.Pause)
             {DrawCameraZoom(390,365,310,false);DrawMasterVolume(740,365,310,false);if(Button(new Rect(390,443,660,68),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}}
             else
-            {if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(390,343,660,93));else Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}
+            {if(screen==Screen.Victory){if(SelectedExpeditionStage!=null)Text(390,341,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},UiPaper,660);if(completedRewardGun!=null||completedRewardArmor!=null)DrawCompletedGearReward(new Rect(390,382,660,93));else Text(390,382,Toast,new GUIStyle(small){wordWrap=true},Gold,660);Text(390,475,CompletedPayoutLabel(),new GUIStyle(small){wordWrap=false},Gold,660);if(Button(new Rect(390,520,660,68),T("CONFIRM","確認"),true)){if(PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}return;}else {Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}}
             if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
             if(screen==Screen.Pause&&Button(new Rect(390,700,660,42),T("WORLD MAP","広域地図")))OpenOverworldMap();
             if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","インベントリ [I]")))ToggleInventory();

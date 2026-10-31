@@ -89,22 +89,22 @@ namespace NeonVault
             new[]{"根縛りの王","樹冠の蜘蛛","庭園管理人","開花怪異","狐火の群れ"},
             new[]{"赤い巨人","静電預言者","クレーター喰らい","塩の亡霊","無の追跡者"}
         };
-        static readonly string[] missionEn = {"Defeat 18 hostiles","Defeat the alpha mutant","Recover 3 caches across 2 floors","Break the infestation: 8 kills and 2 caches","Open a cache on each of 2 floors","Salvage 5 caches across 3 floors"};
-        static readonly string[] missionJa = {"敵を18体倒す","変異体の主を倒す","2フロア以上で物資を計3箱回収","感染網を断つ：敵8体と物資2箱","別々の2フロアで各1箱を開く","3フロア以上で物資を計5箱回収"};
+        static readonly string[] missionEn = {"Defeat 18 hostiles","Defeat the boss","Recover 3 supplies across 2 floors","Break the infestation: 8 kills and 2 supplies","Recover supplies on each of 2 floors","Recover 5 supplies across 3 floors"};
+        static readonly string[] missionJa = {"敵を18体倒す","ボスを倒す","2フロア以上で物資を3つ回収","感染網を断つ：敵8体と物資2つを回収","別々の2フロアで物資を1つずつ回収","3フロア以上で物資を5つ回収"};
         static readonly Color[] colors = {new Color(.31f,.63f,.55f),new Color(.84f,.43f,.23f),new Color(.23f,.62f,.72f),new Color(.48f,.68f,.35f),new Color(.86f,.28f,.20f)};
         public static ExpeditionStage Get(int id,int playerLevel=1)
         {
             id=Mathf.Clamp(id,0,StageCount-1); int region=(id%100)/20, n=id%20, place=n/4, variant=n%4+(id/100)*4;
             string loc=places[region][place], locJa=placesJa[region][place]; int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-3);
-            int mission=(id+region+place)%missionEn.Length;
+            int mission=id==197?1:id==198?0:id%2==0?1:new[]{0,2,3,4,5}[(id/2)%5];
             var faction=FactionForStage(id);
             string target=mission==1?targets[region][(n*3+place)%5]:mission==0?"Zone hostiles":mission==3?"Infestation network":"Supply cache";
             string targetJa=mission==1?targetsJa[region][(n*3+place)%5]:mission==0?"区域の敵":mission==3?"感染網":"補給物資";
             return new ExpeditionStage { id=id,region=region,level=danger,legacyDungeonIndex=region==0?0:region<3?1:2,
-                englishName=loc+" / " + (variant+1).ToString("00"), japaneseName=locJa+"・"+(variant+1).ToString("00"),
+                englishName=id==196?"RED CLAW STRONGHOLD":id==197?"COYOTE STRONGHOLD":loc+" / " + (variant+1).ToString("00"), japaneseName=id==196?"レッドクロウ本拠地":id==197?"コヨーテ本拠地":locJa+"・"+(variant+1).ToString("00"),
                 englishLocation=regions[region]+" — "+loc,japaneseLocation=regionsJa[region]+" — "+locJa,
                 englishBiome=faction==DungeonFaction.Raiders?"RED CLAW HIDEOUT":faction==DungeonFaction.Gang?"DUSK COYOTES HIDEOUT":biomes[region][place],japaneseBiome=faction==DungeonFaction.Raiders?"レッドクロウのアジト":faction==DungeonFaction.Gang?"ダスク・コヨーテのアジト":biomesJa[region][place],mission=(ExpeditionMission)mission,
-                englishTarget=mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"Raider commander":"Gang leader"):target,japaneseTarget=mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"レイダーの指揮官":"ギャングのリーダー"):targetJa,
+                englishTarget=id==196?"RAVEN":id==197?"VEX":mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"Raider commander":"Gang leader"):target,japaneseTarget=id==196?"レイヴン":id==197?"ヴェックス":mission==1&&faction!=DungeonFaction.None?(faction==DungeonFaction.Raiders?"レイダーの指揮官":"ギャングのリーダー"):targetJa,
                 englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[region] };
         }
         public static int MissionCount(int region,ExpeditionMission mission){int count=0;for(int id=0;id<StageCount;id++)if(Get(id).region==Mathf.Clamp(region,0,4)&&Get(id).mission==mission)count++;return count;}
@@ -120,7 +120,7 @@ namespace NeonVault
             if(stage==null)return "";
             int target=KillTarget(stage.id,stage.mission);
             if(stage.mission==ExpeditionMission.ClearHostiles)return japanese?"敵を"+target+"体倒す":"Defeat "+target+" hostiles";
-            if(stage.mission==ExpeditionMission.DestroyNest)return japanese?"感染網を断つ：敵"+target+"体と物資2箱":"Break the infestation: "+target+" kills and 2 caches";
+            if(stage.mission==ExpeditionMission.DestroyNest)return japanese?"感染網を断つ：敵"+target+"体と物資2つを回収":"Break the infestation: "+target+" kills and 2 supplies";
             return MissionLabel(stage.mission,japanese);
         }
         public static string MissionLabel(ExpeditionMission mission,bool japanese)=>japanese?missionJa[(int)mission]:missionEn[(int)mission];

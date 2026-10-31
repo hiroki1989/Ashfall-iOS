@@ -82,6 +82,7 @@ namespace NeonVault
         public bool EnterNearbyWorldDungeon(int stage)
         {
             if(!IsOverworld||stage<0||stage>=ExpeditionMap.StageCount||(WorldGeography.Entrances[stage]-PlayerPosition).sqrMagnitude>3.5f*3.5f)return false;
+            if(!FactionHeadquartersUnlocked(stage)){Notify("STRONGHOLD LOCKED","この本拠地はまだ発見できない");return false;}
             DiscoverOverworldDungeon(stage);
             SaveInventory();RememberOverworldPosition(WorldGeography.Entrances[stage]+Vector3.back*2,true);SetOverworldReturnStage(stage);
             return EnterExpeditionStage(stage);

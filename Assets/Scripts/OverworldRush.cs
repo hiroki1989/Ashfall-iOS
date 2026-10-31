@@ -49,10 +49,10 @@ namespace NeonVault
             overworldRushSite = site; overworldRushRewardReady = false;
             overworldChallengeMode = mode; overworldHoldProgress = 0;
             overworldChallengeTarget=ActivityKillTarget(site.id);
-            overworldRushRemaining = mode == 0 ? 45f : mode==1?100f:60f; overworldRushSpawnTimer = 0;
+            overworldRushRemaining = mode == 0 ? UnityEngine.Random.Range(90,181) : mode==1?100f:60f; overworldRushSpawnTimer = 0;
             ReserveOverworldRushSlots();
             RefreshOverworldActivities();
-            if (mode == 0) Notify("HOSTILE SURGE / survive for 45 seconds", "敵襲 / 45秒間生き延びよう");
+            if (mode == 0) Notify("HOSTILE SURGE / survive for "+Mathf.CeilToInt(overworldRushRemaining)+" seconds", "敵襲 / "+Mathf.CeilToInt(overworldRushRemaining)+"秒間生き延びよう");
             else if (mode == 1) Notify("CLEAR / defeat "+overworldChallengeTarget+" attackers in 100 seconds", "殲滅 / 100秒以内に敵"+overworldChallengeTarget+"体を倒そう");
             else Notify("DEFEND / stay within 9m for 30 seconds", "防衛 / 地点から9m以内に30秒留まろう");
         }

@@ -17,6 +17,7 @@ namespace NeonVault
         // Stable visual contract: 0 rush, 1 overhead slam, 2 sweeping strike.
         public int BossAttackStyle=>kind==3?(int)bossMove:-1;
         public bool RaiderBoss { get; private set; }
+        public bool MajorBoss { get; set; }
         public void SetRaiderBoss(bool value){RaiderBoss=kind==3&&value;}
         public bool HeavyMelee=>kind==1||kind==2||kind==6||kind==7||kind==9;
         public bool IsMelee=>kind==0||kind==4||kind==8||HeavyMelee;
@@ -50,7 +51,7 @@ namespace NeonVault
         {
             if(game==null||dead)return;
             if(!game.Active){ClearWarning();charging=false;dash=0;burstShots=0;timer=Mathf.Max(timer,.8f);return;}
-            if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=RaiderBoss?.22f:.16f;}}
+            if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=MajorBoss?.14f:RaiderBoss?.22f:.16f;}}
             Vector3 delta=game.PlayerPosition-transform.position;delta.y=0;float distance=delta.magnitude;Vector3 direction=delta.normalized;
             if(!alerted&&distance>22)return;
             if(Time.time>=visibilityNext){visibilityNext=Time.time+.14f+(kind&7)*.008f;cachedVisible=distance<35&&game.LineOfSight(transform.position,game.PlayerPosition);}
@@ -93,7 +94,7 @@ namespace NeonVault
             contact-=Time.deltaTime; // Damage comes from readable attacks, never passive body contact.
             if(charging)
             {
-                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();timer=kind==3?(bossMove==BossMove.Gun?2.65f:bossMove==BossMove.Slam?2.1f:bossMove==BossMove.Sweep?1.45f:1.7f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.5f:kind==7?3.2f:kind==0||kind==8?1.1f:kind==4?1.9f:kind==9?3.3f:2f;return;
+                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();timer=kind==3?(bossMove==BossMove.Gun?2.65f:bossMove==BossMove.Slam?2.1f:bossMove==BossMove.Sweep?1.45f:1.7f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.5f:kind==7?3.2f:kind==0||kind==8?1.1f:kind==4?1.9f:kind==9?3.3f:2f;if(MajorBoss)timer*=.72f;return;
             }
             timer-=Time.deltaTime;
             if(timer>0||!visible||distance>18)return;
@@ -146,7 +147,7 @@ namespace NeonVault
             GetComponent<EnemyPainted2D>()?.NotifyAttack();GetComponent<FaithfulEnemy3D>()?.NotifyAttack();
             if(kind==3)
             {
-                if(RaiderBoss&&bossMove==BossMove.Gun){FireRangedShot();burstShots=2;burstTimer=.22f;return;}
+                if(RaiderBoss&&bossMove==BossMove.Gun){FireRangedShot();burstShots=MajorBoss?5:2;burstTimer=MajorBoss?.14f:.22f;return;}
                 if(bossMove==BossMove.Rush){contact=0;dash=.46f;return;}
                 if(bossMove==BossMove.Slam)
                 {

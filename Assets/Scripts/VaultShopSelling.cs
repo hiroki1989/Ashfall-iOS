@@ -102,7 +102,7 @@ namespace NeonVault
             else if(entry.kind==SaleKind.Armor){var item=ArmorInventory.Find(a=>a.id==entry.id);if(Armory.IsActiveArmor(item)&&!IsArmorEquipped(item)){DiscardArmor(item);removed=true;}}
             else if(entry.kind==SaleKind.Module){var item=ArtifactInventory.Find(a=>a.id==entry.id);if(item!=null&&System.Array.IndexOf(EquippedArtifacts,item)<0){DiscardArtifact(item);removed=true;}}
             else if(entry.kind==SaleKind.Melee){var item=MeleeWeaponInventory.Find(m=>m.id==entry.id);if(item!=null&&item!=EquippedMeleeWeapon&&MeleeWeaponInventory.Count>1){MeleeWeaponInventory.Remove(item);SaveInventory();removed=true;}}
-            if(removed){AwardCredits(entry.price);PlayUserSound("transaction",.35f);Notify("Sera: Got it. Bring something rare next time. / +"+entry.price.ToString("N0"),"セラ：確かに受け取った。次は珍しい物も頼むよ。 / +"+entry.price.ToString("N0"));}
+            if(removed){AwardCredits(entry.price);FirstStepsEquipmentSold();PlayUserSound("transaction",.35f);Notify("Sera: Got it. Bring something rare next time. / +"+entry.price.ToString("N0"),"セラ：確かに受け取った。次は珍しい物も頼むよ。 / +"+entry.price.ToString("N0"));}
             return removed;
         }
     }

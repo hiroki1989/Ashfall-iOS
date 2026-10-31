@@ -23,6 +23,12 @@ namespace NeonVault
         const string FirstStepsTargetKey = "Vault.FirstSteps.target.v1";
         const string DebtBossDefeatedKey = "Vault.DebtBoss.defeated.v1";
         bool finalDebtBossFight;
+        void StartValeRematch()
+        {
+            if(DebtRemaining!=0||PlayerPrefs.GetInt(DebtBossDefeatedKey,0)==0)return;
+            finalDebtBossFight=true;SelectedStageId=-1;DungeonIndex=2;
+            ResetExpeditionMission();StartRun();
+        }
         int debtFinalBeat;
         bool DebtFinalConversationVisible => !smoke && screen == Screen.Hub && WorldStorySeen && DebtRemaining == 0 && PlayerPrefs.GetInt(DebtBossDefeatedKey, 0) == 0;
         void DrawDebtFinalConversation()
@@ -49,7 +55,7 @@ namespace NeonVault
             finalDebtBossFight=false;
             PlayerPrefs.SetInt(DebtBossDefeatedKey,1);PlayerPrefs.Save();
             ClearRunCheckpoint();SaveInventory();screen=Screen.Victory;
-            Notify("THE MALCOLM VALE IS DOWN / The debt is settled.","マルコム・ヴェイルを撃破 / 借りは返した。");
+            Notify("MALCOLM VALE IS DOWN / The debt is settled.","マルコム・ヴェイルを撃破 / 借りは返した。");
         }
         int FirstStepsStage => PlayerPrefs.GetInt(FirstStepsKey, 0);
         bool TryFirstStepsWaypoint(out Vector3 target)
@@ -61,7 +67,7 @@ namespace NeonVault
                 int id=PlayerPrefs.GetInt(FirstStepsTargetKey,-1);
                 if(id>=0&&id<ExpeditionMap.StageCount){target=WorldGeography.Entrances[id];return true;}
             }
-            if(FirstStepsStage==4){target=WorldGeography.Camps[LastVisitedCamp];return true;}
+            if(FirstStepsStage==4||FirstStepsStage==6||FirstStepsStage==7){target=WorldGeography.Camps[LastVisitedCamp];return true;}
             return false;
         }
         void SetFirstStepsStage(int stage)
@@ -73,26 +79,27 @@ namespace NeonVault
         void BeginFirstStepsTutorial()
         {
             if (smoke || FirstStepsStage != 0) return;
-            int target = -1; float closest = float.MaxValue;
-            Vector3 camp = WorldGeography.Camps[LastVisitedCamp];
-            for (int i = 0; i < ExpeditionMap.StageCount; i++)
-            {
-                if (ExpeditionMap.Get(i, 1).level != 1) continue;
-                float distance = (WorldGeography.Entrances[i] - camp).sqrMagnitude;
-                if (distance < closest) { closest = distance; target = i; }
-            }
+            int target = 0;
             PlayerPrefs.SetInt(FirstStepsTargetKey, target);
             SetFirstStepsStage(1);
             if (target >= 0) SetOverworldWaypoint(2, target);
         }
+        void FirstStepsDungeonCleared(){if(FirstStepsStage==3&&SelectedStageId==0)SetFirstStepsStage(4);}
+        void FirstStepsEquipmentSold(){if(FirstStepsStage==4)SetFirstStepsStage(6);}
+        void FirstStepsDebtPaid()
+        {
+            if(FirstStepsStage!=6)return;
+            if(DebtLevel>=2)SetFirstStepsStage(7);
+            else { SetFirstStepsStage(3);PlayerPrefs.SetInt(FirstStepsTargetKey,0);SetOverworldWaypoint(2,0); }
+        }
+        void FirstStepsSkillUpgraded(){if(FirstStepsStage==7){SetFirstStepsStage(5);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}}
         void DrawFirstStepsTutorial()
         {
             if (smoke || InventoryOpen || manufacturerRegistry || WorldBossConversationVisible || worldTransitionPending) return;
             int stage = FirstStepsStage;
-            if (stage == 0 || stage >= 5 || screen == Screen.Menu || screen == Screen.Dead) return;
+            if (stage == 0 || stage == 5 || screen == Screen.Menu || screen == Screen.Dead) return;
             if (stage == 2 && IsOverworld && screen == Screen.Playing) { SetFirstStepsStage(3); stage = 3; }
-            if (stage == 3 && OverworldMissionClears > 0) { SetFirstStepsStage(4); stage = 4; }
-            if (stage == 4 && DebtLevel >= 2) { SetFirstStepsStage(5); Notify("FIRST STEPS COMPLETE / Repay the billion", "チュートリアル完了 / 10億スクラップの返済を目指そう"); return; }
+            if ((stage == 4 || stage == 6) && DebtLevel >= 2) { SetFirstStepsStage(7); stage = 7; }
             if (stage == 1 && screen == Screen.Hub)
             {
                 Box(new Rect(0,0,1440,900),new Color(0,0,0,.72f));
@@ -102,8 +109,8 @@ namespace NeonVault
                 if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
                 return;
             }
-            string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (IsOverworld ? "Follow the marked destination and clear the level 1 dungeon." : "Complete the mission and leave the dungeon.") : "Return to a safehouse. Sell spare gear, then pay Briggs until you reach level 2.";
-            string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (IsOverworld ? "地図の目的地へ向かい、レベル1のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : "拠点に戻り、不要な装備を売ってブリッグスに返済し、レベル2を目指そう。";
+            string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (screen == Screen.Hub ? "Leave the safehouse and return to dungeon 01." : IsOverworld ? "Follow the marker and clear dungeon 01." : "Complete the mission and leave the dungeon.") : stage == 4 ? "Return to a safehouse and sell spare equipment to Sera." : stage == 6 ? "Talk to Briggs and repay your debt." : "Talk to Briggs and spend a skill point to improve an action skill.";
+            string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (screen == Screen.Hub ? "街へ出て、01のダンジョンに再挑戦しよう。" : IsOverworld ? "目的地へ向かい、01のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : stage == 4 ? "拠点に戻り、セラに不要な装備を売ろう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済しよう。" : "ブリッグスに話しかけ、スキルポイントでアクションスキルを強化しよう。";
             if (screen == Screen.Hub || screen == Screen.Playing)
             {
                 Box(new Rect(410,76,620,82),new Color(.02f,.03f,.04f,.88f));

@@ -67,13 +67,15 @@ namespace NeonVault
         }
         static GameObject CreateSite(SiteState state,int key)
         {
-            bool camp=key<state.geography.Camps.Length;int style=camp?4:(key-state.geography.Camps.Length)%4;
+            bool camp=key<state.geography.Camps.Length;int entranceId=key-state.geography.Camps.Length;
+            bool factionHeadquarters=!camp&&(entranceId==196||entranceId==197);
+            int style=camp||factionHeadquarters?4:entranceId%4;
             var site=new GameObject(camp?"Raider headquarters / camp "+key:"Dungeon building / "+(key-state.geography.Camps.Length));
             site.transform.SetParent(state.root,false);Vector3 threshold=SitePosition(state.geography,key);threshold.y=0;site.transform.localPosition=threshold;
             // Adapter contract: imported exterior fits the xﾂｱ6,z2..10 footprint. Threshold remains unobstructed.
             bool adapted;
-            if(!camp){RuinedCityArchitecture.Place(site.transform,new Rect(-6,2,12,8),(key%5==0)?6:key%6);adapted=true;}
-            else { BuildShell(site.transform,state.materials,style,true); BuildCampFortification(site.transform,state.materials,key==0); adapted=true; }
+            if(!camp&&!factionHeadquarters){RuinedCityArchitecture.Place(site.transform,new Rect(-6,2,12,8),(key%5==0)?6:key%6);adapted=true;}
+            else { BuildShell(site.transform,state.materials,style,true); BuildCampFortification(site.transform,state.materials,key==0||factionHeadquarters); adapted=true; }
             if(!adapted)BuildShell(site.transform,state.materials,style,camp);
             if(camp)
             {
@@ -83,6 +85,13 @@ namespace NeonVault
                     AddFactionFlag(site.transform,state.materials,state.factionFlags[0],-3.75f,9.1f,2.68f,2.4f,1.7f,"Warden HQ west banner");
                     AddFactionFlag(site.transform,state.materials,state.factionFlags[0],3.75f,9.1f,2.68f,2.4f,1.7f,"Warden HQ east banner");
                 }
+            }
+            if(factionHeadquarters)
+            {
+                DressCampExterior(site.transform,key);WeatherCampFacade(site.transform,state.materials,key);
+                int flag=entranceId==196?1:2;
+                AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],-3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ west banner");
+                AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ east banner");
             }
             // A readable dark doorway and recessed jambs are always present, including imported exteriors.
             Box(site.transform,state.materials, "Door recess",new Vector3(0,1.3f,2.03f),new Vector3(2.3f,2.6f,.12f),2);

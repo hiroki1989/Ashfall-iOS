@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace NeonVault {
  public enum ArtifactEffect { KillShield, DashPulse, ReloadSurge, ShieldConversion }
- [System.Serializable] public class ArtifactItem {public string id,name,japanese,catalogId,manufacturerId;public int designVariant;public int level=1,dungeon,uniqueEffect;public Rarity rarity;public ArtifactEffect effect;public float power,cooldown;public GearAffix[] affixes;public string Name=>ArtifactCatalog.DisplayName(this);public string Description=>ArtifactCatalog.Description(this);}
+ [System.Serializable] public class ArtifactItem {public string id,name,japanese,catalogId,manufacturerId,bossRelicId;public int designVariant;public int level=1,dungeon,uniqueEffect;public Rarity rarity;public ArtifactEffect effect;public float power,cooldown;public GearAffix[] affixes;public string Name=>ArtifactCatalog.DisplayName(this);public string Description=>ArtifactCatalog.Description(this);}
  public static class ArtifactCatalog {
   public static ArtifactItem RollForDungeon(System.Random random,int dungeon,bool boss=false){return Create(random,dungeon,DungeonCatalog.RollRarity(random,boss),DungeonCatalog.ItemLevel(random,dungeon));}
   public static ArtifactItem Create(System.Random random,int dungeon,Rarity rarity,int level){
@@ -31,7 +31,7 @@ namespace NeonVault {
    }
   }
   public static string DisplayName(ArtifactItem a)=>DisplayName(a,VaultLanguage.Japanese);
-  public static string DisplayName(ArtifactItem a,bool japanese){var recipe=DistinctEquipmentDesigns.For(a);return recipe!=null?(japanese?recipe.japanese:recipe.name):LegacyDisplayName(a,japanese);}
+  public static string DisplayName(ArtifactItem a,bool japanese){string relic=BossRelicFoundation.Name(a?.bossRelicId,japanese);if(!string.IsNullOrEmpty(relic))return relic;var recipe=DistinctEquipmentDesigns.For(a);return recipe!=null?(japanese?recipe.japanese:recipe.name):LegacyDisplayName(a,japanese);}
   static string LegacyDisplayName(ArtifactItem a,bool japanese)=>!string.IsNullOrEmpty(a.catalogId)&&ModuleProductCatalog.Find(a.catalogId)!=null?(japanese?a.japanese:a.name):japanese?(a.rarity==Rarity.Legendary?new[]{"街道の防壁","炉心放電器","同位体中継器"}[Mathf.Clamp(a.dungeon,0,2)]:new[]{"シールド蓄電器","放電コイル","リロードリレー","変換回路"}[(int)a.effect]):(a.rarity==Rarity.Legendary?new[]{"HIGHWAY BULWARK","FURNACE DISCHARGER","ISOTOPE RELAY"}[Mathf.Clamp(a.dungeon,0,2)]:new[]{"SHIELD CAPACITOR","DISCHARGE COIL","RELOAD RELAY","CONVERSION CIRCUIT"}[(int)a.effect]);
   public static string Description(ArtifactItem a)
   {
@@ -48,7 +48,8 @@ namespace NeonVault {
     string signature=LegendaryModuleSignature(a);
     if(!string.IsNullOrEmpty(signature))detail+=" / "+VaultLanguage.T("On the same activation: ","同じ発動時：")+signature;
    }
-   return detail;
+   string relic=BossRelicFoundation.Description(a?.bossRelicId,VaultLanguage.Japanese);
+   return string.IsNullOrEmpty(relic)?detail:detail+" / "+relic;
   }
   public static bool LegendaryModuleBonus(ArtifactItem a,out int healing,out int rounds,out float dodge)
   {

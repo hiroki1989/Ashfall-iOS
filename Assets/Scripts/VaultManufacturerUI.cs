@@ -16,12 +16,24 @@ namespace NeonVault
             else if(manufacturerKind==1){foreach(var product in ArmorProductCatalog.All)if(product.manufacturerId==id&&Armory.IsActiveSlot(product.slot))manufacturerProducts.Add(Armory.CreateCatalog(product.id,Rarity.Common,1));}
             else if(manufacturerKind==2){foreach(var product in ModuleProductCatalog.All)if(product.manufacturerId==id)manufacturerProducts.Add(ArtifactCatalog.CreateCatalog(product.id,product.legendary?Rarity.Legendary:Rarity.Common,1));}
             else if(manufacturerKind==3){for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){var item=MeleeWeaponCatalog.Catalog(i);if(ManufacturerBranding.Maker(item)==id){manufacturerProducts.Add(MeleeWeaponCatalog.Catalog(i,Rarity.Legendary));manufacturerProducts.Add(item);}}}
+            if(manufacturerKind>=0&&manufacturerKind<=3)
+            {
+                for(int boss=0;boss<BossRelicFoundation.BossCount;boss++)for(int category=0;category<BossRelicFoundation.CategoryCount;category++)
+                {
+                    if((category<5?0:category<9?1:category==9?2:3)!=manufacturerKind)continue;
+                    object relic=BossRelicFoundation.Create(boss,category,1,new System.Random(9100+boss*37+category));
+                    string maker=relic is Gun g?ManufacturerBranding.Maker(g):relic is ArmorItem a?ManufacturerBranding.Maker(a):relic is ArtifactItem m?ManufacturerBranding.Maker(m):relic is MeleeWeaponItem w?ManufacturerBranding.Maker(w):null;
+                    if(maker==id)manufacturerProducts.Add(relic);
+                }
+            }
             var legendary=new List<object>();var regular=new List<object>();
             foreach(var item in manufacturerProducts){if(CatalogIsLegendary(item))legendary.Add(item);else regular.Add(item);}
             manufacturerProducts.Clear();manufacturerProducts.AddRange(legendary);manufacturerProducts.AddRange(regular);
         }
         static bool CatalogIsLegendary(object item)
         {
+            string relic=item is Gun rg?rg.bossRelicId:item is ArmorItem ra?ra.bossRelicId:item is ArtifactItem rm?rm.bossRelicId:item is MeleeWeaponItem rw?rw.bossRelicId:null;
+            if(BossRelicFoundation.Decode(relic,out _,out _))return true;
             if(item is Gun gun)return !string.IsNullOrEmpty(gun.legendaryKey);
             if(item is ArmorItem armor)return !string.IsNullOrEmpty(armor.legendaryKey)||armor.uniqueEffect>0;
             if(item is ArtifactItem module)return module.rarity==Rarity.Legendary||module.uniqueEffect>0;
@@ -29,6 +41,8 @@ namespace NeonVault
         }
         string CatalogEffect(object item)
         {
+            string relic=item is Gun rg?rg.bossRelicId:item is ArmorItem ra?ra.bossRelicId:item is ArtifactItem rm?rm.bossRelicId:item is MeleeWeaponItem rw?rw.bossRelicId:null;
+            if(BossRelicFoundation.Decode(relic,out _,out _))return LegendaryRedOpen+BossRelicFoundation.Description(relic,VaultLanguage.Japanese)+LegendaryRedClose;
             if(item is Gun gun)return string.IsNullOrEmpty(gun.legendaryKey)
                 ?T("A firearm recovered from the ruined city.","廃きょの街で回収された銃器。")
                 :LegendaryRedOpen+LegendaryCatalog.Description(gun,VaultLanguage.Japanese)+LegendaryRedClose;

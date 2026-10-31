@@ -12,6 +12,13 @@ namespace NeonVault {
   [Serializable] class ProgressSave{public int dungeon,unlocked,credits,cycle,stage=-1,tokens,moduleCapacityTier,collectorClaims;public bool collectorIntroSeen;public bool hasSelectedStage;public List<int> clearedStages;public List<ArtifactItem> artifacts;public string[] equipped;public List<int> purchased;}
   public class ShopOffer{public Gun gun;public ArmorItem armor;public ArtifactItem artifact;public MeleeWeaponItem melee;public int cost;public bool purchased;}
   Gun completedRewardGun;ArmorItem completedRewardArmor;
+  int completedScrapReward,completedSkillPointReward;
+  string CompletedPayoutLabel()
+  {
+   string result=VaultLanguage.T("SCRAP +","スクラップ +")+completedScrapReward.ToString("N0");
+   if(completedSkillPointReward>0)result+=VaultLanguage.T("  /  SKILL POINT +","  /  スキルポイント +")+completedSkillPointReward;
+   return result;
+  }
   public IReadOnlyList<ShopOffer> ShopStock=>shopStock;
   public void OpenArtifactInventory(){artifactPage=true;if(!InventoryOpen)ToggleInventory();}
   readonly List<int> shopPurchased=new List<int>();
@@ -20,7 +27,7 @@ namespace NeonVault {
   public void EnterHub(){finalDebtBossFight=false;ClearActiveActionSkill();SaveInventory();EnsureOverworldState();IsOverworld=false;ClearRunCheckpoint();shake=0;runDamage=runFire=runVitality=runDash=runChain=runHarvest=0;damageBonus=fireBonus=0;ClearRunUpgradeHistory();shopSellingPage=false;pendingSaleKey=null;ResetGameplayOverlays();ResetArtifactCombat();RefreshPermanentStats();hp=maxHp;RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);screen=Screen.Hub;BuildHub();}
   public bool EnterDungeon(int index){if(!smoke||index<0||index>HighestUnlocked||index>=3)return false;SelectedStageId=-1;ResetExpeditionMission();DungeonIndex=index;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
   public bool EnterExpeditionStage(int stageId){if(stageId<0||stageId>=ExpeditionMap.StageCount)return false;if(!smoke&&(!IsOverworld||(WorldGeography.Entrances[stageId]-PlayerPosition).sqrMagnitude>3.5f*3.5f))return false;var stage=ExpeditionMap.Get(stageId,DebtLevel);SelectedStageId=stageId;ResetExpeditionMission();DungeonIndex=stage.legacyDungeonIndex;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
-  public void OnDungeonFinished(bool won){completedRewardGun=null;completedRewardArmor=null;if(won){ExpeditionRunCompleted();if(SelectedExpeditionStage==null||MissionCompleted){HighestUnlocked=Mathf.Min(2,Mathf.Max(HighestUnlocked,DungeonIndex+1));AwardCredits(ScaleScrap(new[]{5000000,10000000,20000000}[DungeonIndex]));if(SelectedStageId>=0){if(clearedExpeditionStages.Contains(SelectedStageId))GrantRepeatExpeditionReward(SelectedStageId);else GrantExpeditionReward(SelectedStageId);}}else Notify("MISSION FAILED / EXTRACTION PAYOUT ONLY","任務失敗 / 脱出報酬のみ");}shopCycle++;shopPurchased.Clear();CreateShopStock();SaveProgression();}
+  public void OnDungeonFinished(bool won){completedRewardGun=null;completedRewardArmor=null;int rewardCreditsBefore=Credits,rewardPointsBefore=ExpeditionTokens;completedScrapReward=0;completedSkillPointReward=0;if(won){ExpeditionRunCompleted();if(SelectedExpeditionStage==null||MissionCompleted){if(SelectedStageId==0)FirstStepsDungeonCleared();HighestUnlocked=Mathf.Min(2,Mathf.Max(HighestUnlocked,DungeonIndex+1));AwardCredits(ScaleScrap(new[]{5000000,10000000,20000000}[DungeonIndex]));if(SelectedStageId>=0){if(clearedExpeditionStages.Contains(SelectedStageId))GrantRepeatExpeditionReward(SelectedStageId);else GrantExpeditionReward(SelectedStageId);}}else Notify("MISSION FAILED / EXTRACTION PAYOUT ONLY","任務失敗 / 脱出報酬のみ");}completedScrapReward=Mathf.Max(0,Credits-rewardCreditsBefore);completedSkillPointReward=Mathf.Max(0,ExpeditionTokens-rewardPointsBefore);shopCycle++;shopPurchased.Clear();CreateShopStock();SaveProgression();}
   void GrantExpeditionReward(int stageId)
   {
    if(clearedExpeditionStages.Contains(stageId))return;

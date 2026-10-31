@@ -27,6 +27,8 @@ namespace NeonVault
 
         internal static string Key(object item)
         {
+            string relic=item is Gun rg?rg.bossRelicId:item is ArmorItem ra?ra.bossRelicId:item is ArtifactItem rm?rm.bossRelicId:item is MeleeWeaponItem rw?rw.bossRelicId:null;
+            if(BossRelicFoundation.Decode(relic,out _,out _))return relic;
             if (item is Gun gun)
             {
                 int index = LegendaryCatalog.Index(gun.legendaryKey);
@@ -61,6 +63,7 @@ namespace NeonVault
             foreach(var product in ArmorProductCatalog.All)if(Armory.IsActiveSlot(product.slot))Add(Armory.CreateCatalog(product.id,Rarity.Common,1));
             foreach(var product in ModuleProductCatalog.All)Add(ArtifactCatalog.CreateCatalog(product.id,product.legendary?Rarity.Legendary:Rarity.Common,1));
             for(int i=0;i<MeleeWeaponCatalog.CatalogCount;i++){Add(MeleeWeaponCatalog.Catalog(i));Add(MeleeWeaponCatalog.Catalog(i,Rarity.Legendary));}
+            for(int boss=0;boss<BossRelicFoundation.BossCount;boss++)for(int category=0;category<BossRelicFoundation.CategoryCount;category++)if(ids.Contains(BossRelicFoundation.Id(boss,category)))catalog.Add(BossRelicFoundation.Id(boss,category));
             return catalog.Count;
         }
 

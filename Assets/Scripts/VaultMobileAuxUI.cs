@@ -163,6 +163,7 @@ namespace NeonVault
                 if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(MobileButton(new Rect(40,650,650,110),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
                 if(MobileButton(new Rect(720,650,680,110),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0")))TryRespecActionSkills();
+                if(DebtRemaining==0&&PlayerPrefs.GetInt(DebtBossDefeatedKey,0)!=0&&MobileButton(new Rect(400,780,640,90),T("VALE REMATCH","ヴェイル再戦")))StartValeRematch();
                 return;
             }
             DrawActionSkillTree();

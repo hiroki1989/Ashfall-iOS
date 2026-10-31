@@ -8,7 +8,7 @@ namespace NeonVault
     public class ArmorItem
     {
         public string id, name, subtitle;
-        public string catalogId, manufacturerId, legendaryKey;
+        public string catalogId, manufacturerId, legendaryKey, bossRelicId;
         public int designVariant;
         public int balanceVersion;
         public ArmorSlot slot;

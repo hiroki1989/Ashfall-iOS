@@ -8,7 +8,7 @@ namespace NeonVault
     [Serializable]
     public sealed class MeleeWeaponItem
     {
-        public string id, catalogId, manufacturerId;
+        public string id, catalogId, manufacturerId, bossRelicId;
         public int designVariant;
         public MeleeWeaponFamily family;
         public Rarity rarity;
@@ -93,7 +93,7 @@ namespace NeonVault
         {random=random??new System.Random();return Create(random,DungeonCatalog.ItemLevel(random,dungeon),DungeonCatalog.RollRarity(random,boss));}
         public static string Name(MeleeWeaponItem item)
         {
-            if(item==null)return "";InferIdentity(item);
+            if(item==null)return "";string relic=BossRelicFoundation.Name(item.bossRelicId,VaultLanguage.Japanese);if(!string.IsNullOrEmpty(relic))return relic;InferIdentity(item);
             return DistinctEquipmentDesigns.ManufacturerProductName("melee",(int)item.family*DesignsPerFamily+item.designVariant,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)),VaultLanguage.Japanese);
         }
         public static string Name(MeleeWeaponFamily family)=>VaultLanguage.T(English(family),Japanese(family));
@@ -115,7 +115,9 @@ namespace NeonVault
                 case 5:effect=mode==0?VaultLanguage.T("gain 4 barrier (cap 30)","シールドを4得る（上限30）"):mode==1?VaultLanguage.T("grant at least 0.25s of invulnerability","最低0.25秒の無敵を得る"):mode==2?VaultLanguage.T("gain 2 barrier and push other visible enemies within 2m by 0.8m","シールドを2得て、2m以内の見える別の敵を0.8m押し返す"):VaultLanguage.T("gain 2 barrier, grant at least 0.15s of invulnerability, and delay the target's next attack to at least 0.75s","シールドを2得て最低0.15秒の無敵を得て、対象の次の攻撃を最低0.75秒遅らせる");break;
                 default:return "";
             }
-            return VaultLanguage.T("First landed melee hit when ready: ","クールダウン終了後、最初の近接命中時：")+effect+VaultLanguage.T("; 3s cooldown.","。クールダウン3秒。");
+            string result=VaultLanguage.T("First landed melee hit when ready: ","クールダウン終了後、最初の近接命中時：")+effect+VaultLanguage.T("; 3s cooldown.","。クールダウン3秒。");
+            string relic=BossRelicFoundation.Description(item.bossRelicId,VaultLanguage.Japanese);
+            return string.IsNullOrEmpty(relic)?result:result+" / "+relic;
         }
         public static string English(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"Shiv":family==MeleeWeaponFamily.Cleaver?"Cleaver":family==MeleeWeaponFamily.Machete?"Machete":family==MeleeWeaponFamily.Hatchet?"Hatchet":"Field Knife";
         public static string Japanese(MeleeWeaponFamily family)=>family==MeleeWeaponFamily.Shiv?"シヴ":family==MeleeWeaponFamily.Cleaver?"ブッチャーナイフ":family==MeleeWeaponFamily.Machete?"マチェット":family==MeleeWeaponFamily.Hatchet?"ハチェット":"フィールドナイフ";

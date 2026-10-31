@@ -37,6 +37,11 @@ namespace NeonVault
             fieldAmmoCrates.RemoveAll(crate => crate == null || crate.visual == null);
             if (!ammoCrateRoomPlan.Remove(room) || Layout == null || Layout.chambers.Count == 0) return;
 
+            // Reserve mission objectives first, before optional ammo crates occupy
+            // the available floor space.
+            if(MissionNeedsCaches && room < CurrentDungeon.AreaCount-1)
+                for(int i=0;i<2;i++)SpawnMissionSupplyCrate();
+
             for (int placed = 0; placed < AmmoCratesPerFloor; placed++)
             {
                 bool found=false;
@@ -62,8 +67,6 @@ namespace NeonVault
                 }
                 if (!found) { Debug.LogWarning("Could not safely place all ammunition crates in room " + room); break; }
             }
-            if(MissionNeedsCaches && room < CurrentDungeon.AreaCount-1)
-                for(int i=0;i<2;i++)SpawnMissionSupplyCrate();
         }
 
         void SpawnMissionSupplyCrate()
@@ -73,15 +76,26 @@ namespace NeonVault
                 var chamber=Layout.chambers[rng.Next(Layout.chambers.Count)];
                 if(chamber==Layout.chambers[Layout.EntryChamberIndex]||chamber==Layout.chambers[Layout.ExitChamberIndex])continue;
                 Vector3 p=Layout.Center(chamber)+new Vector3((float)rng.NextDouble()*5f-2.5f,0,(float)rng.NextDouble()*5f-2.5f);
-                if(Blocked(p,.8f)||Vector3.Distance(p,Layout.Entry)<7f||Vector3.Distance(p,Layout.Exit)<3f)continue;
-                bool tooClose=false;foreach(var c in fieldAmmoCrates)if(Vector3.Distance(c.position,p)<2.3f){tooClose=true;break;}
-                if(tooClose)continue;
-                var visual=CreateLootPresentation("MISSION SUPPLIES",new Vector3(p.x,.31f,p.z),new Vector3(1.15f,.55f,.9f),new Color(.9f,.48f,.19f),LootPresentationKind.AmmoCrate);
-                ObjectiveGroundRing.Create(visual.transform,p,1.15f);
-                fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,visual=visual,mission=true});
-                return;
+                if(TryPlaceMissionSupply(p))return;
+            }
+            int cells=Layout.Columns*Layout.Rows, start=rng.Next(cells);
+            for(int n=0;n<cells;n++)
+            {
+                int index=(start+n)%cells;
+                Vector3 p=Layout.Center(new Vector2Int(index%Layout.Columns,index/Layout.Columns));
+                if(TryPlaceMissionSupply(p))return;
             }
             Debug.LogWarning("Could not place mission supply crate in room "+room);
+        }
+
+        bool TryPlaceMissionSupply(Vector3 p)
+        {
+            if(Blocked(p,.8f)||Vector3.Distance(p,Layout.Entry)<7f||Vector3.Distance(p,Layout.Exit)<3f)return false;
+            foreach(var c in fieldAmmoCrates)if(c!=null&&c.visual&&Vector3.Distance(c.position,p)<2.3f)return false;
+            var visual=CreateLootPresentation("MISSION SUPPLIES",new Vector3(p.x,.31f,p.z),new Vector3(1.15f,.55f,.9f),new Color(.9f,.48f,.19f),LootPresentationKind.AmmoCrate);
+            ObjectiveGroundRing.Create(visual.transform,p,1.15f);
+            fieldAmmoCrates.Add(new FieldAmmoCrate{position=visual.transform.position,visual=visual,mission=true});
+            return true;
         }
 
         bool TryPlaceAmmoCrate(Vector3 p)

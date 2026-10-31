@@ -45,6 +45,73 @@ namespace NeonVault
             if(trigger=="fire")legendaryShots++;
             if(gun!=null)TryLegendaryEffect(gun.legendaryKey,false,trigger,origin,struck);
             foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))TryLegendaryEffect(armor.legendaryKey,true,trigger,origin,struck);
+            if(trigger=="kill")
+            {
+                if(gun!=null)TryBossRelicEffect(gun.bossRelicId,origin);
+                foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))TryBossRelicEffect(armor.bossRelicId,origin);
+                if(EquippedArtifacts!=null)foreach(var module in EquippedArtifacts)if(module!=null)TryBossRelicEffect(module.bossRelicId,origin);
+                if(EquippedMeleeWeapon!=null)TryBossRelicEffect(EquippedMeleeWeapon.bossRelicId,origin);
+            }
+        }
+        void TryBossRelicEffect(string id,Vector3 origin)
+        {
+            if(!BossRelicFoundation.Decode(id,out int boss,out int category))return;
+            if(legendaryReady.TryGetValue(id,out float ready)&&legendaryClock<ready)return;
+            legendaryReady[id]=legendaryClock+4f;
+            legendaryResolving=true;
+            try
+            {
+                Color color=boss==0?new Color(1f,.3f,.1f):boss==1?new Color(.5f,.8f,1f):new Color(1f,.7f,.2f);
+                float power=Mathf.Max(12f,gun!=null?gun.damage*1.1f:20f);
+                var nearby=LegendaryGunTargets(origin,category==3?10f:category==2?7f:3.5f);
+                switch(category)
+                {
+                    case 0: // Sidearm: one compact ricochet chain.
+                        for(int i=0;i<Mathf.Min(2,nearby.Count);i++)LegendaryStrike(nearby[i],power*(boss==2?.9f:.68f),color);
+                        break;
+                    case 1: // Shotgun: close blast with a readable knockback.
+                        foreach(var foe in LegendaryGunTargets(origin,2.6f))LegendaryStrike(foe,power*.62f,color);
+                        ArmorPush(origin,2.7f,.7f,color);
+                        break;
+                    case 2: // Assault rifle: chained, lower-damage hits.
+                        for(int i=0;i<Mathf.Min(3,nearby.Count);i++){LegendaryStrike(nearby[i],power*.57f,color);if(boss==1)ArmorStagger(nearby[i],.45f,color);}
+                        break;
+                    case 3: // Sniper rifle: one long-range execution shot.
+                        if(nearby.Count>0)LegendaryStrike(nearby[nearby.Count-1],power*(boss==2?1.9f:1.45f),color);
+                        break;
+                    case 4: // Heavy machine gun: short suppression burst.
+                        for(int i=0;i<Mathf.Min(4,nearby.Count);i++){LegendaryStrike(nearby[i],power*.48f,color);ArmorStagger(nearby[i],boss==1?.9f:.55f,color);}
+                        break;
+                    case 5: // Chest armor.
+                        ArmorBarrier(boss==2?14:boss==1?10:8);ArmorPush(origin,3f,.85f,color);
+                        break;
+                    case 6: // Arm armor.
+                        legendaryPrecisionUntil=legendaryClock+2.5f;
+                        if(nearby.Count>0)LegendaryStrike(nearby[0],power*.9f,color);
+                        break;
+                    case 7: // Leg armor.
+                        dodgeCooldown=0;hp=Mathf.Min(maxHp,hp+maxHp*(boss==1?.09f:.045f));
+                        if(nearby.Count>0)ArmorStagger(nearby[0],.65f,color);
+                        break;
+                    case 8: // Boots.
+                        invincible=Mathf.Max(invincible,.28f);ArmorBarrier(boss==2?9:5);
+                        break;
+                    case 9: // Support module.
+                        hp=Mathf.Min(maxHp,hp+maxHp*(boss==1?.12f:.07f));
+                        if(gun!=null){var ammoType=AmmoForGun(gun);ammoReserves[(int)ammoType]=Mathf.Min(AmmoCapacity(ammoType),ammoReserves[(int)ammoType]+(boss==2?8:4));}
+                        break;
+                    case 10: // Melee relic.
+                        foreach(var foe in LegendaryGunTargets(origin,2.4f)){LegendaryStrike(foe,power*(boss==2?1.0f:.72f),color);ArmorStagger(foe,.8f,color);}
+                        ArmorPush(origin,2.6f,1.05f,color);
+                        break;
+                }
+                // The three sources retain a distinct combat signature in addition
+                // to the item's slot-specific proc.
+                if(boss==1&&category!=7&&category!=9)hp=Mathf.Min(maxHp,hp+maxHp*.025f);
+                if(boss==2&&category!=5&&category!=8)ArmorBarrier(4);
+                Burst(origin,color,16);
+            }
+            finally{legendaryResolving=false;}
         }
         void TryLegendaryEffect(string key,bool armor,string trigger,Vector3 origin,Foe struck)
         {

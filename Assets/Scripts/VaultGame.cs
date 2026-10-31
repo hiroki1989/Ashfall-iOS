@@ -177,7 +177,7 @@ namespace NeonVault
                 if(room==CurrentDungeon.AreaCount-1)
                 {
                     SpawnFoe(Layout.Exit,3);
-                    int champions=rng.Next(3,6);
+                    int champions=IsFactionHeadquarters(SelectedStageId)?5:rng.Next(3,6);
                     for(int i=0;i<champions;i++)
                     {
                         float angle=2*Mathf.PI*i/champions;
@@ -258,11 +258,13 @@ namespace NeonVault
             if(IsOverworld)ConfigureOverworldFoe(f);
             else
             {
-                int stageLevel=SelectedExpeditionStage?.level??1;
+                int stageLevel=finalDebtBossFight?Mathf.Max(1,DebtLevel):SelectedExpeditionStage?.level??1;
                 float levelHealth=1+(stageLevel-1)*.14f,levelDamage=1+(stageLevel-1)*.065f;
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
             if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
+            else if(IsFactionHeadquarters(SelectedStageId)&&kind==3)f.ConfigureDifficulty(2.4f,1.5f,.20f);
+            if(kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId))){f.MajorBoss=true;f.speed*=1.2f;}
             bool elite=!restoringChampionCheckpoint&&kind!=3&&(forceElite||(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275));
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
@@ -326,7 +328,10 @@ namespace NeonVault
                 return;
             }
             if(worldTransitionPending)return;
-            if(WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
+            if(FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
+            if(screen==Screen.Playing&&!IsOverworld&&IsFactionHeadquarters(SelectedStageId)&&room==CurrentDungeon.AreaCount-1&&player)
+                foreach(var enemy in Enemies)if(enemy&&!enemy.dead&&enemy.kind==3&&Vector3.Distance(enemy.transform.position,PlayerPosition)<14f){BeginFactionBossConversation();break;}
+            if(FactionBossConversationVisible)return;
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(IsOverworld&&OverworldActivityChoiceOpen)
@@ -471,7 +476,11 @@ namespace NeonVault
             kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
             if(!IsOverworld)ExpeditionEnemyKilled(f);
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
-            if(finalDebtBossFight&&boss){CompleteDebtBossFight();return;}
+            if(finalBoss&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)))
+            {
+                DropBossRelic(f,finalDebtBossFight?2:SelectedStageId==RedClawHeadquarters?0:1);
+                if(finalDebtBossFight){PlayerPrefs.SetInt(DebtBossDefeatedKey,1);PlayerPrefs.Save();}
+            }
             if(!IsOverworld&&!smoke&&finalBoss&&SelectedStageId==0&&!clearedExpeditionStages.Contains(0)&&PlayerPrefs.GetInt("Vault.FirstBossLegendaryD0",0)==0)
             {AddDrop(Arsenal.Legendary(0,rng,DungeonCatalog.ItemLevel(rng,DungeonIndex)),f.transform.position+Vector3.right*.7f);PlayerPrefs.SetInt("Vault.FirstBossLegendaryD0",1);PlayerPrefs.Save();}
             if(boss||f.elite)DropChampionReward(f,boss);
@@ -582,7 +591,7 @@ namespace NeonVault
         public void Advance()
         {
             if(IsOverworld||screen!=Screen.Playing||!ExpeditionExitOpen)return;
-            if(room>=CurrentDungeon.AreaCount-1||(ExpeditionAllowsBypass&&MissionCompleted)){Finish(true);return;}
+            if(room>=CurrentDungeon.AreaCount-1){if(finalDebtBossFight){CompleteDebtBossFight();return;}Finish(true);return;}
             choices=new[]{0,1,2,3,4,5,6,7,8,9,10,11,12};
             for(int i=choices.Length-1;i>0;i--) { int j=rng.Next(i+1); int a=choices[i];choices[i]=choices[j];choices[j]=a; }
             screen=Screen.Reward;
@@ -615,7 +624,6 @@ namespace NeonVault
                 Time.timeScale=1;deathReturnAt=Time.unscaledTime+DeathSequenceDuration;
                 return;
             }
-            if(!smoke||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0)ReturnFromWorldDungeon(true);
         }
         void Notify(string message,string japanese=null)
         {

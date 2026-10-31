@@ -10,6 +10,7 @@ namespace NeonVault
         {return Japanese?new[]{"コモン","アンコモン","レア","エピック","レジェンダリー"}[(int)rarity]:rarity.ToString().ToUpper();}
         public static string GunName(Gun gun,bool? japanese=null)
         {
+            string bossRelic=BossRelicFoundation.Name(gun?.bossRelicId,japanese??Japanese);if(!string.IsNullOrEmpty(bossRelic))return bossRelic;
             if(LegendaryCatalog.Index(gun.legendaryKey)>=0)return LegendaryCatalog.GunName(gun,japanese??Japanese);
             var recipe=DistinctEquipmentDesigns.For(gun);if(recipe!=null)return (japanese??Japanese)?recipe.japanese:recipe.name;
             int variant=DisplayModel(gun);
@@ -19,6 +20,7 @@ namespace NeonVault
         public static string GunDescription(Gun gun,bool? japanese=null)
         {
             bool ja=japanese??Japanese;
+            if(BossRelicFoundation.Decode(gun?.bossRelicId,out _,out _))return LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
             if(!string.IsNullOrEmpty(gun.legendaryKey))return LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
             return ManufacturerBranding.GunDescription(gun,ja)+"\n"+GunMechanismDescription(gun,ja);
         }
