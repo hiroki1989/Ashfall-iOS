@@ -22,7 +22,7 @@ namespace NeonVault
                 ||item is ArtifactItem module&&(module.rarity==Rarity.Legendary||module.uniqueEffect>0||BossRelicFoundation.Decode(module.bossRelicId,out _,out _))
                 ||item is MeleeWeaponItem melee&&(melee.uniqueEffect||BossRelicFoundation.Decode(melee.bossRelicId,out _,out _));
             if(!legendary)return description;
-            int split=item is ArtifactItem?description.LastIndexOf('\n'):description.IndexOf('\n');
+            if(item is ArtifactItem){int idx=description.IndexOf(T(" / Legendary circuit "," / レジェンダリー回路"),System.StringComparison.Ordinal);if(idx>=0)return description.Substring(0,idx+3)+LegendaryRedOpen+description.Substring(idx+3)+LegendaryRedClose;int s=description.LastIndexOf(" / ",System.StringComparison.Ordinal);if(s>=0)return description.Substring(0,s+3)+LegendaryRedOpen+description.Substring(s+3)+LegendaryRedClose;}int split=item is ArtifactItem?description.LastIndexOf('\n'):description.IndexOf('\n');
             if(split<0)return LegendaryRedOpen+description+LegendaryRedClose;
             return item is ArtifactItem
                 ?description.Substring(0,split+1)+LegendaryRedOpen+description.Substring(split+1)+LegendaryRedClose
@@ -124,7 +124,7 @@ namespace NeonVault
                 else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();}
                 else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
-                DrawFirstStepsTutorial();DrawActionSkillTutorial();
+                DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
                 if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
             }
             if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
@@ -139,7 +139,7 @@ namespace NeonVault
             {
                 if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing)DrawActionSkillHUD();else DrawOverlay();
             }
-            DrawFirstStepsTutorial();DrawActionSkillTutorial();
+            DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
         void DrawDeathScreen()

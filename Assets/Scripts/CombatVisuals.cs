@@ -64,7 +64,10 @@ namespace NeonVault
         {
             p.y=.08f;var obj=ObjectAt("Artillery danger perimeter",p,parent);Ring(obj,new Color(1,.12f,.05f,.85f),radius,.13f);
             var cross=ObjectAt("Blast center",p,obj.transform);cross.transform.localPosition=Vector3.zero;var line=Line(cross,new Color(1,.35f,.05f,.65f),.09f);line.positionCount=5;
-            line.SetPositions(new[]{new Vector3(-radius*.35f,0,0),new Vector3(radius*.35f,0,0),Vector3.zero,new Vector3(0,0,-radius*.35f),new Vector3(0,0,radius*.35f)});return obj;
+            line.SetPositions(new[]{new Vector3(-radius*.35f,0,0),new Vector3(radius*.35f,0,0),Vector3.zero,new Vector3(0,0,-radius*.35f),new Vector3(0,0,radius*.35f)});return obj;}
+        public static GameObject WarningArc(Vector3 p,Vector3 direction,float radius,float angleDegrees,Transform parent){p.y=.08f;direction.y=0;if(direction.sqrMagnitude<.001f)direction=Vector3.forward;direction.Normalize();var obj=ObjectAt("Attack arc warning",p,parent);var line=Line(obj,new Color(1,.22f,.10f,.82f),.12f);const int seg=18;line.positionCount=seg+3;line.SetPosition(0,Vector3.zero);float half=angleDegrees*.5f;for(int i=0;i<=seg;i++){float a=Mathf.Lerp(-half,half,i/(float)seg);line.SetPosition(i+1,Quaternion.Euler(0,a,0)*direction*radius);}line.SetPosition(seg+2,Vector3.zero);return obj;}
+        public static GameObject WarningParabolicArc(Vector3 origin,Vector3 target,float splashRadius,Transform parent){var obj=ObjectAt("Parabolic spit warning",new Vector3(target.x,.08f,target.z),parent);Ring(obj,new Color(.68f,.92f,.18f,.82f),Mathf.Max(.45f,splashRadius),.10f);var arcObj=ObjectAt("Spit trajectory preview",Vector3.zero,obj.transform);arcObj.transform.position=Vector3.zero;var arc=Line(arcObj,new Color(.65f,.95f,.22f,.55f),.075f);arc.useWorldSpace=true;arc.positionCount=14;float peak=Mathf.Clamp(Vector3.Distance(origin,target)*.28f,1.2f,3.2f);for(int i=0;i<14;i++){float t=i/13f;Vector3 pos=Vector3.Lerp(origin,new Vector3(target.x,.12f,target.z),t);pos.y+=4f*peak*t*(1f-t);arc.SetPosition(i,pos);}return obj;}
+        public static void ConfigureSpitProjectile(Shot shot,Color color){for(int i=shot.transform.childCount-1;i>=0;i--)Object.Destroy(shot.transform.GetChild(i).gameObject);var core=ObjectAt("Bio spit glob core",shot.transform.position,shot.transform);core.transform.localPosition=Vector3.zero;var coreLine=Line(core,Color.Lerp(color,Color.white,.55f),.26f);coreLine.startWidth=.28f;coreLine.endWidth=.14f;coreLine.positionCount=2;coreLine.SetPositions(new[]{new Vector3(0,0,.14f),new Vector3(0,0,-.24f)});var glob=ObjectAt("Spit droplet ring",shot.transform.position,shot.transform);glob.transform.localPosition=Vector3.zero;Ring(glob,color,.22f,.075f);var inner=ObjectAt("Spit droplet cross",shot.transform.position,glob.transform);inner.transform.localPosition=Vector3.zero;Ring(inner,Color.Lerp(color,Color.white,.45f),.15f,.055f);inner.transform.localRotation=Quaternion.Euler(90,0,0);var wake=ObjectAt("Viscous saliva trail",shot.transform.position,shot.transform);wake.transform.localPosition=Vector3.zero;var trail=wake.AddComponent<TrailRenderer>();trail.sharedMaterial=Glow;trail.time=.28f;trail.numCapVertices=4;trail.numCornerVertices=3;trail.minVertexDistance=.06f;trail.startWidth=.24f;trail.endWidth=.02f;trail.startColor=color;trail.endColor=new Color(color.r,color.g,color.b,0);trail.shadowCastingMode=ShadowCastingMode.Off;trail.receiveShadows=false;trail.sortingOrder=20000;var shadow=ObjectAt("Spit ground shadow",new Vector3(shot.transform.position.x,.08f,shot.transform.position.z),shot.transform);Ring(shadow,new Color(color.r*.5f,color.g*.5f,color.b*.5f,.42f),.24f,.045f);var motion=shot.GetComponent<BoltVisualMotion>()??shot.gameObject.AddComponent<BoltVisualMotion>();motion.Init(shot,glob.transform,shadow.transform);// keep closing brace below
         }
         public static void ConfigureProjectile(Shot shot,Color color)
         {
@@ -267,12 +270,13 @@ namespace NeonVault
     }
     public sealed class BoltVisualMotion : MonoBehaviour
     {
-        Shot shot;Transform glyph;
-        public void Init(Shot owner,Transform ring){shot=owner;glyph=ring;}
+
+        Shot shot;Transform glyph,groundShadow;
+        public void Init(Shot owner,Transform ring,Transform shadow=null){shot=owner;glyph=ring;groundShadow=shadow;}
         void LateUpdate()
         {
             if(shot==null)return;
-            if(shot.velocity.sqrMagnitude>.001f)transform.rotation=Quaternion.LookRotation(shot.velocity);
+            Vector3 v=shot.parabolic?new Vector3(shot.velocity.x,shot.verticalVelocity,shot.velocity.z):shot.velocity;if(v.sqrMagnitude>.001f)transform.rotation=Quaternion.LookRotation(v);if(groundShadow!=null){groundShadow.position=new Vector3(transform.position.x,.08f,transform.position.z);groundShadow.rotation=Quaternion.identity;}
             if(glyph!=null){glyph.Rotate(0,220*Time.deltaTime,100*Time.deltaTime);glyph.localScale=Vector3.one*(1+Mathf.Sin(Time.time*16)*.08f);}
         }
     }

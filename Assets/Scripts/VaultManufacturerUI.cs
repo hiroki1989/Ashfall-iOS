@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 namespace NeonVault
 {
@@ -42,23 +42,23 @@ namespace NeonVault
         string CatalogEffect(object item)
         {
             string relic=item is Gun rg?rg.bossRelicId:item is ArmorItem ra?ra.bossRelicId:item is ArtifactItem rm?rm.bossRelicId:item is MeleeWeaponItem rw?rw.bossRelicId:null;
-            if(BossRelicFoundation.Decode(relic,out _,out _))return LegendaryRedOpen+BossRelicFoundation.Description(relic,VaultLanguage.Japanese)+LegendaryRedClose;
+            if(BossRelicFoundation.Decode(relic,out int rBoss,out _)){string rStage=rBoss==0?T("[Dungeon 201–203 Boss Exclusive] ","【ダンジョン 201〜203 ボス固有ドロップ】"):rBoss==1?T("[Dungeon 204–206 Boss Exclusive] ","【ダンジョン 204〜206 ボス固有ドロップ】"):T("[Vale Final Boss Exclusive] ","【ヴェイル固有ドロップ】");return rStage+LegendaryRedOpen+BossRelicFoundation.Description(relic,VaultLanguage.Japanese)+LegendaryRedClose;}string exclPrefix=DungeonBossExclusive.TryGetExclusiveStageForItem(item,out int exclStage)?DungeonBossExclusive.DungeonNumberLabel(exclStage,VaultLanguage.Japanese)+" ":"";
             if(item is Gun gun)return string.IsNullOrEmpty(gun.legendaryKey)
                 ?T("A firearm recovered from the ruined city.","廃きょの街で回収された銃器。")
-                :LegendaryRedOpen+LegendaryCatalog.Description(gun,VaultLanguage.Japanese)+LegendaryRedClose;
+                :exclPrefix+LegendaryRedOpen+LegendaryCatalog.Description(gun,VaultLanguage.Japanese)+LegendaryRedClose;
             if(item is ArmorItem armor)return string.IsNullOrEmpty(armor.legendaryKey)
                 ?T("Survival gear built for the dust and debris.","粉じんと瓦礫の中を生き抜くための装備。")
-                :LegendaryRedOpen+LegendaryCatalog.Description(armor,VaultLanguage.Japanese)+LegendaryRedClose;
+                :exclPrefix+LegendaryRedOpen+LegendaryCatalog.Description(armor,VaultLanguage.Japanese)+LegendaryRedClose;
             if(item is ArtifactItem module)
             {
                 if(!CatalogIsLegendary(module))return T("A portable circuit assembled from salvage.","回収部品から組み上げた携帯回路。");
                 string description=module.Description;
                 string marker=T("Legendary circuit ","レジェンダリー回路");
                 int start=description.IndexOf(marker,System.StringComparison.Ordinal);
-                return start<0?"":LegendaryRedOpen+description.Substring(start)+LegendaryRedClose;
+                return start<0?exclPrefix:exclPrefix+LegendaryRedOpen+description.Substring(start)+LegendaryRedClose;
             }
             if(item is MeleeWeaponItem melee)return melee.uniqueEffect
-                ?LegendaryRedOpen+MeleeWeaponCatalog.LegendaryDescription(melee)+LegendaryRedClose
+                ?exclPrefix+LegendaryRedOpen+MeleeWeaponCatalog.LegendaryDescription(melee)+LegendaryRedClose
                 :T("A hand weapon shaped for close quarters.","接近戦に備えて作られた手持ちの刃物。");
             return "";
         }

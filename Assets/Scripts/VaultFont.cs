@@ -6,6 +6,6 @@ namespace NeonVault
     internal static class VaultFont
     {
         internal const bool UseAprilGothic = true;
-        internal static Font Preferred() => UseAprilGothic ? Resources.Load<Font>("Fonts/AprilGothicOne-R") : null;
+        internal static Font Preferred() => Resources.Load<Font>("Fonts/GenShinGothic-P-Regular") ?? Resources.Load<Font>("Fonts/NotoSansJP");
     }
 }

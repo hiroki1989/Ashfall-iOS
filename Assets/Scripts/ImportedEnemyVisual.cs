@@ -209,6 +209,8 @@ namespace NeonVault
                     else if(kind==5||kind==10||owner&&owner.RaiderBoss&&owner.BossAttackStyle==3){upperDirection=new Vector3(limb.side*.24f,-.82f,.38f+strike*.35f);lowerDirection=new Vector3(-limb.side*.1f,-.25f,.95f+prepare*.2f);}
                     if(kind==3&&owner&&owner.BossAttackStyle==1){upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.3f,.8f,.4f),prepare);lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(0,.6f,.8f),prepare);}
                     if(kind==3&&owner&&owner.BossAttackStyle==2){upperDirection=new Vector3(limb.side*(.45f+prepare*.6f),-.25f,.4f+strike);lowerDirection=new Vector3(-limb.side*.65f*strike,-.2f,.9f);}
+                    if(kind==3&&owner&&(owner.BossAttackStyle>=4||owner.IsSpinning)){float spin=owner.IsSpinning||owner.BossAttackStyle==7?1f:0f;upperDirection=new Vector3(limb.side*(.55f+spin*.35f),spin>0?-.05f:-.35f+prepare*.45f,.45f+strike*.85f);lowerDirection=new Vector3(-limb.side*.35f*strike,-.15f,.9f);}
+                    else if(kind!=3&&kind!=10&&owner&&owner.AttackVariant>0){int v=owner.AttackVariant;upperDirection+=new Vector3(limb.side*(v==2?.35f:-.15f)*(prepare+strike),v==2?.35f*prepare:-.2f*prepare,strike*.45f);}
                     upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.5f,-.75f,.25f),dying);
                     lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(limb.side*.2f,-.5f,.8f),dying);
                 }
@@ -384,8 +386,10 @@ namespace NeonVault
             float strike=attackTime>0?Mathf.Sin((1-attackTime/.5f)*Mathf.PI):0;
             float roll=stride*moving*(heavy?2.1f:kind==0?2.8f:1.1f);
             float pitch=kind==4?moving*7:kind==0?3:heavy?1.5f:0;
-            pitch+=anticipation*(kind==4?9:heavy?-5:-2)+strike*(heavy?8:4);
-            model.localRotation=modelRotation*Quaternion.Euler(pitch,0,roll);
+            int variant=owner?owner.AttackVariant:0,bossStyle=owner?owner.BossAttackStyle:-1;
+            float yaw=kind==3?(bossStyle==2||bossStyle==4?(-32*anticipation+58*strike):bossStyle==5?Mathf.Sin(Time.time*18f)*36f*(anticipation+strike):0):kind!=10?(variant==1?(-22*anticipation+36*strike):variant==2?(34*anticipation-54*strike):0):0;
+            pitch+=anticipation*(kind==3&&bossStyle==3?-18:kind==3&&bossStyle==6?-14:variant==2?-12:kind==4?9:heavy?-5:-2)+strike*(kind==3&&bossStyle==3?24:heavy?12:8);
+            model.localRotation=modelRotation*Quaternion.Euler(pitch,yaw,roll);
             // No vertical bounce: the normalized foot contact and actor/root separation remain intact.
         }
         void ApplyFallbackCollapse(bool heavy,int kind)

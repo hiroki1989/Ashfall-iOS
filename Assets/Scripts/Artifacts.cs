@@ -7,7 +7,7 @@ namespace NeonVault {
   public static ArtifactItem Create(System.Random random,int dungeon,Rarity rarity,int level){
    if(random==null)throw new System.ArgumentNullException(nameof(random));
    int family=rarity==Rarity.Legendary?4+Mathf.Clamp(dungeon,0,2):random.Next(4);
-   return CreateCatalog(ModuleProductCatalog.Roll(random,family).id,rarity,level,random,dungeon);
+   var product=rarity==Rarity.Legendary?DungeonBossExclusive.RollNonExclusiveLegendaryModule(random,family):ModuleProductCatalog.Roll(random,family);return CreateCatalog(product.id,rarity,level,random,dungeon);
   }
   public static ArtifactItem CreateCatalog(string catalogId,Rarity rarity,int level,System.Random random=null,int dungeon=0){
    var product=ModuleProductCatalog.Find(catalogId);

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace NeonVault {public partial class VaultGame {
  bool restoringChampionCheckpoint;
  void DropBossRelic(Foe foe,int bossId)
@@ -21,6 +21,15 @@ namespace NeonVault {public partial class VaultGame {
   // Each champion guarantees one quality reward; ordinary drops remain separate.
   double roll=rng.NextDouble();Rarity rarity=roll<(boss?.2375:.076)?Rarity.Legendary:roll<(boss?.7625:.4315)?Rarity.Epic:Rarity.Rare;
   int level=ExpeditionLootLevel(rng);var p=foe.transform.position+Vector3.right*.7f;
+  if(boss&&rarity==Rarity.Legendary&&!IsOverworld&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var excl)&&rng.NextDouble()<.5)
+  {
+   var item=DungeonBossExclusive.CreateStageExclusiveItem(excl,rng,level);
+   if(item is Gun eg)AddDrop(eg,p);
+   else if(item is ArmorItem ea)AddArmorDrop(ea,p);
+   else if(item is ArtifactItem em)AddArtifactDrop(em,p);
+   else if(item is MeleeWeaponItem ew)AddMeleeDrop(ew,p);
+   return;
+  }
   switch(rng.Next(4)){case 0:AddDrop(Arsenal.CreateForDungeon(rng,DungeonIndex,rarity,level),p);break;case 1:AddArmorDrop(Armory.CreateForDungeon(rng,DungeonIndex,rarity,level),p);break;case 2:AddArtifactDrop(ArtifactCatalog.Create(rng,DungeonIndex,rarity,level),p);break;default:AddMeleeDrop(MeleeWeaponCatalog.Create(rng,level,rarity),p);break;}
  }
 }}

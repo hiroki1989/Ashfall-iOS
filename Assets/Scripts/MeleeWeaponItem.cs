@@ -40,7 +40,7 @@ namespace NeonVault
 
         public static MeleeWeaponItem Create(System.Random random,int level,Rarity rarity)
         {
-            random=random??new System.Random();return Catalog(random.Next(CatalogCount),rarity,level,random);
+            random=random??new System.Random();int index=rarity==Rarity.Legendary?DungeonBossExclusive.RollNonExclusiveMeleeIndex(random):random.Next(CatalogCount);return Catalog(index,rarity,level,random);
         }
         public static MeleeWeaponItem Catalog(int index,Rarity rarity=Rarity.Common,int level=1,System.Random random=null)
         {

@@ -6,7 +6,21 @@ namespace NeonVault
     {
         const string FirstStepsKey = "Vault.FirstSteps.v1";
         const string ActionSkillTutorialKey = "Vault.ActionSkillTutorial.v1";
-        bool actionSkillTutorialVisible;
+        const string LegendaryWeaponTutorialKey = "Vault.LegendaryWeaponTutorial.v1";
+        bool actionSkillTutorialVisible, legendaryWeaponTutorialVisible;
+        public void BeginLegendaryWeaponTutorial()
+        {
+            if(smoke || PlayerPrefs.GetInt(LegendaryWeaponTutorialKey,0)!=0)return;
+            legendaryWeaponTutorialVisible=true;Time.timeScale=0;
+        }
+        void DrawLegendaryWeaponTutorial()
+        {
+            if(!legendaryWeaponTutorialVisible)return;
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.78f));Panel(new Rect(220,190,1000,520),Gold);
+            Text(260,220,T("LEGENDARY WEAPON ACQUIRED","レジェンダリー武器を入手"),heading,Gold,920);
+            Text(260,310,T("Legendary weapons are exceedingly rare and possess powerful unique effects.\nOpen the equipment screen [I], equip your new legendary weapon, and try it out in combat.","レジェンダリー武器は非常にレアで、強力な固有の効果を持っています。\n装備画面を開いて早速装備し、その威力を試してみましょう。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+            if(WorldButton(new Rect(500,600,440,70),T("CONTINUE","続ける"))){legendaryWeaponTutorialVisible=false;PlayerPrefs.SetInt(LegendaryWeaponTutorialKey,1);PlayerPrefs.Save();Time.timeScale=1;}
+        }
         void BeginActionSkillTutorial()
         {
             if(smoke || PlayerPrefs.GetInt(ActionSkillTutorialKey,0)!=0)return;
@@ -93,7 +107,7 @@ namespace NeonVault
             if(DebtLevel>=2)SetFirstStepsStage(7);
             else { SetFirstStepsStage(3);PlayerPrefs.SetInt(FirstStepsTargetKey,0);SetOverworldWaypoint(2,0); }
         }
-        void FirstStepsSkillUpgraded(){if(FirstStepsStage==7){SetFirstStepsStage(5);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}}
+        void FirstStepsSkillUpgraded(){if(FirstStepsStage==7){SetFirstStepsStage(5);PlayerPrefs.DeleteKey(FirstStepsTargetKey);SetOverworldWaypoint(0,-1);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}}
         void DrawFirstStepsTutorial()
         {
             if (smoke || InventoryOpen || manufacturerRegistry || WorldBossConversationVisible || worldTransitionPending) return;

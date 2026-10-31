@@ -358,7 +358,8 @@ namespace NeonVault
 
             // Distinct silhouettes: spitters rear back, gunners brace, chargers coil,
             // and the healer opens its chest. Keep the pelvis above the grounded feet.
-            float crouch=anticipate*(kind==4?19:kind==8?10:kind==7?7:kind==0?8:0);
+            int variant=owner?owner.AttackVariant:0;
+            float crouch=anticipate*(kind==4?19:kind==8?10:kind==7?7:kind==0?8:0)+(variant==1?anticipate*11:0);
             float rear=anticipate*(kind==1?-13:kind==2?-5:kind==3?-10:kind==5?-7:kind==6?-8:kind==9?-9:0);
             float lean=(kind==4?12:GaitHunch[kind])+crouch+rear;
             float pitchAttack=kind==1?-24:kind==3?28:kind==4?-23:kind==7?-12:kind==9?-7:-17;
@@ -368,7 +369,8 @@ namespace NeonVault
             float bob=kind==3?-.035f*Mathf.Pow(Mathf.Abs(wave),.5f):kind==4?.035f*Mathf.Abs(wave):kind==7?-.018f*Mathf.Abs(wave):.018f*Mathf.Abs(wave);
             rig.localPosition=V(wave*(kind==7?.025f:kind==1?.017f:.008f)*moving,bob*moving+(kind==4?-.10f:0),strike*(kind==4?.16f:kind==3?.06f:0));
             chest.localPosition=V(0,1.34f+breath*(kind==7?.018f:.007f),0);
-            chest.localRotation=Quaternion.Euler((kind==4?30:0)+anticipate*(kind==1?-16:kind==3?-9:kind==9?-12:kind==7?8:kind==6?-6:0)+strike*(kind==3?18:kind==7?15:9)+breath*(kind==1?2:0),wave*(kind==3?6:kind==7?3:kind==4?10:5)*moving,breath*(kind==9?3:0));
+            float vTwist=kind!=3?(variant==1?(-26*anticipate+42*strike):variant==2?(38*anticipate-64*strike):0):0;
+            chest.localRotation=Quaternion.Euler((kind==4?30:0)+anticipate*(kind==1?-16:kind==3?-9:kind==9?-12:kind==7?8:kind==6?-6:0)+(variant==2?-14*anticipate+22*strike:0)+strike*(kind==3?18:kind==7?15:9)+breath*(kind==1?2:0),wave*(kind==3?6:kind==7?3:kind==4?10:5)*moving+vTwist,breath*(kind==9?3:0));
             pelvis.localRotation=Quaternion.Euler(kind==4?12:0,-wave*(kind==3?7:4)*moving,wave*(kind==7?5:1)*moving);
             for(int i=0;i<2;i++)
             {
@@ -396,6 +398,8 @@ namespace NeonVault
                 if(ImportedShapeActive&&kind==8){armPitch=-5-w*8*moving-anticipate*27-strike*75;elbow=-10-strike*35;abduction=side*(38+anticipate*8);}
                 if(kind!=3&&kind!=5&&moving>.1f&&anticipate<.01f&&strike<.01f&&death<0)
                 {armPitch=-57-w*5*moving;elbow=24;abduction=side*13;}
+                if(kind!=3&&variant==1){if(i==0){armPitch-=anticipate*28+strike*45;abduction-=18*strike;}else{armPitch+=anticipate*15-strike*15;}}
+                else if(kind!=3&&variant==2){armPitch-=anticipate*35-strike*50;abduction+=side*(28*anticipate-18*strike);}
                 arms[i].localRotation=Quaternion.Euler(armPitch,gun?side*-18:side*(kind==4?12:0),abduction);
                 forearms[i].localRotation=Quaternion.Euler(elbow,0,side*strike*(kind==4?15:0));
             }
@@ -441,6 +445,44 @@ namespace NeonVault
                 forearms[0].localRotation=Quaternion.Euler(-62+20*strike,0,0);
                 arms[1].localRotation=Quaternion.Euler(-36-38*windup+24*strike,0,46-20*strike);
                 forearms[1].localRotation=Quaternion.Euler(-95+68*strike,0,0);
+            }
+            else if(style==3)
+            {
+                // Bio-acid parabolic spit volley: rear torso and head back, then heave forward.
+                chest.localRotation*=Quaternion.Euler(-28*windup+36*strike,0,0);
+                head.localRotation*=Quaternion.Euler(-24*windup+32*strike,0,0);
+                for(int i=0;i<2;i++){int side=i==0?-1:1;arms[i].localRotation=Quaternion.Euler(-25+20*windup-35*strike,0,side*(32+22*windup));forearms[i].localRotation=Quaternion.Euler(-40+25*strike,0,0);}
+            }
+            else if(style==4)
+            {
+                // Sudden flash-lunge: deep predatory coil and explosive horizontal slash.
+                rig.localPosition+=V(0,-.24f*windup+.06f*motion,-.16f*windup+.24f*motion);
+                chest.localRotation*=Quaternion.Euler(18*windup-12*motion,38*windup-72*motion,0);
+                arms[0].localRotation=Quaternion.Euler(-55-40*motion,0,-48+25*motion);
+                arms[1].localRotation=Quaternion.Euler(-25-75*motion,-30*motion,55-35*motion);
+            }
+            else if(style==5)
+            {
+                // 3-step rhythm combo: alternating left/right hooks and overhead smash.
+                float hook=Mathf.Sin(Time.time*18f);
+                chest.localRotation*=Quaternion.Euler(14*motion,hook*42*(windup+motion),0);
+                for(int i=0;i<2;i++){int side=i==0?-1:1;float active=side*hook>0?1f:.25f;arms[i].localRotation=Quaternion.Euler(-45-65*active*motion,side*-24*active,side*(24+18*windup));forearms[i].localRotation=Quaternion.Euler(-68+42*active*motion,0,0);}
+            }
+            else if(style==6)
+            {
+                // Shockwave ring: high leg stomp and ground-shattering double-fist drive.
+                rig.localPosition+=V(0,.12f*windup-.22f*strike,0);
+                chest.localRotation*=Quaternion.Euler(-22*windup+44*strike,0,0);
+                thighs[0].localRotation*=Quaternion.Euler(-58*windup+28*strike,0,0);
+                shins[0].localRotation*=Quaternion.Euler(45*windup,0,0);
+                for(int i=0;i<2;i++){int side=i==0?-1:1;arms[i].localRotation=Quaternion.Euler(-135*windup+52*strike,0,side*(28+16*windup));}
+            }
+            else if(style==7||(owner&&owner.IsSpinning))
+            {
+                // Whirlwind rampage: both arms extended wide in a 360-degree tornado cleave.
+                float spin=owner&&owner.IsSpinning?1f:Mathf.Max(windup,strike);
+                chest.localRotation*=Quaternion.Euler(12*spin,0,0);
+                for(int i=0;i<2;i++){int side=i==0?-1:1;arms[i].localRotation=Quaternion.Euler(-78*spin,0,side*76*spin);forearms[i].localRotation=Quaternion.Euler(-12*spin,0,0);}
             }
         }
         void AnimateDeath(float dt)

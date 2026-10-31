@@ -348,8 +348,8 @@ namespace NeonVault
             if(speed>.05f)phase+=dt*Mathf.Clamp(speed*.55f,.5f,2.5f);
             if(owner&&owner.dead&&!owner.Escaping&&deathTime<0)deathTime=0;
             if(deathTime>=0){deathTime+=dt;if(deathTime>1.1f)return;}else if(owner&&owner.game){float distSq=(transform.position-owner.game.PlayerPosition).sqrMagnitude;if(distSq>32f*32f)return;if((Application.isMobilePlatform||distSq>16f*16f)&&Time.time<nextPoseAt)return;if(Application.isMobilePlatform||distSq>16f*16f)nextPoseAt=Time.time+(distSq>16f*16f?.08f:speed<=.05f?.12f:.033f);}
-            Vector3 direction=transform.forward;
-            DetailedHeroPlayer3D.Pose(Body,gun,handgun,true,direction,speed>.05f?phase:-1,
+            Vector3 direction=transform.forward;bool firing=owner==null||!owner.IsHumanReloading;Vector3 vel=dt>0?delta/dt:Vector3.zero;DetailedHeroPlayer3D.Pose(Body,gun,handgun,firing,direction,speed>.05f?phase:-1,vel,Mathf.Clamp01(speed/2));if(owner!=null&&deathTime<0){float sideVel=Vector3.Dot(vel,transform.right);float lean=Mathf.Clamp(-sideVel*5.5f,-18f,18f)+(owner.IsHumanRolling?Mathf.Sin(Time.time*24f)*16f:0f);if(owner.IsHumanCrouching||owner.IsHumanRolling){float crouch=owner.IsHumanCrouching?1f:.65f;Body.transform.localPosition=new Vector3(0,-.18f*crouch,0);Body.transform.localRotation=Quaternion.Euler(18f*crouch,0,lean);Body.leftThigh.localRotation*=Quaternion.Euler(-38f*crouch,0,0);Body.rightThigh.localRotation*=Quaternion.Euler(-34f*crouch,0,0);Body.leftShin.localRotation*=Quaternion.Euler(46f*crouch,0,0);Body.rightShin.localRotation*=Quaternion.Euler(42f*crouch,0,0);}else{Body.transform.localPosition=Vector3.zero;Body.transform.localRotation=Quaternion.Euler(0,0,lean);}if(owner.IsHumanReloading){float r=Mathf.Sin(Time.time*14f);Body.leftForearm.localRotation*=Quaternion.Euler(-22f+r*18f,12f,0);Body.head.localRotation*=Quaternion.Euler(14f,r*6f,0);}}
+            if(false)DetailedHeroPlayer3D.Pose(Body,gun,handgun,true,direction,speed>.05f?phase:-1,
                 dt>0?delta/dt:Vector3.zero,Mathf.Clamp01(speed/2));
             if(deathTime>=0)
             {

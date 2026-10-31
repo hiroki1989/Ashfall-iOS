@@ -1,3 +1,30 @@
+## 2026-11-01 / バージョン37・敵/ボス攻撃と人間敵移動バリエーション・放物線唾弾・フォント/赤字修正・初回伝説武器チュートリアル・目的地リセット・レア率-3%・ダンジョンボス固有レジェンダリ(上位1/3・50%・図鑑番号表示)
+- **バージョン・ビルド番号更新 (`37`)**:
+  - `ProjectSettings/ProjectSettings.asset` および `Assets/Editor/IOSProjectBuilder.cs` の `bundleVersion` / `buildNumber.iPhone` を `36` から `37` に更新。
+- **ボス・通常敵の攻撃バリエーション拡張とゾンビ系遠距離の放物線弾道（`WorldActors.cs`, `CombatVisuals.cs`, `FaithfulEnemy3D.cs`, `ImportedEnemyVisual.cs`）**:
+  - ボス（`kind == 3`）の攻撃パターンを8種（`Rush`, `Slam`, `Sweep`, `Gun`, `FlashLunge` 急接近爆発突き, `ComboFrenzy` 3連斬り, `ShockwaveRing` 二重衝撃波＋6方向地割れ, `Whirlwind` 回転突進斬り）へ拡張し、距離とHP60%以下の発狂状態に応じてリズム・予兆時間・攻撃範囲が変化するよう実装。
+  - 通常のゾンビ／変異体（`kind 0..9`）にもそれぞれ3種類の攻撃バリアント（`AttackVariant = 0, 1, 2`：素早い飛びかかり・広角薙ぎ払い・3連射／拡散吐き出し・自爆突進など）と3D予備動作モーションを追加。
+  - ゾンビ・変異体系の遠距離攻撃を直線弾道から、口元から吐き出す放物線弾道（`Shot.ConfigureParabolic`、放物線予兆 `CombatVisuals.WarningParabolicArc`、飛沫弾ビジュアル `ConfigureSpitProjectile`）へ変更。
+- **人間の敵（`kind == 10`）の戦術的な移動・リロード遮蔽動作（`WorldActors.cs`, `HumanFactionVisual.cs`）**:
+  - 人間の敵が左右にストレイフ（横移動）しながら照準・射撃し、緊急回避ロール（`IsHumanRolling`）や距離維持を行うよう拡張。
+  - 2〜3バースト射撃ごとに近くの壁や遮蔽物の裏を検索（`TryFindHumanCover`）して移動し、物陰で身をかがめてリロード（`IsHumanCrouching` / `IsHumanReloading`）する人間らしい挙動と3D姿勢アニメーションを追加。
+- **レジェンダリモジュールの赤字範囲修正と全テキストの非太字フォント化（`VaultUI.cs`, `VaultFont.cs`, `VaultGame.cs`）**:
+  - `ArtifactItem` の説明文（`" / "` 区切り）において、通常効果まで赤字になっていた問題を修正し、`Legendary circuit` / `レジェンダリー回路` 以降の固有効果部分（およびボス遺物効果）のみを `<color=#FF4545>` で赤字表示するよう修正。
+  - 可読性向上のため、極太フォントであった `AprilGothicOne-R` / `BarlowCondensed-Bold` の使用を廃止し、すべてのテキストを標準ウェイトの `GenShinGothic-P-Regular`（`FontStyle.Normal`）で描画するよう変更。
+- **初回レジェンダリ武器入手チュートリアル・Lv2チュートリアル完了時の目的地リセット・レア以上ドロップ率-3%（`FirstStepsTutorial.cs`, `VaultGame.cs`, `VaultUI.cs`, `VaultMobileUI.cs`, `DungeonCatalog.cs`）**:
+  - 初めてレジェンダリ銃またはレジェンダリ近接武器を拾った際に、非常にレアで強力な固有効果を持つことと装備して使ってみるよう案内するチュートリアル（`BeginLegendaryWeaponTutorial` / `DrawLegendaryWeaponTutorial`）をPC・モバイル双方に追加。
+  - レベル2に上がってスキル強化チュートリアルが完了した際（`FirstStepsSkillUpgraded`）、全体マップの目的地設定を自動リセット（`SetOverworldWaypoint(0, -1)`）するよう変更。
+  - `DungeonCatalog.RollRarity` におけるレア（Rare）以上の合計ドロップ確率を通常枠・ボス枠ともに3%引き下げ。
+- **ダンジョンボス固有レジェンダリ装備（上位1/3選定・50%固有ドロップ・他ドロップ除外・図鑑のダンジョン番号表示）（`DungeonBossExclusive.cs`, `Arsenal.cs`, `LegendaryCatalog.cs`, `Artifacts.cs`, `MeleeWeaponItem.cs`, `VaultChampionLoot.cs`, `VaultExpeditionLoot.cs`, `VaultManufacturerUI.cs`）**:
+  - 勢力ボス固有装備（`BossRelicFoundation`）以外のレジェンダリ装備全248種（銃90・防具24・モジュール84・近接50）のうち、固有効果が強い上位3分の1（計83種：銃30種・防具8種・モジュール28種・近接17種）を選定し、それぞれ特定のダンジョンボス（ステージID `0..199`、表示番号 `01..200`）の固有ドロップに設定。
+  - 固有ドロップ対象となった83種は、該当ダンジョンのボス以外（雑魚敵・エリート・宝箱・ショップ・報酬箱・他ダンジョンボス）からは一切ドロップしないよう通常抽選プール（残り2/3）と分離。
+  - 固有ドロップを持つダンジョンボスからレジェンダリ装備がドロップした場合、50%の確率でそのボスの固有レジェンダリ装備がドロップし、残り50%の確率で汎用レジェンダリ装備（2/3プール）からドロップするよう実装。
+  - メーカー製品図鑑（PC版 `DrawManufacturerRegistry` / モバイル版 `DrawMobileManufacturer`）において、固有ドロップ装備にどのダンジョンの固有ドロップか（例：`【ダンジョン 03 ボス固有ドロップ】` / `[Dungeon 03 Boss Exclusive]`、勢力ボス装備は `201〜206`）をダンジョン番号付きで表示。
+- **検証**: Unity 6000.6.0f1同梱のRoslyn `csc` による `Assembly-CSharp` 全体のコンパイル成功（エラー0 / `CSC_EXIT=0`）、`git diff --check` 通過。Unity Editor本体が稼働中のため、実画面およびiOS実機でのプレイ確認は未実施。
+
+## 2026-11-01 / iOS IPA 36をApp Store Connectへアップロード
+指定 `D:/downloads2/15669793359011-ash-8-default-ios-2.ipa`（1,923,722,774 bytes）を既存アプリ `com.hiroki1989.ashfall` へApple Build Upload APIで送信。IPA内のversion/buildは36/36、送信前のApp Store Connect最新buildは35。29分割の送信後、file commit HTTP 200・asset `COMPLETE`・警告/エラーなし。Build Upload ID `5030336f-0aca-423b-9457-e1ef572ec70d`。Apple側は `PROCESSING`。ビルド一覧への反映とTestFlightでの配信可能状態は未確認。ログ `D:/Unity/AshfallArtValidation/upload-build36-current.log`。
+
 ## 2026-11-01 / iOS版の電池消費・発熱軽減（GPU/CPU/メモリ帯域最適化）
 - 原因分析と対策実装:
   1. **フル画面マルチパスポストプロセス（`VaultPost`）・`DepthNormals`・HDR・4x MSAAの廃止（`VaultGame.cs`）**:

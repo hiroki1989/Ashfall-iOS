@@ -65,7 +65,7 @@ namespace NeonVault
             if(IsOverworld)return Arsenal.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
             if(SelectedExpeditionStage==null)return Arsenal.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
-            bool focus=random.NextDouble()<.70;Gun item=null;
+            if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var eg)&&eg.category==ExclusiveLegendaryCategory.Gun&&random.NextDouble()<.5)return (Gun)DungeonBossExclusive.CreateStageExclusiveItem(eg,random,level);bool focus=random.NextDouble()<.70;Gun item=null;
             for(int i=0;i<10;i++)
             {
                 item=Arsenal.CreateForDungeon(random,DungeonIndex,rarity,level);
@@ -78,7 +78,7 @@ namespace NeonVault
             if(IsOverworld)return Armory.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
             if(SelectedExpeditionStage==null)return Armory.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
-            bool focus=random.NextDouble()<.70;ArmorItem item=null;
+            if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var ea)&&ea.category==ExclusiveLegendaryCategory.Armor&&random.NextDouble()<.5)return (ArmorItem)DungeonBossExclusive.CreateStageExclusiveItem(ea,random,level);bool focus=random.NextDouble()<.70;ArmorItem item=null;
             for(int i=0;i<10;i++)
             {
                 item=Armory.CreateForDungeon(random,DungeonIndex,rarity,level);
@@ -91,7 +91,7 @@ namespace NeonVault
             if(IsOverworld)return ArtifactCatalog.Create(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
             if(SelectedExpeditionStage==null)return ArtifactCatalog.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
-            bool focus=random.NextDouble()<.70;ArtifactItem item=null;
+            if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var em)&&em.category==ExclusiveLegendaryCategory.Module&&random.NextDouble()<.5)return (ArtifactItem)DungeonBossExclusive.CreateStageExclusiveItem(em,random,level);bool focus=random.NextDouble()<.70;ArtifactItem item=null;
             for(int i=0;i<10;i++)
             {
                 item=ArtifactCatalog.Create(random,DungeonIndex,rarity,level);
@@ -104,7 +104,7 @@ namespace NeonVault
             if(IsOverworld)return MeleeWeaponCatalog.Create(random,ExpeditionLootLevel(random),ExpeditionLootRarity(random,boss));
             if(SelectedExpeditionStage==null)return MeleeWeaponCatalog.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
-            bool focus=random.NextDouble()<.70;MeleeWeaponItem item=null;
+            if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var ew)&&ew.category==ExclusiveLegendaryCategory.Melee&&random.NextDouble()<.5)return (MeleeWeaponItem)DungeonBossExclusive.CreateStageExclusiveItem(ew,random,level);bool focus=random.NextDouble()<.70;MeleeWeaponItem item=null;
             for(int i=0;i<10;i++)
             {
                 item=MeleeWeaponCatalog.Create(random,level,rarity);

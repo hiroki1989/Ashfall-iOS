@@ -72,7 +72,7 @@ namespace NeonVault
             if(font==null)font=Font.CreateDynamicFontFromOSFont(Application.platform==RuntimePlatform.IPhonePlayer?new[]{"HiraginoSans-W3","Hiragino Sans","Arial"}:new[]{"Yu Gothic UI","Meiryo","Segoe UI","Arial"},20);
             englishHeadingFont=VaultFont.Preferred();
             if(englishHeadingFont==null)englishHeadingFont=Resources.Load<Font>("Fonts/851Gkktt-005");
-            if(englishHeadingFont==null)englishHeadingFont=Resources.Load<Font>("Fonts/BarlowCondensed-Bold");
+            if(englishHeadingFont==null)englishHeadingFont=Resources.Load<Font>("Fonts/GenShinGothic-P-Regular");
             pixel=new Texture2D(1,1); pixel.SetPixel(0,0,Color.white); pixel.Apply();
             cam=new GameObject("Isometric camera").AddComponent<Camera>(); cam.orthographic=true; cam.orthographicSize=13.5f; cam.backgroundColor=Ink; cam.clearFlags=CameraClearFlags.SolidColor;
             cam.tag="MainCamera";
@@ -610,12 +610,12 @@ namespace NeonVault
             if(module!=null&&moduleDistance<weaponDistance&&moduleDistance<armorDistance&&moduleDistance<meleeDistance)
             {if(!StoreArtifact(module.item)){Notify("Artifact storage full. Discard unused artifacts in [I].","拡張モジュール枠が満杯です。[I]で整理してください。");return;}artifactDrops.Remove(module);Destroy(module.visual);audioSource.PlayOneShot(pickupSound);Notify(ArtifactCatalog.DisplayName(module.item,false)+" collected.",ArtifactCatalog.DisplayName(module.item,true)+"を入手");return;}
             if(melee!=null&&meleeDistance<weaponDistance&&meleeDistance<armorDistance)
-            {if(!StoreMeleeWeapon(melee.item)){Notify("Melee storage full / discard items in [I]","近接武器の所持枠が満杯 / [I]で整理してください");return;}meleeDrops.Remove(melee);Destroy(melee.visual);string rarity=VaultLanguage.RarityName(melee.item.rarity);Notify(rarity+" MELEE: "+MeleeWeaponCatalog.English(melee.item.family)+" / SCORE "+MeleeWeaponCatalog.Score(melee.item),rarity+" 近接武器: "+MeleeWeaponCatalog.Japanese(melee.item.family)+" / 評価 "+MeleeWeaponCatalog.Score(melee.item));audioSource.PlayOneShot(pickupSound);return;}
+            {if(!StoreMeleeWeapon(melee.item)){Notify("Melee storage full / discard items in [I]","近接武器の所持枠が満杯 / [I]で整理してください");return;}meleeDrops.Remove(melee);Destroy(melee.visual);string rarity=VaultLanguage.RarityName(melee.item.rarity);Notify(rarity+" MELEE: "+MeleeWeaponCatalog.English(melee.item.family)+" / SCORE "+MeleeWeaponCatalog.Score(melee.item),rarity+" 近接武器: "+MeleeWeaponCatalog.Japanese(melee.item.family)+" / 評価 "+MeleeWeaponCatalog.Score(melee.item));audioSource.PlayOneShot(pickupSound);if(melee.item.rarity==Rarity.Legendary||melee.item.uniqueEffect||!string.IsNullOrEmpty(melee.item.bossRelicId))BeginLegendaryWeaponTutorial();return;}
             if(armor!=null&&armorDistance<weaponDistance)
             {if(!StoreArmor(armor.item)){Notify("Armor storage full / discard items in [I]","防具所持枠が満杯 / [I]で整理してください");return;}string en=Armory.Name(armor.item,false);string ja=Armory.Name(armor.item,true);armorDrops.Remove(armor);Destroy(armor.visual);audioSource.PlayOneShot(pickupSound);Notify("ARMOR: "+en+" / Equip in [I]","防具: "+ja+" / [I]で装備");return;}
             if(drop==null)return;
             if(!StoreWeapon(drop.gun)){Notify("10 weapon slots full / discard a weapon in [I]","銃10枠が満杯 / [I]で所持品を整理してください");return;}drops.Remove(drop);Destroy(drop.visual);
-            audioSource.PlayOneShot(pickupSound);Notify("WEAPON: "+VaultLanguage.GunName(drop.gun,false)+" / Assign in [I]","銃: "+VaultLanguage.GunName(drop.gun,true)+" / [I]で装備");
+            audioSource.PlayOneShot(pickupSound);Notify("WEAPON: "+VaultLanguage.GunName(drop.gun,false)+" / Assign in [I]","銃: "+VaultLanguage.GunName(drop.gun,true)+" / [I]で装備");if(drop.gun.rarity==Rarity.Legendary||!string.IsNullOrEmpty(drop.gun.legendaryKey)||!string.IsNullOrEmpty(drop.gun.bossRelicId))BeginLegendaryWeaponTutorial();
         }
         bool ExpeditionExitOpen
         {
