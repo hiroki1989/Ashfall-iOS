@@ -15,7 +15,7 @@ namespace NeonVault
             }
         }
         Vector2 MobileCanvasPoint(Vector2 bottomScreen)=>MobileCanvasMatrix.inverse.MultiplyPoint3x4(new Vector3(bottomScreen.x,UnityEngine.Screen.height-bottomScreen.y,0));
-        bool MobileButton(Rect r,string caption,int fontSize=38){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=fontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
+        bool MobileButton(Rect r,string caption,int fontSize=38,Font font=null){Panel(r,Gold);Box(new Rect(r.x+2,r.y+4,r.width-4,r.height-6),new Color(.15f,.24f,.30f));Box(new Rect(r.x+2,r.y+4,6,r.height-8),Gold);var style=new GUIStyle(centered){fontSize=fontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};if(font!=null)style.font=font;style.normal.textColor=UiPaper;style.hover.textColor=Gold;style.active.textColor=Gold;return GUI.Button(r,caption,style);}
         void DrawMobileMenu()
         {
             DrawTitleMenu(true);
@@ -61,7 +61,7 @@ namespace NeonVault
                 DrawWorldLootPreview();
                 if(NearbySupplyChest)WorldLabel(new Rect(25,430,390,55),T("USE: OPEN CACHE","調べる：物資箱を開ける"),Gold,20);
                 foreach(var foe in Enemies)if(foe&&!foe.dead&&(foe.elite||foe.kind==3||foe.hp<foe.maxHp)&&Layout.IsVisible(foe.transform.position))
-                {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);WorldLabel(new Rect(at.x-82,at.y-31,164,25),EnemyHealthLabel(foe),UiPaper,17);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);}
+                {var screen=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.5f);if(screen.z<=0)continue;Vector2 at=MobileCanvasPoint(screen);DrawEnemyHealthLabel(at.x,at.y,EnemyHealthLabel(foe),UiPaper);Box(new Rect(at.x-30,at.y,60,5),PanelInk);Box(new Rect(at.x-30,at.y,60*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);}
             }
         }
         void DrawMobilePause()

@@ -25,7 +25,25 @@ namespace NeonVault
         readonly List<DebtSkillNode> debtSkillNodes = BuildDebtSkillNodes();
         int debtPaid; bool debtIntroSeen=true, debtPage, debtSkillTreePage; int debtTrack;
         int debtPaymentAmount;
-        int DebtPaymentLimit=>Mathf.Max(0,Mathf.Min(Credits,DebtRemaining));
+        bool FreeVersionBlocksProgress
+        {
+            get
+            {
+#if UNITY_IOS && !UNITY_EDITOR
+                return !IosPremiumAccess.IsUnlocked;
+#else
+                return false;
+#endif
+            }
+        }
+        int DebtPaymentLimit
+        {
+            get
+            {
+                int limit=Mathf.Max(0,Mathf.Min(Credits,DebtRemaining));
+                return FreeVersionBlocksProgress?Mathf.Min(limit,FreeVersionRepaymentAllowance(debtPaid,DebtTotalForLevel(3))):limit;
+            }
+        }
         void SetDebtPaymentFraction(float fraction)
         {
             int limit=DebtPaymentLimit;
@@ -113,10 +131,18 @@ namespace NeonVault
             PlayerPrefs.SetString(DebtSaveKey,JsonUtility.ToJson(data));PlayerPrefs.Save();
         }
         void MarkDebtIntroSeen(){debtIntroSeen=true;SaveDebtSkills();}
+        internal static int FreeVersionRepaymentAllowance(int paid,int levelThreeTotal)=>Mathf.Max(0,levelThreeTotal-paid);
         public bool RepayDebt(int requested)
         {
             if(requested<=0||Credits<=0||DebtRemaining<=0)return false;
             int amount=Mathf.Min(Mathf.Min(requested,Credits),DebtRemaining);
+#if UNITY_IOS && !UNITY_EDITOR
+            if(!IosPremiumAccess.IsUnlocked)
+            {
+                amount=Mathf.Min(amount,FreeVersionRepaymentAllowance(debtPaid,DebtTotalForLevel(3)));
+                if(amount<=0){Notify("FREE VERSION / Unlock the full game to advance beyond level 3.","無料版 / レベル3以降は完全版の購入で解放されます。");return false;}
+            }
+#endif
             int before=DebtLevel;int paidBefore=InitialDebt-DebtRemaining;Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();FirstStepsDebtPaid();UpdateFactionBossUnlocks(paidBefore);PlayUserSound("transaction",.35f);
             if(DebtRemaining==0)Notify("Briggs: Balance zero. Talk to Vale about the collar.","ブリッグス：残高、ゼロ。首輪の話はヴェイルにしろ。");
             else if(DebtLevel>before)Notify("Briggs: Check your training points.","ブリッグス：次の段階に達した。訓練に使えるポイントを確認しておけ。");

@@ -1,3 +1,11 @@
+## 2026-11-02 / フォント・敵名とApp Store下書き準備
+- 図鑑メーカー切替矢印に旧GenShin Gothic、ダメージ・回復数値にApril Gothicを指定。敵名はPC/モバイル/広域マップを共通化し、一行に収まるサイズで描画。Unity隔離QAでは日英10例・左右矢印・April数字を表示、実TextMeshのフォントも確認。画像 D:/Unity/BuildTemp/EnemyLabelFontReview/review.png。実戦・iOS実機未確認。
+- App Store Connectのバージョン39下書きに日英説明、検索キーワード、プロモーション文、英語名、審査案内を設定。購入審査画像はUnity EditorのiOS画面再現（Lv3・JPY490の模擬状態）をアップロードしasset COMPLETE、IAP READY_TO_SUBMIT。提出はしていない。画像 D:/Unity/BuildTemp/IosPremiumScreenshotReview/purchase-ja-iphone-editor-rgb.png。
+- サポートURL・プライバシーURLはユーザー指示により空欄。著作権者名は未確認。アプリ公開用スクリーンショットは未登録、Unity実ゲーム撮影はIndexingから進まず2回停止（D:/Unity/BuildTemp/gameplay-iphone-retry.log）。ビルド39のIPA生成・紐付け、iOS Sandbox課金確認、プライバシー申告の確認・アプリ内ポリシー導線、第三者素材権利確認も未完了。購入権利のレシート検証未実装。
+## 2026-11-02 / iOS無料版のレベル制限と製品版購入（審査準備中）
+- iOS未購入時は返済をレベル3到達額までに制限し、レベル4以上のダンジョンの新規入場・再開を制限。旧形式でレベルを判定できないダンジョンの保存は無料版で再開を保留し、保存は残す。レベル3未満からも購入・復元可能。既存完済セーブの会話ループと、選択返済額の上限を修正。
+- StoreKitの非消耗型商品 com.hiroki1989.ashfall.premium.unlock の購入・復元を実装。App Store Connect商品ID 6829545171、日本価格490円、日英の名称・説明と販売地域を設定。商品は MISSING_METADATA、審査用スクリーンショット未登録、審査未提出。購入・復元・返金後の権利状態はiOS Sandbox未検証。ローカル権利のレシート検証は未実装。
+- Unity設定はバージョン39・iOSビルド39。iOS構成処理が旧番号37を上書きする処理を削除。C# Editor・iOS条件付きコンパイル成功。Unity Editor境界検査8項目PASS（D:/Unity/BuildTemp/IosPremiumReview/unity-retry.log）。iOSネイティブビルド・ストア決済・全画面UIは未検証。
 ## 2026-11-01 / スキルツリー拡張（作業中）
 ユーザー指示は既存45ノードの約5倍、各枝内の分岐・銃種と属性のシナジー・複数タレット・メディックの敵デバフ・新UI。既存v1保存の45ランクとポイントを保持して拡張が必要。タレット機動3段・メディック支援3段をランク3にすると追尾可能とし、最終段の旧追尾経路も保持。説明文を日英更新。C#統合コンパイル成功。追加ノードの実装、ツリーUI、戦闘シナジー、複数タレット、保存互換・実戦検証は未了。
 

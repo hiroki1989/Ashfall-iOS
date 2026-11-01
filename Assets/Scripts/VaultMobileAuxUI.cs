@@ -4,7 +4,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         public Rect MobileCityView=>new Rect(40,140,1360,490);
-        bool mobileMapEntered;int mobileShopPage,mobileSalePage,mobileCatalogPage,mobileSkillPage;
+        bool mobileMapEntered,mobilePremiumPage;int mobileShopPage,mobileSalePage,mobileCatalogPage,mobileSkillPage;
         GUIStyle MobileCopy=>new GUIStyle(label){fontSize=34,wordWrap=true,clipping=TextClipping.Clip,richText=true};
         void MobileCopyAt(float x,float y,string text,Color color,float width=1000)
         {GUIStyle style=MobileCopy;float height=Mathf.Clamp(style.CalcHeight(new GUIContent(text??""),width)+8,42,145);GUI.color=color;GUI.Label(new Rect(x,y,width,height),text??"",style);GUI.color=Color.white;}
@@ -30,8 +30,8 @@ namespace NeonVault
         {
             Box(new Rect(0,0,1440,900),PanelInk);string maker=ManufacturerCatalog.Id(makerSelection);
             ManufacturerBranding.Badge(new Rect(30,15,105,105),maker);MobileCopyAt(155,35,ManufacturerCatalog.Name(maker,VaultLanguage.Japanese),Gold,660);
-            if(MobileButton(new Rect(840,10,125,110),"‹")){makerSelection=(makerSelection+5)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
-            if(MobileButton(new Rect(980,10,125,110),"›")){makerSelection=(makerSelection+1)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
+            if(MobileButton(new Rect(840,10,125,110),"‹",38,VaultFont.Legacy())){makerSelection=(makerSelection+5)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
+            if(MobileButton(new Rect(980,10,125,110),"›",38,VaultFont.Legacy())){makerSelection=(makerSelection+1)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
             if(MobileButton(new Rect(1120,10,280,110),T("BACK","戻る")))manufacturerRegistry=false;
             string[] tabs={T("PROFILE","企業概要"),T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
             for(int i=0;i<5;i++)if(MobileButton(new Rect(30+i*278,140,265,110),tabs[i])){manufacturerKind=i-1;mobileCatalogPage=0;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
@@ -146,13 +146,36 @@ namespace NeonVault
                 case SaleKind.Melee: var melee=MeleeWeaponInventory.Find(x=>x.id==entry.id);if(melee!=null)DrawMeleeIcon(rect,melee.family);break;
             }
         }
+        static bool PremiumIosReviewPlatform
+        {
+            get {
+#if UNITY_EDITOR
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--ios-premium-screenshot") >= 0) return true;
+#endif
+                return Application.platform == RuntimePlatform.IPhonePlayer;
+            }
+        }
         void DrawMobileDebt()
         {
+            if(mobilePremiumPage&&IosPremiumAccess.IsUnlocked)mobilePremiumPage=false;
             Box(new Rect(0,0,1440,900),PanelInk);MobileCopyAt(40,25,T("DEBT ","残債 ")+DebtRemaining.ToString("N0")+" / Lv "+DebtLevel,Gold,1050);
-            if(MobileButton(new Rect(1110,10,290,110),T("BACK","戻る"))){debtSkillTreePage=false;screen=Screen.Hub;return;}
+            if(MobileButton(new Rect(1110,10,290,110),T("BACK","戻る"))){if(mobilePremiumPage){mobilePremiumPage=false;return;}debtSkillTreePage=false;screen=Screen.Hub;return;}
             MobileCopyAt(40,155,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" / POINTS "," / スキルポイント ")+DebtSkillPoints,Cyan,1300);
             if(!debtSkillTreePage)
             {
+                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&(DebtLevel>=3||mobilePremiumPage))
+                {
+                    MobileCopyAt(40,220,DebtLevel>=3?T("LEVEL 3 REACHED / FULL GAME LOCKED","レベル3到達 / 製品版はロック中"):T("FULL GAME","製品版"),Gold,1360);
+                    MobileCopyAt(40,290,T("Unlock the full game to continue repayment and progression.","製品版を購入すると、返済とレベルアップを続けられます。"),Mist,1360);
+                    string price=IosPremiumAccess.PriceText;
+                    string purchaseCaption=T("UNLOCK FULL GAME","製品版を購入")+"\n"+(string.IsNullOrWhiteSpace(price)?T("PRICE NOT AVAILABLE YET","価格を取得できていません"):price);
+                    if(MobileButton(new Rect(40,405,655,110),purchaseCaption,30))IosPremiumAccess.Purchase();
+                    if(MobileButton(new Rect(720,405,680,110),T("RESTORE PURCHASE","購入を復元")))IosPremiumAccess.Restore();
+                    if(!string.IsNullOrEmpty(IosPremiumAccess.StatusMessage))MobileCopyAt(40,540,IosPremiumAccess.StatusMessage,Cyan,1360);
+                    if(MobileButton(new Rect(40,700,650,110),T("SKILLS","スキルを確認"))){mobilePremiumPage=false;debtSkillTreePage=true;}
+                    if(MobileButton(new Rect(720,700,680,110),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0")))TryRespecActionSkills();
+                    return;
+                }
                 int levelCost=DebtNextLevelRequirement;int remainingToNext=DebtNextLevelRemaining;
                 MobileCopyAt(40,205,T("NEXT LEVEL ","次のレベルまで ")+remainingToNext.ToString("N0")+" / "+levelCost.ToString("N0"),Cyan,1000);
                 Rect progress=new Rect(40,245,1360,22);Box(progress,new Color(.12f,.16f,.17f));Box(new Rect(progress.x,progress.y,progress.width*DebtProgressRatio,progress.height),new Color(1,.34f,.23f));
@@ -163,6 +186,7 @@ namespace NeonVault
                 if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(MobileButton(new Rect(40,650,650,110),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
                 if(MobileButton(new Rect(720,650,680,110),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0")))TryRespecActionSkills();
+                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&DebtLevel<3&&MobileButton(new Rect(400,780,640,90),T("FULL GAME / RESTORE","製品版の購入・復元"),32))mobilePremiumPage=true;
                 if(DebtRemaining==0&&PlayerPrefs.GetInt(DebtBossDefeatedKey,0)!=0&&MobileButton(new Rect(400,780,640,90),T("VALE REMATCH","ヴェイル再戦")))StartValeRematch();
                 return;
             }

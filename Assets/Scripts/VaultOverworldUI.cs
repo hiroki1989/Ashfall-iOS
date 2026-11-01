@@ -139,6 +139,14 @@ namespace NeonVault
         GUIStyle WorldCopy(int size=22)=>new GUIStyle(label){fontSize=size,wordWrap=true,clipping=TextClipping.Clip};
         void WorldLabel(Rect bounds,string value,Color color,int size=22)
         {var style=WorldCopy(size);style.normal.textColor=color;GUI.Label(bounds,value,style);}
+        void DrawEnemyHealthLabel(float x,float y,string value,Color color)
+        {
+            const float width=210f;
+            var style=WorldCopy(17);style.wordWrap=false;style.alignment=TextAnchor.MiddleCenter;style.normal.textColor=color;
+            var content=new GUIContent(value);
+            while(style.fontSize>1&&style.CalcSize(content).x>width)style.fontSize--;
+            GUI.Label(new Rect(Mathf.Clamp(x-width*.5f,0,1440-width),y-31,width,27),content,style);
+        }
         // Filled scanlines stay legible under the mobile canvas's nonuniform scale.
         void WorldMarker(float x,float y,float radius,Color color)
         {for(int row=-Mathf.CeilToInt(radius);row<=Mathf.CeilToInt(radius);row++){float half=Mathf.Max(1,radius-Mathf.Abs(row));Box(new Rect(x-half,y+row,half*2,1.2f),color);}}
@@ -239,7 +247,7 @@ namespace NeonVault
             {
                 var p=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.6f);if(p.z<=0)continue;
                 Vector2 at=MobileTouchControls.Enabled?MobileCanvasPoint(p):new Vector2((p.x-(UnityEngine.Screen.width-1440*Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f))*.5f)/Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f),(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f))*.5f)/Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f));
-                WorldLabel(new Rect(at.x-82,at.y-31,164,25),EnemyHealthLabel(foe),UiPaper,17);
+                DrawEnemyHealthLabel(at.x,at.y,EnemyHealthLabel(foe),UiPaper);
                 Box(new Rect(at.x-28,at.y,56,5),Ink);Box(new Rect(at.x-28,at.y,56*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);
             }
             if(!Active)return;

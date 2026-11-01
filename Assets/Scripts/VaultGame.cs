@@ -58,7 +58,7 @@ namespace NeonVault
         static readonly Color Cyan=new Color(93/255f,226/255f,210/255f), Gold=new Color(1f,209/255f,102/255f), Ink=new Color(21/255f,36/255f,50/255f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--action-tree-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--real-city-scenery-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
+        static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-label-font-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--ios-premium-screenshot")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--action-tree-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--real-city-scenery-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
         void Awake()
         {
             Time.timeScale=1;
@@ -93,7 +93,7 @@ namespace NeonVault
             menuArt=Resources.Load<Texture2D>("Art/WastelandKeyArt");
             audioSource=gameObject.AddComponent<AudioSource>();fireSound=GunReport(false,false);scatterSound=GunReport(true,false);coilSound=GunReport(false,true);hitSound=Resources.Load<AudioClip>("SoundEffects/player-hit");if(!hitSound)hitSound=GunReport(true,true);pickupSound=Resources.Load<AudioClip>("WeaponSFX/Handgun_equip");if(pickupSound==null)pickupSound=Tone(620,.16f);ammoPickupSound=Resources.Load<AudioClip>("WeaponSFX/Ammo_pickup");if(ammoPickupSound==null)ammoPickupSound=pickupSound;
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
-            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--dungeon-entry-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--live-building-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
+            smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--gameplay-screenshot")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--dungeon-entry-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--live-building-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
             ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);
             // The title screen uses menuArt. Building a dungeon here loads every
@@ -122,9 +122,10 @@ namespace NeonVault
             }
             var clip=AudioClip.Create(electric?"Vacuum tube discharge":heavy?"Pump shotgun report":"Salvage carbine report",count,1,rate,false);clip.SetData(data,0);return clip;
         }
-        public void StartRun(int? fixedSeed=null) {if(QueueWorldTransition(()=>StartRunImmediate(fixedSeed)))return;StartRunImmediate(fixedSeed);}
+        public void StartRun(int? fixedSeed=null) {if(!CanAccessFreeVersionStage(SelectedStageId))return;if(QueueWorldTransition(()=>StartRunImmediate(fixedSeed)))return;StartRunImmediate(fixedSeed);}
         void StartRunImmediate(int? fixedSeed=null)
         {
+            if(!CanAccessFreeVersionStage(SelectedStageId))return;
             IsOverworld=false;ClearRunCheckpoint();shake=0;
             ResetGameplayOverlays(); seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
             route.Clear(); var cell=Vector2Int.zero; route.Add(cell);

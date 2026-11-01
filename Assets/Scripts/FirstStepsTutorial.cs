@@ -40,11 +40,12 @@ namespace NeonVault
         void StartValeRematch()
         {
             if(DebtRemaining!=0||PlayerPrefs.GetInt(DebtBossDefeatedKey,0)==0)return;
+            if(FreeVersionBlocksProgress){Notify("FREE VERSION / Unlock the full game to challenge Vale.","無料版 / ヴェイルへの再挑戦は完全版の購入で解放されます。");return;}
             finalDebtBossFight=true;SelectedStageId=-1;DungeonIndex=2;
             ResetExpeditionMission();StartRun();
         }
         int debtFinalBeat;
-        bool DebtFinalConversationVisible => !smoke && screen == Screen.Hub && WorldStorySeen && DebtRemaining == 0 && PlayerPrefs.GetInt(DebtBossDefeatedKey, 0) == 0;
+        bool DebtFinalConversationVisible => !FreeVersionBlocksProgress && !smoke && screen == Screen.Hub && WorldStorySeen && DebtRemaining == 0 && PlayerPrefs.GetInt(DebtBossDefeatedKey, 0) == 0;
         void DrawDebtFinalConversation()
         {
             string[] en={

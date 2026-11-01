@@ -310,7 +310,7 @@ namespace NeonVault
             TotalDamageNumbers++;LastHitPoint=p;LastDamage=damage;
             var obj=ObjectAt("Hit damage",p,parent);
             var text=obj.AddComponent<TextMesh>();
-            if(numberFont==null)numberFont=VaultFont.Preferred();
+            if(numberFont==null)numberFont=VaultFont.Damage();
             if(numberFont==null)numberFont=Resources.Load<Font>("Fonts/851Gkktt-005");
             if(numberFont==null)numberFont=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.font=numberFont;text.GetComponent<MeshRenderer>().sharedMaterial=numberFont.material;

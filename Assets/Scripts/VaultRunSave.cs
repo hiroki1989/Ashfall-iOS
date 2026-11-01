@@ -70,6 +70,9 @@ namespace NeonVault
             catch(Exception e){Debug.LogWarning("Expedition checkpoint could not be read: "+e.GetType().Name);return false;}
             if(!ValidateCheckpoint(save))
             {Debug.LogWarning("Expedition checkpoint is invalid; retained without changing equipment or progression.");return false;}
+            if(save.stage<0 && FreeVersionBlocksProgress)
+            {Notify("FREE VERSION / Unlock the full game to resume this older checkpoint. Your save is retained.","無料版 / この旧形式の探索を再開するには完全版が必要です。セーブは保持されます。");return false;}
+            if(!CanAccessFreeVersionStage(save.stage))return false;
             IsOverworld=false;EnsureOverworldState();if(save.stage>=0)SetOverworldReturnStage(save.stage);
             DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);ResetGameplayOverlays();shake=0;meleeAttack?.ResetCooldown();seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
             if(save.foes==null)save.foes=new List<FoeCheckpoint>();if(save.guns==null)save.guns=new List<GunDropCheckpoint>();if(save.armor==null)save.armor=new List<ArmorDropCheckpoint>();if(save.modules==null)save.modules=new List<ArtifactDropCheckpoint>();if(save.melee==null)save.melee=new List<MeleeDropCheckpoint>();if(save.supplies==null)save.supplies=new List<SupplyCheckpoint>();if(save.chests==null)save.chests=new List<PositionCheckpoint>();if(save.ammoCrates==null)save.ammoCrates=new List<AmmoCrateCheckpoint>();
