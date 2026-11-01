@@ -26,6 +26,7 @@ namespace NeonVault
             stash.tier=Mathf.Clamp(stash.tier,0,10);stash.guns=stash.guns??new List<Gun>();stash.armor=stash.armor??new List<ArmorItem>();stash.modules=stash.modules??new List<ArtifactItem>();stash.melee=stash.melee??new List<MeleeWeaponItem>();
             if(PlayerPrefs.HasKey(StashUpgradeKey))try { var upgrade=JsonUtility.FromJson<StashUpgradeJournal>(PlayerPrefs.GetString(StashUpgradeKey));if(upgrade!=null)FinishStashUpgrade(upgrade); } catch(Exception e){Debug.LogWarning("Stash upgrade recovery failed: "+e.GetType().Name);}
             if(PlayerPrefs.HasKey(StashJournalKey))try { var move=JsonUtility.FromJson<StashMove>(PlayerPrefs.GetString(StashJournalKey)); if(move!=null)ApplyStashMove(move); } catch(Exception e){Debug.LogWarning("Stash recovery failed: "+e.GetType().Name);}
+            foreach(var weapon in stash.guns)GearBalance.Migrate(weapon);
         }
         bool BuyStashCapacity(int cost)
         {
@@ -60,7 +61,7 @@ namespace NeonVault
         void ApplyStashMove(StashMove m)
         {
             // Replaying a journal is idempotent; preserve the instance already in the destination.
-            if(m.category==0&&m.gun!=null){var a=Weapons.Find(x=>x.id==m.gun.id);var b=stash.guns.Find(x=>x.id==m.gun.id);if(m.deposit){if(b==null)stash.guns.Add(a??m.gun);if(a!=null)Weapons.Remove(a);}else{if(a==null)Weapons.Add(b??m.gun);if(b!=null)stash.guns.Remove(b);}}
+            if(m.category==0&&m.gun!=null){var a=Weapons.Find(x=>x.id==m.gun.id);var b=stash.guns.Find(x=>x.id==m.gun.id);if(m.deposit){if(b==null){var moved=a??m.gun;GearBalance.Migrate(moved);stash.guns.Add(moved);}if(a!=null)Weapons.Remove(a);}else{if(a==null){var moved=b??m.gun;GearBalance.Migrate(moved);Weapons.Add(moved);}if(b!=null)stash.guns.Remove(b);}}
             else if(m.category==1&&m.armor!=null){var a=ArmorInventory.Find(x=>x.id==m.armor.id);var b=stash.armor.Find(x=>x.id==m.armor.id);if(m.deposit){if(b==null)stash.armor.Add(a??m.armor);if(a!=null)ArmorInventory.Remove(a);}else{if(a==null)ArmorInventory.Add(b??m.armor);if(b!=null)stash.armor.Remove(b);}}
             else if(m.category==2&&m.module!=null){var a=ArtifactInventory.Find(x=>x.id==m.module.id);var b=stash.modules.Find(x=>x.id==m.module.id);if(m.deposit){if(b==null)stash.modules.Add(a??m.module);if(a!=null)ArtifactInventory.Remove(a);}else{if(a==null)ArtifactInventory.Add(b??m.module);if(b!=null)stash.modules.Remove(b);}}
             else if(m.category==3&&m.melee!=null){var a=MeleeWeaponInventory.Find(x=>x.id==m.melee.id);var b=stash.melee.Find(x=>x.id==m.melee.id);if(m.deposit){if(b==null)stash.melee.Add(a??m.melee);if(a!=null)MeleeWeaponInventory.Remove(a);}else{if(a==null)MeleeWeaponInventory.Add(b??m.melee);if(b!=null)stash.melee.Remove(b);}}

@@ -1,3 +1,26 @@
+## 2026-11-01 / スキルツリー拡張（作業中）
+ユーザー指示は既存45ノードの約5倍、各枝内の分岐・銃種と属性のシナジー・複数タレット・メディックの敵デバフ・新UI。既存v1保存の45ランクとポイントを保持して拡張が必要。タレット機動3段・メディック支援3段をランク3にすると追尾可能とし、最終段の旧追尾経路も保持。説明文を日英更新。C#統合コンパイル成功。追加ノードの実装、ツリーUI、戦闘シナジー、複数タレット、保存互換・実戦検証は未了。
+
+## 2026-11-01 / 追加修正（統合検証待ち）
+スキル発動成功時のガジェットSE、HP回復量の緑数値、建物不透明度40%と木の遮蔽透過、効果に対応した一部レジェンダリ銃の属性固定を実装。Unityの個別検証: 回復/スキル15項目、木遮蔽12項目、属性固定1301項目が各失敗0。実画面・iOS確認は未了。
+
+## 2026-11-01 / JNRフォントへの統一
+添付 JNRfont_n.ttf を Resources/Fonts へ埋め込み、本文・見出し・タッチUI・ダメージ/回避文字の共通参照を変更。Unity Editor JnrFontReview 118項目0失敗、日本語/英数字の取り込みと文字アトラスを確認。スクリプト及び主要Resourcesテキストの静的文字は収録確認。日英の画面見本をUnityで描画し目視（D:/Unity/BuildTemp/JnrFontReview/font-ui.png）。iOS実機・全画面未確認。フォントファイルにライセンス条項の記載なし。
+
+## 2026-11-01 / 属性銃イラスト右上アイコン
+imagegenで炎・電気・毒・爆発の透明4セル画像 `Assets/Resources/Art/UI/gun-element-icons.png` を新規制作。銃ポートレート共通処理 `ItemPortraits.Draw` の全経路に、属性付きのみ右上へ表示する処理を追加。初期・通常・レジェンダリを含め、インベントリ・商店・倉庫・報酬など共通描画に適用。Unity EditorのPlay Modeで5種（無属性＋4属性）と小型・横長表示を描画し、右上位置と無属性非表示を撮影・目視確認（`D:/Unity/BuildTemp/ElementIconReview/cards.png`、result PASS）。Unityコンパイルおよびgit diff --check通過。iOS実機未確認。
+
+## 2026-11-01 / 銃属性・散弾・モジュール特性（Unity検証済み）
+ショットガンを意匠ごと1〜12発・個別拡散角に移行し、弾数に応じて威力を調整。ハンドガン・スナイパーの威力+15%を保存済み銃にも一度だけ適用。新規銃にメーカー別傾向で炎・電気・毒・爆発を抽選、命中処理・ダメージ色・簡易演出・スコア・装備詳細を追加。モジュールに属性/銃種別の威力特性を追加。毒は弾ごとの継続ダメージを蓄積し、512件超は近い残存時間に集約。既存保存銃は無属性のまま。C#コンパイル成功、git diff --check通過。Unity実戦・iOSでのエフェクト、バランス、実セーブ再読込は未検証。
+
+統合後にUnity Editor 6000.6.0f1の分離した非保存テストで30,860 checks / 0 failures。実射による散弾数・角度、属性の射出時コピー、4属性命中と連鎖・毒複数命中、属性強化・表示色、倉庫の旧銃移行とjournal再実行、シリアライズ、メーカーごとの抽選・スコアを確認（D:/Unity/BuildTemp/ElementCombatReview/result.txt）。旧銃が倉庫内で移行されない問題を修正。炎舌・電弧・毒の靄・爆発の閃光と煙をUnity画像で確認（D:/Unity/BuildTemp/ElementVisualReview）。iOS実機・長時間戦闘時の性能と視認性は未確認。旧銃の属性は無属性のまま。
+
+## 2026-11-01 / 装備詳細メタデータと現行一覧
+インベントリ右側の選択装備説明の先頭へレベル・レア度を追加。現行ソースから銃90、防具30（頭部6停止）、ボス固有33、モジュール84、近接50、アクションスキル45ノードの名称・種別・固有効果を `Development/LegendaryAndSkillsCurrent.md` に整理。生成ツールは `Development/Tools/export_legendary_skill_list.py`。コード上の件数と `git diff --check` を確認。Unity実画面では未確認。
+
+## 2026-11-01 / iOS IPA 37をApp Store Connectへアップロード
+指定 `D:/downloads2/15669793359011-ash-8-default-ios-5.ipa`（1,923,893,681 bytes）を既存アプリ `com.hiroki1989.ashfall` へApple Build Upload APIで送信。IPA内のversion/buildは37/37、送信前のApp Store Connect最新buildは36。29分割の送信後、file commit HTTP 200・asset `COMPLETE`・警告/エラーなし。Build Upload ID `d8081037-2a1f-48e4-ab6d-84bf1b77622f`。Apple側は `PROCESSING`。確認時点でビルド一覧への反映待ち、TestFlight配信可能状態は未確認。ログ `D:/Unity/AshfallArtValidation/upload-build37-current.log`。
+
 ## 2026-11-01 / 会話ダイアログ・立ち絵レイアウトの完全統一、クリア報酬説明文の日本語化修正、ボス・NPC会話の映画調リライト
 - **全会話のダイアログ枠・立ち絵イラスト配置の完全統一（`VaultDialoguePortraits.cs`, `VaultBossIntro.cs`, `FirstStepsTutorial.cs`, `FactionBossProgression.cs`, `VaultNpcConversations.cs`, `VaultHubWorld.cs`）**:
   - 従来はヴェイル冒頭（`y=570, h=245`）、ヴェイル10億決戦（`y=470, h=315`）、勢力ボス・セラ・ブリッグス（`y=425, h=350`）、ギデオン博士（`x=190, y=340, w=1060, h=370`）でダイアログ枠の座標・幅・高さが異なり、それに連動して立ち絵のサイズと表示位置も相手ごとにズレていた問題を解消。
@@ -1141,3 +1164,16 @@ Modly/Shap-E試作は見た目が受け入れ水準に達せず不採用。既�
 ## 2026-10-31 / D版へレベル成長・ダメージ表記反映
 D:\\Unity\\Ashfall-iOSの既存35作業を保持し、敵攻撃力のレベル倍率を敵HPと同じ凸型曲線(.21係数)へ統一。戦闘中のダメージ表示にK/M短縮表記を追加し、既存の回復表示・フォント処理は維持。iOS bundleVersion/buildNumberを35から36へ更新。Unity実行確認は未実施。
 変更: CombatVisuals.cs、WorldActors.cs、VaultGame.cs、VaultOverworld.cs、ProjectSettings.asset。
+
+## 2026-11-01 / アクションスキル拡張・属性継承（検証継続中）
+変更: ActionSkillSystem.cs、ActionSkillExpansion.cs、ActionSkillCombat.cs、ActionSkillExpandedCombat.cs、ActionSkillUI.cs、VaultInventory.cs、VaultCombatStats.cs、VaultGame.cs と専用QA。既存45ノード・旧セーブを保ち180ノードを追加し、各枝に選択・合流を配置。ハンドガン／スナイパー等の銃種や4属性、タレット2台・追尾、グレネードの妨害・回復、メディック範囲内の妨害・攻撃・防護などを接続。銃属性の継承は砲台／グレネード各専用ノードでのみ有効。銃属性はスキル使用時に記録する。
+検証: Unity Editor QA D:/Unity/BuildTemp/ActionSkillExpansionReview/result.txt は66件失敗0。実際に生成した砲台の弾とグレネードを無属性／4属性で検査。旧セーブの読み取り、2台設置、能力値とメディック防護を検査。日英18画面を D:/Unity/BuildTemp/ActionTreeReview/ に撮影、字の重複を修正後に日本語と英語を目視。git diff --check通過。
+未完了: Windows統合ビルドはRAM監視で停止し未完成（D:/Unity/BuildTemp/action-skill-build.log）。実機iOS・タッチ操作・長時間の戦闘バランスは未検証。追加180枠には数値と効果の組合せが多く、独立した効果種類そのものが従来の5倍に達したことは未確認。既存要件である最大獲得ポイントに対する全ノードの約8割という配分も、枠追加後に再設計・検証が必要。完成とみなさず継続する。
+追加: 405ランクに対し最大で旧来約228ptだったため、レベル到達に応じて最大96ptを追加。既存セーブの取得済みランクは変更せず自動加算し、10億返済・全ミッション・全図鑑を仮定した理論上限を約324pt（80%）へ調整。図鑑の完全収集は未確認で通常プレイ時の到達率は低い。統合ビルドの再試行もRAM監視で停止（action-skill-build2.log）。
+最終追加QA: ポイント配分を含む ActionSkillExpansionReview は71件失敗0（D:/Unity/BuildTemp/ActionSkillExpansionReview/result.txt、action-expansion-review5.log）。統合ビルド成功・iOS実機確認・独立効果種類の不足は引き続き未完了。
+
+## 2026-11-02 / スキル拡張・バランスと回帰検証
+12種類の条件付き効果（タレット付近・回復域・グレネードの連動）を追加し、既存セーブ上のランク座標は維持。タレット・グレネードの属性は専用ノード取得時のみ発動時の銃から継承。タレット弾で手持ち銃のレジェンダリ命中効果が誤発動する問題を修正。序盤に比べて終盤のタレットと爆風が過大になる計算を調整、上限と爆風の同一敵への逓減を導入し、表示に上限を記載。メディックの敵攻撃は銃DPS基準にし、攻撃予備動作の無限中断を回避。詳細説明はスクロール可能にし、ボマーの威力説明を実式に合わせた。
+スキルの取得・振り直しで周回中のHP・威力・連射強化が消える不具合も修正。Unity Editor検査 D:/Unity/BuildTemp/ActionSkillExpansionReview/result.txt は149件失敗0。D:/Unity/BuildTemp/ActionTreeReview/ の日英24画面を撮影し、長文スクロール前後を目視。実機操作の検証はユーザー指示により対象外。バランス試算は Development/ActionSkillBalanceReport.md と Development/Tools/ActionSkillBalance/simulate_actual.py を参照。計算上の比較であり実プレイの測定ではない。
+未完了: Windows製品統合ビルドは D:/Unity/BuildTemp/low-memory-build4/ で空き約1.07GBに達し安全監視で停止。成功していない。空きメモリの確保後に再実行が必要。追加ノードは効果の組み合わせを含み、独立効果の種類が従来比で正確に5倍かは未計測。
+統合ビルド追試（2026-11-02）: 不要アプリ終了後の空き約6.9GB、job-worker 1、Asset Import Worker 1、1秒ごとの監視でも、D:/Unity/BuildTemp/low-memory-build5/ は空き1.06GBで停止し未成功。Unity Editor検査は149項目失敗0、日英24画面は長文スクロール前後を含め目視確認。製品ビルド完了にはメモリ負荷の削減またはより多い空きRAMが必要。ユーザーはiOS実機確認を不要と指定済み。

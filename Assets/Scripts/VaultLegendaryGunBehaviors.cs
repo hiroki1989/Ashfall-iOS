@@ -219,7 +219,7 @@ namespace NeonVault
             foreach(var foe in LegendaryGunTargets(point,radius))
             {LegendaryStrike(foe,damage,color);if(push)LegendaryGunPush(foe,foe.transform.position-point,1.1f);}
         }
-        void LegendaryGunHeal(float amount){hp=Mathf.Min(maxHp,hp+amount);}
+        void LegendaryGunHeal(float amount){HealPlayer(amount);}
         void LegendaryGunBarrier(float amount){ArtifactShield=Mathf.Min(60,ArtifactShield+amount);UpdateBarrierVisual();}
 
         static string DistinctLegendaryGunDescription(int maker,int variant,bool ja)

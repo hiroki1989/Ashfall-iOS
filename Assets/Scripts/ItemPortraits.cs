@@ -7,6 +7,8 @@ namespace NeonVault
     {
         static Texture2D atlas;
         static bool loaded;
+        static Texture2D elementIcons;
+        static bool elementIconsLoaded;
         static Material previewMaterial;
         static LayeredPlayer2D.WeaponRegionTable previewRegions;
         static LayeredPlayer2D.WeaponRegionTable modernPreviewRegions;
@@ -31,7 +33,7 @@ namespace NeonVault
             var previous=RenderTexture.active;try{Graphics.Blit(source,result,previewMaterial);}finally{RenderTexture.active=previous;}previews[key]=result;return result;
         }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetPreviews(){foreach(var value in previews.Values){value.Release();Object.Destroy(value);}previews.Clear();if(previewMaterial!=null)Object.Destroy(previewMaterial);previewMaterial=null;previewRegions=null;modernPreviewRegions=null;handgunPreviewRegions=null;loaded=false;atlas=null;}
+        static void ResetPreviews(){foreach(var value in previews.Values){value.Release();Object.Destroy(value);}previews.Clear();if(previewMaterial!=null)Object.Destroy(previewMaterial);previewMaterial=null;previewRegions=null;modernPreviewRegions=null;handgunPreviewRegions=null;loaded=false;atlas=null;elementIconsLoaded=false;elementIcons=null;}
         // Wasteland atlas: twelve gun designs followed by head, torso, arms and lower-body gear.
         static readonly Rect[] portraitWindows={
             new Rect(12,65,324,250),new Rect(342,65,278,250),new Rect(601,65,340,250),new Rect(913,65,329,250),
@@ -54,11 +56,41 @@ namespace NeonVault
         public static int ArmorCell(ArmorItem item)=>12+Mathf.Min((int)item.slot,3);
         public static void Draw(Rect rect,Gun item)
         {
-            if(item!=null&&item.visualSet==Arsenal.TrailWardenVisualSet&&DrawApprovedPortrait(rect,"Weapon_"+GunCell(item),item.rarity)){ManufacturerBranding.PortraitBadge(rect,ManufacturerBranding.Maker(item));return;}
-            if(BespokeLegendaryPortraits.Draw(rect,item))return;
-            if(DistinctEquipmentPortraits.Draw(rect,item))return;
-            DrawLegacy(rect,item);
-            ManufacturerBranding.PortraitBadge(rect,ManufacturerBranding.Maker(item));
+            if(item==null)return;
+            if(item.visualSet==Arsenal.TrailWardenVisualSet&&DrawApprovedPortrait(rect,"Weapon_"+GunCell(item),item.rarity))
+                ManufacturerBranding.PortraitBadge(rect,ManufacturerBranding.Maker(item));
+            else if(!BespokeLegendaryPortraits.Draw(rect,item)&&!DistinctEquipmentPortraits.Draw(rect,item))
+            {
+                DrawLegacy(rect,item);
+                ManufacturerBranding.PortraitBadge(rect,ManufacturerBranding.Maker(item));
+            }
+            DrawGunElementIcon(rect,item.element);
+        }
+        // Each unbaked atlas cell is 543:724. Keep that aspect ratio so the
+        // authored symbols remain undistorted even on wide weapon cards.
+        public static Rect GunElementIconRect(Rect card)
+        {
+            float smaller=Mathf.Min(card.width,card.height);
+            if(smaller<=0)return new Rect(card.xMax,card.y,0,0);
+            float margin=Mathf.Min(4f,smaller*.04f);
+            float height=Mathf.Min(52f,smaller*.40f);
+            float width=height*.75f;
+            return new Rect(card.xMax-margin-width,card.y+margin,width,height);
+        }
+        public static void DrawGunElementIcon(Rect card,GunElement element)
+        {
+            int cell=(int)element-1;
+            if(cell<0||cell>=4)return;
+            if(!elementIconsLoaded){elementIcons=Resources.Load<Texture2D>("Art/UI/gun-element-icons");elementIconsLoaded=true;}
+            if(!elementIcons)return;
+            Rect target=GunElementIconRect(card);
+            if(target.width<=0||target.height<=0)return;
+            // Inset half a texel at cell edges so filtering never blends in
+            // the neighbouring elemental icon.
+            float inset=.5f/elementIcons.width;
+            var uv=new Rect(cell*.25f+inset,0,.25f-2*inset,1);
+            Color old=GUI.color;GUI.color=new Color(1,1,1,old.a);
+            GUI.DrawTextureWithTexCoords(target,elementIcons,uv,true);GUI.color=old;
         }
         static void DrawLegacy(Rect rect,Gun item)
         {

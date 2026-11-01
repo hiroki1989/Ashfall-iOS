@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NeonVault
@@ -5,8 +6,11 @@ namespace NeonVault
     public partial class VaultGame
     {
         bool actionSkillInventoryOpen, actionSkillInventoryTree;
-        Texture2D actionSkillArt, actionSkillDisc;
+        Texture2D actionSkillArt, actionSkillDisc, actionTreeRing;
         int actionTreeKind, actionTreeBranch, actionTreeTier;
+        int actionTreeSlot = -1;
+        Vector2 actionTreeDescriptionScroll;
+        string actionTreeLastDescription;
         static readonly Color[] ActionTreeColors = {
             new Color(.38f,.70f,.76f), new Color(.91f,.53f,.27f), new Color(.44f,.76f,.53f)
         };
@@ -55,61 +59,129 @@ namespace NeonVault
             bool clicked=GUI.Button(r,value,style);GUI.enabled=previous;return clicked;
         }
 
+        Texture2D ActionTreeRing()
+        {
+            if(actionTreeRing)return actionTreeRing;
+            const int size=64; var tex=new Texture2D(size,size,TextureFormat.RGBA32,false);
+            tex.name="ActionTreeRing";tex.wrapMode=TextureWrapMode.Clamp;tex.filterMode=FilterMode.Bilinear;
+            var pixels=new Color32[size*size];
+            for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+            {
+                float dx=(x+0.5f-size*.5f)/(size*.5f),dy=(y+0.5f-size*.5f)/(size*.5f);
+                float d=Mathf.Sqrt(dx*dx+dy*dy);
+                float alpha=Mathf.Clamp01((1f-d)*size*.5f)*Mathf.Clamp01((d-.74f)*size*.5f);
+                pixels[y*size+x]=new Color(1,1,1,alpha);
+            }
+            tex.SetPixels32(pixels);tex.Apply(false,true);actionTreeRing=tex;return tex;
+        }
+        static readonly Color[] ActionBranchHighlights = {new Color(.31f,.70f,.83f),new Color(.92f,.61f,.28f),new Color(.65f,.46f,.82f)};
+        Color ActionBranchColor(int kind,int branch)
+        {
+            return Color.Lerp(ActionTreeColors[kind],ActionBranchHighlights[branch],.58f);
+        }
+        bool DrawActionTreeNode(Rect r, string title, int rank, int max, bool available, bool selected, Color accent, bool diamond=false)
+        {
+            Color edge=selected?UiPaper:rank>0?accent:available?new Color(.58f,.64f,.64f):new Color(.28f,.32f,.33f);
+            float cx=r.x+19,cy=r.center.y;
+            if(rank>0)Diamond(cx,cy,20,new Color(accent.r,accent.g,accent.b,.12f));
+            if(diamond)
+            {
+                Diamond(cx,cy,17,edge);
+                Diamond(cx,cy,13,new Color(.065f,.078f,.085f,.98f));
+                Diamond(cx,cy,rank>0?7:4,rank>0?accent:edge);
+            }
+            else
+            {
+                Color old=GUI.color;GUI.color=edge;
+                GUI.DrawTexture(new Rect(cx-18,cy-18,36,36),ActionTreeRing());GUI.color=old;
+                Diamond(cx,cy,rank>0?7:4,rank>0?accent:edge);
+            }
+            if(selected)Box(new Rect(r.x+41,r.yMax-2,r.width-44,2),accent);
+            ActionLabel(new Rect(r.x+42,r.y,r.width-44,r.height),title+"  "+rank+"/"+max,rank>0?accent:available?UiPaper:Mist,20,TextAnchor.MiddleLeft);
+            return GUI.Button(r,GUIContent.none,GUIStyle.none);
+        }
+
+        void ActionTreeDescription(Rect area,string value,Color color,int size)
+        {
+            var style=new GUIStyle(label){fontSize=size,fontStyle=FontStyle.Normal,alignment=TextAnchor.UpperLeft,wordWrap=false,clipping=TextClipping.Clip};
+            style.normal.textColor=color;
+            if(value!=actionTreeLastDescription){actionTreeDescriptionScroll=Vector2.zero;actionTreeLastDescription=value;}
+            var lines=new List<string>();string line="";
+            foreach(char c in value??"")
+            {
+                if(c=='\r')continue;
+                if(c=='\n'||style.CalcSize(new GUIContent(line+c)).x>area.width-18)
+                {
+                    lines.Add(line);line="";
+                    if(c=='\n')continue;
+                }
+                line+=c;
+            }
+            if(line.Length>0)lines.Add(line);
+            float height=Mathf.Max(area.height,lines.Count*35f);
+            actionTreeDescriptionScroll=GUI.BeginScrollView(area,actionTreeDescriptionScroll,new Rect(0,0,area.width-18,height),false,height>area.height);
+            for(int i=0;i<lines.Count;i++)GUI.Label(new Rect(0,i*35f,area.width-18,31),lines[i],style);
+            GUI.EndScrollView();
+        }
+
         void DrawActionSkillTree()
         {
-            int kind=Mathf.Clamp(actionTreeKind,0,2),branch=Mathf.Clamp(actionTreeBranch,0,2),tier=Mathf.Clamp(actionTreeTier,0,4);
-            var selected=(ActionSkillKind)kind;Color accent=ActionTreeColors[kind];
+            int kind=Mathf.Clamp(actionTreeKind,0,2), branch=Mathf.Clamp(actionTreeBranch,0,2), tier=Mathf.Clamp(actionTreeTier,0,4);
+            var selected=(ActionSkillKind)kind; Color accent=ActionTreeColors[kind];
             Box(new Rect(0,0,1440,900),new Color(.045f,.053f,.059f,.99f));
-            ActionLabel(new Rect(46,22,760,55),T("ACTION SKILL TREE","アクションスキルツリー"),UiPaper,34);
-            ActionLabel(new Rect(46,77,700,34),T("AVAILABLE POINTS  ","残りポイント  ")+ActionSkillAvailablePoints,accent,23);
-            if(ActionButton(new Rect(1195,24,200,70),T("BACK","戻る"),false,accent)) {if(actionSkillInventoryTree)actionSkillInventoryTree=false;else debtSkillTreePage=false;return;}
+            ActionLabel(new Rect(46,20,760,48),T("ACTION SKILL TREE","アクションスキルツリー"),UiPaper,32);
+            ActionLabel(new Rect(48,67,700,32),T("AVAILABLE POINTS  ","残りポイント  ")+ActionSkillAvailablePoints,accent,22);
+            if(ActionButton(new Rect(1195,20,200,65),T("BACK","戻る"),false,accent)) {if(actionSkillInventoryTree)actionSkillInventoryTree=false;else debtSkillTreePage=false;return;}
             for(int i=0;i<3;i++)
-            {
-                var type=(ActionSkillKind)i;
-                if(ActionButton(new Rect(48+i*310,125,294,68),ActionSkillName(type),kind==i,ActionTreeColors[i],24))
-                {actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;kind=i;selected=type;accent=ActionTreeColors[i];branch=tier=0;}
-            }
-            ActionLabel(new Rect(955,129,430,55),T("SELECT A SKILL","スキルを選択"),Mist,19);
-            DrawActionSkillArt(new Rect(1305,120,72,72),kind);
+                if(ActionButton(new Rect(48+i*300,105,285,55),ActionSkillName((ActionSkillKind)i),kind==i,ActionTreeColors[i],22))
+                {actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;kind=i;selected=(ActionSkillKind)i;accent=ActionTreeColors[i];branch=tier=0;}
             for(int b=0;b<3;b++)
+                if(ActionButton(new Rect(48+b*300,172,285,55),ActionBranchName(kind,b),branch==b,ActionBranchColor(kind,b),20))
+                {actionTreeBranch=b;actionTreeTier=0;actionTreeSlot=-1;branch=b;tier=0;}
+            accent=ActionBranchColor(kind,branch);
+            Box(new Rect(48,240,870,580),new Color(.065f,.074f,.078f,.96f));
+            ActionLabel(new Rect(68,245,800,27),T("BASE  →  BRANCH  →  SPECIALIZATION","基礎  →  分岐  →  特化"),accent,16);
+            for(int t=0;t<5;t++)
             {
-                Rect column=new Rect(48+b*300,210,284,573);
-                Box(column,new Color(.075f,.085f,.09f,.8f));
-                Box(new Rect(column.x,column.y,column.width,2),new Color(accent.r,accent.g,accent.b,.55f));
-                ActionLabel(new Rect(column.x+16,column.y+10,column.width-32,44),ActionBranchName(kind,b),UiPaper,22);
-                for(int t=0;t<4;t++){
-                    Vector2 from=new Vector2(column.x+31+(t%2)*9,column.y+109+t*96);
-                    Vector2 to=new Vector2(column.x+31+((t+1)%2)*9,column.y+109+(t+1)*96);
-                    bool linked=ActionSkillRank(selected,b,t)>0;
-                    Line(from,to,linked?accent:new Color(.25f,.28f,.29f,.9f),linked?3:2);
-                }
-                for(int t=0;t<5;t++)
-                {
-                    Rect node=new Rect(column.x+14+(t%2)*9,column.y+66+t*96,column.width-38,84);
-                    int rank=ActionSkillRank(selected,b,t),max=ActionSkillMaxRank(t);
-                    bool active=actionTreeBranch==b&&actionTreeTier==t;
-                    bool available=ActionSkillTierAvailable(selected,b,t);
-                    Color bg=rank>0?new Color(accent.r*.23f,accent.g*.23f,accent.b*.23f,.98f):new Color(.085f,.10f,.105f,.98f);
-                    Box(node,bg);
-                    if(active)Box(new Rect(node.x,node.y,node.width,2),accent);
-                    float cx=node.x+17,cy=node.center.y;
-                    if(rank>0){Box(new Rect(cx-12,cy-12,24,24),new Color(accent.r,accent.g,accent.b,.16f));}
-                    Diamond(cx,cy,9,rank>0?accent:available?new Color(.55f,.58f,.57f):new Color(.3f,.32f,.32f));
-                    ActionLabel(new Rect(node.x+34,node.y+7,node.width-46,46),ActionSkillNodeTitle(selected,b,t),available?UiPaper:Mist,18,TextAnchor.MiddleLeft,true);
-                    ActionLabel(new Rect(node.x+34,node.y+54,node.width-46,23),rank+" / "+max,rank>0?accent:Mist,17);
-                    if(GUI.Button(node,GUIContent.none,GUIStyle.none)){actionTreeBranch=b;actionTreeTier=t;branch=b;tier=t;}
-                }
+                float cy=305+t*101;
+                Rect root=new Rect(68,cy-23,145,46), first=new Rect(245,cy-23,145,46);
+                Rect upper=new Rect(430,cy-47,145,44), lower=new Rect(430,cy+3,145,44), end=new Rect(635,cy-23,145,46);
+                Color line=new Color(accent.r,accent.g,accent.b,.42f);
+                if(t<4)Line(new Vector2(root.center.x,cy+23),new Vector2(root.center.x,cy+78),line,2);
+                Line(new Vector2(root.xMax,cy),new Vector2(first.x,cy),line,2);
+                Line(new Vector2(first.xMax,cy),new Vector2(upper.x,upper.center.y),line,2);
+                Line(new Vector2(first.xMax,cy),new Vector2(lower.x,lower.center.y),line,2);
+                Line(new Vector2(upper.xMax,upper.center.y),new Vector2(end.x,cy),line,2);
+                Line(new Vector2(lower.xMax,lower.center.y),new Vector2(end.x,cy),line,2);
+                if(DrawActionTreeNode(root,(t+1)+"-0",ActionSkillRank(selected,branch,t),ActionSkillMaxRank(t),ActionSkillTierAvailable(selected,branch,t),tier==t&&actionTreeSlot<0,accent)){actionTreeTier=t;actionTreeSlot=-1;tier=t;}
+                Rect[] nodes={first,upper,lower,end};
+                for(int slot=0;slot<4;slot++)
+                    if(DrawActionTreeNode(nodes[slot],(t+1)+"-"+((char)('A'+slot)),ActionSkillExtraRank(selected,branch,t,slot),1,ActionSkillExtraAvailable(selected,branch,t,slot),tier==t&&actionTreeSlot==slot,accent,slot==3)){actionTreeTier=t;actionTreeSlot=slot;tier=t;}
             }
-            var panel=new Rect(955,210,438,573);FieldUIArt.Plate(panel,false);
-            int selectedRank=ActionSkillRank(selected,branch,tier),maxRank=ActionSkillMaxRank(tier);
-            bool canUnlock=ActionSkillTierAvailable(selected,branch,tier)&&selectedRank<maxRank&&ActionSkillAvailablePoints>0;
-            ActionLabel(new Rect(978,232,385,35),ActionBranchName(kind,branch)+" / "+(tier+1),accent,19);
-            ActionLabel(new Rect(978,276,385,80),ActionSkillNodeTitle(selected,branch,tier),UiPaper,27,TextAnchor.MiddleLeft,true);
-            ActionLabel(new Rect(978,362,385,205),ActionSkillNodeDescription(selected,branch,tier),UiPaper,22,TextAnchor.UpperLeft,true);
-            ActionLabel(new Rect(978,595,385,48),T("RANK ","ランク ")+selectedRank+" / "+maxRank,accent,23);
-            string button=selectedRank>=maxRank?T("MAX RANK","最大ランク"):T("UPGRADE / 1 POINT","強化 / 1ポイント");
-            if(ActionButton(new Rect(978,670,390,78),button,canUnlock,accent,22,canUnlock))TryUpgradeActionSkill(selected,branch,tier);
-            if(!canUnlock&&selectedRank<maxRank)ActionLabel(new Rect(978,751,390,28),ActionSkillAvailablePoints<=0?T("Not enough points","ポイントが足りません"):tier==4?T("Previous tier: rank 6 required","前段階をランク6にする"):T("Previous tier: rank 3 required","前段階をランク3にする"),Mist,17);
+            Rect panel=new Rect(955,172,438,648);FieldUIArt.Plate(panel,false);
+            int chosenSlot=actionTreeSlot;
+            bool extra=chosenSlot>=0;
+            int rank=extra?ActionSkillExtraRank(selected,branch,tier,chosenSlot):ActionSkillRank(selected,branch,tier);
+            int max=extra?1:ActionSkillMaxRank(tier);
+            bool available=extra?ActionSkillExtraAvailable(selected,branch,tier,chosenSlot):ActionSkillTierAvailable(selected,branch,tier);
+            bool canUnlock=available&&rank<max&&ActionSkillAvailablePoints>0;
+            string title=extra?ActionSkillExtraTitle(selected,branch,tier,chosenSlot):ActionSkillNodeTitle(selected,branch,tier);
+            string desc=extra?ActionSkillExtraDescription(selected,branch,tier,chosenSlot):ActionSkillNodeDescription(selected,branch,tier);
+            string nodeId=(tier+1)+"-"+(extra?((char)('A'+chosenSlot)).ToString():"0");
+            ActionLabel(new Rect(978,198,385,38),ActionBranchName(kind,branch)+" / "+nodeId,accent,22);
+            ActionLabel(new Rect(978,245,385,76),title,UiPaper,25,TextAnchor.MiddleLeft,true);
+            ActionTreeDescription(new Rect(978,330,385,235),desc,UiPaper,22);
+            ActionLabel(new Rect(978,580,385,42),T("RANK ","ランク ")+rank+" / "+max,accent,22);
+            string button=rank>=max?T("MAX RANK","最大ランク"):T("UPGRADE / 1 POINT","強化 / 1ポイント");
+            if(ActionButton(new Rect(978,660,390,72),button,canUnlock,accent,21,canUnlock))
+            {if(extra)TryUpgradeActionSkillExtra(selected,branch,tier,chosenSlot);else TryUpgradeActionSkill(selected,branch,tier);}
+            if(!canUnlock&&rank<max)
+            {
+                string reason=ActionSkillAvailablePoints<=0?T("Not enough points","ポイントが足りません"):
+                    extra?(chosenSlot==0?T("Acquire this tier's base skill","同段階の基礎スキルが必要"):chosenSlot==3?T("Acquire either preceding branch","手前の分岐をいずれか取得"):T("Acquire the branch origin","分岐の起点を取得")):
+                    tier==4?T("Previous tier: rank 6 required","前段階をランク6にする"):T("Previous tier: rank 3 required","前段階をランク3にする");
+                ActionLabel(new Rect(978,740,390,48),reason,Mist,17,TextAnchor.MiddleLeft,true);
+            }
         }
 
         void DrawActionSkillInventory()
@@ -129,7 +201,7 @@ namespace NeonVault
                 ActionLabel(new Rect(card.x+36,card.y+220,360,115),ActionSkillSummary(kind),UiPaper,24,TextAnchor.UpperLeft,true);
                 ActionLabel(new Rect(card.x+36,card.y+356,360,32),equipped?T("EQUIPPED","装備中"):T("AVAILABLE","選択可能"),equipped?accent:Mist,19);
                 if(ActionButton(new Rect(card.x+28,card.y+400,183,78),equipped?T("EQUIPPED","装備中"):T("EQUIP","装備する"),equipped,accent,20,!equipped))SelectActionSkill(kind);
-                if(ActionButton(new Rect(card.x+220,card.y+400,186,78),T("SKILL TREE","スキルツリー"),false,accent,19)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionSkillInventoryTree=true;}
+                if(ActionButton(new Rect(card.x+220,card.y+400,186,78),T("SKILL TREE","スキルツリー"),false,accent,19)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;actionSkillInventoryTree=true;}
             }
         }
 

@@ -67,6 +67,7 @@ namespace NeonVault
                     int pick=BossCount==1?0:boss*(designs.Count-1)/(BossCount-1);
                     var rifle=Arsenal.RollCatalogStats(Arsenal.FromRecipe(designs[pick],Rarity.Legendary),random,level);
                     rifle.bossRelicId=id;rifle.name=Name(id,false);rifle.subtitle=Description(id,false);
+                    GunElements.RollBossGun(rifle,random);
                     rifle.damage*=1.3f;rifle.interval*=.9f;
                     return rifle;
                 }
@@ -76,6 +77,7 @@ namespace NeonVault
                 var gun=LegendaryCatalog.CreateGun(30+line*6+boss,random,level);
                 if(Arsenal.Category(gun.modelVariant)!=requested)throw new InvalidOperationException("Legendary weapon catalog class mismatch: "+requested);
                 gun.bossRelicId=id;gun.name=Name(id,false);gun.subtitle=Description(id,false);
+                GunElements.RollBossGun(gun,random);
                 gun.damage*=1.3f;gun.interval*=.9f;
                 return gun;
             }

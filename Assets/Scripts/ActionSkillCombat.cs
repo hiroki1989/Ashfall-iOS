@@ -7,15 +7,19 @@ namespace NeonVault
     {
         // The selected skill and ranks are owned by the progression system. These
         // transient objects belong to the current world and never enter a save file.
-        Transform actionSkillObject, actionSkillHead;
+        Transform actionSkillObject, actionSkillHead, extraTurretObject, extraTurretHead;
+        float extraTurretFireTimer;
+        Foe primaryTurretFocus,secondaryTurretFocus;
+        int primaryTurretShots,secondaryTurretShots;
+        ActionElementSnapshot turretElement;
         Material actionSkillRingMaterial;
         float actionSkillDuration, actionSkillFireTimer, actionSkillPulseTimer;
         float actionSkillPower, actionSkillRadius;
-        float medicHealAccumulated, medicHealNumberTimer;
         bool actionSkillFollows, actionSkillMultitarget;
-        AudioClip actionTurretSound, actionGrenadeSound;
+        AudioClip actionTurretSound, actionGrenadeSound, actionActivationSound;
         bool actionAudioLoaded;
         readonly List<ActionGrenade> actionGrenades=new List<ActionGrenade>();
+        readonly Dictionary<Foe,int> actionGrenadeHits=new Dictionary<Foe,int>();
 
         void PlayActionSound(bool grenade)
         {
@@ -35,6 +39,7 @@ namespace NeonVault
             public Vector3 start, end;
             public float age, travel, damage, radius;
             public bool cluster;
+            public ActionElementSnapshot element;
         }
 
         int ASRank(ActionSkillKind kind,int branch,int tier)=>Mathf.Clamp(ActionSkillRank(kind,branch,tier),0,1);
@@ -60,6 +65,8 @@ namespace NeonVault
                 case ActionSkillKind.Bomber: ThrowActionGrenades();break;
                 case ActionSkillKind.Medic: DeployActionHealingField();break;
             }
+            if(!actionActivationSound)actionActivationSound=Resources.Load<AudioClip>("ActionSkillAudio/activation");
+            if(actionActivationSound&&audioSource)audioSource.PlayOneShot(actionActivationSound,.48f);
             return true;
         }
 
@@ -67,10 +74,14 @@ namespace NeonVault
         {
             var k=ActionSkillKind.Mechanic;
             float fire=ASPath(k,0),movement=ASPath(k,1),area=ASPath(k,2);
-            actionSkillDuration=12+movement*1.5f+ASRank(k,1,4)*5;
-            actionSkillPower=EffectiveDamage*(.5f+fire*.13f+ASRank(k,0,4)*.55f);
-            actionSkillRadius=14+area*1.5f;
-            actionSkillFollows=ASRank(k,1,4)>0;
+            actionSkillDuration=Mathf.Min(22,12+movement*1.5f+ASRank(k,1,4)*5+ActionSkillExtraValue("turret_duration"));
+            actionSkillPower=EffectiveDamage*(.5f+fire*.07f+ASRank(k,0,4)*.12f);
+            actionSkillRadius=14+area*1.5f+ActionSkillExtraValue("turret_range");
+            turretElement=CaptureActionElement(ActionSkillExtraValue("turret_element")>0);
+            primaryTurretFocus=null;secondaryTurretFocus=null;primaryTurretShots=0;secondaryTurretShots=0;
+            // The mobile platform becomes useful during progression rather than
+            // requiring the final node. Retain the previous capstone path too.
+            actionSkillFollows=ActionSkillRank(k,1,2)>=3||ASRank(k,1,4)>0||ActionSkillExtraValue("turret_follow")>0;
             actionSkillMultitarget=ASRank(k,2,4)>0;
             actionSkillFireTimer=.2f;
             actionSkillObject=new GameObject("Mechanic / field sentry").transform;
@@ -94,16 +105,28 @@ namespace NeonVault
             art.Part("Barrel muzzle",PrimitiveType.Cylinder,new Vector3(0,0,.66f),new Vector3(.075f,.08f,.075f),dark,actionSkillHead).localRotation=Quaternion.Euler(90,0,0);
             for(int i=0;i<4;i++)art.Part("Barrel cooling collar",PrimitiveType.Cylinder,new Vector3(0,0,.20f+i*.105f),new Vector3(.14f,.018f,.14f),dark,actionSkillHead).localRotation=Quaternion.Euler(90,0,0);
             for(int i=0;i<3;i++)art.Part("Receiver fastener",PrimitiveType.Cylinder,new Vector3(.24f,-.08f+i*.08f,-.16f),new Vector3(.035f,.012f,.035f),brass,actionSkillHead).localRotation=Quaternion.Euler(0,0,90);
+            if(ActionSkillExtraValue("turret_double")>0)
+            {
+                extraTurretObject=Instantiate(actionSkillObject.gameObject,world).transform;
+                extraTurretObject.name="Mechanic / second sentry";
+                extraTurretHead=extraTurretObject.Find("Sentry aiming head");
+                Vector3 side=Vector3.Cross(Vector3.up,aim.normalized)*1.8f;
+                var pos=MoveWithinRoom(PlayerPosition,side,.6f);extraTurretObject.position=new Vector3(pos.x,origin.y,pos.z);
+                extraTurretFireTimer=.35f;
+            }
             CombatVisuals.Burst(origin+Vector3.up*.3f,new Color(.8f,.66f,.35f),9,world);
         }
 
         void ThrowActionGrenades()
         {
+            grenadeChargeAwarded=false;
+            actionGrenadeHits.Clear();
             var k=ActionSkillKind.Bomber;
-            int count=1+Mathf.FloorToInt(ASPath(k,0))+3*ASRank(k,0,4);
-            float radius=2.7f+ASPath(k,1)*.35f+ASRank(k,1,4)*1.25f;
+            int count=Mathf.Clamp(1+Mathf.FloorToInt(ASPath(k,0))+3*ASRank(k,0,4)+Mathf.RoundToInt(ActionSkillExtraValue("grenade_count")),1,12);
+            float radius=Mathf.Min(7f,2.7f+ASPath(k,1)*.35f+ASRank(k,1,4)*1.25f+ActionSkillExtraValue("grenade_radius"));
             float weaponDps=gun!=null?EffectiveDamage*Mathf.Max(1,gun.pellets)*EffectiveFireRate:EffectiveDamage*7.7f;
-            float damage=Mathf.Max(18,weaponDps/7.7f)*(9.0f+ASPath(k,2)*1.0f+ASRank(k,2,4)*3.0f);
+            float damage=Mathf.Max(18,weaponDps/7.7f)*(20.0f+ASPath(k,2)*1.0f+ASRank(k,2,4)*3.0f)*(1+ActionSkillExtraValue("grenade_damage"));
+            var grenadeElement=CaptureActionElement(ActionSkillExtraValue("grenade_element")>0);
             Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:player.forward;forward.y=0;
             for(int i=0;i<count;i++)
             {
@@ -114,7 +137,7 @@ namespace NeonVault
                 var root=new GameObject("Bomber / thrown grenade").transform;root.SetParent(world,false);root.position=start;
                 art.Part("Grenade body",PrimitiveType.Capsule,Vector3.zero,new Vector3(.19f,.16f,.19f),new Color(.32f,.34f,.22f),root);
                 art.Part("Grenade cap",PrimitiveType.Cylinder,new Vector3(0,.16f,0),new Vector3(.12f,.04f,.12f),new Color(.42f,.39f,.28f),root);
-                actionGrenades.Add(new ActionGrenade{visual=root,start=start,end=end,travel=.6f+i*.045f,damage=damage,radius=radius,cluster=ASRank(k,2,4)>0});
+                actionGrenades.Add(new ActionGrenade{visual=root,start=start,end=end,travel=.6f+i*.045f,damage=damage,radius=radius,cluster=ASRank(k,2,4)>0,element=grenadeElement});
             }
         }
 
@@ -122,12 +145,11 @@ namespace NeonVault
         {
             var k=ActionSkillKind.Medic;
             float recovery=ASPath(k,0),radius=ASPath(k,1),duration=ASPath(k,2);
-            actionSkillPower=.028f+recovery*.006f+ASRank(k,0,4)*.025f;
-            actionSkillRadius=3.0f+radius*.45f+ASRank(k,1,4)*1.6f;
-            actionSkillDuration=12+duration*1.5f+ASRank(k,2,4)*5;
-            actionSkillFollows=ASRank(k,2,4)>0;
+            actionSkillPower=Mathf.Min(.09f,(.028f+recovery*.006f+ASRank(k,0,4)*.025f)*(1+ActionSkillExtraValue("medic_heal")));
+            actionSkillRadius=3.0f+radius*.45f+ASRank(k,1,4)*1.6f+ActionSkillExtraValue("medic_radius");
+            actionSkillDuration=Mathf.Min(24,12+duration*1.5f+ASRank(k,2,4)*5+ActionSkillExtraValue("medic_duration"));
+            actionSkillFollows=ActionSkillRank(k,2,2)>=3||ASRank(k,2,4)>0||ActionSkillExtraValue("medic_follow")>0;
             actionSkillPulseTimer=0;
-            medicHealAccumulated=0;medicHealNumberTimer=1f;
             actionSkillObject=new GameObject("Medic / healing field").transform;
             actionSkillObject.SetParent(world,false);var p=PlayerPosition;p.y=.10f;actionSkillObject.position=p;
             var shader=Resources.Load<Shader>("CombatGlow")??Shader.Find("Sprites/Default");
@@ -163,50 +185,49 @@ namespace NeonVault
                 Vector3 offset=target-current;offset.y=0;
                 if(offset.magnitude>1.8f){var moved=MoveWithinRoom(new Vector3(current.x,PlayerPosition.y,current.z),Vector3.ClampMagnitude(offset,delta*3.5f),.45f);actionSkillObject.position=new Vector3(moved.x,current.y,moved.z);}
             }
-            if(actionSkillHead)TickActionTurret(delta);
+            if(extraTurretObject&&actionSkillFollows)
+            {
+                Vector3 target=PlayerPosition+Vector3.Cross(Vector3.up,aim.normalized)*1.8f;
+                var offset=target-extraTurretObject.position;offset.y=0;
+                if(offset.sqrMagnitude>3.24f){var moved=MoveWithinRoom(new Vector3(extraTurretObject.position.x,PlayerPosition.y,extraTurretObject.position.z),Vector3.ClampMagnitude(offset,delta*3.5f),.45f);extraTurretObject.position=new Vector3(moved.x,extraTurretObject.position.y,moved.z);}
+            }
+            if(actionSkillHead){TickActionTurret(delta,actionSkillHead,ref actionSkillFireTimer);if(extraTurretHead)TickActionTurret(delta,extraTurretHead,ref extraTurretFireTimer);}
             else
             {
                 Vector3 separation=PlayerPosition-actionSkillObject.position;separation.y=0;
                 if(separation.sqrMagnitude<=actionSkillRadius*actionSkillRadius&&LineOfSight(actionSkillObject.position,PlayerPosition))
                 {
-                    float before=hp;hp=Mathf.Min(maxHp,hp+maxHp*actionSkillPower*delta);
-                    medicHealAccumulated+=Mathf.Max(0,hp-before);
+                    HealPlayer(maxHp*actionSkillPower*delta);
                 }
-                medicHealNumberTimer-=delta;
-                if(medicHealNumberTimer<=0){ShowMedicHealNumber();medicHealNumberTimer=1f;}
-                actionSkillPulseTimer-=delta;if(actionSkillPulseTimer<=0){actionSkillPulseTimer=1.5f;CombatVisuals.Burst(actionSkillObject.position+Vector3.up*.1f,new Color(.28f,.72f,.44f),3,world);}
+                actionSkillPulseTimer-=delta;if(actionSkillPulseTimer<=0){actionSkillPulseTimer=1.5f;ApplyMedicDebuff();CombatVisuals.Burst(actionSkillObject.position+Vector3.up*.1f,new Color(.28f,.72f,.44f),3,world);}
             }
         }
 
-        void ShowMedicHealNumber()
+        void TickActionTurret(float delta,Transform head,ref float fireTimer)
         {
-            if(medicHealAccumulated<.05f)return;
-            CombatVisuals.DamageNumber(PlayerPosition+Vector3.up*1.7f,medicHealAccumulated,new Color(.22f,.9f,.47f),cam,world,true);
-            medicHealAccumulated=0;
-        }
-
-        void TickActionTurret(float delta)
-        {
-            actionSkillFireTimer-=delta;if(actionSkillFireTimer>0)return;
+            fireTimer-=delta;if(fireTimer>0)return;
             Foe target=null;float best=actionSkillRadius*actionSkillRadius;
             foreach(var foe in Enemies)if(foe&&!foe.dead)
-            {Vector3 d=foe.transform.position-actionSkillHead.position;d.y=0;float distance=d.sqrMagnitude;if(distance<best&&LineOfSight(actionSkillHead.position,foe.transform.position)){best=distance;target=foe;}}
-            if(!target){actionSkillFireTimer=.25f;return;}
-            Vector3 direction=target.transform.position-actionSkillHead.position;direction.y=0;if(direction.sqrMagnitude<.001f)return;
-            actionSkillPower=EffectiveDamage*(.5f+ASPath(ActionSkillKind.Mechanic,0)*.13f+ASRank(ActionSkillKind.Mechanic,0,4)*.55f);
-            direction.Normalize();actionSkillHead.rotation=Quaternion.LookRotation(direction);
-            Vector3 muzzle=actionSkillHead.position+direction*.64f;
+            {Vector3 d=foe.transform.position-head.position;d.y=0;float distance=d.sqrMagnitude;if(distance<best&&LineOfSight(head.position,foe.transform.position)){best=distance;target=foe;}}
+            if(!target){fireTimer=.25f;return;}
+            Vector3 direction=target.transform.position-head.position;direction.y=0;if(direction.sqrMagnitude<.001f)return;
+            actionSkillPower=EffectiveDamage*(.5f+ASPath(ActionSkillKind.Mechanic,0)*.07f+ASRank(ActionSkillKind.Mechanic,0,4)*.12f)*(1+ActionSkillExtraValue("turret_damage"))*(head==extraTurretHead?.7f:1f);
+            if(head==actionSkillHead){if(primaryTurretFocus==target)primaryTurretShots=Mathf.Min(5,primaryTurretShots+1);else{primaryTurretFocus=target;primaryTurretShots=0;}actionSkillPower*=1+primaryTurretShots*ActionSkillExtraValue("turret_focus");}
+            else {if(secondaryTurretFocus==target)secondaryTurretShots=Mathf.Min(5,secondaryTurretShots+1);else{secondaryTurretFocus=target;secondaryTurretShots=0;}actionSkillPower*=1+secondaryTurretShots*ActionSkillExtraValue("turret_focus");}
+            actionSkillPower=Mathf.Min(actionSkillPower,EffectiveDamage*(head==extraTurretHead?.665f:.95f));
+            direction.Normalize();head.rotation=Quaternion.LookRotation(direction);
+            Vector3 muzzle=head.position+direction*.64f;
             int pellets=gun!=null?Mathf.Max(1,gun.pellets):1;float speed=gun!=null?gun.speed:25;
-            for(int i=0;i<pellets;i++){float spread=pellets==1?0:Mathf.Lerp(-8,8,(float)i/(pellets-1));SpawnBullet(muzzle,Quaternion.Euler(0,spread,0)*direction,true,actionSkillPower,speed,new Color(.9f,.67f,.32f),GunEffect.Normal);}
+            for(int i=0;i<pellets;i++){float spread=pellets==1?0:Mathf.Lerp(-8,8,(float)i/(pellets-1));var shot=SpawnBullet(muzzle,Quaternion.Euler(0,spread,0)*direction,true,actionSkillPower,speed,new Color(.9f,.67f,.32f),GunEffect.Normal);shot.skillProjectile=true;ApplyActionElement(shot,turretElement);}
             PlayActionSound(false);
             CombatVisuals.Muzzle(muzzle,direction,new Color(.9f,.67f,.32f),GunEffect.Normal,world);
             if(actionSkillMultitarget)
             {
                 Foe second=null;float next=actionSkillRadius*actionSkillRadius;
-                foreach(var foe in Enemies)if(foe&&!foe.dead&&foe!=target){Vector3 d=foe.transform.position-actionSkillHead.position;d.y=0;if(d.sqrMagnitude<next&&LineOfSight(actionSkillHead.position,foe.transform.position)){next=d.sqrMagnitude;second=foe;}}
-                if(second){Vector3 d=second.transform.position-muzzle;d.y=0;if(d.sqrMagnitude>.001f)SpawnBullet(muzzle,d.normalized,true,actionSkillPower*.8f,speed,new Color(.9f,.67f,.32f),GunEffect.Normal);}
+                foreach(var foe in Enemies)if(foe&&!foe.dead&&foe!=target){Vector3 d=foe.transform.position-head.position;d.y=0;if(d.sqrMagnitude<next&&LineOfSight(head.position,foe.transform.position)){next=d.sqrMagnitude;second=foe;}}
+                if(second){Vector3 d=second.transform.position-muzzle;d.y=0;if(d.sqrMagnitude>.001f){var shot=SpawnBullet(muzzle,d.normalized,true,actionSkillPower*.8f,speed,new Color(.9f,.67f,.32f),GunEffect.Normal);shot.skillProjectile=true;ApplyActionElement(shot,turretElement);}}
             }
-            actionSkillFireTimer=Mathf.Max(.04f,(gun!=null?1/Mathf.Max(.01f,EffectiveFireRate):.65f)/(1+ASPath(ActionSkillKind.Mechanic,2)*.1f));
+            fireTimer=Mathf.Max(.04f,(gun!=null?1/Mathf.Max(.01f,EffectiveFireRate):.65f)/Mathf.Min(1.35f,1+ASPath(ActionSkillKind.Mechanic,2)*.06f+ActionSkillExtraValue("turret_rate")));
         }
 
         void ExplodeActionGrenade(ActionGrenade grenade)
@@ -216,20 +237,30 @@ namespace NeonVault
             CombatVisuals.Impact(center+Vector3.up*.25f,Vector3.up,new Color(1,.55f,.16f),GunEffect.Scatter,world);
             // Copy targets because damage can synchronously run kill/reward logic.
             var targets=new List<Foe>(Enemies);
+            Foe elementTarget=null;float elementDistance=float.MaxValue,elementFalloff=0;int hitCount=0;
             foreach(var foe in targets)if(foe&&!foe.dead)
             {
                 Vector3 d=foe.transform.position-center;d.y=0;
                 if(d.sqrMagnitude>grenade.radius*grenade.radius||!LineOfSight(center,foe.transform.position))continue;
                 float falloff=Mathf.Lerp(1,.55f,Mathf.Clamp01(d.magnitude/grenade.radius));
-                foe.Hit(grenade.damage*falloff,foe.transform.position+Vector3.up*.8f,new Color(1,.55f,.16f));
-                if(grenade.cluster&&!foe.dead)foe.Hit(grenade.damage*.25f,foe.transform.position+Vector3.up*.8f,new Color(1,.55f,.16f));
+                actionGrenadeHits.TryGetValue(foe,out int previousHits);actionGrenadeHits[foe]=previousHits+1;
+                // Repeated blasts in a single salvo retain crowd coverage but
+                // yield diminishing damage against the same enemy.
+                falloff/=1+.4f*previousHits;
+                hitCount++;float delay=Mathf.Max(ActionSkillExtraValue("grenade_suppress"),ActionSkillExtraValue("grenade_slow"));if(delay>0)foe.DelayNextAttack(delay);
+                if(foe.Hit(grenade.damage*falloff,foe.transform.position+Vector3.up*.8f,new Color(1,.55f,.16f))&&d.sqrMagnitude<elementDistance){elementTarget=foe;elementDistance=d.sqrMagnitude;elementFalloff=falloff;}
+                if(grenade.cluster&&!foe.dead)foe.Hit(grenade.damage*falloff*.25f,foe.transform.position+Vector3.up*.8f,new Color(1,.55f,.16f));
             }
+            ApplyGrenadeElement(grenade,elementTarget,elementFalloff);
+            float heal=ActionSkillExtraValue("grenade_heal")+ActionSkillExtraValue("grenade_hit_heal");if(heal>0&&hitCount>0)HealPlayer(maxHp*heal*Mathf.Min(hitCount,5));
+            if(hitCount>0&&!grenadeChargeAwarded&&ActionSkillExtraValue("grenade_hit_charge")>0){grenadeChargeAwarded=true;ActionSkillOnBulletHit(ActionSkillChargeMax*ActionSkillExtraValue("grenade_hit_charge"));}
         }
 
         void ClearActionDevice()
         {
-            if(actionSkillObject&&!actionSkillHead)ShowMedicHealNumber();
             if(actionSkillObject)Destroy(actionSkillObject.gameObject);
+            if(extraTurretObject)Destroy(extraTurretObject.gameObject);
+            extraTurretObject=null;extraTurretHead=null;
             if(actionSkillRingMaterial)Destroy(actionSkillRingMaterial);
             actionSkillObject=null;actionSkillHead=null;actionSkillRingMaterial=null;actionSkillDuration=0;
         }
@@ -237,7 +268,7 @@ namespace NeonVault
         {
             ClearActionDevice();
             foreach(var grenade in actionGrenades)if(grenade.visual)Destroy(grenade.visual.gameObject);
-            actionGrenades.Clear();
+            actionGrenades.Clear();actionGrenadeHits.Clear();
         }
     }
 }

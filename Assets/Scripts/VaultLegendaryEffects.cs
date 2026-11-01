@@ -90,14 +90,14 @@ namespace NeonVault
                         if(nearby.Count>0)LegendaryStrike(nearby[0],power*.9f,color);
                         break;
                     case 7: // Leg armor.
-                        dodgeCooldown=0;hp=Mathf.Min(maxHp,hp+maxHp*(boss==1?.09f:.045f));
+                        dodgeCooldown=0;HealPlayer(maxHp*(boss==1?.09f:.045f));
                         if(nearby.Count>0)ArmorStagger(nearby[0],.65f,color);
                         break;
                     case 8: // Boots.
                         invincible=Mathf.Max(invincible,.28f);ArmorBarrier(boss==2?9:5);
                         break;
                     case 9: // Support module.
-                        hp=Mathf.Min(maxHp,hp+maxHp*(boss==1?.12f:.07f));
+                        HealPlayer(maxHp*(boss==1?.12f:.07f));
                         if(gun!=null){var ammoType=AmmoForGun(gun);ammoReserves[(int)ammoType]=Mathf.Min(AmmoCapacity(ammoType),ammoReserves[(int)ammoType]+(boss==2?8:4));}
                         break;
                     case 10: // Melee relic.
@@ -107,7 +107,7 @@ namespace NeonVault
                 }
                 // The three sources retain a distinct combat signature in addition
                 // to the item's slot-specific proc.
-                if(boss==1&&category!=7&&category!=9)hp=Mathf.Min(maxHp,hp+maxHp*.025f);
+                if(boss==1&&category!=7&&category!=9)HealPlayer(maxHp*.025f);
                 if(boss==2&&category!=5&&category!=8)ArmorBarrier(4);
                 Burst(origin,color,16);
             }
@@ -177,10 +177,10 @@ namespace NeonVault
                 case 13: for(int i=0;i<Mathf.Min(2,nearby.Count);i++){LegendaryStrike(nearby[i],power*.4f,color);ArmorStagger(nearby[i],1,color);}break;
                 case 14: ArmorInterceptShots(PlayerPosition,5,1,color);break;
 
-                case 16: ScheduleLegendaryPulse(origin,power*.3f,1.4f,2,maker);hp=Mathf.Min(maxHp,hp+3);break;
-                case 17: if(hp<maxHp*.5f){hp=Mathf.Min(maxHp,hp+8);ArmorStagger(closest,.8f,color);}break;
-                case 18: if(nearby.Count>=2){hp=Mathf.Min(maxHp,hp+5);ArmorPush(PlayerPosition,1.8f,.8f,color);}break;
-                case 19: if(ArtifactShield>=3){ArtifactShield-=3;hp=Mathf.Min(maxHp,hp+5);}else ArmorBarrier(3);UpdateBarrierVisual();break;
+                case 16: ScheduleLegendaryPulse(origin,power*.3f,1.4f,2,maker);HealPlayer(3);break;
+                case 17: if(hp<maxHp*.5f){HealPlayer(8);ArmorStagger(closest,.8f,color);}break;
+                case 18: if(nearby.Count>=2){HealPlayer(5);ArmorPush(PlayerPosition,1.8f,.8f,color);}break;
+                case 19: if(ArtifactShield>=3){ArtifactShield-=3;HealPlayer(5);}else ArmorBarrier(3);UpdateBarrierVisual();break;
 
                 case 21: ScheduleLegendaryPulse(origin,power*.8f,1.8f,1,maker);break;
                 case 22: foreach(var foe in nearby)if(LegendaryGunInCone(PlayerPosition,aim,foe.transform.position,5,.65f))LegendaryStrike(foe,power*.65f,color);break;

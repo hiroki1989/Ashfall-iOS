@@ -9,7 +9,7 @@ namespace NeonVault
     {
         const string ActionSkillSaveKey = "Vault.ActionSkills.v1";
         const int ActionSkillSlots = 45;
-        [Serializable] sealed class ActionSkillSave { public int version=1,selected; public int[] ranks; }
+        [Serializable] sealed class ActionSkillSave { public int version=1,selected; public int[] ranks,extraRanks; }
         readonly int[] actionSkillRanks = new int[ActionSkillSlots];
         bool actionSkillLoaded;
         ActionSkillKind actionSkillSelected;
@@ -31,24 +31,31 @@ namespace NeonVault
                 if(data==null||data.version!=1)return;
                 actionSkillSelected=(ActionSkillKind)Mathf.Clamp(data.selected,0,2);
                 if(data.ranks!=null)for(int i=0;i<Mathf.Min(data.ranks.Length,ActionSkillSlots);i++)actionSkillRanks[i]=Mathf.Clamp(data.ranks[i],0,ActionSkillMaxRank(i%5));
+                if(data.extraRanks!=null)for(int i=0;i<Mathf.Min(data.extraRanks.Length,actionSkillExtraRanks.Length);i++)actionSkillExtraRanks[i]=Mathf.Clamp(data.extraRanks[i],0,1);
             }
             catch(Exception e){Debug.LogWarning("Action skill save load: "+e.GetType().Name);}
         }
         void SaveActionSkills()
         {
             if(smoke)return;
-            PlayerPrefs.SetString(ActionSkillSaveKey,JsonUtility.ToJson(new ActionSkillSave{selected=(int)actionSkillSelected,ranks=actionSkillRanks}));PlayerPrefs.Save();
+            PlayerPrefs.SetString(ActionSkillSaveKey,JsonUtility.ToJson(new ActionSkillSave{selected=(int)actionSkillSelected,ranks=actionSkillRanks,extraRanks=actionSkillExtraRanks}));PlayerPrefs.Save();
         }
         public int ActionSkillRank(ActionSkillKind kind,int branch,int tier)
         {LoadActionSkills();return ValidActionSkill(kind,branch,tier)?actionSkillRanks[ActionSkillIndex(kind,branch,tier)]:0;}
-        public int ActionSkillSpentPoints { get { LoadActionSkills();int total=0;foreach(int rank in actionSkillRanks)total+=rank;return total; } }
-        public int ActionSkillAvailablePoints => Mathf.Max(0,DebtLevel-1+ExpeditionTokens-ActionSkillSpentPoints);
+        public int ActionSkillSpentPoints { get { LoadActionSkills();int total=0;foreach(int rank in actionSkillRanks)total+=rank;foreach(int rank in actionSkillExtraRanks)total+=rank;return total; } }
+        // The expanded tree contains 405 ranks.  Spread 96 additional points
+        // over the existing 122 level-ups so the full set of level, mission
+        // and collector rewards can reach approximately 80% of the tree.
+        // This is computed rather than saved, so existing characters retain
+        // all spent ranks and receive the same progression retroactively.
+        public int ActionSkillLevelBonusPoints => Mathf.Clamp((DebtLevel-1)*96/122,0,96);
+        public int ActionSkillAvailablePoints => Mathf.Max(0,DebtLevel-1+ActionSkillLevelBonusPoints+ExpeditionTokens-ActionSkillSpentPoints);
         public bool TryUpgradeActionSkill(ActionSkillKind kind,int branch,int tier)
         {
             LoadActionSkills();if(!ValidActionSkill(kind,branch,tier)||ActionSkillAvailablePoints<=0)return false;
             int index=ActionSkillIndex(kind,branch,tier);if(actionSkillRanks[index]>=ActionSkillMaxRank(tier))return false;
             if(!ActionSkillTierAvailable(kind,branch,tier))return false;
-            actionSkillRanks[index]++;SaveActionSkills();RefreshPermanentStats();FirstStepsSkillUpgraded();PlayUserSound("skill",.35f);return true;
+            actionSkillRanks[index]++;SaveActionSkills();RecalculateArmor();FirstStepsSkillUpgraded();PlayUserSound("skill",.35f);return true;
         }
         public void SelectActionSkill(ActionSkillKind kind)
         {
@@ -56,7 +63,7 @@ namespace NeonVault
             ClearActiveActionSkill();actionSkillSelected=kind;ActionSkillPoints=0;SaveActionSkills();
         }
         public void ResetActionSkills()
-        {LoadActionSkills();Array.Clear(actionSkillRanks,0,actionSkillRanks.Length);ActionSkillPoints=0;ClearActiveActionSkill();SaveActionSkills();RefreshPermanentStats();}
+        {LoadActionSkills();Array.Clear(actionSkillRanks,0,actionSkillRanks.Length);Array.Clear(actionSkillExtraRanks,0,actionSkillExtraRanks.Length);actionSkillExtraValuesDirty=true;ActionSkillPoints=0;ClearActiveActionSkill();SaveActionSkills();RecalculateArmor();}
 
         // Passive effects are retained across the three trees when changing the equipped action.
         public float ActionSkillPassive(string kind,int family=-1)
@@ -88,8 +95,16 @@ namespace NeonVault
             string[,] ja={{"1ランクごとにタレットの威力が武器威力の約2.17%分上昇。","1ランクごとにタレットの持続時間が0.25秒延長。","1ランクごとに射程が0.25m延長し、射撃間隔が0.01秒短縮。"},{"この枝の合計6ランクごとにグレネードを1個追加。","1ランクごとに爆発範囲が約0.06m拡大。","1ランクごとに爆発威力が武器威力の5%分上昇。"},{"1ランクごとに回復量が最大HPの毎秒0.1%分上昇。","1ランクごとに回復範囲が0.075m拡大。","1ランクごとに回復時間が0.25秒延長。"}};
             string[,] finalEn={{"Turret damage gains another 55% of weapon damage.","Turret follows you and lasts 5 seconds longer.","Turret also fires at a second enemy."},{"Throw 3 additional grenades.","Increase blast radius by 1.25 m.","Increase blast damage by 300% of weapon damage and add a secondary hit."},{"Heal an additional 2.5% of maximum HP each second.","Increase the healing radius by 1.6 m.","The field follows you and lasts 5 seconds longer."}};
             string[,] finalJa={{"タレット威力が武器威力の55%分さらに上昇。","タレットが追尾し、持続時間が5秒延長。","タレットが2体目にも射撃。"},{"グレネードをさらに3個投擲。","爆発範囲が1.25m拡大。","爆発威力が武器威力の80%分上昇し、追加打撃。"},{"回復量が最大HPの毎秒2.5%分さらに上昇。","回復範囲が1.6m拡大。","回復エリアが追尾し、持続時間が5秒延長。"}};
+            if(kind==ActionSkillKind.Mechanic&&branch==0){en[0,0]="Each rank raises turret damage by about 1.17% of your weapon damage.";ja[0,0]="1ランクごとにタレット威力が武器威力の約1.17%分上昇。";finalEn[0,0]="Turret damage gains another 12% of weapon damage.";finalJa[0,0]="タレット威力が武器威力の12%分さらに上昇。";}
+            if(kind==ActionSkillKind.Mechanic&&branch==2){en[0,2]="Each rank adds 0.25 m to range and increases firing speed by 1%.";ja[0,2]="1ランクごとに射程が0.25m、連射速度が1%上昇。";}
             string text=tier==4?T(finalEn[(int)kind,branch],finalJa[(int)kind,branch]):T(en[(int)kind,branch],ja[(int)kind,branch]);
-            if(kind==ActionSkillKind.Bomber&&branch==2)text=tier==4?T("Increase blast damage by 300% of weapon damage and add a secondary hit.","爆発威力が武器威力の300%分上昇し、追加打撃。"):T("Each rank raises blast damage by about 16.7% of weapon damage.","1ランクごとに爆発威力が武器威力の約16.7%分上昇。");
+            if(kind==ActionSkillKind.Bomber&&branch==2)text=tier==4?T("Add 3/7.7 of weapon DPS to blast damage and a secondary hit.","爆発威力に武器DPSの3/7.7を加え、追加打撃。"):T("Each rank adds approximately 1/46.2 of weapon DPS to blast damage.","1ランクごとに爆発威力へ武器DPSの約1/46.2を加算。");
+            if(kind==ActionSkillKind.Bomber&&branch==0)text+="\n"+T("Repeated blasts against one enemy deal diminishing damage.","同じ敵への連続爆発は徐々に威力が減少。");
+            if(kind==ActionSkillKind.Bomber&&branch==1)text+="\n"+T("Blast radius is capped at 7 m.","爆発範囲の上限は7m。");
+            if(kind==ActionSkillKind.Mechanic)text+="\n"+T("Turret limits: 95% weapon damage, 135% fire rate, 22 sec.","上限：武器威力の95%、連射速度の135%、持続22秒。");
+            if(kind==ActionSkillKind.Medic&&(branch==0||branch==2))text+="\n"+T("Healing is capped at 9% HP/s and duration at 24 s.","回復量は毎秒最大HPの9%、持続は24秒が上限。");
+            if(tier==2&&kind==ActionSkillKind.Mechanic&&branch==1)text+="\n"+T("At rank 3, the turret follows you.","ランク3でタレットが追尾する。");
+            if(tier==2&&kind==ActionSkillKind.Medic&&branch==2)text+="\n"+T("At rank 3, the healing field follows you.","ランク3で回復エリアが追尾する。");
             if(tier==1){string[,] bonusEn={{"Assault rifle and heavy machine gun damage +1.2% per rank.","","Reload speed +1.2% per rank."},{"Shotgun damage +1.4% per rank.","","Critical chance +0.3% per rank."},{"Maximum HP +3 per rank.","Accuracy +0.6% per rank.","Damage reduction +1% per rank."}};string[,] bonusJa={{"アサルト・重機関銃の威力が1ランクごとに1.2%上昇。","","リロード速度が1ランクごとに1.2%上昇。"},{"ショットガン威力が1ランクごとに1.4%上昇。","","会心率が1ランクごとに0.3%上昇。"},{"最大HPが1ランクごとに3上昇。","命中精度が1ランクごとに0.6%上昇。","被ダメージ軽減が1ランクごとに1%上昇。"}};string bonus=T(bonusEn[(int)kind,branch],bonusJa[(int)kind,branch]);if(!string.IsNullOrEmpty(bonus))text+="\n"+bonus;}
             if(tier==3&&branch==1)text+="\n"+(kind==ActionSkillKind.Mechanic?T("Assault and heavy machine gun fire rate +1% per rank.","アサルト・重機関銃の連射速度が1ランクごとに1%上昇。"):kind==ActionSkillKind.Bomber?T("Shotgun fire rate +1% per rank.","ショットガンの連射速度が1ランクごとに1%上昇。"):T("Health regeneration +0.12 HP/s per rank.","HP自動回復が1ランクごとに毎秒0.12上昇。"));
             return text;

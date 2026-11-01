@@ -191,6 +191,70 @@ namespace NeonVault
             for(int i=0;i<(effect==GunEffect.Scatter?3:6)&&particles<ParticleLimit;i++)Spark(p,i%2==0?Color.Lerp(color,Color.white,.7f):color,(back+Random.insideUnitSphere*.6f)*Random.Range(2.4f,5.5f),Random.Range(.16f,.32f),parent);
             if(effect==GunEffect.Ricochet)RingBurst(p,Color.white,.72f,.34f,parent);
         }
+        // Small, short-lived elemental signatures share the existing transient
+        // limit so a dense shotgun volley cannot allocate unbounded effects.
+        public static void ElementImpact(Vector3 p,GunElement element,Transform parent=null)
+        {
+            if(element==GunElement.None||particles>=ParticleLimit)return;
+            Color color=GunElements.ColorFor(element);
+            switch(element)
+            {
+                case GunElement.Fire:
+                    // Offset, curved and tapered strips overlap into a flame
+                    // silhouette; small embers travel upward from its edge.
+                    FlameTongue(p+Vector3.left*.18f,new Color(.95f,.12f,.035f,.82f),.83f,.31f,-.13f,parent);
+                    FlameTongue(p+Vector3.right*.12f,new Color(1,.26f,.035f,.85f),1.02f,.27f,.12f,parent);
+                    FlameTongue(p+Vector3.up*.03f,new Color(1,.57f,.08f,.9f),.68f,.19f,-.06f,parent);
+                    FlameTongue(p+Vector3.up*.06f,new Color(1,.82f,.29f,.9f),.38f,.11f,.04f,parent);
+                    for(int i=0;i<3&&particles<ParticleLimit;i++)
+                        Spark(p+Random.insideUnitSphere*.18f,new Color(1,.48f,.10f),Vector3.up*Random.Range(1.8f,3.2f)+Random.insideUnitSphere*.5f,.25f,parent);
+                    break;
+                case GunElement.Electric:
+                    // Jagged forks make the impact distinguishable at a glance.
+                    ElementArc(p-Vector3.right*.35f,p+Vector3.up*.45f+Vector3.right*.3f,parent);
+                    ElementArc(p+Vector3.forward*.25f,p+Vector3.up*.5f-Vector3.forward*.25f,parent);
+                    break;
+                case GunElement.Poison:
+                    // Soft translucent wisps spread apart while bright purple
+                    // droplets separate from the cloud.
+                    PuffTinted(p+Vector3.left*.20f,Vector3.up*.45f+Vector3.left*.55f,.48f,.52f,new Color(.49f,.12f,.68f,.48f),parent);
+                    PuffTinted(p+Vector3.right*.18f,Vector3.up*.70f+Vector3.right*.45f,.39f,.48f,new Color(.67f,.18f,.82f,.43f),parent);
+                    PuffTinted(p+Vector3.up*.20f,Vector3.up*.85f,.32f,.42f,new Color(.77f,.30f,.92f,.38f),parent);
+                    RingBurst(p,new Color(.72f,.23f,.88f,.55f),.28f,.30f,parent);
+                    for(int i=0;i<3&&particles<ParticleLimit;i++)
+                        Spark(p+Random.insideUnitSphere*.18f,color,Vector3.up*Random.Range(.7f,1.6f)+Random.insideUnitSphere*.8f,.34f,parent);
+                    break;
+                case GunElement.Explosive:
+                    // Flash, expanding pressure ring, dark smoke and fragments
+                    // have distinct lengths and lifetimes instead of one mark.
+                    PuffTinted(p,Vector3.up*.45f,.55f,.48f,new Color(.28f,.22f,.17f,.48f),parent);
+                    PuffTinted(p+Vector3.right*.19f,Vector3.up*.6f+Vector3.right*.45f,.42f,.42f,new Color(.36f,.25f,.16f,.38f),parent);
+                    RingBurst(p,color,.42f,.24f,parent);
+                    Ribbon(p,Vector3.up,new Color(1,.72f,.25f,.92f),.70f,.42f,.10f,parent);
+                    Ribbon(p,Vector3.right,new Color(1,.46f,.08f,.85f),.53f,.20f,.10f,parent);
+                    Ribbon(p,Vector3.left,new Color(1,.38f,.06f,.85f),.53f,.20f,.10f,parent);
+                    for(int i=0;i<4&&particles<ParticleLimit;i++)
+                        Spark(p,i%2==0?color:new Color(1,.56f,.12f),Random.insideUnitSphere*Random.Range(2.5f,4.2f),.25f,parent);
+                    break;
+            }
+        }
+        public static void ElementArc(Vector3 from,Vector3 to,Transform parent=null)
+        {
+            if(particles>=ParticleLimit)return;
+            Vector3 delta=to-from;if(delta.sqrMagnitude<.0001f)return;
+            var obj=ObjectAt("Electric chain arc",from,parent);
+            Color color=new Color(1f,.87f,.12f,.95f);
+            var line=Line(obj,color,.08f);line.positionCount=7;
+            Vector3 sideways=Vector3.Cross(delta.normalized,Vector3.up);
+            if(sideways.sqrMagnitude<.001f)sideways=Vector3.right;
+            sideways.Normalize();
+            for(int i=0;i<7;i++)
+            {
+                float t=i/6f;float offset=(i==0||i==6)?0:(i%2==0?.10f:-.10f);
+                line.SetPosition(i,delta*t+sideways*offset);
+            }
+            obj.AddComponent<CombatTransient>().Init(line,color,.13f,Vector3.zero,0);
+        }
         public static void Burst(Vector3 p,Color color,int count,Transform parent=null)
         {
             for(int i=0;i<Mathf.Min(count,24)&&particles<ParticleLimit;i++)
@@ -211,7 +275,17 @@ namespace NeonVault
             var line=Line(obj,color,width);line.positionCount=3;line.SetPositions(new[]{Vector3.zero,Vector3.forward*length*.38f,Vector3.forward*length});line.endWidth=0;
             obj.AddComponent<CombatTransient>().Init(line,color,life,Vector3.zero,1.2f);
         }
+        static void FlameTongue(Vector3 p,Color color,float height,float width,float bend,Transform parent)
+        {
+            if(particles>=ParticleLimit)return;
+            var obj=ObjectAt("Element flame tongue",p,parent);
+            var line=Line(obj,color,width);line.endWidth=0;line.positionCount=5;
+            line.SetPositions(new[]{Vector3.zero,new Vector3(-bend*.35f,height*.22f,0),new Vector3(bend*.45f,height*.50f,0),new Vector3(-bend*.3f,height*.76f,0),new Vector3(bend,height,0)});
+            obj.AddComponent<CombatTransient>().Init(line,color,.23f,Vector3.up*.5f,1f);
+        }
         static void Puff(Vector3 p,Vector3 velocity,float size,float life,Transform parent)
+        {PuffTinted(p,velocity,size,life,new Color(.18f,.16f,.13f,.24f),parent);}
+        static void PuffTinted(Vector3 p,Vector3 velocity,float size,float life,Color tint,Transform parent)
         {
             if(particles>=ParticleLimit)return;
             if(smoke==null)
@@ -220,8 +294,8 @@ namespace NeonVault
                 for(int y=0;y<32;y++)for(int x=0;x<32;x++){float radius=new Vector2((x-15.5f)/15.5f,(y-15.5f)/15.5f).magnitude;pixels[y*32+x]=new Color(1,1,1,Mathf.Pow(Mathf.Clamp01(1-radius),1.6f));}
                 smokeTexture.SetPixels(pixels);smokeTexture.Apply(false,true);smoke=new Material(Shader.Find("Sprites/Default")){name="Shared soft ash smoke",mainTexture=smokeTexture};
             }
-            var obj=ObjectAt("Transient gun smoke",p,parent);var line=Line(obj,new Color(.18f,.16f,.13f,.24f),size);line.sharedMaterial=smoke;line.positionCount=2;line.SetPositions(new[]{Vector3.up*(-size*.5f),Vector3.up*(size*.5f)});
-            obj.AddComponent<CombatTransient>().Init(line,new Color(.18f,.16f,.13f,.24f),life,velocity,2.1f);
+            var obj=ObjectAt("Transient gun smoke",p,parent);var line=Line(obj,tint,size);line.sharedMaterial=smoke;line.positionCount=2;line.SetPositions(new[]{Vector3.up*(-size*.5f),Vector3.up*(size*.5f)});
+            obj.AddComponent<CombatTransient>().Init(line,tint,life,velocity,2.1f);
         }
         static void RingBurst(Vector3 p,Color color,float radius,float life,Transform parent)
         {
@@ -243,7 +317,9 @@ namespace NeonVault
             text.fontSize=48;text.fontStyle=FontStyle.Normal;text.characterSize=.075f;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;
             text.GetComponent<MeshRenderer>().sortingOrder=20010;
             text.text=healing?"+"+damage.ToString("0.#",CultureInfo.InvariantCulture):FormatDamageNumber(damage);
-            text.color=Color.Lerp(color,Color.white,.55f);
+            // Preserve the requested damage category colours, including dark
+            // orange for explosions, instead of washing them out toward white.
+            text.color=color;
             text.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.Off;
             obj.AddComponent<DamageFloat>().Init(text,camera);
         }

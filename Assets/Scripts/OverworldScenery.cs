@@ -113,8 +113,12 @@ namespace NeonVault
             foreach(var tree in data.Trees)
             {
                 int seed=unchecked(x*1973+z*9277+index++*101);bool dense=geography.DenseForest(tree);if((!dense||Mathf.Abs(seed)%3!=0)&&OverworldScenery.AssetAdapter?.Invoke("tree",obj.transform,tree,seed)==true)continue;
-                float h=(dense?6.2f:5f)+Mathf.Abs(seed%6)*.7f;Box(tree+Vector3.up*h*.4f,new Vector3(dense?.46f:.38f,h*.8f,dense?.46f:.38f),6);
-                for(int lobe=0;lobe<(dense?8:6);lobe++){float a=lobe*2.399f+seed;var offset=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a));Box(tree+offset*.75f+Vector3.up*(h*.5f+lobe*.22f),new Vector3(2.1f,.18f,.18f),6,-a*Mathf.Rad2Deg);Box(tree+offset*(1.15f+lobe%2*.45f)+Vector3.up*(h*.62f+lobe*.22f),new Vector3(dense?2.7f:2.3f,dense?2.0f:1.7f,dense?2.4f:2f),lobe%2==0?1:5,seed+lobe*37,true);}
+                float h=(dense?6.2f:5f)+Mathf.Abs(seed%6)*.7f;
+                var treeBatch=obj.GetComponent<ImportedWorldBatch>();if(!treeBatch)treeBatch=obj.AddComponent<ImportedWorldBatch>();
+                int treeOwner=treeBatch.RegisterTree(new Bounds(obj.transform.TransformPoint(tree+Vector3.up*(h*.5f+1f)),new Vector3(6f,h+3f,6f)));
+                void TreeBox(Vector3 position,Vector3 size,int mat,float yaw=0,bool round=false){treeBatch.AddBuildingPart(treeOwner,round?sphere:cube,materials[mat],obj.transform.localToWorldMatrix*Matrix4x4.TRS(position,Quaternion.Euler(0,yaw,0),size));}
+                TreeBox(tree+Vector3.up*h*.4f,new Vector3(dense?.46f:.38f,h*.8f,dense?.46f:.38f),6);
+                for(int lobe=0;lobe<(dense?8:6);lobe++){float a=lobe*2.399f+seed;var offset=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a));TreeBox(tree+offset*.75f+Vector3.up*(h*.5f+lobe*.22f),new Vector3(2.1f,.18f,.18f),6,-a*Mathf.Rad2Deg);TreeBox(tree+offset*(1.15f+lobe%2*.45f)+Vector3.up*(h*.62f+lobe*.22f),new Vector3(dense?2.7f:2.3f,dense?2.0f:1.7f,dense?2.4f:2f),lobe%2==0?1:5,seed+lobe*37,true);}
             }
             foreach(var car in data.Cars)
             {if(OverworldScenery.AssetAdapter?.Invoke("car",obj.transform,car,index++)==true)continue;Box(car+Vector3.up*.4f,new Vector3(1.8f,.6f,4.8f),6);Box(car+Vector3.up*.95f,new Vector3(1.55f,.55f,2),2);for(int side=-1;side<=1;side+=2)for(int end=-1;end<=1;end+=2)Box(car+new Vector3(side*.85f,.3f,end*1.5f),new Vector3(.22f,.6f,.65f),2,0,true);}

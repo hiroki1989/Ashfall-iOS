@@ -106,7 +106,7 @@ namespace NeonVault
                 {
                     if(hp>=maxHp-.01f)continue;
                     float restored=Mathf.Min(maxHp-hp,maxHp*.05f);
-                    hp=Mathf.Min(maxHp,hp+restored);
+                    HealPlayer(restored);
                     if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickupSound);
                     Notify("HEALTH PACK +"+Mathf.CeilToInt(restored)+" HP","回復パック HP +"+Mathf.CeilToInt(restored));
                     continue;

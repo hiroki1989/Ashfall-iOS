@@ -25,6 +25,13 @@ namespace NeonVault
         // apply them without hiding them inside firearm damage or magazine stats.
         public float bonusHealth, damageReductionBonus, movementBonus, regenBonus;
         public int magazine, pellets;
+        // Saved with the weapon so its pellet pattern remains stable across sessions.
+        public float shotgunSpreadDegrees;
+        public int shotgunProfileVersion;
+        public int weaponDamageRevision;
+        public GunElement element;
+        public float elementPercent, elementRadius, elementDuration;
+        public int elementChains, elementVersion, elementAffinityRevision;
         public Color color;
         public Gun(string n, string s, Rarity r, GunEffect e, float d, float i, float v, int m, int p)
         { accuracy=85; name=n; subtitle=s; rarity=r; effect=e; damage=d; interval=i; speed=v; magazine=m; pellets=p; color=Arsenal.Colors[(int)r]; id=System.Guid.NewGuid().ToString("N"); }
@@ -50,7 +57,7 @@ namespace NeonVault
             if(r.legendary)return BespokeLegendaryDesigns.CreateBase(r.index);
             var g=BaseModel(r.family,rarity);g.catalogId=r.id;g.manufacturerId=ManufacturerCatalog.Id(r.maker);g.designVariant=r.index;g.name=r.name;
             GunSeriesDesigns.Apply(g,r);
-            ManufacturerCatalog.Apply(g);GearBalance.Migrate(g);if(r.gunClass==1&&r.series==2)g.magazine=6;if(r.gunClass==2&&r.series==1)g.magazine=2;if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
+            ManufacturerCatalog.Apply(g);GearBalance.Migrate(g);EnsureShotgunProfile(g);if(r.gunClass==1&&r.series==2)g.magazine=6;if(r.gunClass==2&&r.series==1)g.magazine=2;if(r.legendary){g.legendaryKey=LegendaryCatalog.Key(false,r.index);g.name=LegendaryCatalog.GunName(g,false);g.subtitle=LegendaryCatalog.Description(g,false);}return g;
         }
         public static Gun LegacyCatalog(int index,Rarity rarity=Rarity.Common)
         {
@@ -72,7 +79,7 @@ namespace NeonVault
             if(basic==9){gun.pellets++;gun.damage*=.8f;gun.speed*=1.15f;}
             gun.name=ModelNames[model]+" / "+DesignName(design,false);
             gun.subtitle=DesignName(design,false)+" engineering · "+ModelDescription(model);
-            ManufacturerCatalog.Apply(gun);ProductGeneration.Apply(gun);GearBalance.Migrate(gun);return gun;
+            ManufacturerCatalog.Apply(gun);ProductGeneration.Apply(gun);GearBalance.Migrate(gun);EnsureShotgunProfile(gun);return gun;
         }
         // Compatibility lookup is creation-only; loading retained items uses serialized stats.
         public static Gun FindCatalog(string id,Rarity rarity=Rarity.Common){
@@ -91,7 +98,38 @@ namespace NeonVault
         }
         public static float Accuracy(Gun gun)=>gun==null?0:Mathf.Clamp(gun.accuracy>0?gun.accuracy:DefaultAccuracy(VaultLanguage.DisplayModel(gun)),1,100);
         // Accuracy is a spread score, rather than a promise of hitting a moving target.
-        public static float SpreadHalfAngle(Gun gun)=>gun==null?0:(100-Accuracy(gun))*.25f;
+        public static float SpreadHalfAngle(Gun gun)
+        {
+            if(gun==null)return 0;
+            EnsureShotgunProfile(gun);
+            EnsureWeaponDamageBalance(gun);
+            return Category(VaultLanguage.DisplayModel(gun))==WeaponClass.Shotgun
+                ?gun.shotgunSpreadDegrees*.5f+(100-Accuracy(gun))*.06f
+                :(100-Accuracy(gun))*.25f;
+        }
+        public static void EnsureShotgunProfile(Gun gun)
+        {
+            if(gun==null||gun.shotgunProfileVersion>0||Category(VaultLanguage.DisplayModel(gun))!=WeaponClass.Shotgun)return;
+            // The stable catalog identity keeps matching named designs consistent.
+            string identity=!string.IsNullOrEmpty(gun.catalogId)?gun.catalogId:(!string.IsNullOrEmpty(gun.name)?gun.name:gun.modelVariant.ToString());
+            unchecked
+            {
+                uint hash=2166136261;foreach(char c in identity){hash^=c;hash*=16777619;}
+                int oldCount=Mathf.Max(1,gun.pellets),count=1+(int)(hash%12);
+                // Preserve the old full-hit output while modestly compensating wide patterns.
+                float angle=5f+((hash>>8)%2600)/100f;
+                gun.damage*=oldCount/(float)count*Mathf.Lerp(.93f,1.07f,Mathf.InverseLerp(5f,31f,angle));
+                gun.pellets=count;gun.shotgunSpreadDegrees=angle;gun.shotgunProfileVersion=1;
+            }
+        }
+        // Migrate retained weapons once, preserving their existing rolls and identity.
+        public static void EnsureWeaponDamageBalance(Gun gun)
+        {
+            if(gun==null||gun.weaponDamageRevision>0)return;
+            var category=Category(VaultLanguage.DisplayModel(gun));
+            if(category==WeaponClass.Handgun||category==WeaponClass.SniperRifle)gun.damage*=1.15f;
+            gun.weaponDamageRevision=1;
+        }
         public static string ModelDescription(int variant)
         {
             switch(Mathf.Clamp(variant,0,ModelCount-1)){case 14:return "Six-shot revolver · measured single fire";case 15:return "Blowback automatic pistol · rapid lead fire";case 16:return "Heavy hand cannon · powerful single-shot lead rounds";case 17:return "Suppressed compact pistol · precise fire";case 12:return "Modern carbine · controlled automatic lead fire";case 13:return "Pump-action shotgun · hard-hitting breach shot";case 9:return "Ricochets between enemies · fragments on impact";case 10:return "Isotope drones launch toward your aim";case 11:return "Vacuum implosion · delayed detonation";case 3:case 4:case 5:return "Lead shot · wide close-range burst";default:return "Mechanical action · lead or coil projectile";}
@@ -115,7 +153,7 @@ namespace NeonVault
         public static Gun Model(int variant,Rarity rarity)
         {
             var gun=BaseModel(variant,rarity);gun.catalogId="gun-"+gun.modelVariant.ToString("00")+"-00";
-            gun.manufacturerId=ManufacturerCatalog.ForDesign(gun.modelVariant,0);ManufacturerCatalog.Apply(gun);GearBalance.Migrate(gun);return gun;
+            gun.manufacturerId=ManufacturerCatalog.ForDesign(gun.modelVariant,0);ManufacturerCatalog.Apply(gun);GearBalance.Migrate(gun);EnsureShotgunProfile(gun);return gun;
         }
         internal static Gun BaseModel(int variant,Rarity rarity)
         {
@@ -150,6 +188,9 @@ namespace NeonVault
         static Gun Randomize(Gun gun,System.Random random,int level)
         {
             if(random==null)throw new System.ArgumentNullException(nameof(random));
+            EnsureShotgunProfile(gun);
+            EnsureWeaponDamageBalance(gun);
+            GunElements.Roll(gun,random);
             gun.level=Mathf.Max(1,level);
             float outputScale=GearBalance.LevelPower(gun.rarity,gun.level);
             gun.damage*= outputScale*Range(random,.92f,1.08f);

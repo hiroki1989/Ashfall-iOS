@@ -58,7 +58,7 @@ namespace NeonVault
         static readonly Color Cyan=new Color(93/255f,226/255f,210/255f), Gold=new Color(1f,209/255f,102/255f), Ink=new Color(21/255f,36/255f,50/255f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--real-city-scenery-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
+        static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--action-tree-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--real-city-scenery-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
         void Awake()
         {
             Time.timeScale=1;
@@ -340,6 +340,7 @@ namespace NeonVault
         void Update()
         {
             UpdateMobilePowerState();
+            TickHealNumber();
             if(screen==Screen.Dead)
             {
                 if(Time.unscaledTime>=deathReturnAt)
@@ -379,7 +380,7 @@ namespace NeonVault
             if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill))TryUseActionSkill();
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
-            if(Time.time-lastHurt>3&&HealthRegen>0)hp=Mathf.Min(maxHp,hp+HealthRegen*Time.deltaTime);
+            if(Time.time-lastHurt>3&&HealthRegen>0)HealPlayer(HealthRegen*Time.deltaTime);
             runTime+=Time.deltaTime; toastTimer-=Time.deltaTime; fireTimer-=Time.deltaTime; invincible-=Time.deltaTime; dodgeCooldown-=Time.deltaTime;debtChainTimer-=Time.deltaTime;if(debtChainTimer<=0)debtChainCount=0;
             Layout.Discover(PlayerPosition,IsOverworld?1.5f:5f);navigationTimer-=Time.deltaTime;if(navigationTimer<=0){if(!IsOverworld||Layout.ToCell(PlayerPosition)!=lastNavigationCell){Layout.BuildDistanceField(PlayerPosition);lastNavigationCell=Layout.ToCell(PlayerPosition); }navigationTimer=IsOverworld?.75f:.25f;}
             if(VaultMobileInputBridge.Enabled)
@@ -437,6 +438,7 @@ namespace NeonVault
         public void Fire()
         {
             if(reload>0||ammo<=0)return;
+            Arsenal.EnsureShotgunProfile(gun);
             // Use the same displayed direction for the shot; recalculating from the
             // cursor here would discard continuous tracking just before firing.
             PlayerWeapon.Aim(aim);PlayerWeapon.Kick();
@@ -445,7 +447,8 @@ namespace NeonVault
             CombatVisuals.Muzzle(PlayerWeapon.MuzzlePosition,aim,gun.color,gun.effect,world,VaultLanguage.DisplayModel(gun));
             for(int i=0;i<gun.pellets;i++)
             {
-                float halfAngle=Mathf.Max(0,(100-EffectiveAccuracy)*.25f);
+                bool shotgun=Arsenal.Category(VaultLanguage.DisplayModel(gun))==WeaponClass.Shotgun;
+                float halfAngle=Mathf.Max(0,Arsenal.SpreadHalfAngle(gun)+(Arsenal.Accuracy(gun)-EffectiveAccuracy)*(shotgun?.06f:.25f));
                 float spread=gun.pellets==1?UnityEngine.Random.Range(-halfAngle,halfAngle):Mathf.Lerp(-halfAngle,halfAngle,i/(gun.pellets-1f));
                 Vector3 direction=Quaternion.Euler(0,spread,0)*aim;
                 Vector3 origin=PlayerWeapon.MuzzlePosition;
@@ -456,8 +459,9 @@ namespace NeonVault
                     Burst(origin,Gold,3);
                 }
                 var shot=SpawnBullet(origin,direction,true,UnityEngine.Random.Range(EffectiveDamageMin,EffectiveDamageMax),gun.speed,gun.effect==GunEffect.Ricochet?Cyan:gun.color,gun.effect,EffectiveAccuracy);
-                shot.actionCharge=ActionSkillChargeMax*.01f*7.7f/Mathf.Max(.1f,EffectiveFireRate)/Mathf.Max(1,gun.pellets);
-                shot.critical=UnityEngine.Random.value<EffectiveCriticalChance;shot.moduleAmplified=ArtifactDamageMultiplier>1.0001f||ArtifactAffixBonus("damage")>0;
+                shot.element=gun.element;shot.elementPercent=gun.elementPercent;shot.elementRadius=gun.elementRadius;shot.elementDuration=gun.elementDuration;shot.elementChains=gun.elementChains;shot.elementBonus=1f+ArtifactAffixBonus("elementDamage")+ActionSkillElementBonus(gun.element);
+                shot.actionCharge=ActionSkillChargeMax*.01f*7.7f/Mathf.Max(.1f,EffectiveFireRate)/Mathf.Max(1,gun.pellets)*(1+ActionSkillExtraValue("action_charge")+(ActionTurretActive?ActionSkillExtraValue("turret_hit_charge"):0)+(PlayerInActionHealingField?ActionSkillExtraValue("medic_field_charge"):0));
+                shot.critical=UnityEngine.Random.value<EffectiveCriticalChance;shot.moduleAmplified=ArtifactDamageMultiplier>1.0001f||ArtifactAffixBonus("damage")>0||ArtifactGunDamageBonus(gun)>0;
                 if(shot.critical)shot.damage*=EffectiveCriticalMultiplier;
                 LegendaryModifyShot(shot);
             }
@@ -490,13 +494,21 @@ namespace NeonVault
         }
         public void Hurt(float damage)
         {
-            if(!Active||invincible>0)return;hp-=AbsorbArtifactDamage(damage*(1-DamageReduction));LegendaryTrigger("hurt",PlayerPosition);lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
+            if(!Active||invincible>0)return;
+            float fieldGuard=0;
+            if(ActionSkillSelected==ActionSkillKind.Medic&&actionSkillObject&&actionSkillDuration>0)
+            {
+                Vector3 delta=PlayerPosition-actionSkillObject.position;delta.y=0;
+                if(delta.sqrMagnitude<=actionSkillRadius*actionSkillRadius)fieldGuard=Mathf.Clamp01(ActionSkillExtraValue("medic_guard"));
+            }
+            if(PlayerNearActionTurret)fieldGuard=1-(1-fieldGuard)*(1-Mathf.Clamp01(ActionSkillExtraValue("turret_near_guard")));
+            hp-=AbsorbArtifactDamage(damage*(1-DamageReduction)*(1-fieldGuard));LegendaryTrigger("hurt",PlayerPosition);lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
             if(hp<=0) { hp=0; Finish(false); }
         }
         public void FoeKilled(Foe f)
         {
             if(IsOverworld)OnOverworldEnemyKilled(f);
-            kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)hp=Mathf.Min(maxHp,hp+DebtHealOnKill);if(runHarvest>0)hp=Mathf.Min(maxHp,hp+runHarvest);Burst(f.transform.position,Gold,9);
+            kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)HealPlayer(DebtHealOnKill);if(runHarvest>0)HealPlayer(runHarvest);Burst(f.transform.position,Gold,9);
             if(!IsOverworld)ExpeditionEnemyKilled(f);
             bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
             if(finalBoss&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)))
@@ -530,7 +542,7 @@ namespace NeonVault
             bool alive=false; foreach(var e in Enemies) if(e!=null&&!e.dead)alive=true;
             if(!alive)
             {
-                cleared=true; hp=Mathf.Min(maxHp,hp+8);
+                cleared=true; HealPlayer(8);
                 if(room==CurrentDungeon.AreaCount-1)
                 {
                     if(IsFactionHeadquarters(SelectedStageId))
@@ -639,13 +651,13 @@ namespace NeonVault
         public void ChooseReward(int index)
         {
             if(screen!=Screen.Reward||index<0||index>=choices.Length)return;
-            switch(choices[index]) { case 0:damageBonus+=.25f;runDamage+=.25f;break;case 1:baseMaxHp+=30;runVitality+=30;RecalculateArmor();hp=Mathf.Min(maxHp,hp+35);break;case 2:fireBonus+=.22f;runFire+=.22f;break;case 3:hp=maxHp;break;case 4:runDash+=.35f;break;case 5:runChain+=.30f;break;case 6:runHarvest+=3;break;
+            switch(choices[index]) { case 0:damageBonus+=.25f;runDamage+=.25f;break;case 1:baseMaxHp+=30;runVitality+=30;RecalculateArmor();HealPlayer(35,true);break;case 2:fireBonus+=.22f;runFire+=.22f;break;case 3:HealPlayer(maxHp-hp,true);break;case 4:runDash+=.35f;break;case 5:runChain+=.30f;break;case 6:runHarvest+=3;break;
             case 7:damageBonus+=.12f;runDamage+=.12f;fireBonus+=.10f;runFire+=.10f;break;
-            case 8:baseMaxHp+=20;runVitality+=20;RecalculateArmor();hp=Mathf.Min(maxHp,hp+45);break;
+            case 8:baseMaxHp+=20;runVitality+=20;RecalculateArmor();HealPlayer(45,true);break;
             case 9:runDash+=.20f;runHarvest+=1;break;
             case 10:runChain+=.20f;fireBonus+=.10f;runFire+=.10f;break;
             case 11:damageBonus+=.15f;runDamage+=.15f;runDash+=.15f;break;
-            case 12:hp=Mathf.Min(maxHp,hp+maxHp*.5f);foreach(var type in new[]{AmmoType.Handgun,AmmoType.Shotgun,AmmoType.AssaultRifle,AmmoType.SniperRifle,AmmoType.LightMachineGun})AddAmmo(type,AmmoPackSize(type));break; }
+            case 12:HealPlayer(maxHp*.5f,true);foreach(var type in new[]{AmmoType.Handgun,AmmoType.Shotgun,AmmoType.AssaultRifle,AmmoType.SniperRifle,AmmoType.LightMachineGun})AddAmmo(type,AmmoPackSize(type));break; }
             room++; ResetGameplayOverlays();StopReloadSound();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
         }
         void Finish(bool victory)

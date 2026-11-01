@@ -39,10 +39,10 @@ namespace NeonVault
                     if(mode==3){PushNearby(center,struck,2.5f,.9f);dodgeCooldown=Mathf.Max(0,dodgeCooldown-.25f);}
                     break;
                 case 3:
-                    if(mode==0)hp=Mathf.Min(maxHp,hp+3);
+                    if(mode==0)HealPlayer(3);
                     else if(mode==1)struck.DelayNextAttack(1.1f);
                     else if(mode==2)PullNearby(center,struck,2.8f,.8f);
-                    if(mode==3){StrikeNearby(center,struck,2f,2,hitDamage*.22f,color);hp=Mathf.Min(maxHp,hp+1);}
+                    if(mode==3){StrikeNearby(center,struck,2f,2,hitDamage*.22f,color);HealPlayer(1);}
                     break;
                 case 4:
                     if(mode==0)StrikeNearby(center,struck,2.3f,3,hitDamage*.38f,color);

@@ -239,7 +239,7 @@ namespace NeonVault
             else if (site.type == 1)
             {
                 if (choice == 0) { GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("RESCUE / survivor sent a reward", "救難 / 生存者から謝礼が届いた"); }
-                else { hp = Mathf.Min(maxHp, hp + maxHp * .22f); AddHealthPackDrop(site.position + Vector3.right * 2); GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("SIGNAL TRACED / medical supplies and gear", "無線追跡 / 医療物資と装備を入手"); }
+                else { HealPlayer(maxHp * .22f); AddHealthPackDrop(site.position + Vector3.right * 2); GrantActivityGear(roll, PlayerPosition + Vector3.right * 2); Notify("SIGNAL TRACED / medical supplies and gear", "無線追跡 / 医療物資と装備を入手"); }
             }
             else
             {

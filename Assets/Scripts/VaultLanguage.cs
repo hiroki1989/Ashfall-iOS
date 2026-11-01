@@ -20,9 +20,11 @@ namespace NeonVault
         public static string GunDescription(Gun gun,bool? japanese=null)
         {
             bool ja=japanese??Japanese;
-            if(BossRelicFoundation.Decode(gun?.bossRelicId,out _,out _))return LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
-            if(!string.IsNullOrEmpty(gun.legendaryKey))return LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
-            return ManufacturerBranding.GunDescription(gun,ja)+"\n"+GunMechanismDescription(gun,ja);
+            string element=GunElements.Description(gun,ja);
+            string prefix=string.IsNullOrEmpty(element)?"":element+"\n";
+            if(BossRelicFoundation.Decode(gun?.bossRelicId,out _,out _))return prefix+LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
+            if(!string.IsNullOrEmpty(gun.legendaryKey))return prefix+LegendaryCatalog.Description(gun,ja)+"\n"+ManufacturerBranding.GunDescription(gun,ja);
+            return prefix+ManufacturerBranding.GunDescription(gun,ja)+"\n"+GunMechanismDescription(gun,ja);
         }
         public static string GunClassName(Gun gun,bool? japanese=null)
         {

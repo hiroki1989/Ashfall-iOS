@@ -43,7 +43,7 @@ namespace NeonVault
                 float damage=Random.Range(game.EffectiveMeleeDamageMin(weapon),game.EffectiveMeleeDamageMax(weapon));
                 bool critical=Random.value<Mathf.Clamp(game.MeleeCriticalChance+GearScoring.AffixTotal(weapon.affixes,"critChance"),0,.75f);
                 if(critical)damage*=game.MeleeCriticalMultiplier+GearScoring.AffixTotal(weapon.affixes,"critDamage");
-                Color numberColor=critical?new Color(1,.9f,.12f):(game.ArtifactDamageMultiplier>1.0001f||game.ArtifactAffixBonus("damage")>0)?new Color(1,.22f,.16f):Color.white;
+                Color numberColor=critical?new Color(.55f,.85f,1f):(game.ArtifactDamageMultiplier>1.0001f||game.ArtifactAffixBonus("damage")>0)?new Color(.35f,1f,.55f):Color.white;
                 if(!foe.Hit(damage,point,numberColor,100))continue;
                 game.RunHit(foe,damage,point);
                 if(weapon.uniqueEffect&&legendaryReady<=0)

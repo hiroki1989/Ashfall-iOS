@@ -73,6 +73,7 @@ namespace NeonVault
                 string damage=T("DMG ","威力 ")+GunDamageMin(g).ToString("0.0")+"-"+GunDamageMax(g).ToString("0.0")+(g.pellets>1?" ×"+g.pellets:"");
                 c.description=T("TYPE ","銃種 ")+VaultLanguage.GunClassName(g)+"\n"+damage+T("   RATE ","   連射 ")+(1/Mathf.Max(.001f,g.interval)).ToString("0.0")+T("/s\nMAG ","/秒\n装弾 ")+g.magazine+T("   RELOAD ","   リロード ")+g.reloadSeconds.ToString("0.0")+T("s\nCRIT ","秒\n会心 ")+(GunCriticalChance(g)*100).ToString("0.#")+"%";
                 c.description=EqAppend(c.description,GearScoring.AffixSummary(g));
+                c.description=EqAppend(c.description,GunElements.Description(g,VaultLanguage.Japanese));
                 if(!string.IsNullOrEmpty(g.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(g,LegendaryCatalog.Description(g,VaultLanguage.Japanese)));
                 c.fullDescription=EqAppend(c.description,T("ACCURACY ","命中 ")+Arsenal.Accuracy(g).ToString("0.#")+"%"+T("   SPEED ","   弾速 ")+g.speed.ToString("0.#"));
                 }
@@ -227,7 +228,7 @@ namespace NeonVault
                 Box(new Rect(952,top+104,64,3),selected.color);
                 EqPortrait(new Rect(978,top+116,390,124),selected.item,true);
                 float detailH=362-top;
-                string eqDetail=selected.fullDescription;
+                string eqDetail=selected.summary+"\n"+selected.fullDescription;
                 float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
                 eqDetailExtent=Mathf.Max(detailH,textHeight+16);
                 eqDetailScroll=GUI.BeginScrollView(new Rect(950,top+248,446,detailH),eqDetailScroll,new Rect(0,0,416,eqDetailExtent));

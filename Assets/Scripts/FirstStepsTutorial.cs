@@ -136,7 +136,7 @@ namespace NeonVault
             if(DebtLevel>=2)SetFirstStepsStage(7);
             else { SetFirstStepsStage(3);PlayerPrefs.SetInt(FirstStepsTargetKey,0);SetOverworldWaypoint(2,0); }
         }
-        void FirstStepsSkillUpgraded(){if(FirstStepsStage==7){SetFirstStepsStage(5);PlayerPrefs.DeleteKey(FirstStepsTargetKey);SetOverworldWaypoint(0,-1);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}}
+        void FirstStepsSkillUpgraded(){if(smoke)return;if(FirstStepsStage==7){SetFirstStepsStage(5);PlayerPrefs.DeleteKey(FirstStepsTargetKey);SetOverworldWaypoint(0,-1);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}}
         void DrawFirstStepsTutorial()
         {
             if (smoke || InventoryOpen || manufacturerRegistry || WorldBossConversationVisible || worldTransitionPending) return;

@@ -454,7 +454,8 @@ namespace NeonVault
         public float damage, life=3;
         public float hitAccuracy=100;
         public float actionCharge;
-        public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect,parabolic;
+        public GunElement element;public float elementPercent,elementRadius,elementDuration,elementBonus=1f;public int elementChains;
+        public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect,parabolic,skillProjectile;
         public float verticalVelocity,gravity=18f,splashRadius;
         public void ConfigureParabolic(Vector3 origin,Vector3 targetPos,float horizSpeed,float arcGravity=18f,float splash=.85f)
         {
@@ -471,8 +472,8 @@ namespace NeonVault
         public int bounces;
         public Foe last;
         public Color visualColor=Color.cyan;
-        public static readonly Color LegendaryDamageColor=new Color(1f,.36f,.04f);
-        public Color DamageNumberColor=>legendaryEffect?LegendaryDamageColor:critical?new Color(1,.9f,.12f):moduleAmplified?new Color(1,.22f,.16f):Color.white;
+        public static readonly Color LegendaryDamageColor=new Color(.32f,.82f,1f);
+        public Color DamageNumberColor=>legendaryEffect?LegendaryDamageColor:critical?new Color(.55f,.85f,1f):moduleAmplified?new Color(.35f,1f,.55f):Color.white;
         float visibilityNext;bool cachedVisible;
         void Update()
         {
@@ -496,9 +497,9 @@ namespace NeonVault
                     Vector3 hitPoint=ContactPoint(target.transform.position,old,transform.position,target.kind==3?1.2f:.65f);
                     transform.position=hitPoint;CombatVisuals.Impact(hitPoint,velocity,visualColor,effect,transform.parent);
                     if(!target.Hit(damage,hitPoint,DamageNumberColor,hitAccuracy)){Destroy(gameObject);return;}
+                    GunElements.Apply(this,target,hitPoint);
                     if(actionCharge>0){game.ActionSkillOnBulletHit(actionCharge);actionCharge=0;}
-                    game.RunHit(target,damage,hitPoint);
-                    game.LegendaryBulletHit(target,hitPoint);
+                    if(!skillProjectile){game.RunHit(target,damage,hitPoint);game.LegendaryBulletHit(target,hitPoint);}
                     if(effect==GunEffect.Singularity) { game.GravityWell(transform.position,damage,DamageNumberColor); Destroy(gameObject); return; }
                     if(effect==GunEffect.Ricochet && bounces<3)
                     {
@@ -509,6 +510,7 @@ namespace NeonVault
                         {
                             var split=game.SpawnBullet(transform.position,Quaternion.Euler(0,i*40,0)*velocity.normalized,true,damage*.3f,18,Color.cyan,GunEffect.Normal,hitAccuracy);
                             split.critical=critical;split.moduleAmplified=moduleAmplified;split.legendaryEffect=legendaryEffect;split.last=target; // Leave the struck enemy before looking for a new collision.
+                            split.element=element;split.elementPercent=elementPercent;split.elementRadius=elementRadius;split.elementDuration=elementDuration;split.elementChains=elementChains;split.elementBonus=elementBonus;
                         }
                         if(next!=null) { velocity=(next.transform.position-transform.position).normalized*25; life=2; return; }
                     }

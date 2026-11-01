@@ -2,10 +2,9 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    // Set to false to restore the previous font choices throughout the game.
+    // Main UI, headings, mobile controls and combat text use the same asset.
     internal static class VaultFont
     {
-        internal const bool UseAprilGothic = true;
-        internal static Font Preferred() => Resources.Load<Font>("Fonts/GenShinGothic-P-Regular") ?? Resources.Load<Font>("Fonts/NotoSansJP");
+        internal static Font Preferred() => Resources.Load<Font>("Fonts/JNRfont_n");
     }
 }

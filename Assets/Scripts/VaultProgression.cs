@@ -91,13 +91,13 @@ namespace NeonVault {
   void ActivateLegendaryModule(ArtifactItem a)
   {
    if(!ArtifactCatalog.LegendaryModuleBonus(a,out int healing,out int rounds,out float dodge))return;
-   hp=Mathf.Min(maxHp,hp+healing);dodgeCooldown=Mathf.Max(0,dodgeCooldown-dodge);
+   HealPlayer(healing);dodgeCooldown=Mathf.Max(0,dodgeCooldown-dodge);
    if(rounds>0&&gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+rounds);}
    ApplyLegendaryModuleSignature(a);
   }
   public void ArtifactOnKill(Vector3 position){if(armorKillTimer<=0){foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor)&&armor.uniqueEffect==1){ArtifactShield=Mathf.Max(ArtifactShield,Mathf.Min(30,ArtifactShield+4));armorKillTimer=4;break;}}for(int i=0;i<2;i++){var a=EquippedArtifacts[i];if(a==null||ArtifactTimer(a)>0||a.effect!=ArtifactEffect.KillShield)continue;ArtifactShield=Mathf.Max(ArtifactShield,Mathf.Min(30,ArtifactShield+8*a.power));artifactTimers[a.id]=a.cooldown;ActivateLegendaryModule(a);}}
   public void ArtifactOnReload(){LegendaryTrigger("reload",PlayerPosition);for(int i=0;i<2;i++){var a=EquippedArtifacts[i];if(a!=null&&ArtifactTimer(a)<=0&&a.effect==ArtifactEffect.ReloadSurge){reloadSurgeExpiry[a.id]=artifactCombatClock+3;artifactTimers[a.id]=a.cooldown;ActivateLegendaryModule(a);}}RefreshReloadSurgeSummary();}
-  public void ArtifactOnDash(){LegendaryTrigger("dash",PlayerPosition);if(armorDashTimer<=0){foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor)&&armor.uniqueEffect==2){hp=Mathf.Min(maxHp,hp+4);armorDashTimer=5;break;}}for(int i=0;i<2;i++){var a=EquippedArtifacts[i];if(a==null||ArtifactTimer(a)>0||a.effect!=ArtifactEffect.DashPulse)continue;artifactTimers[a.id]=a.cooldown;foreach(var f in Enemies.ToArray())if(f!=null&&Vector3.Distance(f.transform.position,PlayerPosition)<3.5f)f.Hit(12*a.power,null,new Color(1,.22f,.16f));Burst(PlayerPosition,Cyan,12);ActivateLegendaryModule(a);}}
+  public void ArtifactOnDash(){LegendaryTrigger("dash",PlayerPosition);if(armorDashTimer<=0){foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor)&&armor.uniqueEffect==2){HealPlayer(4);armorDashTimer=5;break;}}for(int i=0;i<2;i++){var a=EquippedArtifacts[i];if(a==null||ArtifactTimer(a)>0||a.effect!=ArtifactEffect.DashPulse)continue;artifactTimers[a.id]=a.cooldown;foreach(var f in Enemies.ToArray())if(f!=null&&Vector3.Distance(f.transform.position,PlayerPosition)<3.5f)f.Hit(12*a.power,null,new Color(1,.22f,.16f));Burst(PlayerPosition,Cyan,12);ActivateLegendaryModule(a);}}
   class ArtifactDrop{public ArtifactItem item;public Vector3 position;public GameObject visual;}
   readonly List<ArtifactDrop> artifactDrops=new List<ArtifactDrop>();
   ArtifactDrop NearArtifact(){ArtifactDrop nearest=null;float distance=2.6f;foreach(var d in artifactDrops){float n=Vector3.Distance(PlayerPosition,d.position);if(n<distance){nearest=d;distance=n;}}return nearest;}
