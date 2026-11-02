@@ -1231,3 +1231,6 @@ D:\\Unity\\Ashfall-iOSの既存35作業を保持し、敵攻撃力のレベル�
 スキルの取得・振り直しで周回中のHP・威力・連射強化が消える不具合も修正。Unity Editor検査 D:/Unity/BuildTemp/ActionSkillExpansionReview/result.txt は149件失敗0。D:/Unity/BuildTemp/ActionTreeReview/ の日英24画面を撮影し、長文スクロール前後を目視。実機操作の検証はユーザー指示により対象外。バランス試算は Development/ActionSkillBalanceReport.md と Development/Tools/ActionSkillBalance/simulate_actual.py を参照。計算上の比較であり実プレイの測定ではない。
 未完了: Windows製品統合ビルドは D:/Unity/BuildTemp/low-memory-build4/ で空き約1.07GBに達し安全監視で停止。成功していない。空きメモリの確保後に再実行が必要。追加ノードは効果の組み合わせを含み、独立効果の種類が従来比で正確に5倍かは未計測。
 統合ビルド追試（2026-11-02）: 不要アプリ終了後の空き約6.9GB、job-worker 1、Asset Import Worker 1、1秒ごとの監視でも、D:/Unity/BuildTemp/low-memory-build5/ は空き1.06GBで停止し未成功。Unity Editor検査は149項目失敗0、日英24画面は長文スクロール前後を含め目視確認。製品ビルド完了にはメモリ負荷の削減またはより多い空きRAMが必要。ユーザーはiOS実機確認を不要と指定済み。
+
+## 2026-11-03 / iOS version and build 42
+Confirmed App Store Connect build 41 is VALID. Updated D:/Unity/Ashfall-iOS/ProjectSettings/ProjectSettings.asset bundleVersion and iPhone buildNumber to 42. New IPA generation, signing, and upload are not performed. Recorded the required post-upload version confirmation rule in Development/TEAM.md.

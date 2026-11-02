@@ -35,3 +35,6 @@
 完了報告: 変更ファイル / 結果 / 検証 / 未解決。15行以内。
 他担当のファイルやSTATE.mdを編集しない。
 ```
+
+## App Store Connect versioning rule
+After an IPA upload, when the user makes their first Unity change request, PMO must first ask whether to increment the app version and build number. Apply the user's answer before implementation.
