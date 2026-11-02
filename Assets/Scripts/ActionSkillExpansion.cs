@@ -53,11 +53,29 @@ namespace NeonVault
                 if(k==ActionSkillKind.Medic&&b==1&&t==2)return "medic_damage";
                 if(k==ActionSkillKind.Medic&&b==2&&t==1)return "medic_follow";
             }
+            // Later choices previously bundled a tactical effect with two damage
+            // bonuses. Give that tactical effect its own stable saved node instead.
+            string tactical=ExtraTactical(k,b,t,s);
+            if(tactical!=null)return tactical;
             if(s==1&&(t==1||t==3))return ExtraPassive[(int)k*3+b,t==1?0:1];
+            if(t>0)
+            {
+                // Each saved position remains unchanged; later tiers offer a wider
+                // selection of utility rather than repeating damage on every row.
+                string[,] utility={
+                    {"reload_speed","accuracy","move_speed","action_charge","critical_chance","turret_range","turret_duration","fire_rate"},
+                    {"move_speed","reload_speed","critical_chance","action_charge","grenade_radius","grenade_count","accuracy","critical_damage"},
+                    {"max_health","damage_reduction","move_speed","action_charge","medic_radius","medic_duration","reload_speed","critical_chance"}
+                };
+                string current=ExtraEffects[(int)k,b,s];
+                if(current.EndsWith("_damage"))return utility[(int)k,(b*3+t+s)%8];
+            }
             return ExtraEffects[(int)k,b,s];
         }
         static float ExtraAmount(string id,int tier)
         {
+            float tactical=ExtraTacticalAmount(id);
+            if(tactical>0)return tactical;
             switch(id)
             {
                 case "turret_double":case "turret_element":case "grenade_element":case "medic_debuff":case "turret_follow":case "medic_follow":return 1;
@@ -71,18 +89,7 @@ namespace NeonVault
                 default:return .025f+.005f*tier;
             }
         }
-        // Compound nodes create meaningful choices across weapon and elemental builds.
-        static string ExtraSecondary(ActionSkillKind k,int b,int t,int slot)
-        {
-            string primary=ExtraEffect(k,b,t,slot);
-            if(primary=="turret_double"||primary=="turret_element"||primary=="grenade_element"||primary=="medic_debuff"||primary=="turret_focus"||primary=="turret_follow"||primary=="grenade_suppress"||primary=="grenade_heal"||primary=="medic_damage"||primary=="medic_guard"||primary=="medic_follow")return null;
-            string[] ids={"handgun_damage","sniper_damage","fire_damage","electric_damage","poison_damage","explosive_damage"};
-            string secondary=ids[((int)k*3+b+t+slot)%ids.Length];
-            return secondary==primary?ids[((int)k*3+b+t+slot+1)%ids.Length]:secondary;
-        }
-        // Preserve the original primary and secondary bonuses (including for
-        // existing saves). These late-tree bonuses add tactical positioning and
-        // interaction with the currently active device.
+        // Late-tree choices use positioning and interaction with the active device.
         static string ExtraTactical(ActionSkillKind k,int b,int t,int slot)
         {
             if(slot!=0)return null;
@@ -149,10 +156,6 @@ namespace NeonVault
                     string id=ExtraEffect((ActionSkillKind)k,b,t,slot);
                     actionSkillExtraValues.TryGetValue(id,out float current);
                     actionSkillExtraValues[id]=current+ExtraAmount(id,t);
-                    string secondary=ExtraSecondary((ActionSkillKind)k,b,t,slot);
-                    if(secondary!=null){actionSkillExtraValues.TryGetValue(secondary,out current);actionSkillExtraValues[secondary]=current+.01f+.0025f*t;}
-                    string tactical=ExtraTactical((ActionSkillKind)k,b,t,slot);
-                    if(tactical!=null){actionSkillExtraValues.TryGetValue(tactical,out current);actionSkillExtraValues[tactical]=current+ExtraTacticalAmount(tactical);}
                 }
                 actionSkillExtraValuesDirty=false;
             }
@@ -162,6 +165,18 @@ namespace NeonVault
         {
             switch(id)
             {
+                case "turret_near_damage":return ja?"砲台援護":"Turret cover";
+                case "turret_near_reload":return ja?"補給支援":"Supply cover";
+                case "turret_near_critical":return ja?"狙撃支援":"Targeting cover";
+                case "turret_near_guard":return ja?"防護支援":"Defensive cover";
+                case "turret_hit_charge":return ja?"連動充電":"Linked charge";
+                case "turret_near_element":return ja?"属性支援":"Elemental cover";
+                case "grenade_hit_heal":return ja?"爆風回復":"Blast recovery";
+                case "grenade_hit_charge":return ja?"爆風充電":"Blast charge";
+                case "grenade_slow":return ja?"衝撃遅延":"Concussive delay";
+                case "medic_field_damage":return ja?"治療域の援護":"Field fire";
+                case "medic_field_reload":return ja?"治療域の補給":"Field supply";
+                case "medic_field_charge":return ja?"治療域の充電":"Field charge";
                 case "turret_damage":return ja?"タレット威力":"Turret damage";case "turret_rate":return ja?"タレット連射":"Turret fire rate";
                 case "turret_range":return ja?"タレット射程":"Turret range";case "turret_duration":return ja?"タレット持続":"Turret duration";
                 case "turret_focus":return ja?"集中射撃":"Focused fire";case "turret_follow":return ja?"追尾架台":"Mobile turret";
@@ -200,6 +215,8 @@ namespace NeonVault
         {
             if(!ValidExtra(k,b,t,s))return "";
             string id=ExtraEffect(k,b,t,s);bool ja=VaultLanguage.Japanese;
+            string tacticalDescription=ExtraTacticalDescription(id,ja);
+            if(tacticalDescription.Length>0)return tacticalDescription;
             switch(id)
             {
                 case "turret_focus":return ja?"同じ敵への連続射撃ごとに威力+5%、最大5回。威力は武器の95%が上限。":"Each consecutive turret shot at the same target adds 5% damage, up to five times. Damage is capped at 95% of the weapon.";
@@ -218,10 +235,6 @@ namespace NeonVault
             string suffix=id=="grenade_count"?(ja?"個":""):id=="turret_range"||id=="medic_radius"||id=="grenade_radius"?"m":id=="turret_duration"||id=="medic_duration"?(ja?"秒":"s"):"%";
             float displayed=suffix=="%"?amount*100:amount;
             string result=ExtraLabel(id,ja)+" +"+displayed.ToString("0.#")+suffix;
-            string secondary=ExtraSecondary(k,b,t,s);
-            if(secondary!=null)result+="\n"+ExtraLabel(secondary,ja)+" +"+((.01f+.0025f*t)*100).ToString("0.##")+"%";
-            string tactical=ExtraTactical(k,b,t,s);
-            if(tactical!=null)result+="\n"+ExtraTacticalDescription(tactical,ja);
             if(id=="turret_damage")result+=ja?"\n上限：武器威力の95%（2台目は70%）。":"\nLimit: 95% of weapon damage (second turret: 70% of the first).";
             if(id=="turret_rate")result+=ja?"\n上限：武器連射速度の135%。":"\nLimit: 135% of weapon fire rate.";
             if(id=="turret_duration")result+=ja?"\n持続時間の上限：22秒。":"\nDuration limit: 22 seconds.";

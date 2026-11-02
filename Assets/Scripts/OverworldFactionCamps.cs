@@ -117,7 +117,7 @@ namespace NeonVault
                 if (!camp.spawned && (camp.position - PlayerPosition).sqrMagnitude < 100 * 100)
                 {
                     camp.spawned = true;
-                    int guardCount = rng.Next(10, 21);
+                    int guardCount = rng.Next(9, 19);
                     for (int member = 0; member < guardCount; member++)
                     {
                         float angle = member * Mathf.PI * 2f / guardCount;

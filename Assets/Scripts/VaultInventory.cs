@@ -101,7 +101,7 @@ namespace NeonVault
                 {
                     var save=JsonUtility.FromJson<LoadoutSave>(PlayerPrefs.GetString(storageKey));
                     if(save!=null){trailWardenGrantVersion=save.trailWardenGrantVersion;trailWardenDelivered=save.trailWardenDelivered;WeaponCapacityTier=Mathf.Clamp(save.weaponCapacityTier,0,10);ArmorCapacityTier=Mathf.Clamp(save.armorCapacityTier,0,10);MeleeCapacityTier=Mathf.Clamp(save.meleeCapacityTier,0,10);for(int i=0;i<AmmoTypeCount;i++)ammoCapacityTiers[i]=save.ammoCapacityTiers!=null&&i<save.ammoCapacityTiers.Length?Mathf.Clamp(save.ammoCapacityTiers[i],0,10):Mathf.Clamp(save.ammoCapacityTier,0,10);}
-                    if(save?.weapons!=null)foreach(var item in save.weapons)if(item!=null&&item.damage>0&&item.interval>0&&(Weapons.Count<WeaponCapacity||save.trailWardenGrantVersion>0)){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");Weapons.Add(item);}
+                    if(save?.weapons!=null)foreach(var item in save.weapons)if(item!=null&&item.damage>0&&item.interval>0){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");Weapons.Add(item);}
                     if(save?.armor!=null)foreach(var item in save.armor)if(item!=null&&(int)item.slot>=0&&(int)item.slot<5){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");ArmorInventory.Add(item);}
                     if(save?.meleeWeapons!=null)foreach(var item in save.meleeWeapons)if(item!=null&&item.damage>0&&item.interval>0&&MeleeWeaponInventory.Count<MeleeWeaponCapacity){if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");MeleeWeaponCatalog.EnsureAffixes(item);if(!MeleeWeaponInventory.Exists(m=>m.id==item.id))MeleeWeaponInventory.Add(item);}
                     if(save!=null&&!string.IsNullOrEmpty(save.equippedMelee))EquippedMeleeWeapon=MeleeWeaponInventory.Find(m=>m.id==save.equippedMelee);
@@ -231,11 +231,11 @@ namespace NeonVault
         {
             for(int step=1;step<=AvailableWeaponSlotCount;step++){int slot=((ActiveWeaponSlot+direction*step)%AvailableWeaponSlotCount+AvailableWeaponSlotCount)%AvailableWeaponSlotCount;if(WeaponInSlot(slot)!=null){ActivateWeaponSlot(slot);return;}}
         }
-        public bool StoreWeapon(Gun item)
+        public bool StoreWeapon(Gun item, bool allowRewardOverflow=false)
         {
             GearBalance.Migrate(item);
             if(item==null)return false;if(Weapons.Contains(item))return true;
-            if(Weapons.Count>=WeaponCapacity)return false;
+            if(!allowRewardOverflow&&Weapons.Count>=WeaponCapacity)return false;
             if(string.IsNullOrEmpty(item.id))item.id=Guid.NewGuid().ToString("N");
             Weapons.Add(item);SaveInventory();return true;
         }
@@ -250,8 +250,8 @@ namespace NeonVault
         }
         public void EquipMeleeWeapon(MeleeWeaponItem item)
         {if(item==null||!MeleeWeaponInventory.Contains(item))return;if(EquippedMeleeWeapon!=item)PlayWeaponSound(gun,"equip",.5f);EquippedMeleeWeapon=item;SaveInventory();}
-        public bool StoreArmor(ArmorItem item)
-        {if(!Armory.IsActiveArmor(item)||ActiveArmorCount>=ArmorCapacity)return false;GearBalance.Migrate(item);if(!ArmorInventory.Contains(item))ArmorInventory.Add(item);SaveInventory();return true;}
+        public bool StoreArmor(ArmorItem item, bool allowRewardOverflow=false)
+        {if(!Armory.IsActiveArmor(item)||(!allowRewardOverflow&&ActiveArmorCount>=ArmorCapacity))return false;GearBalance.Migrate(item);if(!ArmorInventory.Contains(item))ArmorInventory.Add(item);SaveInventory();return true;}
         public void EquipArmor(ArmorItem item)
         {if(!Armory.IsActiveArmor(item)||!ArmorInventory.Contains(item))return;if(EquippedArmor[(int)item.slot]!=item)PlayWeaponSound(gun,"equip",.5f);EquippedArmor[(int)item.slot]=item;RecalculateArmor();PlayerAppearance?.ApplyArmor(EquippedArmor);SaveInventory();}
         public void UnequipArmor(int slot)

@@ -4,9 +4,10 @@ namespace NeonVault
 {
     public class Foe : MonoBehaviour
     {
-        public const float HealthGrowthPerLevel=.21f;
+        public const float HealthGrowthPerLevel=.28f;
+        public const float DamageGrowthPerLevel=.27f;
         public static float LevelHealthScale(int level)=>1f+HealthGrowthPerLevel*GearBalance.LevelGrowthSteps(level);
-        public static float LevelDamageScale(int level)=>1f+HealthGrowthPerLevel*GearBalance.LevelGrowthSteps(level);
+        public static float LevelDamageScale(int level)=>1f+DamageGrowthPerLevel*GearBalance.LevelGrowthSteps(level);
         public VaultGame game;
         public bool elite;
         public Color HealthBarColor=>elite?new Color(.72f,.28f,1f):kind==3?new Color(1f,.58f,.12f):new Color(.92f,.12f,.16f);
@@ -109,14 +110,14 @@ namespace NeonVault
                 }
                 return;
             }
-            if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=MajorBoss?.14f:RaiderBoss?.22f:.16f;}if(kind==10&&burstShots>=0&&lockedAim.sqrMagnitude>.01f){transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);Vector3 strafe=Vector3.Cross(Vector3.up,lockedAim)*humanStrafeSign;transform.position=game.MoveWithinRoom(transform.position,strafe*speed*.85f*Time.deltaTime,.6f);}}
+            if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=MajorBoss?.14f:RaiderBoss?.22f:.16f;}if(kind==10&&lockedAim.sqrMagnitude>.01f){transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}}
             Vector3 delta=game.PlayerPosition-transform.position;delta.y=0;float distance=delta.magnitude;Vector3 direction=delta.normalized;
             if(!alerted&&distance>22)return;
             if(Time.time>=visibilityNext){visibilityNext=Time.time+.14f+(kind&7)*.008f;cachedVisible=distance<35&&game.LineOfSight(transform.position,game.PlayerPosition);}
             bool visible=cachedVisible;
             if(distance<17&&visible)alerted=true;if(!alerted)return;
             if(!charging&&dash<=0&&burstShots==0){if(distance>.01f)transform.rotation=Quaternion.LookRotation(direction);if(weapon!=null)weapon.Aim(direction);}
-            if(dash>0){dash-=Time.deltaTime;float dSpd=dashSpeed>0?dashSpeed:(kind==3?18f:14f);transform.position=game.MoveWithinRoom(transform.position,lockedAim*dSpd*Time.deltaTime,.6f);if(Vector3.Distance(game.PlayerPosition,transform.position)<(kind==3?1.6f:1.3f)&&contact<=0){game.Hurt((kind==3?29:kind==8?25:22)*damageScale);contact=1;dash=0;}if(dash<=0&&dashLandingBlast){dashLandingBlast=false;CombatVisuals.Burst(transform.position,new Color(.95f,.42f,.15f),14,transform.parent);Vector3 dp=game.PlayerPosition-transform.position;dp.y=0;if(dp.magnitude<(kind==3?3.2f:2.3f)&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt((kind==3?26f:20f)*damageScale);}}
+            if(dash>0){dash-=Time.deltaTime;float dSpd=dashSpeed>0?dashSpeed:(kind==3?18f:14f);transform.position=game.MoveWithinRoom(transform.position,lockedAim*dSpd*Time.deltaTime,.6f);if(Vector3.Distance(game.PlayerPosition,transform.position)<(kind==3?1.6f:1.3f)&&contact<=0){game.Hurt((kind==3?29:kind==8?25:22)*damageScale);contact=1;dash=0;}if(dash<=0&&dashLandingBlast){dashLandingBlast=false;CombatVisuals.Burst(transform.position,new Color(.95f,.42f,.15f),14,transform.parent);Vector3 dp=game.PlayerPosition-transform.position;dp.y=0;if(dp.magnitude<(kind==3?3.2f:kind==7?1.9f:2.3f)&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt((kind==3?26f:20f)*damageScale);}}
             else if(!charging)
             {
                 Vector3 movement=direction;
@@ -152,14 +153,15 @@ namespace NeonVault
                         {
                             humanTactic=(humanTactic+1+Mathf.Abs(Mathf.RoundToInt(transform.position.x*7+transform.position.z*13))%3)%5;
                             if((humanTactic&1)==0)humanStrafeSign=-humanStrafeSign;
-                            humanTacticTimer=humanTactic==4?.38f:1.1f+(humanTactic*.32f);
+                            humanTacticTimer=humanTactic==4?.38f:1.8f+(humanTactic*.40f);
                             if(humanTactic==4&&visible&&distance<13f)humanRollTimer=.38f;
                         }
                         if(visible&&distance>=4.2f&&distance<=14.5f)
                         {
                             Vector3 perp=Vector3.Cross(Vector3.up,direction)*humanStrafeSign;
                             if(game.Blocked(transform.position+perp*1.1f,.55f)){humanStrafeSign=-humanStrafeSign;perp=-perp;}
-                            if(humanTactic==0||humanTactic==4){movement=(perp+(distance>9.5f?direction*.35f:distance<6f?-direction*.35f:Vector3.zero)).normalized;mobile=true;}
+                            if(humanTactic==0||humanTactic==3){mobile=false;}
+                            else if(humanTactic==4){movement=(perp+(distance>9.5f?direction*.35f:distance<6f?-direction*.35f:Vector3.zero)).normalized;mobile=true;}
                             else if(humanTactic==1){movement=(perp*.8f+direction*(distance>7.2f?.6f:-.25f)).normalized;mobile=true;}
                             else if(humanTactic==2){movement=(perp*.75f-direction*.65f).normalized;mobile=true;}
                             else {mobile=distance>10.5f;movement=direction;}
@@ -187,20 +189,20 @@ namespace NeonVault
                     if(away.sqrMagnitude>0)movement=(movement+away*2.2f).normalized;
                     if(sprintBoostTimer>0)sprintBoostTimer-=Time.deltaTime;
                     else if(kind!=10&&distance>3.8f&&distance<11f&&timer<.65f&&((enemyAttackCount+kind)&1)==1)sprintBoostTimer=.45f;
-                    float moveSpeed=speed*(kind==10?(humanRollTimer>0?1.85f:humanReloadTimer>0&&hasCoverTarget?1.35f:humanTactic==1?1.2f:1.05f):sprintBoostTimer>0?(kind==3?1.55f:1.45f):1f);
-                    if((mobile||away.sqrMagnitude>0)&&!(RaiderBoss&&burstShots>0))transform.position=game.MoveWithinRoom(transform.position,movement*moveSpeed*Time.deltaTime,.6f);
+                    float moveSpeed=speed*(kind==10?(humanRollTimer>0?1.45f:humanReloadTimer>0&&hasCoverTarget?1.1f:humanTactic==1?.8f:.75f):sprintBoostTimer>0?(kind==3?1.55f:1.45f):1f);
+                    if((mobile||away.sqrMagnitude>0)&&!((RaiderBoss||kind==10)&&burstShots>0))transform.position=game.MoveWithinRoom(transform.position,movement*moveSpeed*Time.deltaTime,.6f);
                 }
             }
             contact-=Time.deltaTime; // Damage comes from readable attacks, never passive body contact.
             if(charging)
             {
-                if(kind==10&&visible&&charge>.18f){Vector3 strafe=Vector3.Cross(Vector3.up,direction)*humanStrafeSign;if(game.Blocked(transform.position+strafe*.9f,.55f)){humanStrafeSign=-humanStrafeSign;strafe=-strafe;}Vector3 dodgeMove=(strafe+(distance<5.2f?-direction*.45f:Vector3.zero)).normalized;transform.position=game.MoveWithinRoom(transform.position,dodgeMove*speed*(humanRollTimer>0?1.65f:.95f)*Time.deltaTime,.6f);Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f){lockedAim=shotDirection.normalized;transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}if(warning!=null){muzzle=HumanMuzzlePosition();warning.transform.position=new Vector3(muzzle.x,.08f,muzzle.z);var line=warning.GetComponent<LineRenderer>();if(line!=null&&line.positionCount>=2){float length=line.GetPosition(1).magnitude;line.SetPosition(1,lockedAim*length);}}}
+                if(kind==10&&visible&&charge>.18f){Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f){lockedAim=shotDirection.normalized;transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}if(warning!=null){muzzle=HumanMuzzlePosition();warning.transform.position=new Vector3(muzzle.x,.08f,muzzle.z);var line=warning.GetComponent<LineRenderer>();if(line!=null&&line.positionCount>=2){float length=line.GetPosition(1).magnitude;line.SetPosition(1,lockedAim*length);}}}
                 charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();float baseWait=kind==3?(bossMove==BossMove.FlashLunge?.95f:bossMove==BossMove.ComboFrenzy?1.85f:bossMove==BossMove.Whirlwind?1.9f:bossMove==BossMove.ShockwaveRing?2.2f:bossMove==BossMove.Gun?2.3f:bossMove==BossMove.Slam?1.95f:bossMove==BossMove.Sweep?1.35f:1.55f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.2f:kind==7?2.8f:kind==0||kind==8?1.05f:kind==4?1.75f:kind==9?2.8f:1.85f;if(kind!=3&&kind!=10)baseWait*=attackVariant==1?.68f:attackVariant==2?1.22f:1f;if(kind==3&&hp<maxHp*.6f)baseWait*=.78f;if(MajorBoss)baseWait*=.72f;timer=baseWait;return;
             }
             timer-=Time.deltaTime;
             if(timer>0||!visible||distance>18)return;
             if((kind==0||kind==8)&&distance>(enemyAttackCount>0&&enemyAttackCount%3==1?4.2f:2.25f))return;
-            if(kind==7&&distance>(enemyAttackCount>0&&enemyAttackCount%3==2?11f:4.0f)||kind==4&&distance>10.5f||(kind==1||kind==2||kind==5||kind==6||kind==9)&&distance>15f)return;
+            if(kind==7&&distance>6.5f||kind==4&&distance>10.5f||(kind==1||kind==2||kind==5||kind==6||kind==9)&&distance>15f)return;
             if(kind!=3&&kind!=10){attackVariant=enemyAttackCount==0?0:SelectEnemyVariant(distance);enemyAttackCount++;}
             else if(kind==10){if(humanReloadTimer>0)return;enemyAttackCount++;}
             if(kind==3)
@@ -242,7 +244,7 @@ namespace NeonVault
                 lockedRadialAngle=Time.time*.35f;warning=new GameObject("Radial barrage warning");warning.transform.SetParent(transform.parent,false);int count=9;for(int i=0;i<count;i++){float angle=i*Mathf.PI*2/count+lockedRadialAngle;CombatVisuals.WarningLine(transform.position,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),5,warning.transform);}
             }
             else if(kind==9&&attackVariant==0)warning=CombatVisuals.WarningCircle(transform.position,HealingRadius,transform.parent);
-            else if(kind==7&&attackVariant!=2){lockedTarget=attackVariant==1?transform.position+lockedAim*2.2f:transform.position;lockedTarget.y=.08f;warning=CombatVisuals.WarningCircle(lockedTarget,attackVariant==1?2.4f:2.9f,transform.parent);}
+            else if(kind==7&&attackVariant!=2){lockedTarget=attackVariant==1?transform.position+lockedAim*3.9f:transform.position;lockedTarget.y=.08f;warning=CombatVisuals.WarningCircle(lockedTarget,attackVariant==1?1.9f:2.3f,transform.parent);}
             else if((kind==1||kind==2||kind==6||kind==9)&&distance<2.8f){lockedTarget=transform.position;lockedTarget.y=.08f;warning=CombatVisuals.WarningCircle(lockedTarget,2.9f,transform.parent);}
             else if(kind==0||kind==8){if(attackVariant==1)warning=CombatVisuals.WarningLine(transform.position,lockedAim,kind==8?4.4f:3.4f,transform.parent);else if(attackVariant==2)warning=CombatVisuals.WarningArc(transform.position,lockedAim,2.2f,135f,transform.parent);else warning=CombatVisuals.WarningCircle(transform.position+lockedAim*1.1f,1.2f,transform.parent);}
             else if(kind==4){warning=CombatVisuals.WarningLine(transform.position+Vector3.up*.05f,lockedAim,attackVariant==1?6.5f:9f,transform.parent);if(attackVariant==2)CombatVisuals.WarningCircle(transform.position+lockedAim*Mathf.Min(distance,8f),2.3f,warning.transform);}
@@ -274,7 +276,7 @@ namespace NeonVault
         int SelectEnemyVariant(float distance)
         {
             if(kind==9){foreach(var ally in game.Enemies)if(ally!=null&&!ally.dead&&ally!=this&&ally.hp<ally.maxHp*.92f&&Vector3.Distance(ally.transform.position,transform.position)<HealingRadius)return 0;return distance<3.8f?2:1;}
-            if(kind==7)return distance>3.9f?2:(enemyAttackCount%2==1?1:0);
+            if(kind==7)return distance>3.9f?1:(enemyAttackCount%2==1?1:0);
             if(kind==6)return distance<3.1f&&enemyAttackCount%3==2?2:(enemyAttackCount%2==1?1:0);
             if(kind==0||kind==8)return distance>2.35f?1:(enemyAttackCount%3);
             return enemyAttackCount%3;
@@ -323,7 +325,7 @@ namespace NeonVault
             if(kind==7&&attackVariant!=2)
             {
                 if(attackVariant==1){contact=0;dashSpeed=13f;dashLandingBlast=true;dash=.30f;return;}
-                CombatVisuals.Burst(transform.position+lockedAim*1.1f,new Color(.55f,.32f,.18f),16,transform.parent);var delta=game.PlayerPosition-transform.position;delta.y=0;if(delta.magnitude<2.9f&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(36*damageScale);return;
+                CombatVisuals.Burst(transform.position+lockedAim*1.1f,new Color(.55f,.32f,.18f),16,transform.parent);var delta=game.PlayerPosition-transform.position;delta.y=0;if(delta.magnitude<2.3f&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(36*damageScale);return;
             }
             if((kind==1||kind==2||kind==6||kind==9)&&(Vector3.Distance(game.PlayerPosition,transform.position)<2.8f||(kind==6||kind==9)&&attackVariant==2))
             {
@@ -341,7 +343,7 @@ namespace NeonVault
             {
                 if(UseAssaultRifle){burstShots=2;burstTimer=.16f;}
                 if((enemyAttackCount&1)==0)humanStrafeSign=-humanStrafeSign;
-                else {humanRollTimer=.34f;humanStrafeSign=-humanStrafeSign;}
+                else {humanStrafeSign=-humanStrafeSign;}
                 humanShotsSinceCover++;
                 if(humanShotsSinceCover>=(UseAssaultRifle?2:3))
                 {
@@ -482,7 +484,7 @@ namespace NeonVault
         public Color visualColor=Color.cyan;
         public static readonly Color LegendaryDamageColor=new Color(.32f,.82f,1f);
         public static readonly Color ModuleDamageColor=new Color(.08f,.72f,1f);
-        public Color DamageNumberColor=>legendaryEffect?LegendaryDamageColor:critical?new Color(.55f,.85f,1f):moduleAmplified?ModuleDamageColor:Color.white;
+        public Color DamageNumberColor=>legendaryEffect?LegendaryDamageColor:critical?new Color(.55f,.85f,1f):Color.white;
         float visibilityNext;bool cachedVisible;
         void Update()
         {

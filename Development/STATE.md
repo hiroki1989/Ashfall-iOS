@@ -1,3 +1,16 @@
+## 2026-11-02 / v41 透過・ダンジョン報酬（検証途中）
+- 透過建物の描画順を弾より後にし、木の幹は元のワールド投影を使うよう変更。実際の遮蔽シーンとiOS描画は未検証。
+- ダンジョンクリア報酬の銃・防具は所持上限を超えて受け取り、超過した銃の保存再読込も維持。現行にモジュール・近接のクリア報酬はない。報酬画面の画像と説明文字を拡大し、長文はスクロール対応。実画面・セーブ再読込は未検証。
+- Unity ActionSkillExpansionReview 149件失敗0、Editorコンパイル成功。統合Windowsビルドは不要アプリ終了後も空き約1.2GBで安全監視が停止し未完成（D:/Unity/BuildTemp/v41-final3）。前項のバランス・イベント・保存移行・画面検証も未完了。
+
+## 2026-11-02 / v41 戦闘・イベント・スキル調整（統合確認中）
+- Unity version/iOS build 41。Corporate Logo Medium ver3を共通本文・ダメージ・旧矢印に適用。主要文字をフォントのcmapで確認。無属性モジュール強化ダメージを白に変更。
+- 敵HP/攻撃成長を装備の成長より高くし、人間敵を射撃中停止、ブロウターの範囲を縮小。屋外スポーン候補・同時上限、通常ダンジョンの敵数を約10%削減（任務の最低討伐数は維持）。
+- 屋外生存イベントに30m境界と範囲外失敗、報酬箱のオレンジ輪を追加。スキル基幹と追加ノードを単一効果へ整理し、旧保存のスキルポイントを1回無償返還するv2移行を追加。
+- Unity EditorおよびPlayerスクリプトのコンパイルは成功（D:/Unity/BuildTemp/v41-integrated-final/unity.log、v41-compile-only.log）。git diff --check通過。統合ビルドは空きRAMが約1.1GBまで低下し安全監視が停止。実画面・イベント境界・スキルの保存移行と実戦バランスは未検証。メモリ確保後に統合ビルド・確認を続行する。
+
+## 2026-11-02 / iOS IPA 40をApp Store Connectへアップロード
+指定 `D:/downloads2/15669793359011-ash-8-default-ios-9.ipa`（1,927,807,669 bytes）を既存アプリ `com.hiroki1989.ashfall` へApple Build Upload APIで送信。IPA内のversion/buildは40/40。送信前のApp Store Connect最新buildは39で、40は未登録。29分割の送信後、file commit HTTP 200・asset `COMPLETE`・警告/エラーなし。Build Upload ID `8765a8f3-1d8a-43ca-8e41-742aa99212b1`。Apple側の状態は `PROCESSING`。TestFlight配信可能状態は未確認。ログ `D:/Unity/AshfallArtValidation/upload-build40-current.log`。アップロード実行記録 `D:/Unity/AshfallArtValidation/upload_build40_current.py`。
 ## 2026-11-02 / 勢力ボスのモーション
 - ユーザー指示によりボスのCrocモデルを通常の勢力兵と同じ軽量Prefabへ切り替え。レッドクロウは勢力1、コヨーテは勢力2、ヴェイルはウォーデンズ勢力0。kind 3・ボスAI・強さ・報酬は保持し、既存の人間敵と同じ可動骨格、歩行、両手での銃構え、倒れを使用。
 - Unity Editorで3勢力Prefabの待機・歩行姿勢を正面／側面から撮影し確認（D:/Unity/BuildTemp/BossHumanPoseReview）。Editor・iOS条件付きC#コンパイル成功、git diff --check通過。実際の各ボス戦とiOS実機での動作・長時間負荷は未検証。

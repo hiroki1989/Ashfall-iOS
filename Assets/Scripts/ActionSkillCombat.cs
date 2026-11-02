@@ -44,7 +44,18 @@ namespace NeonVault
 
         int ASRank(ActionSkillKind kind,int branch,int tier)=>Mathf.Clamp(ActionSkillRank(kind,branch,tier),0,1);
         float ASPath(ActionSkillKind kind,int branch)
-        {float n=0;for(int tier=0;tier<4;tier++)n+=Mathf.Clamp(ActionSkillRank(kind,branch,tier),0,6)/6f;return n;}
+        {
+            float n=0;
+            for(int tier=0;tier<4;tier++)
+            {
+                // These ranks already grant a passive player stat. They must not
+                // also add an action-device bonus to the same node.
+                if(tier==1 && !(branch==1 && kind!=ActionSkillKind.Medic))continue;
+                if(tier==3 && branch==1)continue;
+                n+=Mathf.Clamp(ActionSkillRank(kind,branch,tier),0,6)/6f;
+            }
+            return n;
+        }
 
         public void ActionSkillOnBulletHit(float charge)
         {
@@ -73,15 +84,15 @@ namespace NeonVault
         void DeployActionTurret()
         {
             var k=ActionSkillKind.Mechanic;
-            float fire=ASPath(k,0),movement=ASPath(k,1),area=ASPath(k,2);
+            float fire=ASPath(k,0),movement=ASPath(k,1);
             actionSkillDuration=Mathf.Min(22,12+movement*1.5f+ASRank(k,1,4)*5+ActionSkillExtraValue("turret_duration"));
             actionSkillPower=EffectiveDamage*(.5f+fire*.07f+ASRank(k,0,4)*.12f);
-            actionSkillRadius=14+area*1.5f+ActionSkillExtraValue("turret_range");
+            actionSkillRadius=14+ActionSkillExtraValue("turret_range");
             turretElement=CaptureActionElement(ActionSkillExtraValue("turret_element")>0);
             primaryTurretFocus=null;secondaryTurretFocus=null;primaryTurretShots=0;secondaryTurretShots=0;
             // The mobile platform becomes useful during progression rather than
             // requiring the final node. Retain the previous capstone path too.
-            actionSkillFollows=ActionSkillRank(k,1,2)>=3||ASRank(k,1,4)>0||ActionSkillExtraValue("turret_follow")>0;
+            actionSkillFollows=ActionSkillExtraValue("turret_follow")>0;
             actionSkillMultitarget=ASRank(k,2,4)>0;
             actionSkillFireTimer=.2f;
             actionSkillObject=new GameObject("Mechanic / field sentry").transform;
@@ -125,7 +136,7 @@ namespace NeonVault
             int count=Mathf.Clamp(1+Mathf.FloorToInt(ASPath(k,0))+3*ASRank(k,0,4)+Mathf.RoundToInt(ActionSkillExtraValue("grenade_count")),1,12);
             float radius=Mathf.Min(7f,2.7f+ASPath(k,1)*.35f+ASRank(k,1,4)*1.25f+ActionSkillExtraValue("grenade_radius"));
             float weaponDps=gun!=null?EffectiveDamage*Mathf.Max(1,gun.pellets)*EffectiveFireRate:EffectiveDamage*7.7f;
-            float damage=Mathf.Max(18,weaponDps/7.7f)*(20.0f+ASPath(k,2)*1.0f+ASRank(k,2,4)*3.0f)*(1+ActionSkillExtraValue("grenade_damage"));
+            float damage=Mathf.Max(18,weaponDps/7.7f)*(20.0f+ASPath(k,2)*1.0f)*(1+ActionSkillExtraValue("grenade_damage"));
             var grenadeElement=CaptureActionElement(ActionSkillExtraValue("grenade_element")>0);
             Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:player.forward;forward.y=0;
             for(int i=0;i<count;i++)
@@ -148,7 +159,7 @@ namespace NeonVault
             actionSkillPower=Mathf.Min(.09f,(.028f+recovery*.006f+ASRank(k,0,4)*.025f)*(1+ActionSkillExtraValue("medic_heal")));
             actionSkillRadius=3.0f+radius*.45f+ASRank(k,1,4)*1.6f+ActionSkillExtraValue("medic_radius");
             actionSkillDuration=Mathf.Min(24,12+duration*1.5f+ASRank(k,2,4)*5+ActionSkillExtraValue("medic_duration"));
-            actionSkillFollows=ActionSkillRank(k,2,2)>=3||ASRank(k,2,4)>0||ActionSkillExtraValue("medic_follow")>0;
+            actionSkillFollows=ActionSkillExtraValue("medic_follow")>0;
             actionSkillPulseTimer=0;
             actionSkillObject=new GameObject("Medic / healing field").transform;
             actionSkillObject.SetParent(world,false);var p=PlayerPosition;p.y=.10f;actionSkillObject.position=p;

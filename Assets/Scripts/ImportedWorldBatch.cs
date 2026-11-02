@@ -83,6 +83,9 @@ namespace NeonVault {
    var ghostShader=Resources.Load<Shader>("BuildingGhost");
    if(!ghostShader){Debug.LogError("BuildingGhost shader is missing; building opacity cannot be changed.");return source;}
    result=new Material(source);result.shader=ghostShader;
+   bool worldAtlas=source.shader&&source.shader.name=="NeonVault/RuinedDistrict";
+   result.SetFloat("_WorldAtlas",worldAtlas?1f:0f);
+   if(worldAtlas){result.SetVector("_Tile",source.GetVector("_Tile"));result.SetFloat("_Scale",source.GetFloat("_Scale"));}
    // Opaque asset textures may carry unrelated alpha (including all zero).
    // Preserve alpha only for source materials explicitly using cutout/transparency.
    bool alpha=source.renderQueue>=2450||(source.HasProperty("_Mode")&&source.GetFloat("_Mode")>0.5f)||(source.HasProperty("_Surface")&&source.GetFloat("_Surface")>0.5f);
@@ -92,7 +95,10 @@ namespace NeonVault {
    // BuildingGhost writes depth so walls and floors do not repeatedly compound
    // opacity along the same sightline when viewed through a multi-part building.
    if(result.HasProperty("_Color")){var color=result.color;color.a=.40f;result.color=color;}
-   result.renderQueue=3000;result.enableInstancing=true;
+   // Draw the ghost after transparent projectile trails, then blend it over
+   // them. Its depth write still prevents stacked building surfaces from
+   // making the entire building opaque.
+   result.renderQueue=3100;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
   void UpdateRendererFades(){

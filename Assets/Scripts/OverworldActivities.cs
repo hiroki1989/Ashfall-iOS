@@ -54,7 +54,7 @@ namespace NeonVault
                     type == 1 ? VaultLanguage.T("A survivor needs the area secured. Clear the attackers or defend the signal to unlock a rare or better equipment chest.", "生存者が周辺の安全確保を求めている。敵を倒すか信号を守ると、レア以上の装備箱が解放される。") :
                     type == 2 ? VaultLanguage.T("Follow the marks to a guarded cache, or fight here to secure the coordinates. Both routes lead to a rare or better equipment chest.", "印を辿って守られた物資箱を目指すか、この場で戦い座標を確保する。どちらもレア以上の装備箱に通じる。") :
                     type == 3 ? VaultLanguage.T("The cache is guarded. Defeat the attackers before time runs out to unlock it.", "物資箱は敵に守られている。制限時間内に敵を倒して解放しよう。") :
-                    type == 4 ? VaultLanguage.T("Survive the attacking enemies for 90 to 180 seconds to unlock a rare or better equipment chest. Leaving the area ends the challenge.", "90-180秒間、敵の攻撃を生き延びるとレア以上の装備箱が開きます。エリアを離れると挑戦終了。") :
+                    type == 4 ? VaultLanguage.T("Survive for 90 to 180 seconds within 30m of the event. Leaving the area fails the challenge.", "イベントの中心から30m以内で90-180秒間生き延びよう。エリアを出ると失敗。") :
                     type == 5 ? VaultLanguage.T("Open the unlocked equipment chest.", "解放された装備箱を開けよう。") : "";
             }
         }

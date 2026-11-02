@@ -86,8 +86,8 @@ namespace NeonVault
             }
             MobileCopyAt(260,220,screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失"),Gold);
             if(screen==Screen.Victory&&SelectedExpeditionStage!=null)MobileCopyAt(260,295,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),Mist,940);
-            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(260,365,920,150));else MobileCopyAt(260,380,Toast,Mist,940);
-            if(screen==Screen.Victory)MobileCopyAt(260,525,CompletedPayoutLabel(),Gold,940);
-            if(MobileButton(new Rect(260,590,920,140),screen==Screen.Victory?T("CONFIRM","確認"):T("RETURN TO SAFEHOUSE","拠点へ帰還"))){if(screen==Screen.Victory&&PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}
+            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(200,355,1040,250));else MobileCopyAt(260,380,Toast,Mist,940);
+            if(screen==Screen.Victory)MobileCopyAt(260,625,CompletedPayoutLabel(),Gold,940);
+            if(MobileButton(new Rect(260,700,920,120),screen==Screen.Victory?T("CONFIRM","確認"):T("RETURN TO SAFEHOUSE","拠点へ帰還"))){if(screen==Screen.Victory&&PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}
         }    }
 }

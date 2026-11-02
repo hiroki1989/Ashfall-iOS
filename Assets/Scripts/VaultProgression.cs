@@ -49,11 +49,11 @@ namespace NeonVault {
      cacheEn="SCRAP +"+scrap.ToString("N0");cacheJa="スクラップ +"+scrap.ToString("N0");break;
     case 1:
      var gear=RollExpeditionGun(r,RollExpeditionRewardRarity(r,true));
-     if(StoreWeapon(gear)){completedRewardGun=gear;cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
+     if(StoreWeapon(gear,true)){completedRewardGun=gear;cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
      else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
     case 2:
      var armor=RollExpeditionArmor(r,RollExpeditionRewardRarity(r,true));
-     if(StoreArmor(armor)){completedRewardArmor=armor;cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
+     if(StoreArmor(armor,true)){completedRewardArmor=armor;cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
      else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
     default:ExpeditionTokens++;cacheEn="SKILL POINT +1";cacheJa="スキルポイント +1";break;
    }
@@ -77,12 +77,12 @@ namespace NeonVault {
    bool weapon=r.Next(2)==0;
    Rarity rarity=RollExpeditionRewardRarity(r);
    var repeatGun=weapon?RollExpeditionGun(r,rarity):null;var repeatArmor=weapon?null:RollExpeditionArmor(r,rarity);
-   bool stored=weapon?StoreWeapon(repeatGun):StoreArmor(repeatArmor);
+   bool stored=weapon?StoreWeapon(repeatGun,true):StoreArmor(repeatArmor,true);
    if(stored){completedRewardGun=repeatGun;completedRewardArmor=repeatArmor;}
    if(stored)Notify(weapon?"REPEAT REWARD / WEAPON":"REPEAT REWARD / ARMOR",weapon?"再攻略報酬 / 銃":"再攻略報酬 / 防具");
    else {int salvage=ScaleScrap(18000000);AwardCredits(salvage);Notify("REPEAT REWARD / SALVAGE +"+salvage.ToString("N0"),"再攻略報酬 / 換金 +"+salvage.ToString("N0"));}
   }
-  public string ExpeditionRewardDescription(int stageId){if(clearedExpeditionStages.Contains(stageId))return VaultLanguage.T("REPEAT / scrap or gear","再攻略 / スクラップか装備");var r=new System.Random(ExpeditionMap.RewardSeed(stageId));int kind=r.Next(4);if(kind==0){int amount=ScaleScrap(25000000+r.Next(250001)*100);return VaultLanguage.T("SCRAP +"+amount.ToString("N0"),"スクラップ +"+amount.ToString("N0"));}if(kind==1)return VaultLanguage.T("GEAR CACHE / weapon (salvage if full)", "装備箱 / 銃（満杯時は換金）");if(kind==2)return VaultLanguage.T("GEAR CACHE / armor (salvage if full)","装備箱 / 防具（満杯時は換金）");return VaultLanguage.T("SKILL POINT +1 (FIRST CLEAR)","スキルポイント +1（初回のみ）");}
+  public string ExpeditionRewardDescription(int stageId){if(clearedExpeditionStages.Contains(stageId))return VaultLanguage.T("REPEAT / scrap or gear","再攻略 / スクラップか装備");var r=new System.Random(ExpeditionMap.RewardSeed(stageId));int kind=r.Next(4);if(kind==0){int amount=ScaleScrap(25000000+r.Next(250001)*100);return VaultLanguage.T("SCRAP +"+amount.ToString("N0"),"スクラップ +"+amount.ToString("N0"));}if(kind==1)return VaultLanguage.T("GEAR CACHE / weapon", "装備箱 / 銃");if(kind==2)return VaultLanguage.T("GEAR CACHE / armor","装備箱 / 防具");return VaultLanguage.T("SKILL POINT +1 (FIRST CLEAR)","スキルポイント +1（初回のみ）");}
   public void AwardCredits(int amount){Credits=(int)Math.Min(int.MaxValue,(long)Credits+Math.Max(0,amount));SaveProgression();}
   public bool TrySpendCredits(int amount){if(amount<=0||Credits<amount)return false;Credits-=amount;SaveProgression();return true;}
   void CreateShopStock(){shopStock.Clear();var r=new System.Random(51031+shopCycle*7919+HighestUnlocked*173);for(int i=0;i<4;i++){var offer=new ShopOffer();int level=DungeonCatalog.ItemLevel(r,HighestUnlocked);Rarity rarity=VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.RollShopRarity(r):i==3?Rarity.Rare:Rarity.Uncommon;if(i==0||i==1)offer.gun=Arsenal.CreateForDungeon(r,HighestUnlocked,rarity,level);else if(i==2)offer.armor=Armory.CreateForDungeon(r,HighestUnlocked,rarity,level);else offer.artifact=ArtifactCatalog.Create(r,HighestUnlocked,rarity,level);offer.cost=Mathf.Clamp((5000+level*300+(int)rarity*3500)*ScrapLevelMultiplier,5000,30000*ScrapLevelMultiplier);offer.purchased=shopPurchased.Contains(i);shopStock.Add(offer);}var melee=new ShopOffer{melee=MeleeWeaponCatalog.Create(r,DungeonCatalog.ItemLevel(r,HighestUnlocked))};melee.cost=(7500+melee.melee.level*800)*ScrapLevelMultiplier;melee.purchased=shopPurchased.Contains(4);shopStock.Add(melee);}

@@ -200,13 +200,13 @@ namespace NeonVault
                 return;
             }
             string text=screen==Screen.Pause?T("EXPEDITION PAUSED","探索一時停止"):screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失");
-            Panel(new Rect(350,171,740,554),screen==Screen.Victory?Gold:Cyan);
+            Panel(new Rect(350,171,740,screen==Screen.Victory?650:554),screen==Screen.Victory?Gold:Cyan);
             Diamond(720,205,12,Gold);Text(390,249,text,heading,screen==Screen.Victory?Gold:Color.white,680);
             Text(390,320,CurrentDungeon.Name+" / "+(room+1)+" / "+CurrentDungeon.AreaCount+T("  ·  Scrap ","  ·  スクラップ ")+Credits,small,Mist,660);
             if(screen==Screen.Pause)
             {DrawCameraZoom(390,365,310,false);DrawMasterVolume(740,365,310,false);if(Button(new Rect(390,443,660,68),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}}
             else
-            {if(screen==Screen.Victory){if(SelectedExpeditionStage!=null)Text(390,341,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},UiPaper,660);if(completedRewardGun!=null||completedRewardArmor!=null)DrawCompletedGearReward(new Rect(390,382,660,93));else Text(390,382,Toast,new GUIStyle(small){wordWrap=true},Gold,660);Text(390,475,CompletedPayoutLabel(),new GUIStyle(small){wordWrap=false},Gold,660);if(Button(new Rect(390,520,660,68),T("CONFIRM","確認"),true)){if(PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}return;}else {Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}}
+            {if(screen==Screen.Victory){if(SelectedExpeditionStage!=null)Text(390,341,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},UiPaper,660);if(completedRewardGun!=null||completedRewardArmor!=null)DrawCompletedGearReward(new Rect(390,390,660,195));else Text(390,382,Toast,new GUIStyle(small){wordWrap=true},Gold,660);Text(390,594,CompletedPayoutLabel(),new GUIStyle(small){wordWrap=false},Gold,660);if(Button(new Rect(390,645,660,68),T("CONFIRM","確認"),true)){if(PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}return;}else {Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();}}
             if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
             if(screen==Screen.Pause&&Button(new Rect(390,700,660,42),T("WORLD MAP","広域地図")))OpenOverworldMap();
             if(screen==Screen.Pause && Button(new Rect(390,606,660,42),T("ARSENAL / EQUIPMENT [I]","インベントリ [I]")))ToggleInventory();

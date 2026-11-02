@@ -12,7 +12,7 @@ namespace NeonVault
         readonly Dictionary<Chest,int> worldChestIds=new Dictionary<Chest,int>();
         readonly Dictionary<Foe,int> worldEnemyLevels=new Dictionary<Foe,int>();
         float worldSpawnTimer,worldSaveTimer;
-        public static int MaxActiveOverworldEnemies=>Application.isMobilePlatform?12:28;
+        public static int MaxActiveOverworldEnemies=>Application.isMobilePlatform?11:25;
         sealed class WorldEnemySpawn
         {
             public Vector3 position;
@@ -175,6 +175,7 @@ namespace NeonVault
             // Each load owns a fixed population; streaming never regenerates defeated packs.
             for(int x=-49;x<50;x++)for(int z=-49;z<50;z++)
             {
+                if(random.NextDouble()<.10)continue; // Reduce the load-time population by roughly ten percent.
                 bool vertical=random.Next(2)==0;
                 int count=random.NextDouble()<.06?1:random.Next(4,8);
                 float along=(vertical?z:x)*100+25+(float)random.NextDouble()*50;

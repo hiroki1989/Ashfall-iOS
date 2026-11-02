@@ -10,6 +10,8 @@ namespace NeonVault
         float overworldRushRemaining, overworldRushSpawnTimer, overworldHoldProgress;
         int overworldChallengeTarget;
         int overworldChallengeMode; // 0: survival, 1: eliminate, 2: hold
+        GameObject overworldSurvivalBoundary;
+        const float SurvivalRadius = 30f;
         readonly List<WorldEnemySpawn> overworldRushEnemies = new List<WorldEnemySpawn>();
         public bool OverworldRushActive => overworldRushSite != null && !overworldRushRewardReady && overworldRushRemaining > 0;
         public int OverworldRushSeconds => Mathf.CeilToInt(Mathf.Max(0, overworldRushRemaining));
@@ -50,9 +52,15 @@ namespace NeonVault
             overworldChallengeMode = mode; overworldHoldProgress = 0;
             overworldChallengeTarget=ActivityKillTarget(site.id);
             overworldRushRemaining = mode == 0 ? UnityEngine.Random.Range(90,181) : mode==1?100f:60f; overworldRushSpawnTimer = 0;
+            if (mode == 0 && world != null)
+            {
+                overworldSurvivalBoundary = new GameObject("Survival event boundary");
+                overworldSurvivalBoundary.transform.SetParent(world.transform, false);
+                ObjectiveGroundRing.Create(overworldSurvivalBoundary.transform, new Vector3(site.position.x, 0f, site.position.z), SurvivalRadius);
+            }
             ReserveOverworldRushSlots();
             RefreshOverworldActivities();
-            if (mode == 0) Notify("HOSTILE SURGE / survive for "+Mathf.CeilToInt(overworldRushRemaining)+" seconds", "敵襲 / "+Mathf.CeilToInt(overworldRushRemaining)+"秒間生き延びよう");
+            if (mode == 0) Notify("HOSTILE SURGE / survive within 30m for "+Mathf.CeilToInt(overworldRushRemaining)+" seconds", "敵襲 / 30m以内で"+Mathf.CeilToInt(overworldRushRemaining)+"秒間生き延びよう");
             else if (mode == 1) Notify("CLEAR / defeat "+overworldChallengeTarget+" attackers in 100 seconds", "殲滅 / 100秒以内に敵"+overworldChallengeTarget+"体を倒そう");
             else Notify("DEFEND / stay within 9m for 30 seconds", "防衛 / 地点から9m以内に30秒留まろう");
         }
@@ -60,7 +68,10 @@ namespace NeonVault
         void TickOverworldRush()
         {
             if (!OverworldRushActive || !Active) return;
-            if (player == null || hp <= 0 || (PlayerPosition - overworldRushSite.position).sqrMagnitude > 45f * 45f)
+            Vector3 displacement = PlayerPosition - overworldRushSite.position;
+            displacement.y = 0f;
+            float limit = overworldChallengeMode == 0 ? SurvivalRadius : 45f;
+            if (player == null || hp <= 0 || displacement.sqrMagnitude > limit * limit)
             {
                 ResetOverworldRush(); RefreshOverworldActivities();
                 Notify("CHALLENGE FAILED / left the area", "挑戦失敗 / エリアを離れました");
@@ -73,7 +84,7 @@ namespace NeonVault
                 overworldChallengeMode == 1 ? OverworldChallengeKills >= overworldChallengeTarget : overworldHoldProgress >= 30f && overworldRushEnemies.Count>=4;
             if (success)
             {
-                ClearOverworldRushEnemies(); overworldRushRewardReady = true;
+                ClearOverworldRushEnemies(); ClearSurvivalBoundary(); overworldRushRewardReady = true;
                 RefreshOverworldActivities();
                 Notify("CHALLENGE COMPLETE / open the reward chest", "挑戦成功 / 報酬箱を開けよう");
                 return;
@@ -146,8 +157,13 @@ namespace NeonVault
         }
         void ResetOverworldRush()
         {
-            ClearOverworldRushEnemies(); overworldRushSite = null;
+            ClearOverworldRushEnemies(); ClearSurvivalBoundary(); overworldRushSite = null;
             overworldRushRemaining = 0; overworldRushRewardReady = false; overworldHoldProgress = 0; overworldChallengeMode = 0; overworldChallengeTarget=0;
+        }
+        void ClearSurvivalBoundary()
+        {
+            if (overworldSurvivalBoundary) Destroy(overworldSurvivalBoundary);
+            overworldSurvivalBoundary = null;
         }
     }
 }

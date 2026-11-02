@@ -53,6 +53,7 @@ namespace NeonVault
                     chest.transform.position = new Vector3(site.position.x, 0, site.position.z);
                     chest.transform.rotation = Quaternion.Euler(0, site.id % 4 * 90, 0);
                     EquipmentChestVisual.Create(chest.transform, site.id >= 100100 && site.id < 100150);
+                    ObjectiveGroundRing.Create(chest.transform, site.position, 1.15f);
                     visible.Add(site.id, chest);
                     continue;
                 }
