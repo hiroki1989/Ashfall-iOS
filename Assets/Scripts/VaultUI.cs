@@ -148,11 +148,14 @@ namespace NeonVault
             float backdrop=Mathf.SmoothStep(0,.94f,Mathf.Clamp01(elapsed/1.4f));
             float titleAlpha=Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-.65f)/1.1f));
             titleAlpha*=1-Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-3.25f)/1.05f));
-            Box(new Rect(0,0,1440,900),new Color(.008f,.008f,.01f,backdrop));
+            Matrix4x4 deathCanvas=GUI.matrix;
+            GUI.matrix=Matrix4x4.identity;
+            Box(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),new Color(.008f,.008f,.01f,backdrop));
+            GUI.matrix=deathCanvas;
             var title=new GUIStyle(heading){fontSize=80,alignment=TextAnchor.MiddleCenter};
             Text(170,330,"YOU DIED",title,new Color(.78f,.16f,.14f,titleAlpha),1100);
             float blackout=Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-3.65f)/.75f));
-            if(blackout>0)Box(new Rect(0,0,1440,900),new Color(0,0,0,blackout));
+            if(blackout>0){GUI.matrix=Matrix4x4.identity;Box(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),new Color(0,0,0,blackout));GUI.matrix=deathCanvas;}
         }
         void DrawMobileLanguageButton()
         { if(MobileButton(new Rect(1190,794,220,94),VaultLanguage.Japanese?"ENGLISH":"日本語"))VaultLanguage.Set(!VaultLanguage.Japanese,!smoke); }

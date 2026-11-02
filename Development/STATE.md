@@ -1,3 +1,12 @@
+## 2026-11-02 / 勢力ボスのモーション
+- ユーザー指示によりボスのCrocモデルを通常の勢力兵と同じ軽量Prefabへ切り替え。レッドクロウは勢力1、コヨーテは勢力2、ヴェイルはウォーデンズ勢力0。kind 3・ボスAI・強さ・報酬は保持し、既存の人間敵と同じ可動骨格、歩行、両手での銃構え、倒れを使用。
+- Unity Editorで3勢力Prefabの待機・歩行姿勢を正面／側面から撮影し確認（D:/Unity/BuildTemp/BossHumanPoseReview）。Editor・iOS条件付きC#コンパイル成功、git diff --check通過。実際の各ボス戦とiOS実機での動作・長時間負荷は未検証。
+
+## 2026-11-02 / 属性演出・回復表示・死亡画面・人間敵の射線
+- バージョン／iOSビルド40。通常の無属性ダメージを白、HP回復数値をHPパネルに表示。死亡の背景と暗転は画面全体を覆う。炎・電撃・爆発・毒の演出を強化。連射の重複演出を抑制。
+- 毒は感染者に無効、人間と人間ボスに有効。旧装備の威力・表示・スコアを整合。3秒の毒は弾威力の57〜75%、炎の追加ダメージ32〜55%。人間敵の予告射線を銃口・発射方向に一致させ、レイダーボスの拡散角も修正。
+- 検証: EditorおよびiOS条件付きC#コンパイル成功、git diff --check通過。Unity V40CombatReview 21項目0失敗、V40AimReview 10項目0失敗。4属性をUnity画像で目視（D:/Unity/BuildTemp/ElementVisualReview）。死亡画面の実描画、実戦のエフェクト負荷、iOS実機は未検証。
+
 ## 2026-11-02 / フォント・敵名とApp Store下書き準備
 - 図鑑メーカー切替矢印に旧GenShin Gothic、ダメージ・回復数値にApril Gothicを指定。敵名はPC/モバイル/広域マップを共通化し、一行に収まるサイズで描画。Unity隔離QAでは日英10例・左右矢印・April数字を表示、実TextMeshのフォントも確認。画像 D:/Unity/BuildTemp/EnemyLabelFontReview/review.png。実戦・iOS実機未確認。
 - App Store Connectのバージョン39下書きに日英説明、検索キーワード、プロモーション文、英語名、審査案内を設定。購入審査画像はUnity EditorのiOS画面再現（Lv3・JPY490の模擬状態）をアップロードしasset COMPLETE、IAP READY_TO_SUBMIT。提出はしていない。画像 D:/Unity/BuildTemp/IosPremiumScreenshotReview/purchase-ja-iphone-editor-rgb.png。

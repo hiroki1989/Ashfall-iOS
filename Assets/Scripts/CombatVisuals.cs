@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -10,6 +11,7 @@ namespace NeonVault
         static Material glow,smoke;
         static Texture2D smokeTexture;
         static Font numberFont,avoidFont;
+        static readonly Dictionary<Vector4,float> elementalVisualTimes=new Dictionary<Vector4,float>();
         internal static int particles, numbers;
         public static int ActiveDamageNumbers=>numbers;
         public static int TotalDamageNumbers { get; private set; }
@@ -34,7 +36,7 @@ namespace NeonVault
         static void Reset()
         {
             if(glow!=null)Object.Destroy(glow);if(smoke!=null)Object.Destroy(smoke);if(smokeTexture!=null)Object.Destroy(smokeTexture);
-            glow=smoke=null;smokeTexture=null;numberFont=null;particles=0;numbers=0;TotalDamageNumbers=0;LastDamage=0;LastHitPoint=Vector3.zero;
+            glow=smoke=null;smokeTexture=null;numberFont=null;particles=0;numbers=0;TotalDamageNumbers=0;LastDamage=0;LastHitPoint=Vector3.zero;elementalVisualTimes.Clear();
         }
         static GameObject ObjectAt(string name,Vector3 p,Transform parent)
         {
@@ -196,10 +198,17 @@ namespace NeonVault
         public static void ElementImpact(Vector3 p,GunElement element,Transform parent=null)
         {
             if(element==GunElement.None||particles>=ParticleLimit)return;
+            // A volley can hit the same enemy many times in one frame. Coalesce
+            // nearby visual bursts without suppressing damage or electric arcs.
+            var key=new Vector4(Mathf.Round(p.x*2),Mathf.Round(p.y*2),Mathf.Round(p.z*2),(int)element);
+            if(elementalVisualTimes.TryGetValue(key,out float last)&&Time.time>=last&&Time.time-last<.12f)return;
+            if(elementalVisualTimes.Count>=2048)elementalVisualTimes.Clear();
+            elementalVisualTimes[key]=Time.time;
             Color color=GunElements.ColorFor(element);
             switch(element)
             {
                 case GunElement.Fire:
+                    for(int i=0;i<8&&particles<ParticleLimit;i++){float angle=i*Mathf.PI*.25f;Vector3 offset=new Vector3(Mathf.Cos(angle)*.42f,-.55f,Mathf.Sin(angle)*.42f);FlameTongue(p+offset,new Color(1,.28f,.025f,.9f),1.55f,.34f,(i%2==0?.16f:-.16f),parent);}
                     // Offset, curved and tapered strips overlap into a flame
                     // silhouette; small embers travel upward from its edge.
                     FlameTongue(p+Vector3.left*.18f,new Color(.95f,.12f,.035f,.82f),.83f,.31f,-.13f,parent);
@@ -215,6 +224,16 @@ namespace NeonVault
                     ElementArc(p+Vector3.forward*.25f,p+Vector3.up*.5f-Vector3.forward*.25f,parent);
                     break;
                 case GunElement.Poison:
+                    PuffTinted(p,Vector3.up*.7f,1.35f,.85f,new Color(.68f,.15f,.83f,.84f),parent);
+                    // Bright wisps remain legible against dark clothing even
+                    // when the smoke shader is subdued by mobile lighting.
+                    for(int i=0;i<4&&particles<ParticleLimit;i++)
+                    {
+                        float angle=i*Mathf.PI*.5f;
+                        Vector3 offset=new Vector3(Mathf.Cos(angle)*.30f,-.32f,Mathf.Sin(angle)*.30f);
+                        FlameTongue(p+offset,new Color(.82f,.30f,1f,.9f),.82f,.11f,i%2==0?.18f:-.18f,parent);
+                    }
+                    RingBurst(p,new Color(.65f,.17f,.84f,.8f),.85f,.55f,parent);
                     // Soft translucent wisps spread apart while bright purple
                     // droplets separate from the cloud.
                     PuffTinted(p+Vector3.left*.20f,Vector3.up*.45f+Vector3.left*.55f,.48f,.52f,new Color(.49f,.12f,.68f,.48f),parent);
@@ -244,16 +263,28 @@ namespace NeonVault
             Vector3 delta=to-from;if(delta.sqrMagnitude<.0001f)return;
             var obj=ObjectAt("Electric chain arc",from,parent);
             Color color=new Color(1f,.87f,.12f,.95f);
-            var line=Line(obj,color,.08f);line.positionCount=7;
+            var line=Line(obj,color,.16f);line.positionCount=7;
             Vector3 sideways=Vector3.Cross(delta.normalized,Vector3.up);
             if(sideways.sqrMagnitude<.001f)sideways=Vector3.right;
             sideways.Normalize();
             for(int i=0;i<7;i++)
             {
-                float t=i/6f;float offset=(i==0||i==6)?0:(i%2==0?.10f:-.10f);
+                float t=i/6f;float offset=(i==0||i==6)?0:(i%2==0?.24f:-.24f);
                 line.SetPosition(i,delta*t+sideways*offset);
             }
-            obj.AddComponent<CombatTransient>().Init(line,color,.13f,Vector3.zero,0);
+            // Preserve both endpoints during the flash; shrinking the object
+            // made chains visually stop short of the next enemy.
+            obj.AddComponent<CombatTransient>().Init(line,color,.28f,Vector3.zero,0,true);
+        }
+        public static void ElementBlast(Vector3 p,float radius,Transform parent=null)
+        {
+            if(particles>=ParticleLimit)return;
+            radius=Mathf.Max(.2f,radius);
+            var ringObj=ObjectAt("Element explosion radius",p,parent);
+            var ringColor=new Color(1,.39f,.035f,.95f);
+            var ring=Ring(ringObj,ringColor,radius,.10f);
+            ringObj.AddComponent<CombatTransient>().Init(ring,ringColor,.55f,Vector3.zero,1f);
+            for(int i=0;i<8&&particles<ParticleLimit;i++){float angle=i*Mathf.PI*.25f;Vector3 offset=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*radius*.72f;PuffTinted(p+offset,Vector3.up*.7f+offset*.3f,.7f,.65f,new Color(.72f,.29f,.07f,.62f),parent);}
         }
         public static void Burst(Vector3 p,Color color,int count,Transform parent=null)
         {
@@ -358,14 +389,14 @@ namespace NeonVault
     }
     public sealed class CombatTransient : MonoBehaviour
     {
-        LineRenderer line;Color color;Vector3 velocity;float life,age,expansion,startWidth,endWidth;bool counted;
-        public void Init(LineRenderer renderer,Color tint,float duration,Vector3 movement,float expand)
-        {line=renderer;color=tint;life=duration;velocity=movement;expansion=expand;startWidth=line.startWidth;endWidth=line.endWidth;counted=true;CombatVisuals.particles++;}
+        LineRenderer line;Color color;Vector3 velocity;float life,age,expansion,startWidth,endWidth;bool counted,keepShape;
+        public void Init(LineRenderer renderer,Color tint,float duration,Vector3 movement,float expand,bool stableShape=false)
+        {line=renderer;color=tint;life=duration;velocity=movement;expansion=expand;keepShape=stableShape;startWidth=line.startWidth;endWidth=line.endWidth;counted=true;CombatVisuals.particles++;}
         void Update()
         {
             age+=Time.deltaTime;float t=Mathf.Clamp01(age/life);
-            transform.position+=velocity*Time.deltaTime;if(expansion==0)velocity+=Vector3.down*3*Time.deltaTime;
-            float size=expansion>0?Mathf.Lerp(.35f,expansion,t):Mathf.Lerp(1,.2f,t);
+            transform.position+=velocity*Time.deltaTime;if(expansion==0&&!keepShape)velocity+=Vector3.down*3*Time.deltaTime;
+            float size=keepShape?1f:expansion>0?Mathf.Lerp(.35f,expansion,t):Mathf.Lerp(1,.2f,t);
             transform.localScale=Vector3.one*size;line.startWidth=startWidth*size;line.endWidth=endWidth*size;
             Color c=color;c.a=color.a*(1-t)*(1-t);line.startColor=line.endColor=c;
             if(age>=life)Destroy(gameObject);

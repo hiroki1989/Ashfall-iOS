@@ -65,7 +65,7 @@ namespace NeonVault
             foreach(var foe in Enemies.ToArray())
             {
                 if(foe==null||foe.dead||foe==exclude||(foe.transform.position-center).sqrMagnitude>radius*radius||!LineOfSight(center,foe.transform.position))continue;
-                foe.Hit(damage,null,color,100);
+                foe.Hit(damage,null,color,100,Shot.LegendaryDamageColor);
                 if(++hit>=limit)break;
             }
         }
@@ -96,7 +96,7 @@ namespace NeonVault
                 if(foe==null||foe.dead||foe==exclude)continue;
                 Vector3 delta=foe.transform.position-start;delta.y=0;float forward=Vector3.Dot(delta,direction);
                 if(forward<=0||forward>length||Vector3.Cross(direction,delta).sqrMagnitude>width*width||!LineOfSight(start,foe.transform.position))continue;
-                foe.Hit(damage,null,color,100);if(++hit>=limit)break;
+                foe.Hit(damage,null,color,100,Shot.LegendaryDamageColor);if(++hit>=limit)break;
             }
         }
 
@@ -127,7 +127,7 @@ namespace NeonVault
                         foreach(var foe in Enemies.ToArray())
                         {
                             if(foe==null||foe.dead||(foe.transform.position-center).sqrMagnitude>6.25f||!LineOfSight(center,foe.transform.position))continue;
-                            if(foe.Hit(4*item.power,null,color,100)&&!foe.dead)foe.DelayNextAttack(.7f);
+                            if(foe.Hit(4*item.power,null,color,100,Shot.LegendaryDamageColor)&&!foe.dead)foe.DelayNextAttack(.7f);
                             if(++staggered>=2)break;
                         }
                         break;

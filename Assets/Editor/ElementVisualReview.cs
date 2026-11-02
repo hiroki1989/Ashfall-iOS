@@ -59,6 +59,8 @@ public static class ElementVisualReview
                 CombatVisuals.ElementImpact(impact, element, root.transform);
                 if (element == GunElement.Electric)
                     CombatVisuals.ElementArc(impact, impact + camera.transform.right * 1.8f + camera.transform.up * .35f, root.transform);
+                if (element == GunElement.Explosive)
+                    CombatVisuals.ElementBlast(target.transform.position, 1.8f, root.transform);
                 camera.Render();
                 var oldActive = RenderTexture.active;
                 RenderTexture.active = rt;

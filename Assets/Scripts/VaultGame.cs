@@ -232,7 +232,8 @@ namespace NeonVault
             position=SeparateEnemySpawn(position,kind);
             if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
             var faction=IsOverworld?DungeonFaction.None:ExpeditionMap.FactionForStage(SelectedStageId);
-            bool factionHuman=kind==10&&faction!=DungeonFaction.None;
+            bool raiderBoss=kind==3&&(finalDebtBossFight||faction!=DungeonFaction.None);
+            bool factionHuman=kind==10&&faction!=DungeonFaction.None||raiderBoss;
             // Faction humans use the articulated survivor mesh. The old path first
             // constructed a complete FaithfulEnemy3D for every human, then hid it.
             // On a crowded iOS floor that doubled mesh/material memory at entry.
@@ -246,15 +247,15 @@ namespace NeonVault
             else actor=art.Character(position,false,kind);
             var f=actor.gameObject.AddComponent<Foe>();
             f.Init(this,kind,room);
-            bool raiderBoss=kind==3&&(finalDebtBossFight||ExpeditionMap.FactionForStage(SelectedStageId)!=DungeonFaction.None);
             f.SetRaiderBoss(raiderBoss);
             // The human model supplies its own weapon; all other actors retain the legacy visual path.
             if(kind==5||kind==10&&!factionHuman){f.weapon=art.Weapon(f.transform,new Color(.72f,.48f,.24f)).GetComponent<AimedWeapon>();VaultArt.ConfigureWeapon(f.weapon.transform,GunEffect.Normal,new Color(.72f,.48f,.24f),4);}
             if(!factionHuman)f.GetComponent<FaithfulEnemy3D>().Init(f);
             if(factionHuman)
             {
-                var human=HumanFactionVisual.Create(f.transform,faction==DungeonFaction.Raiders?1:2,f.UseAssaultRifle?0:1);
-                human.transform.localScale=Vector3.one*1.12f;
+                int visualFaction=finalDebtBossFight?0:faction==DungeonFaction.Raiders?1:2;
+                var human=HumanFactionVisual.Create(f.transform,visualFaction,raiderBoss?0:f.UseAssaultRifle?0:1);
+                human.transform.localScale=Vector3.one*(raiderBoss?1.20f:1.12f);
             // Keep the existing actor origin and faction model floor alignment.
                 human.transform.localPosition=Vector3.down*.03f;
             }

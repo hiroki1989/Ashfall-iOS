@@ -61,6 +61,11 @@ namespace NeonVault
                 Text(bounds.x+bounds.width-100,bounds.y+24,CriticalHealth?T("CRITICAL","瀕死"):"LV. "+DebtLevel,new GUIStyle(tiny){fontSize=16},Color.white,78);
                 DrawHealthFill(new Rect(bounds.x+28,bounds.y+64,bounds.width-56,9),ratio,accent);
             }
+            if(Time.unscaledTime<shownHealUntil&&shownHealNumber>0)
+            {
+                float alpha=Mathf.Clamp01((shownHealUntil-Time.unscaledTime)*2f);
+                Text(bounds.x+bounds.width-115,bounds.y+86,"+"+shownHealNumber.ToString("0.#"),new GUIStyle(label){fontSize=22,fontStyle=FontStyle.Normal},new Color(HealNumberColor.r,HealNumberColor.g,HealNumberColor.b,alpha),100);
+            }
         }
 
         void DrawHealthFill(Rect track,float ratio,Color accent)

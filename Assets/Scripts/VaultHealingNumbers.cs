@@ -5,6 +5,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         float pendingHealNumber,healNumberAt;
+        float shownHealNumber,shownHealUntil;
         Transform healNumberWorld;
         bool healNumberCarryFloor;
         static readonly Color HealNumberColor=new Color(.22f,.9f,.47f);
@@ -34,7 +35,8 @@ namespace NeonVault
             if(!world||healNumberWorld!=world||screen!=Screen.Playing||!player)
             {pendingHealNumber=0;healNumberWorld=null;healNumberCarryFloor=false;return;}
             if(!Active||!cam||Time.time<healNumberAt||pendingHealNumber<.05f)return;
-            CombatVisuals.DamageNumber(PlayerPosition+Vector3.up*1.7f,pendingHealNumber,HealNumberColor,cam,world,true);
+            shownHealNumber=pendingHealNumber;
+            shownHealUntil=Time.unscaledTime+1.2f;
             pendingHealNumber=0;
         }
     }

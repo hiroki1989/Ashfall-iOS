@@ -68,7 +68,9 @@ namespace NeonVault
             {
                 case GunElement.Fire:return ja?"炎: 追加ダメージ "+pct:"FIRE: bonus damage "+pct;
                 case GunElement.Electric:return ja?"電気: 追加ダメージ "+pct+" / 連鎖 "+g.elementChains+"体 / 範囲 "+g.elementRadius.ToString("0.0")+"m":"ELECTRIC: bonus "+pct+" / chains "+g.elementChains+" / radius "+g.elementRadius.ToString("0.0")+"m";
-                case GunElement.Poison:return ja?"毒: 毎秒 "+pct+" / "+g.elementDuration.ToString("0.0")+"秒":"POISON: "+pct+" per second / "+g.elementDuration.ToString("0.0")+"s";
+                case GunElement.Poison:
+                    pct=(PoisonPercent(g.elementPercent)*100).ToString("0.#")+"%";
+                    return ja?"毒: 人間に毎秒 "+pct+" / "+g.elementDuration.ToString("0.0")+"秒、感染者には無効":"POISON: "+pct+" per second against humans / "+g.elementDuration.ToString("0.0")+"s; ineffective against infected";
                 default:return ja?"爆発: 追加ダメージ "+pct+" / 範囲 "+g.elementRadius.ToString("0.0")+"m":"EXPLOSIVE: bonus "+pct+" / radius "+g.elementRadius.ToString("0.0")+"m";
             }
         }
@@ -96,7 +98,7 @@ namespace NeonVault
                 case GunElement.Electric:
                     gun.elementPercent=Range(.08f,.16f);gun.elementRadius=Range(2f,4f);
                     int chainRoll=random.Next(100);gun.elementChains=chainRoll<45?1:chainRoll<73?2:chainRoll<90?3:chainRoll<98?4:5;break;
-                case GunElement.Poison:gun.elementPercent=Range(.055f,.09f);gun.elementDuration=Range(3f,5f);break;
+                case GunElement.Poison:gun.elementPercent=Range(.19f,.25f);gun.elementDuration=Range(3f,5f);break;
                 case GunElement.Explosive:gun.elementPercent=Range(.17f,.28f);gun.elementRadius=Range(1.4f,2.8f);break;
             }
         }
@@ -104,20 +106,30 @@ namespace NeonVault
         {
             switch(type){case GunElement.Fire:return new Color(1f,.16f,.10f);case GunElement.Electric:return new Color(1f,.87f,.12f);case GunElement.Poison:return new Color(.75f,.22f,.95f);case GunElement.Explosive:return new Color(.91f,.31f,.025f);default:return Color.white;}
         }
+        // Saves created before the rebalance contain rolls between .055 and .09.
+        // Preserve their relative quality without rewriting the stored item.
+        public static float PoisonPercent(float value)
+        {
+            if(value<=0f)return 0f;
+            if(value<.1f)return Mathf.Lerp(.19f,.25f,Mathf.InverseLerp(.055f,.09f,value));
+            return value;
+        }
+        public static bool IsPoisonSusceptible(Foe target)=>target!=null&&(target.kind==10||target.RaiderBoss);
         public static void Apply(Shot shot,Foe target,Vector3 point)
         {
             if(shot==null||target==null||shot.element==GunElement.None||shot.elementPercent<=0)return;
             float extra=shot.damage*shot.elementPercent*Mathf.Max(0,shot.elementBonus);Color color=ColorFor(shot.element);
             var game=shot.game;var parent=target.transform.parent;
-            CombatVisuals.ElementImpact(point,shot.element,parent);
             if(shot.element==GunElement.Poison)
             {
-                if(!target.dead){var poison=target.GetComponent<GunPoison>();if(!poison)poison=target.gameObject.AddComponent<GunPoison>();poison.Apply(game,extra,shot.elementDuration);}
+                if(!target.dead&&IsPoisonSusceptible(target)){CombatVisuals.ElementImpact(point,shot.element,parent);var poison=target.GetComponent<GunPoison>();if(!poison)poison=target.gameObject.AddComponent<GunPoison>();poison.Apply(game,shot.damage*PoisonPercent(shot.elementPercent)*Mathf.Max(0,shot.elementBonus),shot.elementDuration);}
                 return;
             }
+            CombatVisuals.ElementImpact(point,shot.element,parent);
             if(!target.dead)target.Hit(extra,point,color,100,color);
             if(shot.element==GunElement.Explosive)
             {
+                CombatVisuals.ElementBlast(point,shot.elementRadius,parent);
                 foreach(var foe in game.Enemies.ToArray())if(foe!=null&&!foe.dead&&foe!=target&&Vector3.Distance(foe.transform.position,target.transform.position)<=shot.elementRadius&&game.LineOfSight(target.transform.position,foe.transform.position))
                 {Vector3 p=foe.transform.position+Vector3.up*.8f;CombatVisuals.ElementImpact(p,GunElement.Explosive,parent);foe.Hit(extra,p,color,100,color);}
             }
