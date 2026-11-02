@@ -28,7 +28,7 @@ namespace NeonVault
             {
                 var pulse=legendaryAftershocks[i];if(legendaryClock<pulse.next)continue;
                 pulse.next=legendaryClock+.5f;pulse.ticks--;legendaryResolving=true;
-                try{Burst(pulse.position,LegendaryEffectColor(pulse.maker),12);foreach(var foe in Enemies.ToArray())if(foe!=null&&!foe.dead&&(foe.transform.position-pulse.position).sqrMagnitude<=pulse.radius*pulse.radius&&LineOfSight(pulse.position,foe.transform.position))LegendaryStrike(foe,pulse.damage,LegendaryEffectColor(pulse.maker));}finally{legendaryResolving=false;}
+                try{if(world!=null){if(pulse.maker==3)CombatVisuals.ElementImpact(pulse.position,GunElement.Poison,world);else CombatVisuals.ElementBlast(pulse.position,pulse.radius,world);}Burst(pulse.position,LegendaryEffectColor(pulse.maker),12);foreach(var foe in Enemies.ToArray())if(foe!=null&&!foe.dead&&(foe.transform.position-pulse.position).sqrMagnitude<=pulse.radius*pulse.radius&&LineOfSight(pulse.position,foe.transform.position))LegendaryStrike(foe,pulse.damage,LegendaryEffectColor(pulse.maker));}finally{legendaryResolving=false;}
                 if(pulse.ticks<=0)legendaryAftershocks.RemoveAt(i);
             }
             LegendaryTrigger("pulse",PlayerPosition);
@@ -43,14 +43,14 @@ namespace NeonVault
         {
             if(legendaryResolving||!Active)return;
             if(trigger=="fire")legendaryShots++;
-            if(gun!=null)TryLegendaryEffect(gun.legendaryKey,false,trigger,origin,struck);
-            foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))TryLegendaryEffect(armor.legendaryKey,true,trigger,origin,struck);
+            if(gun!=null&&!BossRelicFoundation.Decode(gun.bossRelicId,out _,out _))TryLegendaryEffect(gun.legendaryKey,false,trigger,origin,struck);
+            foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor)&&!BossRelicFoundation.Decode(armor.bossRelicId,out _,out _))TryLegendaryEffect(armor.legendaryKey,true,trigger,origin,struck);
             if(trigger=="kill")
             {
-                if(gun!=null)TryBossRelicEffect(gun.bossRelicId,origin);
-                foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))TryBossRelicEffect(armor.bossRelicId,origin);
-                if(EquippedArtifacts!=null)foreach(var module in EquippedArtifacts)if(module!=null)TryBossRelicEffect(module.bossRelicId,origin);
-                if(EquippedMeleeWeapon!=null)TryBossRelicEffect(EquippedMeleeWeapon.bossRelicId,origin);
+                if(gun!=null)TryBossRelicEffectV2(gun.bossRelicId,origin);
+                foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))TryBossRelicEffectV2(armor.bossRelicId,origin);
+                if(EquippedArtifacts!=null)foreach(var module in EquippedArtifacts)if(module!=null)TryBossRelicEffectV2(module.bossRelicId,origin);
+                if(EquippedMeleeWeapon!=null)TryBossRelicEffectV2(EquippedMeleeWeapon.bossRelicId,origin);
             }
         }
         void TryBossRelicEffect(string id,Vector3 origin)
@@ -137,19 +137,19 @@ namespace NeonVault
             string[] triggerEn={"","On kill (4s cooldown): ","On reload (4s cooldown): ","On dash (4s cooldown): ","Every 5s in combat: "};
             string[] triggerJa={"","撃破時（クールダウン4秒）：","リロード時（クールダウン4秒）：","ダッシュ時（クールダウン4秒）：","戦闘中5秒ごと："};
             string[,] en={
-                {"","tag the nearest survivor with a precision strike; accurate shots for 2s","intercept close hostile rounds and steady shots for 2s","fire two short cover shots at the nearest foe","delay the farthest visible foe's next attack"},
-                {"","gain barrier and shove foes away from the fallen enemy","reload shockwave pushes nearby foes away","dash-start impact pushes nearby foes away","stagger a nearby foe and gain barrier"},
-                {"","arc to two survivors and delay their attacks","intercept nearby hostile projectiles","dash shocks and interrupts two nearby foes","intercept the nearest hostile projectile"},
-                {"","heal 3 HP and plant a damaging spore at the kill site","below half HP, heal and stagger the nearest foe","heal when surrounded and push nearby foes away","convert barrier into health; otherwise grow a small barrier"},
+                {"","fire three guided rounds at the nearest survivor","intercept up to eight nearby hostile rounds","fire two short cover shots at the nearest foe","call three delayed strikes around the farthest visible foe"},
+                {"","detonate a lingering mine at the kill site","launch a blast wave that damages nearby foes","leave an explosive charge at the dash origin","launch a defensive blast at the closest foe"},
+                {"","arc electricity to three survivors","intercept nearby hostile projectiles","dash discharges arcs at three nearby foes","call an electrical strike on the nearest foe"},
+                {"","plant a three-pulse spore field at the kill site","below half HP, restore 12% of maximum health","when surrounded, release a three-pulse spore burst","convert barrier into health; otherwise grow a small barrier"},
                 {"","plant a delayed mine at the kill site","blast foes in a forward cone","leave two delayed fire pockets behind the dash","detonate near the closest visible foe"},
-                {"","gain barrier and counterstrike nearby foes","intercept hostile rounds and reinforce barrier","briefly phase through damage and push nearby foes","spend barrier to release a defensive counterburst"}};
+                {"","gain 20 shield","intercept up to ten nearby hostile rounds","leave a two-pulse explosive charge behind","spend barrier to release a defensive counterburst"}};
             string[,] jp={
-                {"","最寄の生存敵に精密追撃し、2秒間射撃を安定化","近くの敵弾を迎撃し、2秒間射撃を安定化","最寄の敵へ短命の援護弾を2発発射","視界内で最も遠い敵の次の攻撃を遅らせる"},
-                {"","シールドを得て、撃破地点の周囲の敵を押し出す","リロード時の衝撃波で近くの敵を押す","ダッシュ開始地点の敵を押し出す","近くの敵をひるませ、シールドを得る"},
-                {"","生存する2体へ電撃を連鎖させ攻撃を遅らせる","周囲の敵弾を迎撃する","ダッシュで近くの2体を感電・妨害する","最寄の敵弾を迎撃する"},
-                {"","HPを3回復し、撃破地点に攻撃胞子を設置","HP半分以下なら回復し、最寄の敵をひるませる","敵に囲まれた時に回復し、周囲を押し返す","シールドをHPに変換。シールドがなければ少量生成"},
+                {"","最寄の生存敵へ誘導弾を3発放つ","近くの敵弾を最大8発迎撃する","最寄の敵へ短命の援護弾を2発発射","視界内で最も遠い敵の周囲に3回の追撃を落とす"},
+                {"","撃破地点に連続爆発する地雷を設置","周囲の敵に衝撃波でダメージ","ダッシュ開始地点に爆発する罠を残す","最寄りの敵へ防衛爆撃を放つ"},
+                {"","生存する敵3体へ電撃を放つ","周囲の敵弾を迎撃する","ダッシュ時に近くの敵3体へ電撃を放つ","最寄りの敵へ電撃を落とす"},
+                {"","撃破地点に3回波動する胞子領域を設置","HP半分以下なら最大HPの12%を回復","敵に囲まれた時に3回の胞子波動を放つ","シールドをHPに変換。シールドがなければ少量生成"},
                 {"","撃破地点に遅延地雷を設置","前方の扇形範囲を爆破","ダッシュ後方に遅延炎域を2つ残す","最寄の敵の周囲を爆破"},
-                {"","シールドを獲得し近くの敵へ反撃","敵弾を迎撃しシールドを補強","短時間ダメージをかわし近くの敵を押す","シールドを消費して防衛反撃を放つ"}};
+                {"","シールドを20得る","近くの敵弾を最大10発迎撃する","後方に2回爆発する罠を残す","シールドを消費して防衛反撃を放つ"}};
             return (ja?triggerJa:triggerEn)[variant]+(ja?jp:en)[maker,variant];
         }
         void ResolveArmorLegendary(int maker,int variant,Vector3 origin)
@@ -159,27 +159,28 @@ namespace NeonVault
             var color=LegendaryEffectColor(maker);
             var nearby=LegendaryGunTargets(PlayerPosition,8);
             Foe closest=nearby.Count>0?nearby[0]:null;
-            float power=10+room*2;
+            // Keep legendary counterattacks relevant throughout the level curve.
+            float power=gun!=null?Mathf.Max(1f,gun.damage):10f*GearBalance.LevelPower(Rarity.Common,DebtLevel);
             switch(id)
             {
-                case 1: LegendaryStrike(closest,power*.7f,color);legendaryPrecisionUntil=legendaryClock+2;break;
-                case 2: ArmorInterceptShots(PlayerPosition,2.4f,8,color);legendaryPrecisionUntil=legendaryClock+2;break;
+                case 1: if(closest!=null)for(int i=-1;i<=1;i++)LegendaryHomingShot(PlayerPosition+Vector3.up*.7f+Vector3.right*i*.55f,closest,power*.65f,color,null);break;
+                case 2: ArmorInterceptShots(PlayerPosition,2.4f,8,color);break;
                 case 3: if(closest!=null&&gun!=null){Vector3 dir=closest.transform.position-PlayerPosition;for(int i=-1;i<=1;i+=2)LegendaryGunShot(PlayerPosition+Vector3.up*.7f,Quaternion.Euler(0,i*10,0)*dir,power*.35f,color);}break;
-                case 4: if(nearby.Count>0)ArmorStagger(nearby[nearby.Count-1],1.1f,color);break;
+                case 4: if(nearby.Count>0)ScheduleLegendaryPulse(nearby[nearby.Count-1].transform.position,power*.7f,1.8f,3,maker);break;
 
-                case 6: ArmorBarrier(5);ArmorPush(origin,2.5f,1.1f,color);break;
-                case 7: ArmorPush(PlayerPosition,2.4f,1.5f,color);break;
-                case 8: ArmorPush(PlayerPosition,2.1f,2,color);break;
-                case 9: ArmorStagger(closest,1.3f,color);ArmorBarrier(3);break;
+                case 6: ScheduleLegendaryPulse(origin,power*.65f,2.3f,3,maker);break;
+                case 7: CombatVisuals.ElementBlast(PlayerPosition,3f,world);foreach(var foe in LegendaryGunTargets(PlayerPosition,3f))LegendaryStrike(foe,power,color);break;
+                case 8: ScheduleLegendaryPulse(PlayerPosition-dodgeDirection*1.4f,power*1.25f,2.5f,1,maker,.6f);break;
+                case 9: if(closest!=null)ScheduleLegendaryPulse(closest.transform.position,power*1.1f,2f,1,maker);break;
 
-                case 11: for(int i=0;i<Mathf.Min(2,nearby.Count);i++){LegendaryStrike(nearby[i],power*.5f,color);ArmorStagger(nearby[i],.7f,color);}break;
+                case 11: for(int i=0;i<Mathf.Min(3,nearby.Count);i++){CombatVisuals.ElementArc(origin+Vector3.up*.6f,nearby[i].transform.position+Vector3.up*.7f,world);LegendaryStrike(nearby[i],power*.8f,color);}break;
                 case 12: ArmorInterceptShots(PlayerPosition,3,12,color);break;
-                case 13: for(int i=0;i<Mathf.Min(2,nearby.Count);i++){LegendaryStrike(nearby[i],power*.4f,color);ArmorStagger(nearby[i],1,color);}break;
-                case 14: ArmorInterceptShots(PlayerPosition,5,1,color);break;
+                case 13: for(int i=0;i<Mathf.Min(3,nearby.Count);i++){CombatVisuals.ElementArc(PlayerPosition+Vector3.up*.7f,nearby[i].transform.position+Vector3.up*.7f,world);LegendaryStrike(nearby[i],power*.65f,color);}break;
+                case 14: if(closest!=null){CombatVisuals.ElementArc(PlayerPosition+Vector3.up*.7f,closest.transform.position+Vector3.up*.7f,world);LegendaryStrike(closest,power*1.3f,color);}break;
 
-                case 16: ScheduleLegendaryPulse(origin,power*.3f,1.4f,2,maker);HealPlayer(3);break;
-                case 17: if(hp<maxHp*.5f){HealPlayer(8);ArmorStagger(closest,.8f,color);}break;
-                case 18: if(nearby.Count>=2){HealPlayer(5);ArmorPush(PlayerPosition,1.8f,.8f,color);}break;
+                case 16: ScheduleLegendaryPulse(origin,power*.65f,2f,3,maker);break;
+                case 17: if(hp<maxHp*.5f)HealPlayer(maxHp*.12f);break;
+                case 18: if(nearby.Count>=2)ScheduleLegendaryPulse(PlayerPosition,power*.7f,2.5f,3,maker);break;
                 case 19: if(ArtifactShield>=3){ArtifactShield-=3;HealPlayer(5);}else ArmorBarrier(3);UpdateBarrierVisual();break;
 
                 case 21: ScheduleLegendaryPulse(origin,power*.8f,1.8f,1,maker);break;
@@ -187,9 +188,9 @@ namespace NeonVault
                 case 23: for(int i=0;i<2;i++)ScheduleLegendaryPulse(PlayerPosition-dodgeDirection*(i+.5f),power*.38f,1.1f,2,maker);break;
                 case 24: if(closest!=null)ScheduleLegendaryPulse(closest.transform.position,power*.75f,1.6f,1,maker);break;
 
-                case 26: ArmorBarrier(5);foreach(var foe in nearby)if((foe.transform.position-PlayerPosition).sqrMagnitude<4)LegendaryStrike(foe,power*.35f,color);break;
-                case 27: ArmorInterceptShots(PlayerPosition,2.8f,10,color);ArmorBarrier(3);break;
-                case 28: invincible=Mathf.Max(invincible,.22f);ArmorPush(PlayerPosition,1.9f,1.1f,color);break;
+                case 26: ArmorBarrier(20);break;
+                case 27: ArmorInterceptShots(PlayerPosition,2.8f,10,color);break;
+                case 28: ScheduleLegendaryPulse(PlayerPosition-dodgeDirection,power,2f,2,maker);break;
                 case 29: if(ArtifactShield>=5){ArtifactShield-=5;UpdateBarrierVisual();foreach(var foe in nearby)if((foe.transform.position-PlayerPosition).sqrMagnitude<6.25f)LegendaryStrike(foe,power*.8f,color);}break;
             }
             Burst(PlayerPosition,color,12);

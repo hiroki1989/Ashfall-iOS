@@ -37,60 +37,103 @@ namespace NeonVault {
   {
    string detail=EffectDescription(a);
    if(a.effect==ArtifactEffect.KillShield||a.effect==ArtifactEffect.ShieldConversion)detail+=" / "+VaultLanguage.T("Active barrier reduces incoming health damage by 25% plus 0.5% per charge (up to 75% with bonuses); hits consume charge, and charge decays 2/s.","シールド中はHP被害を25%＋残量1点につき0.5%軽減（各種補正込み上限75%）。被弾で残量を消費し、毎秒2減衰。");
-   if(LegendaryModuleBonus(a,out int healing,out int rounds,out float dodge))
+   if(LegendaryModuleBonus(a,out _,out _,out _))
    {
-    var parts=new System.Collections.Generic.List<string>();
-    if(healing>0)parts.Add(VaultLanguage.T("heal ","HP ")+healing+VaultLanguage.T(" HP","回復"));
-    if(rounds>0)parts.Add(VaultLanguage.T("restore ","予備弾 ")+rounds+VaultLanguage.T(" reserve rounds","発回復"));
-    if(dodge>0)parts.Add(VaultLanguage.T("shorten dodge cooldown by ","回避クールダウンを ")+dodge.ToString("0.00")+VaultLanguage.T("s","秒短縮"));
-    string condition=a.effect==ArtifactEffect.ShieldConversion?VaultLanguage.T("while barrier is active (then every 5s): ","シールド有効中に発動（以後5秒ごと）："):VaultLanguage.T("when the module activates: ","モジュール発動時：");
-    detail+=" / "+VaultLanguage.T("Legendary circuit ","レジェンダリー回路")+condition+string.Join(VaultLanguage.T(", ","、"),parts);
+    string condition=a.effect==ArtifactEffect.ShieldConversion?VaultLanguage.T("while shield is active (then every 5s): ","シールド有効中に発動（以後5秒ごと）："):VaultLanguage.T("when the module activates: ","モジュール発動時：");
     string signature=LegendaryModuleSignature(a);
-    if(!string.IsNullOrEmpty(signature))detail+=" / "+VaultLanguage.T("On the same activation: ","同じ発動時：")+signature;
+    if(!string.IsNullOrEmpty(signature))detail+=" / "+VaultLanguage.T("Legendary ","レジェンダリー効果 ")+condition+signature;
    }
    string relic=BossRelicFoundation.Description(a?.bossRelicId,VaultLanguage.Japanese);
    return string.IsNullOrEmpty(relic)?detail:detail+" / "+relic;
   }
   public static bool LegendaryModuleBonus(ArtifactItem a,out int healing,out int rounds,out float dodge)
   {
+   // Legendary identity is already saved with the item; no random support bundle is added.
    healing=rounds=0;dodge=0;
-   var recipe=a==null?null:DistinctEquipmentDesigns.Find(a.catalogId);
-   if(recipe==null||!recipe.legendary||recipe.family<4||recipe.family>6)
-   {
-    // Old saves predate distinct recipes but still contain legendary modules.
-    if(a==null||(a.rarity!=Rarity.Legendary&&a.uniqueEffect==0))return false;
-    int tier=Mathf.Clamp(a.dungeon,0,2);
-    healing=2+tier;rounds=1;dodge=.5f+tier*.1f;
-    return true;
-   }
-   // Housing and core determine the circuit's support mix. The recipe index
-   // determines its exact output, so saved items retain a stable signature.
-   int charge=1+recipe.index%4;
-   if(recipe.maker==1||recipe.maker==3||recipe.maker==5)healing=charge+recipe.body;
-   if(recipe.maker==0||recipe.maker==4||recipe.maker==5)rounds=charge+recipe.attachment/2;
-   dodge=.01f*(recipe.index+1);
-   return true;
+   if(a==null||BossRelicFoundation.Decode(a.bossRelicId,out _,out _))return false;
+   var recipe=DistinctEquipmentDesigns.Find(a.catalogId);
+   if(recipe!=null&&recipe.legendary&&recipe.family>=4&&recipe.family<=6)return true;
+   return a.rarity==Rarity.Legendary||a.uniqueEffect!=0;
   }
+
   public static int LegendaryModuleMode(ArtifactItem a)
   {
-   var recipe=a==null?null:DistinctEquipmentDesigns.Find(a.catalogId);
-   return recipe!=null&&recipe.legendary&&recipe.family>=4&&recipe.family<=6?(recipe.attachment+recipe.body*2)%10:-1;
+   if(a==null||BossRelicFoundation.Decode(a.bossRelicId,out _,out _))return -1;
+   var recipe=DistinctEquipmentDesigns.Find(a.catalogId);
+   if(recipe!=null&&recipe.legendary&&recipe.family>=4&&recipe.family<=6){int rank=0;for(int i=0;i<recipe.index;i++)if((i/6)%7>=4)rank++;return rank;}
+   return a.rarity==Rarity.Legendary||a.uniqueEffect!=0?Mathf.Clamp(a.dungeon,0,2):-1;
   }
   public static string LegendaryModuleSignature(ArtifactItem a)
   {
    switch(LegendaryModuleMode(a))
    {
-    case 0:return VaultLanguage.T("gain 3 barrier (cap 30)","シールドを3得る（上限30）");
-    case 1:return VaultLanguage.T("strike up to 3 visible enemies within 2.6m for ","2.6m以内の見える敵最大3体に")+(6*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
-    case 2:return VaultLanguage.T("shorten dodge cooldown by another 0.45s","回避クールダウンをさらに0.45秒短縮");
-    case 3:return VaultLanguage.T("delay visible enemies within 3m for at least 0.6s","3m以内の見える敵の次の攻撃を最低0.6秒遅らせる");
-    case 4:return VaultLanguage.T("grant at least 0.2s of invulnerability","最低0.2秒の無敵を得る");
-    case 5:return VaultLanguage.T("push visible enemies within 3m back 1.2m","3m以内の見える敵を1.2m押し返す");
-    case 6:return VaultLanguage.T("pull visible enemies within 3m toward you by 0.9m","3m以内の見える敵を自分へ0.9m引き寄せる");
+    case 0:return VaultLanguage.T("gain 20 shield (cap 30)","シールドを20得る（上限30）");
+    case 1:return VaultLanguage.T("strike up to 3 visible enemies within 2.6m for ","2.6m以内の見える敵最大3体に")+(12*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
+    case 2:return VaultLanguage.T("fire five rounds in a forward fan","前方に弾を5発扇状に放つ");
+    case 3:return VaultLanguage.T("blast up to 5 visible enemies within 3m for ","3m以内の見える敵最大5体に")+(12*a.power).ToString("0.0")+VaultLanguage.T(" damage","の爆発ダメージ");
+    case 4:return VaultLanguage.T("grant at least 1.25s of invulnerability","最低1.25秒の無敵を得る");
+    case 5:return VaultLanguage.T("create three explosive pulses within 3m","周囲3mに爆発を3回起こす");
+    case 6:return VaultLanguage.T("create three spore pulses within 3m","周囲3mに胞子の波動を3回起こす");
     case 7:return VaultLanguage.T("pierce up to 3 visible enemies ahead in a 4m by 0.8m line for ","前方4mの直線上0.8m幅の見える敵最大3体へ")+(5*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
-    case 8:return VaultLanguage.T("ready the next melee attack immediately","次の近接攻撃を即座に使用可能にする");
-    case 9:return VaultLanguage.T("strike up to 2 visible enemies within 2.5m for ","2.5m以内の見える敵最大2体へ")+(4*a.power).ToString("0.0")+VaultLanguage.T(" damage and delay their next attack to at least 0.7s","ダメージを与え、次の攻撃を最低0.7秒遅らせる");
-    default:return "";
+    case 8:return VaultLanguage.T("fire eight rounds in all directions","全方向へ弾を8発放つ");
+    case 9:return VaultLanguage.T("strike up to 2 visible enemies within 2.5m for ","2.5m以内の見える敵最大2体へ")+(10*a.power).ToString("0.0")+VaultLanguage.T(" damage with electrical arcs","の電撃ダメージを与える");
+    case 10:return VaultLanguage.T("launch guided rounds at up to three nearby enemies","近くの敵最大3体へ誘導弾を放つ");
+    case 11:return VaultLanguage.T("fire a gravity-well round forward","前方に重力渦を作る弾を放つ");
+    case 12:return VaultLanguage.T("detonate a large blast within 4m","周囲4mに大爆発を起こす");
+    case 13:return VaultLanguage.T("restore 8% of maximum health","最大HPの8%を回復する");
+    case 14:return VaultLanguage.T("below half health, restore 15% of maximum health","HP半分未満なら最大HPの15%を回復する");
+    case 15:return VaultLanguage.T("restore 10% of the active weapon reserve capacity","現在の銃の予備弾を所持上限の10%補充する");
+    case 16:return VaultLanguage.T("launch six rounds outward in a circle","周囲6方向に弾を放つ");
+    case 17:return VaultLanguage.T("immediately reset dodge cooldown","回避のクールダウンを即座に回復する");
+    case 18:return VaultLanguage.T("place a three-pulse blast at the nearest enemy","最も近い敵の位置で3回爆発を起こす");
+    case 19:return VaultLanguage.T("release three explosions in a line ahead","前方に3回の爆発を連続して起こす");
+    case 20:return VaultLanguage.T("fire a round that divides into three while flying","飛行中に3発に分かれる弾を放つ");
+    case 21:return VaultLanguage.T("fire a round that splits sideways while flying","飛行中に左右へ分裂する弾を放つ");
+    case 22:return VaultLanguage.T("fire a round that curves into a circle","円を描いて飛ぶ弾を放つ");
+    case 23:return VaultLanguage.T("fire a round that bursts into a five-way radial volley","飛行中に5方向へ分裂する弾を放つ");
+    case 24:return VaultLanguage.T("fire a round that bursts into a five-shot fan","飛行中に扇状5発に分裂する弾を放つ");
+    case 25:return VaultLanguage.T("fire a round that weaves from side to side","左右に蛇行する弾を放つ");
+    case 26:return VaultLanguage.T("fire an accelerating round that sheds rounds sideways","加速しながら左右に弾を放つ弾を放つ");
+    case 27:return VaultLanguage.T("fire a round that sheds rounds in successive directions","飛行中に周囲へ弾を放つ弾を放つ");
+    case 28:return VaultLanguage.T("fire a spiraling round","らせんを描く弾を放つ");
+    case 29:return VaultLanguage.T("fire an electric round that chains to enemies","敵へ連鎖する電撃弾を放つ");
+    case 30:return VaultLanguage.T("fire a rotating round that releases rounds behind it","回転しながら後方に弾を放つ弾を放つ");
+    case 31:return VaultLanguage.T("fire a flame round","炎属性の弾を放つ");
+    case 32:return VaultLanguage.T("fire a toxic round","毒属性の弾を放つ");
+    case 33:return VaultLanguage.T("fire an explosive round","爆発属性の弾を放つ");
+    case 34:return VaultLanguage.T("fire a slowing electric round that chains to five enemies","減速しながら最大5体に連鎖する電撃弾を放つ");
+    default:
+     int mode=LegendaryModuleMode(a);
+     if(mode>=35&&mode<55){string[] en={"reverse and return","curve sharply left","curve sharply right","orbit before continuing","weave in a wider arc","accelerate over its flight","decelerate over its flight","release a blast along its path","release a fiery blast along its path","release a spore blast along its path","burst forward after a delay","release rounds while orbiting","release rounds to both sides","release rounds behind itself","curve toward the nearest enemy","sweep its direction back and forth","form a gravity well at the end of its flight","drop an explosive charge at the end of its flight","release guided rounds at the end of its flight","release a radial volley at the end of its flight"};string[] ja={"反転して戻る","左へ大きく曲がる","右へ大きく曲がる","円を描いてから進む","大きく蛇行する","飛行中に加速する","飛行中に減速する","飛行中に爆発を起こす","飛行中に炎の爆発を起こす","飛行中に胞子の爆発を起こす","一定時間後に加速する","周回しながら弾を放つ","飛行中に左右へ弾を放つ","飛行中に後方へ弾を放つ","近くの敵を追う","左右に大きく方向を振る","飛行の終点に重力渦を作る","飛行の終点に爆発する罠を残す","飛行の終点から誘導弾を放つ","飛行の終点から全方向に弾を放つ"};return VaultLanguage.T("fire a round that will ","弾を放ち、")+VaultLanguage.T(en[mode-35],ja[mode-35]);}
+     switch(mode)
+     {
+      case 55:return VaultLanguage.T("restore 20% of the action skill gauge","アクションスキルのゲージを20%回復する");
+      case 56:return VaultLanguage.T("move up to a quarter of the magazine from reserves into the current magazine","予備弾からマガジン容量の4分の1を装填する");
+      case 57:return VaultLanguage.T("finish the current reload instantly","リロード中なら即座に完了する");
+      case 58:return VaultLanguage.T("extend an active action device by four seconds","発動中の装置の持続時間を4秒延長する");
+      case 59:return VaultLanguage.T("intercept up to 12 nearby hostile projectiles","近くの敵弾を最大12発迎撃する");
+      case 60:return VaultLanguage.T("strike every visible enemy in a narrow forward lane","前方の細い直線上にいる敵全員を攻撃する");
+      case 61:return VaultLanguage.T("blast the most distant visible enemy","視界内の最も遠い敵の位置を爆破する");
+      case 62:return VaultLanguage.T("fire a bouncing round that ricochets among enemies","敵の間を跳ねる弾を放つ");
+      case 63:return VaultLanguage.T("restore 5% of each ammunition reserve capacity","全銃種の予備弾をそれぞれ所持上限の5%補充する");
+      case 64:return VaultLanguage.T("recover health by spending the active shield","シールドを消費してHPを回復する");
+      case 65:return VaultLanguage.T("freeze the nearest enemy for two seconds","最寄りの敵を2秒間凍結する");
+      case 66:return VaultLanguage.T("execute the weakest visible non-elite enemy below 25% health","視界内でHP25%未満の最も弱い通常敵を処刑する");
+      case 67:return VaultLanguage.T("for six seconds, each kill restores 4% maximum health","6秒間、敵を倒すたび最大HPの4%を回復する");
+      case 68:return VaultLanguage.T("deploy a six-second healing field","6秒間の回復エリアを設置する");
+      case 69:return VaultLanguage.T("deploy a six-second ammunition supply field","6秒間の弾薬補給エリアを設置する");
+      case 70:return VaultLanguage.T("deploy a six-second damage field","6秒間の攻撃エリアを設置する");
+      case 71:return VaultLanguage.T("deploy a six-second electrical field","6秒間の電撃エリアを設置する");
+      case 72:return VaultLanguage.T("deploy a six-second projectile interception field","6秒間の敵弾迎撃エリアを設置する");
+      case 73:return VaultLanguage.T("deploy an autonomous sentry for six seconds","6秒間、自動射撃する迎撃機を設置する");
+      case 74:return VaultLanguage.T("deploy a six-second freezing field","6秒間、敵を凍結させるエリアを設置する");
+      case 75:return VaultLanguage.T("place a proximity mine that detonates when enemies approach","敵が近づくと爆発する地雷を設置する");
+      case 76:return VaultLanguage.T("deploy a rotating projectile emitter for six seconds","6秒間、回転しながら弾を放つ装置を設置する");
+      case 77:return VaultLanguage.T("deploy a six-second action gauge charging field","6秒間、アクションゲージを回復するエリアを設置する");
+      case 78:return VaultLanguage.T("deploy a six-second field that extends the active action device","6秒間、発動中の装置を延長するエリアを設置する");
+      case 79:return VaultLanguage.T("for six seconds, heal 25% of maximum HP when health falls below 25%","6秒間、HPが25%未満になったら最大HPの25%を回復する");
+      default:return "";
+     }
    }
   }
   static string ModuleTendency(ArtifactItem a){

@@ -5,7 +5,7 @@ Shader "NeonVault/BuildingGhost"
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
         Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite On
+        ZWrite Off
         Cull Back
         Pass
         {
@@ -28,6 +28,12 @@ Shader "NeonVault/BuildingGhost"
                     float3 w=pow(abs(normalize(i.worldNormal)),4); w/=max(dot(w,float3(1,1,1)),0.0001);
                     float3 p=i.worldPos*_Scale;
                     tex.rgb=atlas(p.zy)*w.x+atlas(p.xz)*w.y+atlas(p.xy)*w.z;
+                    if(_Tile.x>.25 && _Tile.y<.25) {
+                        float paint=saturate((tex.r-tex.b-.035)*15);
+                        tex.rgb=lerp(tex.rgb,dot(tex.rgb,float3(.299,.587,.114))*.72,paint);
+                        float soot=.78+.18*sin(i.worldPos.x*.17+sin(i.worldPos.z*.23))*sin(i.worldPos.z*.19);
+                        tex.rgb*=soot;
+                    }
                 }
                 fixed4 c=fixed4(tex.rgb*_Color.rgb,_Color.a*lerp(1,tex.a,_UseTextureAlpha)); clip(c.a-0.01); return c;
             }

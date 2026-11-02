@@ -63,8 +63,8 @@ namespace NeonVault
         static string Name(string key,bool armor,bool ja)
         {int index=Index(key);if(index<0)return "";if(armor)return (ja?ArmorJa:ArmorEn)[index/5][index%5];int maker=MakerFromCatalogIndex(index),variant=VariantFromCatalogIndex(index);return variant<5?(ja?GunsJa:GunsEn)[maker][variant]:(ja?NewGunsJa:NewGunsEn)[maker][variant-5];}
         public static string Description(string key,bool ja)=>VaultGame.LegendaryRuntimeDescription(key,ja);
-        public static string Description(Gun item,bool ja)=>Description(item==null?null:item.legendaryKey,ja)+(BossRelicFoundation.Decode(item?.bossRelicId,out _,out _)?"\n"+BossRelicFoundation.Description(item.bossRelicId,ja):"");
-        public static string Description(ArmorItem item,bool ja)=>Description(item==null?null:item.legendaryKey,ja)+(BossRelicFoundation.Decode(item?.bossRelicId,out _,out _)?"\n"+BossRelicFoundation.Description(item.bossRelicId,ja):"");
+        public static string Description(Gun item,bool ja)=>BossRelicFoundation.Decode(item?.bossRelicId,out _,out _)?BossRelicFoundation.Description(item.bossRelicId,ja):Description(item==null?null:item.legendaryKey,ja);
+        public static string Description(ArmorItem item,bool ja)=>BossRelicFoundation.Decode(item?.bossRelicId,out _,out _)?BossRelicFoundation.Description(item.bossRelicId,ja):Description(item==null?null:item.legendaryKey,ja);
         public static Gun CreateGun(int index,System.Random random,int level)
         {
             if(random==null)throw new ArgumentNullException(nameof(random));index=Mathf.Clamp(index,0,GunSeriesDesigns.FirstNewLegendary+NewGunCount-1);

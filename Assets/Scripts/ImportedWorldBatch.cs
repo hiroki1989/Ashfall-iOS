@@ -92,12 +92,11 @@ namespace NeonVault {
    result.SetFloat("_UseTextureAlpha",alpha?1f:0f);
    if(source.HasProperty("_BaseMap")&&source.GetTexture("_BaseMap")){result.SetTexture("_MainTex",source.GetTexture("_BaseMap"));result.SetTextureScale("_MainTex",source.GetTextureScale("_BaseMap"));result.SetTextureOffset("_MainTex",source.GetTextureOffset("_BaseMap"));}
    // 40% opacity keeps the scenery visible while revealing actors behind it.
-   // BuildingGhost writes depth so walls and floors do not repeatedly compound
-   // opacity along the same sightline when viewed through a multi-part building.
+   // Ghost surfaces must not write depth: later projectile fragments must
+   // remain visible even when transparent geometry is sorted differently.
    if(result.HasProperty("_Color")){var color=result.color;color.a=.40f;result.color=color;}
    // Draw the ghost after transparent projectile trails, then blend it over
-   // them. Its depth write still prevents stacked building surfaces from
-   // making the entire building opaque.
+   // them. Each surface blends without blocking other transparent objects.
    result.renderQueue=3100;result.enableInstancing=true;
    fadedMaterials[source]=result;return result;
   }
