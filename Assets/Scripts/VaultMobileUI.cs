@@ -3,7 +3,7 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public bool MobileModalVisible=>InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||legendaryWeaponTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
+        public bool MobileModalVisible=>FactionUnlockDialogVisible||InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||legendaryWeaponTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
         public static Matrix4x4 MobileCanvasMatrix
         {
             get

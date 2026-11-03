@@ -106,6 +106,7 @@ namespace NeonVault
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
             if(worldTransitionPending){DrawWorldLoading();return;}
+            if(FactionUnlockDialogVisible){DrawFactionUnlockDialog();return;}
             if(DebtFinalConversationVisible){DrawDebtFinalConversation();return;}
             if(FactionBossConversationVisible){DrawFactionBossConversation();return;}
             if(NpcConversationVisible){DrawNpcConversation();return;}

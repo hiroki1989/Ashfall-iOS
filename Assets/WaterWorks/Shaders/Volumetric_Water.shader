@@ -283,5 +283,5 @@ Shader "GapperGames/Volumetric_Water"
     ENDHLSL
 }
     }
-        FallBack "Hidden/Shader Graph/FallbackError"
+        FallBack Off
 }

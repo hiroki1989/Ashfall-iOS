@@ -1234,3 +1234,30 @@ D:\\Unity\\Ashfall-iOSの既存35作業を保持し、敵攻撃力のレベル�
 
 ## 2026-11-03 / iOS version and build 42
 Confirmed App Store Connect build 41 is VALID. Updated D:/Unity/Ashfall-iOS/ProjectSettings/ProjectSettings.asset bundleVersion and iPhone buildNumber to 42. New IPA generation, signing, and upload are not performed. Recorded the required post-upload version confirmation rule in Development/TEAM.md.
+
+## 2026-11-03 / iOS IPA build 42 upload
+Uploaded D:/downloads2/15669793359011-ash-8-default-ios-12.ipa (1,930,281,047 bytes) to existing app com.hiroki1989.ashfall via Apple Build Upload API. IPA metadata version/build 42/42 matched the project; latest ASC build before upload was 41. All 29 parts uploaded; file commit HTTP 200, asset COMPLETE, no warnings/errors. Build Upload ID 5da36ef8-ba4d-40f9-9682-5176b3b5e771. Apple processing state remained PROCESSING after polling; build row not yet visible. Log D:/Unity/AshfallArtValidation/upload-build42-current.log. IPA is not yet confirmed VALID/TestFlight-ready.
+
+## 2026-11-03 / Faction boss unlock dialog
+Added a one-time queued modal at each 30/60/100 percent faction unlock. It names the faction and location, explains that a destination is set, and closes with OK; existing automatic waypoint is retained. Mobile controls and gameplay input are blocked while visible. Unity script compilation reported Tundra build success; actual in-game visual verification remains outstanding. Version/build choice pending user response.
+
+## 2026-11-03 / Dungeon interior variety
+Added three interior surface styles, smaller room layouts on selected floors, and imported table/rack/bench cover variants. New checkpoint layoutVersion preserves the original layout for old saves; Unity compile/import succeeded (dungeon-interiors-compile.log), diff check passed. Multiple-seed traversal, game visuals, and iOS performance not yet verified. Suggested free Asset Store packs are not imported.
+
+## 2026-11-03 / Added environment assets (in progress)
+Integrated selected office props via Resources and weathered materials, plus editor importers and streaming placement for ten street props and six city building variants. Source prefab paths verified and git diff --check passed. Unity Editor currently holds the project; generated street/building prefabs, compilation, screenshots, navigation and iOS performance remain unverified. User asked to save and close Editor to continue validation. Buildings are darkened with weathered textures; structural ruin quality is not verified.
+
+## 2026-11-03 / Environment asset integration verification
+Unity Editor batch import succeeded, producing ten NewStreet prefabs and six NewCityBuildings prefabs; script compilation Tundra success. RealCitySceneryReview completed with nine streamed chunks and produced D:/Unity/QA-premium-ui/real-city-scenery.png. This wide capture does not establish that new buildings or office props look suitably ruined. In-game close-up, interiors, collision/navigation, iOS memory/performance remain unverified; task remains in progress.
+
+## 2026-11-03 / Interior and ruin verification
+Fixed imported material lookup by asset path and wood repeat mode; darkened tile floor. Unity DungeonInteriorIntegrationReview passed 13,031 checks across 768 layouts, including connectivity, entry/exit, cover positions, and prefab availability. Captured three styles at D:/Unity/BuildTemp/DungeonInteriorIntegrationReview. City prefab review passed six buildings and captured close-ups at D:/Unity/BuildTemp/RuinedCityPrefabReview; weathered surfaces, boards and debris are present but underlying building geometry is not broken. Real gameplay navigation, building occlusion and mobile performance are not yet validated; interior still sparse and tile visibly regular. Task remains in progress.
+
+## 2026-11-03 / Environment ruins and navigation
+Added V2 derived city meshes with irregular removed triangles, weathered boards/debris, floor dirt shader, and increased office furniture in existing blocked cells. Unity interior review PASS 13031 checks/768 layouts, three captured styles; world navigation and building ownership/occlusion predicate review PASS 5762 checks (720 sites, 3664 footprints, 6 prefabs, 174 parts). Six prefab closeups captured. Windows integrated development build succeeded: D:/Unity/BuildTemp/environment-final-build.log. Real play traversal, visual fading during gameplay, iOS FPS/memory and remaining visual quality improvements unverified; V2 damage subtle in closeup, do not claim strong ruined geometry is fully achieved.
+
+## 2026-11-03 / Unused build assets audit
+OutPost/Resources accounts for approximately 419 MiB in the previous Windows build report. No game code dynamic reference or external GUID reference found in the checked assets. Added Assets/Editor/ExcludeUnusedOutpostResources.cs to move the folder with Unity AssetDatabase while preserving GUIDs. Not executed: Unity Editor currently owns this project. User was asked to save and close; after that execute method, rebuild and compare build reports. No deletion. Build reduction not yet verified.
+
+## 2026-11-04 / Exclude unused OutPost resources
+Moved Assets/OutPost/Resources and its meta together to Assets/OutPost/OutpostSourceAssets, preserving GUIDs and source assets. Windows integrated build succeeded: build report 5.3 GB to 4.9 GB; 579 OutPost Resources entries reduced to one 0.1 KB script assembly entry. No game C# compile errors. Changed WaterWorks Volumetric_Water fallback to Off to remove missing Shader Graph fallback warning; subsequent Unity import succeeded, visual water rendering not yet verified. Logs D:/Unity/BuildTemp/exclude-outpost-build.log and exclude-outpost-final-import.log. Numerous CS0618 warnings and licensing/D3D12 messages remain; user's original Console messages not yet identified. iOS size and device testing not measured.

@@ -45,6 +45,21 @@ namespace NeonVault
         }
         public bool FactionHeadquartersUnlocked(int stage)=>!IsFactionHeadquarters(stage)||ClearedFactionDungeonCount(ExpeditionMap.FactionForStage(stage))>=RequiredFactionDungeonClears(stage);
         public bool FactionBossConversationVisible=>factionBossConversation;
+        readonly System.Collections.Generic.Queue<int> factionUnlockDialogs = new System.Collections.Generic.Queue<int>();
+        public bool FactionUnlockDialogVisible => factionUnlockDialogs.Count > 0;
+        void DrawFactionUnlockDialog()
+        {
+            int stage = factionUnlockDialogs.Peek();
+            int tier = FactionBossTier(stage);
+            string faction = IsRedClawBossStage(stage) ? T("RED CLAW", "\u30ec\u30c3\u30c9\u30af\u30ed\u30a6") : T("COYOTE", "\u30b3\u30e8\u30fc\u30c6");
+            string location = tier == 0 ? T("OUTPOST", "\u524d\u7dda\u57fa\u5730") : tier == 1 ? T("WAR CAMP", "\u8ecd\u4e8b\u62e0\u70b9") : T("STRONGHOLD", "\u672c\u62e0\u5730");
+            Box(new Rect(0, 0, 1440, 900), new Color(0, 0, 0, .76f));
+            Panel(new Rect(300, 250, 840, 400), Gold);
+            WorldLabel(new Rect(350, 285, 740, 52), T("FACTION BOSS UNLOCKED", "\u52e2\u529b\u30dc\u30b9\u62e0\u70b9\u3092\u89e3\u653e"), Gold, 32);
+            WorldLabel(new Rect(350, 360, 740, 60), faction + " / " + location, UiPaper, 30);
+            WorldLabel(new Rect(350, 445, 740, 100), T("The entrance is now your destination. Follow the map marker.", "\u5165\u53e3\u3092\u76ee\u7684\u5730\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002\u5730\u56f3\u306e\u30de\u30fc\u30ab\u30fc\u3092\u76ee\u6307\u3057\u307e\u3057\u3087\u3046\u3002"), Mist, 24);
+            if (WorldButton(new Rect(860, 555, 230, 60), T("OK", "\u78ba\u8a8d"))) factionUnlockDialogs.Dequeue();
+        }
         void UpdateFactionBossUnlocks(int paidBefore) { }
         void UpdateFactionBossUnlocks(int raidersBefore,int gangBefore)
         {
@@ -58,6 +73,7 @@ namespace NeonVault
                 int req=RequiredFactionDungeonClears(redStages[i]);
                 if(raidersBefore<req&&raidersNow>=req)
                 {
+                    factionUnlockDialogs.Enqueue(redStages[i]);
                     DiscoverOverworldDungeon(redStages[i]);
                     SetOverworldWaypoint(2,redStages[i]);
                     Notify(redNamesEn[i]+" UNLOCKED / Boss battle available",redNamesJa[i]+" 解放 / ボス戦ダンジョンに出撃可能");
@@ -71,6 +87,7 @@ namespace NeonVault
                 int req=RequiredFactionDungeonClears(gangStages[i]);
                 if(gangBefore<req&&gangNow>=req)
                 {
+                    factionUnlockDialogs.Enqueue(gangStages[i]);
                     DiscoverOverworldDungeon(gangStages[i]);
                     SetOverworldWaypoint(2,gangStages[i]);
                     Notify(gangNamesEn[i]+" UNLOCKED / Boss battle available",gangNamesJa[i]+" 解放 / ボス戦ダンジョンに出撃可能");

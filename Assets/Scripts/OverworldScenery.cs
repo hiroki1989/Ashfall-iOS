@@ -30,6 +30,23 @@ namespace NeonVault
             var river=ImportedRiverWater.Create(owned);if(river!=null)materials[3]=river;
             var primitive=GameObject.CreatePrimitive(PrimitiveType.Cube);cube=primitive.GetComponent<MeshFilter>().sharedMesh;Destroy(primitive);primitive=GameObject.CreatePrimitive(PrimitiveType.Sphere);sphere=primitive.GetComponent<MeshFilter>().sharedMesh;Destroy(primitive);
         }
+        static GameObject[] addedCityBuildingSources;
+        static bool PlaceAddedCityBuilding(Transform parent,Rect footprint,int seed)
+        {
+            // The site occupies the same geography footprint as its replacement;
+            // ownership covers every mesh so camera obstruction fades the whole site.
+            if((seed&15)!=3)return false;
+            if(addedCityBuildingSources==null)addedCityBuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/RuinedCityBuildingsV2");
+            if(addedCityBuildingSources.Length==0)return false;
+            var source=addedCityBuildingSources[((seed&int.MaxValue)>>4)%addedCityBuildingSources.Length];
+            var bounds=ImportedWorldBatch.SourceBounds(source);
+            if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
+            float scale=Mathf.Min((footprint.width-.4f)/bounds.size.x,(footprint.height-.4f)/bounds.size.z,18f/bounds.size.y);
+            if(scale<=0||float.IsInfinity(scale))return false;
+            var position=new Vector3(footprint.center.x-bounds.center.x*scale,-bounds.min.y*scale,footprint.center.y-bounds.center.z*scale);
+            ImportedWorldBatch.Add(parent,source,position,Quaternion.identity,Vector3.one*scale,true);
+            return true;
+        }
         static GameObject[] cc0BuildingSources;
         static bool PlaceCC0Building(Transform parent,Rect rect,int seed)
         {
@@ -45,6 +62,24 @@ namespace NeonVault
             if(scale<=0)return false;
             var position=new Vector3(rect.center.x-bounds.center.x*scale,-bounds.min.y*scale,rect.center.y-bounds.center.z*scale);
             ImportedWorldBatch.Add(parent,source,position,Quaternion.identity,Vector3.one*scale,true);
+            return true;
+        }
+        static GameObject[] weatheredStreetSources;
+        static bool PlaceWeatheredStreet(Transform parent,Vector3 position,int seed)
+        {
+            // Low frequency and shared meshes/materials keep outdoor chunks bounded on mobile.
+            if((seed&3)!=0)return false;
+            if(weatheredStreetSources==null)weatheredStreetSources=Resources.LoadAll<GameObject>("ImportedWorld/NewStreet");
+            if(weatheredStreetSources.Length==0)return false;
+            var source=weatheredStreetSources[((seed&int.MaxValue)/4)%weatheredStreetSources.Length];
+            var bounds=ImportedWorldBatch.SourceBounds(source);
+            if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
+            float maxHeight=source.name.Contains("street-04")||source.name.Contains("street-07")?2.7f:1.65f;
+            float scale=Mathf.Min(1.35f/bounds.size.x,1.35f/bounds.size.z,maxHeight/bounds.size.y);
+            if(scale<=0||float.IsInfinity(scale))return false;
+            var rotation=Quaternion.Euler(0,((seed>>2)&3)*90,0);
+            var offset=rotation*new Vector3(-bounds.center.x*scale,-bounds.min.y*scale,-bounds.center.z*scale);
+            ImportedWorldBatch.Add(parent,source,position+offset,rotation,Vector3.one*scale);
             return true;
         }
         public void TickFocus(Vector3 position)
@@ -96,6 +131,7 @@ namespace NeonVault
             {
                 Vector3 p=new Vector3(rect.center.x,0,rect.center.y);int seed=unchecked(x*1973+z*9277+index++*101);float h=4.5f+Mathf.Abs(seed%4)*1.7f;
                 int district=geography.District(p);
+                if((district==0||district==1||district==2)&&PlaceAddedCityBuilding(obj.transform,rect,seed))continue;
                 if((district==0||district==1||district==2)&&PlaceCC0Building(obj.transform,rect,seed))continue;
                 if(district==0||district==1||district==2){RuinedCityArchitecture.Place(obj.transform,rect,district==1?7:district==2?6:Mathf.Abs(seed%6));continue;}
                 if(ImportedWorldAssets.PlaceBuilding(obj.transform,rect,seed))continue;
@@ -188,7 +224,7 @@ namespace NeonVault
                 if(geography.River(p)||geography.SiteProtected(p,2))continue;
                 bool occupied=false;foreach(var building in data.Buildings)if(new Rect(building.xMin-1,building.yMin-1,building.width+2,building.height+2).Contains(new Vector2(p.x,p.z))){occupied=true;break;}if(occupied)continue;
                 float clearance=geography.RoadClearance(p);
-                if(clearance>1.6f&&clearance<3.5f)OverworldScenery.AssetAdapter?.Invoke("street",obj.transform,p,i+x*113+z*71);
+                if(clearance>1.6f&&clearance<3.5f){int propSeed=i+x*113+z*71;if(!PlaceWeatheredStreet(obj.transform,p,propSeed))OverworldScenery.AssetAdapter?.Invoke("street",obj.transform,p,propSeed);}
                 else if(clearance>3.5f)OverworldScenery.AssetAdapter?.Invoke("debris",obj.transform,p,i+x*57+z*31);
             }
             for(int mat=0;mat<batches.Length;mat++)

@@ -24,16 +24,18 @@ namespace NeonVault
         float discoveryRadius=-1;
         static readonly Vector2Int[] Directions={Vector2Int.up,Vector2Int.right,Vector2Int.down,Vector2Int.left};
         int entryIndex, exitIndex;
+        readonly bool compactPlan;
         public int EntryChamberIndex=>entryIndex;
         public int ExitChamberIndex=>exitIndex;
         public readonly int ExitPathCells;
         public Vector3 Entry=>Center(chambers[entryIndex]);
         public Vector3 Exit=>Center(chambers[exitIndex]);
         public int WalkableCells { get {int count=0;foreach(bool value in open)if(value)count++;return count;} }
-        public SectorLayout(System.Random random,int theme=0)
+        public SectorLayout(System.Random random,int theme=0,bool compact=false)
         {
             // Scatter rooms instead of keeping a repeated row/column lattice.
             int variant=random.Next(4);
+            compactPlan=compact;
             Columns=variant==0?67:variant==1?29:variant==2?49:41;
             Rows=variant==0?29:variant==1?67:variant==2?41:49;
             open=new bool[Columns,Rows];distances=new int[Columns,Rows];entryZone=new bool[Columns,Rows];
@@ -49,7 +51,7 @@ namespace NeonVault
                     foreach(var other in chambers){int dx=c.x-other.x,dy=c.y-other.y;separation=Math.Min(separation,dx*dx+dy*dy);}
                     if(separation>bestSeparation){best=c;bestSeparation=separation;}
                 }
-                chambers.Add(best);Room(best,random.Next(3,6),random.Next(3,6),(random.Next(5)+theme)%5);
+                chambers.Add(best);Room(best,compactPlan?random.Next(2,4):random.Next(3,6),compactPlan?random.Next(2,4):random.Next(3,6),(random.Next(5)+theme)%5);
             }
             var perimeter=new List<int>();
             for(int i=0;i<chambers.Count;i++){var c=chambers[i];if(c.x<Columns*.25f||c.x>Columns*.75f||c.y<Rows*.25f||c.y>Rows*.75f)perimeter.Add(i);}
@@ -162,7 +164,7 @@ namespace NeonVault
         public bool SpawnSafe(Vector3 p){var c=ToCell(p);return IsOpen(c.x,c.y)&&!entryZone[c.x,c.y]&&(p-Entry).sqrMagnitude>=144&&!Blocked(p,.65f);}
         bool IsCover(int x,int y){foreach(var p in covers)if(ToCell(p)==new Vector2Int(x,y))return true;return false;}
         void Carve(int x,int y,int w,int d){for(int a=x;a<x+w;a++)for(int b=y;b<y+d;b++)if(a>0&&a<Columns-1&&b>0&&b<Rows-1)open[a,b]=true;}
-        void Corridor(Vector2Int a,Vector2Int b){Carve(Math.Min(a.x,b.x)-1,Math.Min(a.y,b.y)-1,Math.Abs(a.x-b.x)+3,Math.Abs(a.y-b.y)+3);}
+        void Corridor(Vector2Int a,Vector2Int b){int margin=compactPlan?0:1;int width=compactPlan?2:3;Carve(Math.Min(a.x,b.x)-margin,Math.Min(a.y,b.y)-margin,Math.Abs(a.x-b.x)+width,Math.Abs(a.y-b.y)+width);}
         public Vector3 Center(Vector2Int c)=>new Vector3((c.x+.5f-Columns*.5f)*CellSize,.65f,(c.y+.5f-Rows*.5f)*CellSize);
         public Vector2Int ToCell(Vector3 p)=>new Vector2Int(Mathf.FloorToInt(p.x/CellSize+Columns*.5f),Mathf.FloorToInt(p.z/CellSize+Rows*.5f));
         public bool IsOpen(int x,int y)=>x>=0&&y>=0&&x<Columns&&y<Rows&&open[x,y];

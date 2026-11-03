@@ -205,36 +205,85 @@ namespace NeonVault {
     }
    }
   }
-  public static void ApplySurfaces(Transform root){
+  public static void ApplySurfaces(Transform root,int interiorStyle=0){
    var concrete=Resources.LoadAll<Material>("ImportedWorld/Surfaces");if(concrete.Length==0)return;
    var shader=BuiltinStandard();
    foreach(var r in root.GetComponentsInChildren<MeshRenderer>()){
     bool floor=r.name=="Wasteland concrete";
     bool wall=r.name=="Concrete wall"||r.name=="Ruined chamber foundation"||r.name=="Concrete partition cap"||r.name=="Concrete recessed cap panel";
     if(!floor&&!wall)continue;
-    var source=Array.Find(concrete,m=>m.name.Contains(wall?"Spalling":"BrushedWorn"))??concrete[0];
+    // Imported materials commonly share the internal name "Standard". Load by
+    // resource path so each floor actually uses its intended surface.
+    string surface=wall?(interiorStyle==1?"M_YFCM_Plastered":interiorStyle==2?"M_YFCM_RevealingBricks":"M_YFCM_Spalling"):(interiorStyle==2?"M_YFCM_Slab1x1":"M_YFCM_BrushedWorn");
+    var source=Resources.Load<Material>("ImportedWorld/Surfaces/"+surface)??concrete[0];
     var material=new Material(shader);material.CopyPropertiesFromMaterial(source);material.shader=shader;
-    if(floor)material.color=new Color(.43f,.45f,.44f);
+    if(floor)material.color=interiorStyle==1?new Color(.65f,.54f,.42f):interiorStyle==2?new Color(.30f,.29f,.26f):new Color(.43f,.45f,.44f);
+    else material.color=interiorStyle==1?new Color(.47f,.43f,.36f):interiorStyle==2?new Color(.49f,.43f,.38f):new Color(.45f,.46f,.43f);
+    if(floor&&interiorStyle==1){var wood=Resources.Load<Texture2D>("Art/DungeonWood");if(wood){wood.wrapMode=TextureWrapMode.Repeat;material.mainTexture=wood;material.DisableKeyword("_NORMALMAP");material.SetTexture("_BumpMap",null);}}
+    if(material.mainTexture)material.mainTexture.wrapMode=TextureWrapMode.Repeat;
+    if(floor){var weathered=Resources.Load<Shader>("DungeonWeatheredFloor");if(weathered){material.shader=weathered;material.SetFloat("_Grime",interiorStyle==2?.72f:.52f);}}
     material.SetFloat("_Glossiness",.15f);material.SetFloat("_Metallic",0);
     var size=r.bounds.size;material.mainTextureScale=new Vector2(Mathf.Max(1,size.x/3),Mathf.Max(1,Mathf.Max(size.z,size.y)/3));
     r.sharedMaterial=material;r.gameObject.AddComponent<ImportedSurfaceLifetime>().material=material;
    }
   }
-  static void ReplaceLegacyCovers(Transform root){
-   // Replace the whole legacy hierarchy, rather than layering a prop over its truck.
+  static readonly Dictionary<Material,Material> salvagedOfficeMaterials=new Dictionary<Material,Material>();
+  static void AgeOfficeProp(GameObject placed){
+   foreach(var collider in placed.GetComponentsInChildren<Collider>(true))collider.enabled=false;
+   foreach(var animation in placed.GetComponentsInChildren<Animator>(true))animation.enabled=false;
+   foreach(var renderer in placed.GetComponentsInChildren<Renderer>(true)){
+    var original=renderer.sharedMaterials;var aged=new Material[original.Length];
+    for(int i=0;i<original.Length;i++){
+     var source=original[i];if(!source)continue;
+     if(!salvagedOfficeMaterials.TryGetValue(source,out var material)){
+      material=new Material(BuiltinStandard());material.name="Weathered office / "+source.name;
+      Texture texture=source.HasProperty("_BaseMap")?source.GetTexture("_BaseMap"):source.HasProperty("_MainTex")?source.GetTexture("_MainTex"):null;
+      if(texture)material.mainTexture=texture;
+      Color color=source.HasProperty("_BaseColor")?source.GetColor("_BaseColor"):source.HasProperty("_Color")?source.GetColor("_Color"):Color.white;
+      material.color=Color.Lerp(color,new Color(.29f,.27f,.23f,1),.58f);
+      material.SetFloat("_Glossiness",.08f);material.SetFloat("_Metallic",0);material.DisableKeyword("_EMISSION");
+      salvagedOfficeMaterials[source]=material;
+     }aged[i]=material;
+    }renderer.sharedMaterials=aged;
+   }
+  }
+  static void ReplaceLegacyCovers(Transform root,bool hub,int styleSeed){
+   // Office props occupy existing blocked cover cells, preserving navigation and line of sight.
    int index=0;foreach(var legacy in root.GetComponentsInChildren<Transform>()){
     if(legacy.name!="Wrecked utility vehicle")continue;
-    string[] names={"PolyHaven/metal_trash_can","PolyHaven/barrel_stove","PolyHaven/metal_toolbox","props/barrel_open"};
-    var source=Resources.Load<GameObject>("ImportedWorld/"+names[index++%names.Length]);if(!source)continue;
+    string[] names={"PolyHaven/metal_trash_can","props/table","props/rack","PolyHaven/metal_toolbox","props/bench","props/barrel_open"};
+    string[] office={"office_desk","office_shelf","office_drawer","old_terminal","office_printer","office_simple_desk","sci_shelf","sci_chair"};
+    int variant=index++;
+    bool useOffice=!hub&&((styleSeed&int.MaxValue)%3!=0)&&variant%4!=3;
+    var source=useOffice?Resources.Load<GameObject>("ImportedWorld/OfficeSalvage/"+office[(variant+(styleSeed&int.MaxValue)%office.Length)%office.Length]):null;
+    if(!source){useOffice=false;source=Resources.Load<GameObject>("ImportedWorld/"+names[variant%names.Length]);}if(!source)continue;
     var placed=UnityEngine.Object.Instantiate(source,legacy.parent,false);placed.name="Imported cover / "+source.name;
     placed.transform.localPosition=legacy.localPosition;placed.transform.localRotation=Quaternion.identity;
+    if(useOffice)AgeOfficeProp(placed);
     var rs=placed.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(placed);continue;}
     Bounds b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
-    // Covers occupy one 2.2m blocked cell; keep a margin within that footprint.
     float scale=Mathf.Min(1.9f/Mathf.Max(.01f,b.size.x),1.9f/Mathf.Max(.01f,b.size.z),1.8f/Mathf.Max(.01f,b.size.y));
+    if(useOffice)scale=Mathf.Min(scale,1.3f);
     placed.transform.localScale*=scale;
     rs=placed.GetComponentsInChildren<Renderer>();b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
     var centre=legacy.position;placed.transform.position+=new Vector3(centre.x-b.center.x,-.06f-b.min.y,centre.z-b.center.z);
+    // Put a small salvaged terminal on some desks without extending the blocked cell.
+    string officeKind=office[(variant+(styleSeed&int.MaxValue)%office.Length)%office.Length];
+    if(useOffice&&(officeKind=="office_desk"||officeKind=="office_simple_desk")){
+     var terminal=Resources.Load<GameObject>("ImportedWorld/OfficeSalvage/old_terminal");
+     if(terminal){
+      var detail=UnityEngine.Object.Instantiate(terminal,placed.transform,false);detail.name="Salvaged desk terminal";AgeOfficeProp(detail);
+      var detailRenderers=detail.GetComponentsInChildren<Renderer>();
+      if(detailRenderers.Length>0){
+       var db=detailRenderers[0].bounds;foreach(var r in detailRenderers)db.Encapsulate(r.bounds);
+       float span=Mathf.Max(db.size.x,db.size.y,db.size.z);
+       if(span>.001f){detail.transform.localScale*=Mathf.Min(.42f/ span,1f);db=detailRenderers[0].bounds;foreach(var r in detailRenderers)db.Encapsulate(r.bounds);
+        var deskBounds=rs[0].bounds;foreach(var r in rs)deskBounds.Encapsulate(r.bounds);
+        detail.transform.position+=new Vector3(deskBounds.center.x-db.center.x,deskBounds.max.y-db.min.y,deskBounds.center.z-db.center.z);
+       }
+      }
+     }
+    }
     legacy.gameObject.SetActive(false);UnityEngine.Object.Destroy(legacy.gameObject);
    }
   }
@@ -283,9 +332,9 @@ namespace NeonVault {
     count++;
    }
   }
-  public static void DressInterior(Transform root,SectorLayout layout,bool hub){
-   ReplaceLegacyCovers(root);
-   ApplySurfaces(root);
+  public static void DressInterior(Transform root,SectorLayout layout,bool hub,int styleSeed=0){
+   ReplaceLegacyCovers(root,hub,styleSeed);
+   ApplySurfaces(root,hub?0:(styleSeed&int.MaxValue)%3);
    if(hub)DressHubPerimeter(root,layout);
    DressClosedDungeonBlocks(root,layout);
   }

@@ -126,7 +126,7 @@ namespace NeonVault
         void StartRunImmediate(int? fixedSeed=null)
         {
             if(!CanAccessFreeVersionStage(SelectedStageId))return;
-            IsOverworld=false;ClearRunCheckpoint();shake=0;
+            dungeonLayoutVersion=1;IsOverworld=false;ClearRunCheckpoint();shake=0;
             ResetGameplayOverlays(); seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
             route.Clear(); var cell=Vector2Int.zero; route.Add(cell);
             for(int i=1;i<CurrentDungeon.AreaCount;i++)
@@ -163,7 +163,7 @@ namespace NeonVault
             if(world!=null) { world.gameObject.SetActive(false); Destroy(world.gameObject); }
             foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();
             world=new GameObject("Generated sector "+room).transform; satellites.Clear();
-            ClearArtifactDrops();Layout=new SectorLayout(new System.Random(seed+room*7919),DungeonIndex);
+            ClearArtifactDrops();Layout=new SectorLayout(new System.Random(seed+room*7919),DungeonIndex,dungeonLayoutVersion>0&&((seed+room*7919)&3)==0);
             halfWidth=Layout.Columns*SectorLayout.Cell/2;halfDepth=Layout.Rows*SectorLayout.Cell/2;cleared=false;
             art=new VaultArt(world,materials,new System.Random(seed+room*7919));art.Floor(halfWidth,halfDepth,room);
             art.DungeonAtmosphere(DungeonIndex,Layout);
@@ -171,7 +171,7 @@ namespace NeonVault
             foreach(var rect in Layout.walls)art.Partition(rect);
             foreach(var p in Layout.covers)art.Cover(p);
             for(int i=0;i<Layout.chambers.Count;i++)art.Chamber(Layout.Center(Layout.chambers[i]),i);
-            art.Gate(Layout.Exit);ImportedWorldAssets.DressInterior(world,Layout,false);
+            art.Gate(Layout.Exit);ImportedWorldAssets.DressInterior(world,Layout,false,seed+room*7919);
             player=art.Character(Layout.Entry,true);
             barrel=art.Weapon(player,gun==null?Cyan:gun.color);if(gun!=null)VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));RefreshWeaponAppearance();
             PlayerAppearance?.ApplyArmor(EquippedArmor);
@@ -354,7 +354,7 @@ namespace NeonVault
                 return;
             }
             if(worldTransitionPending)return;
-            if(FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
+            if(FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
             if(screen==Screen.Playing&&!IsOverworld&&IsFactionHeadquarters(SelectedStageId)&&room==CurrentDungeon.AreaCount-1&&player)
                 foreach(var enemy in Enemies)if(enemy&&!enemy.dead&&enemy.kind==3&&Vector3.Distance(enemy.transform.position,PlayerPosition)<14f){BeginFactionBossConversation();break;}
             if(FactionBossConversationVisible)return;
