@@ -12,6 +12,7 @@ namespace NeonVault
         {
             public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount, layoutVersion;
             public float actionSkillPoints;
+            public int explorationColumns, explorationRows; public string explorationBits;
             public int[] routeX, routeY, ammoReserves, ammoCrateRooms, upgradeKeys, upgradeValues;
             public float hp, baseMaxHp, damageBonus, fireBonus, runDamage, runFire, runVitality, runDash, runChain, runHarvest, runTime, artifactShield, artifactClock;
             public float playerX, playerZ, aimX, aimZ;
@@ -50,6 +51,7 @@ namespace NeonVault
                 runTime=runTime,artifactShield=ArtifactShield,artifactClock=artifactCombatClock,playerX=player.position.x,playerZ=player.position.z,
                 aimX=aim.x,aimZ=aim.z,cleared=cleared,ammoReserves=SaveAmmoReserves(),ammoCrateRooms=ammoCrateRoomPlan.ToArray()
             };
+            if(Layout!=null){save.explorationColumns=Layout.Columns;save.explorationRows=Layout.Rows;save.explorationBits=Layout.SaveExploration();}
             save.routeX=new int[route.Count];save.routeY=new int[route.Count];for(int i=0;i<route.Count;i++){save.routeX[i]=route[i].x;save.routeY[i]=route[i].y;}
             var keys=new List<int>();var values=new List<int>();foreach(var pair in runUpgradeCounts){keys.Add(pair.Key);values.Add(pair.Value);}save.upgradeKeys=keys.ToArray();save.upgradeValues=values.ToArray();
             foreach(var foe in Enemies)if(foe!=null&&!foe.dead)save.foes.Add(new FoeCheckpoint{kind=foe.kind,elite=foe.elite,x=foe.transform.position.x,z=foe.transform.position.z,hp=foe.hp,maxHp=foe.maxHp,timer=foe.timer});
@@ -97,6 +99,7 @@ namespace NeonVault
                 if(c.mission){var obj=CreateLootPresentation("MISSION SUPPLIES",c.position,new Vector3(1.15f,.55f,.9f),new Color(.9f,.48f,.19f),LootPresentationKind.AmmoCrate);ObjectiveGroundRing.Create(obj.transform,new Vector3(c.position.x,0,c.position.z),1.15f);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,visual=obj,mission=true});}
                 else {var type=NormalizeAmmoType((AmmoType)Mathf.Clamp(c.type,0,AmmoTypeCount-1));var obj=CreateLootPresentation(AmmoPickupName(type,c.amount),c.position,new Vector3(.82f,.38f,.72f),AmmoCrateColor(type),LootPresentationKind.AmmoCrate,type,c.amount);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,type=type,amount=c.amount,visual=obj});}
             }
+            Layout.RestoreExploration(save.explorationBits,save.explorationColumns,save.explorationRows);
             ReconcileFloorCompletion();Layout.BuildDistanceField(PlayerPosition);Layout.Discover(PlayerPosition);
             UpdateCamera(true);PlayerPrefs.DeleteKey(RunSaveKey);PlayerPrefs.Save();Notify("EXPEDITION RESTORED / Checkpoint consumed","探索を再開 / 保存データを復元しました");return true;
         }

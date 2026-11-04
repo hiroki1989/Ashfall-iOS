@@ -7,6 +7,19 @@ namespace NeonVault {
   static readonly Dictionary<string,GameObject[]> groups=new Dictionary<string,GameObject[]>();
   static Shader builtinStandard;
   [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] static void Register(){OverworldScenery.AssetAdapter=Place;WorldEntranceBuildings.AssetAdapter=Place;}
+  static bool PlaceRustyVehicle(string category,Transform parent,Vector3 position,int seed){
+   if(category!="car"||!parent.name.StartsWith("Stream /")||(seed&1)!=0)return false;
+   string name=((seed&2)==0)?"rusty_sedan":"rusty_pickup";
+   var source=Resources.Load<GameObject>("ImportedWorld/RustyVehicles/"+name);if(!source)return false;
+   var bounds=ImportedWorldBatch.SourceBounds(source);
+   if(bounds.size.x<.001f||bounds.size.y<.001f||bounds.size.z<.001f)return false;
+   bool sideways=bounds.size.x>bounds.size.z;
+   float width=sideways?bounds.size.z:bounds.size.x,depth=sideways?bounds.size.x:bounds.size.z;
+   float scale=Mathf.Min(1.8f/width,1.6f/bounds.size.y,4.2f/depth);
+   var rotation=Quaternion.Euler(0,sideways?90:0,0);
+   var offset=rotation*new Vector3(-bounds.center.x*scale,-bounds.min.y*scale,-bounds.center.z*scale);
+   ImportedWorldBatch.Add(parent,source,position+offset,rotation,Vector3.one*scale);return true;
+  }
   // Curated props use existing scenery anchors; source geometry is normalized to a
   // bounded footprint so decorative meshes do not block navigation or cover sites.
   static bool PlacePolyHaven(string category,Transform parent,Vector3 position,int seed){
@@ -28,6 +41,7 @@ namespace NeonVault {
    ImportedWorldBatch.Add(parent,source,position+offset,rotation,Vector3.one*scale);return true;
   }
   public static bool Place(string category,Transform parent,Vector3 position,int seed){
+   if(PlaceRustyVehicle(category,parent,position,seed))return true;
    if(PlacePolyHaven(category,parent,position,seed))return true;
    if(!groups.TryGetValue(category,out var prefabs)){prefabs=Array.FindAll(Resources.LoadAll<GameObject>("ImportedWorld/"+category),p=>!EquipmentChestVisual.IsReserved(p));groups[category]=prefabs;}
    if(prefabs.Length==0)return false;
@@ -65,9 +79,18 @@ namespace NeonVault {
    ground.name="Safehouse exterior shared concrete";ground.mainTextureScale=new Vector2(30,30);
    if(floor==null){ground.color=new Color(.36f,.35f,.30f);ground.mainTexture=Resources.Load<Texture2D>("Art/WastelandFloor");}
    apron.GetComponent<MeshRenderer>().sharedMaterial=ground;apron.AddComponent<ImportedSurfaceLifetime>().material=ground;
-   // Compact buildings move into the camera composition while staying beyond closed cells.
-   PlaceBlockedBackdrop(root,layout,"building","Warehouse",new Vector3(-7,0,17),0,.65f);
-   PlaceBlockedBackdrop(root,layout,"building","house_ruined",new Vector3(13,0,13),0,.6f);
+   // The safehouse has continuous simple perimeter walls; keep the upper
+   // corners clear of unrelated exterior building meshes.
+   void HubWall(Vector3 position, Vector3 dimensions){
+    var wall=GameObject.CreatePrimitive(PrimitiveType.Cube);wall.name="Safehouse perimeter wall";
+    wall.transform.SetParent(root,false);wall.transform.localPosition=position;wall.transform.localScale=dimensions;
+    var solid=wall.GetComponent<Collider>();if(solid){solid.enabled=false;UnityEngine.Object.Destroy(solid);}
+    var finish=new Material(BuiltinStandard()){color=new Color(.25f,.25f,.23f),name="Safehouse wall"};
+    wall.GetComponent<Renderer>().sharedMaterial=finish;wall.AddComponent<ImportedSurfaceLifetime>().material=finish;
+   }
+   HubWall(new Vector3(-13.7f,2,0),new Vector3(.45f,4,25));
+   HubWall(new Vector3(13.7f,2,0),new Vector3(.45f,4,25));
+   HubWall(new Vector3(0,2,-13.7f),new Vector3(27.8f,4,.45f));
    for(int i=0;i<7;i++){
     PlaceBlockedBackdrop(root,layout,"props","SM_fence_stand_small",new Vector3(-18,0,-10+i*3.4f),90);
     PlaceBlockedBackdrop(root,layout,"props","SM_fence_stand_small",new Vector3(18,0,-10+i*3.4f),90);
@@ -99,6 +122,12 @@ namespace NeonVault {
    PlaceHubStation(root,layout,"pallet",new Vector3(-6.6f,0,-9.9f),15,.9f);
    PlaceHubStation(root,layout,"bench",new Vector3(4.4f,0,-9.9f),0,1.0f);
    PlaceHubStation(root,layout,"pbr_box_supply",new Vector3(6.6f,0,-9.9f),-15,.9f);
+   // Salvaged office furniture occupies individual navigable cells only when
+   // the remaining floor stays connected; no furniture blocks an NPC or exit.
+   PlaceHubStation(root,layout,"office_desk",new Vector3(-6.6f,0,-4.4f),0,1.2f,"OfficeSalvage");
+   PlaceHubStation(root,layout,"office_shelf",new Vector3(6.6f,0,-4.4f),180,1.8f,"OfficeSalvage");
+   PlaceHubStation(root,layout,"office_drawer",new Vector3(-8.8f,0,-2.2f),0,1.0f,"OfficeSalvage");
+   PlaceHubStation(root,layout,"sci_chair",new Vector3(8.8f,0,-2.2f),180,1.0f,"OfficeSalvage");
    // Stock and workshop details sit just outside the playable circle.  Fit each
    // asset to a modest footprint before checking the entire blocked-cell area.
    PlaceHubDetail(root,layout,"rack",new Vector3(-15.5f,0,0),90,2.2f,2.2f);
@@ -131,10 +160,11 @@ namespace NeonVault {
    if(!safe){instance.SetActive(false);UnityEngine.Object.Destroy(instance);return;}
    foreach(var collider in instance.GetComponentsInChildren<Collider>())collider.enabled=false;
   }
-  static void PlaceHubStation(Transform root,SectorLayout layout,string name,Vector3 position,float yaw,float height){
+  static void PlaceHubStation(Transform root,SectorLayout layout,string name,Vector3 position,float yaw,float height,string category="props"){
    var cell=layout.ToCell(position);if(!layout.IsOpen(cell.x,cell.y))return;
-   var source=Resources.Load<GameObject>("ImportedWorld/props/"+name);if(!source)return;
+   var source=Resources.Load<GameObject>("ImportedWorld/"+category+"/"+name);if(!source)return;
    var instance=UnityEngine.Object.Instantiate(source,root,false);instance.name="Safehouse station / "+name;
+   if(category=="OfficeSalvage")AgeOfficeProp(instance);
    var centre=layout.Center(cell);centre.y=0;instance.transform.localPosition=centre;instance.transform.localRotation=Quaternion.Euler(0,yaw,0);
    var rs=instance.GetComponentsInChildren<Renderer>();if(rs.Length==0){UnityEngine.Object.Destroy(instance);return;}
    Bounds b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);

@@ -144,6 +144,7 @@ namespace NeonVault
             }
 #endif
             int before=DebtLevel;int paidBefore=InitialDebt-DebtRemaining;Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();FirstStepsDebtPaid();UpdateFactionBossUnlocks(paidBefore);PlayUserSound("transaction",.35f);
+            if(!smoke&&before<2&&DebtLevel>=2&&PlayerPrefs.GetInt(PetAdoptedKey,0)==0){npcConversation=3;npcBeat=0;}
             if(DebtRemaining==0)Notify("Briggs: Balance zero. Talk to Vale about the collar.","ブリッグス：残高、ゼロ。首輪の話はヴェイルにしろ。");
             else if(DebtLevel>before)Notify("Briggs: Check your training points.","ブリッグス：次の段階に達した。訓練に使えるポイントを確認しておけ。");
             else Notify("Briggs: Received "+amount.ToString("N0")+". Balance "+DebtRemaining.ToString("N0"),"ブリッグス："+amount.ToString("N0")+"スクラップ、受領。残りは"+DebtRemaining.ToString("N0")+"だ。");return amount>0;

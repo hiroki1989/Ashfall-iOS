@@ -20,14 +20,14 @@ namespace NeonVault {
   }
   static void RollAffixes(ArtifactItem a,System.Random r)
   {
-   int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage","elementDamage","handgunDamage","shotgunDamage","rifleDamage","sniperDamage","heavyDamage"};
+   int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage","elementDamage","handgunDamage","shotgunDamage","rifleDamage","sniperDamage","heavyDamage","petDamage","petSpeed"};
    var used=new System.Collections.Generic.HashSet<int>();a.affixes=new GearAffix[count];
    if(r==null)return;
    for(int i=0;i<count;i++)
    {
     int p;if(i==0&&!string.IsNullOrEmpty(a.manufacturerId)){var product=ModuleProductCatalog.Find(a.catalogId);p=product==null?r.Next(types.Length):System.Array.IndexOf(types,product.preferredAffix);if(p<0)p=r.Next(types.Length);used.Add(p);}else{do{p=r.Next(types.Length);}while(!used.Add(p));}
-    float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.015f,.06f,.04f,.04f,.04f,.04f,.04f,.04f};
-    a.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*a.power*Arsenal.Range(r,.85f,1.15f)};
+    float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.015f,.06f,.04f,.04f,.04f,.04f,.04f,.04f,.08f,.06f};
+    a.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*(p>=17?Mathf.Clamp(a.power,1f,3f):a.power)*Arsenal.Range(r,.85f,1.15f)};
    }
   }
   public static string DisplayName(ArtifactItem a)=>DisplayName(a,VaultLanguage.Japanese);
@@ -39,7 +39,7 @@ namespace NeonVault {
    if(a.effect==ArtifactEffect.KillShield||a.effect==ArtifactEffect.ShieldConversion)detail+=" / "+VaultLanguage.T("Active barrier reduces incoming health damage by 25% plus 0.5% per charge (up to 75% with bonuses); hits consume charge, and charge decays 2/s.","シールド中はHP被害を25%＋残量1点につき0.5%軽減（各種補正込み上限75%）。被弾で残量を消費し、毎秒2減衰。");
    if(LegendaryModuleBonus(a,out _,out _,out _))
    {
-    string condition=a.effect==ArtifactEffect.ShieldConversion?VaultLanguage.T("while shield is active (then every 5s): ","シールド有効中に発動（以後5秒ごと）："):VaultLanguage.T("when the module activates: ","モジュール発動時：");
+    string condition=LegendaryModuleMode(a)==17?"":a.effect==ArtifactEffect.ShieldConversion?VaultLanguage.T("while shield is active (then every 5s): ","シールド有効中に発動（以後5秒ごと）："):VaultLanguage.T("when the module activates: ","モジュール発動時：");
     string signature=LegendaryModuleSignature(a);
     if(!string.IsNullOrEmpty(signature))detail+=" / "+VaultLanguage.T("Legendary ","レジェンダリー効果 ")+condition+signature;
    }
@@ -84,7 +84,7 @@ namespace NeonVault {
     case 14:return VaultLanguage.T("below half health, restore 15% of maximum health","HP半分未満なら最大HPの15%を回復する");
     case 15:return VaultLanguage.T("restore 10% of the active weapon reserve capacity","現在の銃の予備弾を所持上限の10%補充する");
     case 16:return VaultLanguage.T("launch six rounds outward in a circle","周囲6方向に弾を放つ");
-    case 17:return VaultLanguage.T("immediately reset dodge cooldown","回避のクールダウンを即座に回復する");
+    case 17:return VaultLanguage.T("while equipped, companion bite damage +75% and attack speed +25%","装備中、犬のかみつき威力 +75%、攻撃速度 +25%");
     case 18:return VaultLanguage.T("place a three-pulse blast at the nearest enemy","最も近い敵の位置で3回爆発を起こす");
     case 19:return VaultLanguage.T("release three explosions in a line ahead","前方に3回の爆発を連続して起こす");
     case 20:return VaultLanguage.T("fire a round that divides into three while flying","飛行中に3発に分かれる弾を放つ");

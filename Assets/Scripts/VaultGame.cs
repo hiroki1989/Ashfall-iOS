@@ -165,13 +165,14 @@ namespace NeonVault
             world=new GameObject("Generated sector "+room).transform; satellites.Clear();
             ClearArtifactDrops();Layout=new SectorLayout(new System.Random(seed+room*7919),DungeonIndex,dungeonLayoutVersion>0&&((seed+room*7919)&3)==0);
             halfWidth=Layout.Columns*SectorLayout.Cell/2;halfDepth=Layout.Rows*SectorLayout.Cell/2;cleared=false;
-            art=new VaultArt(world,materials,new System.Random(seed+room*7919));art.Floor(halfWidth,halfDepth,room);
+            int dungeonInteriorStyle=SelectedStageId>=0?SelectedStageId:DungeonIndex;
+            art=new VaultArt(world,materials,new System.Random(seed+room*7919));art.Floor(halfWidth,halfDepth,dungeonInteriorStyle);
             art.DungeonAtmosphere(DungeonIndex,Layout);
             art.FactionHideout(ExpeditionMap.FactionForStage(SelectedStageId),Layout);
             foreach(var rect in Layout.walls)art.Partition(rect);
             foreach(var p in Layout.covers)art.Cover(p);
             for(int i=0;i<Layout.chambers.Count;i++)art.Chamber(Layout.Center(Layout.chambers[i]),i);
-            art.Gate(Layout.Exit);ImportedWorldAssets.DressInterior(world,Layout,false,seed+room*7919);
+            art.Gate(Layout.Exit);ImportedWorldAssets.DressInterior(world,Layout,false,dungeonInteriorStyle);
             player=art.Character(Layout.Entry,true);
             barrel=art.Weapon(player,gun==null?Cyan:gun.color);if(gun!=null)VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));RefreshWeaponAppearance();
             PlayerAppearance?.ApplyArmor(EquippedArmor);
@@ -358,6 +359,7 @@ namespace NeonVault
             if(screen==Screen.Playing&&!IsOverworld&&IsFactionHeadquarters(SelectedStageId)&&room==CurrentDungeon.AreaCount-1&&player)
                 foreach(var enemy in Enemies)if(enemy&&!enemy.dead&&enemy.kind==3&&Vector3.Distance(enemy.transform.position,PlayerPosition)<14f){BeginFactionBossConversation();break;}
             if(FactionBossConversationVisible)return;
+            TickPet(Time.deltaTime);
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(IsOverworld&&OverworldActivityChoiceOpen)

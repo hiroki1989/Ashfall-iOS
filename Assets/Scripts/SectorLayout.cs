@@ -138,6 +138,29 @@ namespace NeonVault
             {int mid=(a.y+b.y)/2+random.Next(-2,3);var first=new Vector2Int(a.x,mid);var second=new Vector2Int(b.x,mid);Corridor(a,first);Corridor(first,second);Corridor(second,b);}
         }
         public bool IsExplored(int x,int y)=>IsOpen(x,y)&&explored[x,y];
+        // Compact, deterministic per-floor discovery snapshot. Visible cells are
+        // deliberately recalculated from the player's current position on resume.
+        public string SaveExploration()
+        {
+            var data = new byte[(Columns * Rows + 7) / 8];
+            for (int y = 0; y < Rows; y++) for (int x = 0; x < Columns; x++)
+                if (IsExplored(x, y)) { int i = y * Columns + x; data[i >> 3] |= (byte)(1 << (i & 7)); }
+            return Convert.ToBase64String(data);
+        }
+        public bool RestoreExploration(string encoded, int columns, int rows)
+        {
+            if (string.IsNullOrEmpty(encoded) || columns != Columns || rows != Rows) return false;
+            byte[] data;
+            try { data = Convert.FromBase64String(encoded); }
+            catch (FormatException) { return false; }
+            if (data.Length != (Columns * Rows + 7) / 8) return false;
+            for (int y = 0; y < Rows; y++) for (int x = 0; x < Columns; x++)
+            {
+                int i = y * Columns + x;
+                explored[x, y] = IsOpen(x, y) && (data[i >> 3] & (1 << (i & 7))) != 0;
+            }
+            return true;
+        }
         public bool IsVisible(int x,int y)=>IsOpen(x,y)&&visible[x,y];
         public bool IsVisible(Vector3 position){var c=ToCell(position);return IsVisible(c.x,c.y);}
         // Radius is measured in cells; cache a snapped origin to avoid a full scan every frame.

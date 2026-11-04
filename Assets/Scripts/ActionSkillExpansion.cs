@@ -39,6 +39,8 @@ namespace NeonVault
         };
         static string ExtraEffect(ActionSkillKind k,int b,int t,int s)
         {
+            if(k==ActionSkillKind.Mechanic&&b==0&&t==1&&s==2)return "pet_damage";
+            if(k==ActionSkillKind.Medic&&b==1&&t==2&&s==2)return "pet_speed";
             if(k==ActionSkillKind.Mechanic&&b==1&&t==4&&s==3)return "turret_double";
             if(k==ActionSkillKind.Mechanic&&b==2&&t==2&&s==3)return "turret_element";
             if(k==ActionSkillKind.Bomber&&b==2&&t==2&&s==3)return "grenade_element";
@@ -78,6 +80,8 @@ namespace NeonVault
             if(tactical>0)return tactical;
             switch(id)
             {
+                case "pet_damage":return .25f;
+                case "pet_speed":return .20f;
                 case "turret_double":case "turret_element":case "grenade_element":case "medic_debuff":case "turret_follow":case "medic_follow":return 1;
                 case "turret_focus":case "medic_guard":return .05f;
                 case "grenade_heal":return .01f;
@@ -165,6 +169,8 @@ namespace NeonVault
         {
             switch(id)
             {
+                case "pet_damage":return ja?"犬のかみつき威力":"Companion bite damage";
+                case "pet_speed":return ja?"犬の攻撃速度":"Companion attack speed";
                 case "turret_near_damage":return ja?"砲台援護":"Turret cover";
                 case "turret_near_reload":return ja?"補給支援":"Supply cover";
                 case "turret_near_critical":return ja?"狙撃支援":"Targeting cover";

@@ -172,7 +172,7 @@ namespace NeonVault
                     case 14: if(hp<maxHp*.5f)HealPlayer(maxHp*.15f);break;
                     case 15: if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.1f)));}break;
                     case 16: for(int i=0;i<6;i++){float angle=i*Mathf.PI/3;LegendaryGunShot(center+Vector3.up*.7f,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),12*item.power,color);}break;
-                    case 17: dodgeCooldown=0;break;
+                    case 17: break; // Companion bonus is passive while this module is equipped.
                     case 18: {var targets=LegendaryGunTargets(center,9f);if(targets.Count>0)ScheduleLegendaryPulse(targets[0].transform.position,12*item.power,2f,3,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)));break;}
                     case 19: {Vector3 forward=aim.sqrMagnitude>.001f?aim.normalized:transform.forward;for(int i=1;i<=3;i++)ScheduleLegendaryPulse(center+forward*i*1.5f,12*item.power,1.5f,1,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)),i*.2f);break;}
                     case 55: ActionSkillOnBulletHit(ActionSkillChargeMax*.2f);break;

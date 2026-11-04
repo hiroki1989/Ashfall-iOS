@@ -7,9 +7,10 @@ namespace NeonVault
         int npcConversation, npcBeat;
         bool NpcConversationVisible => npcConversation != 0;
         void OpenMerchantDialogue(){npcConversation=1;npcBeat=PlayerPrefs.GetInt("Vault.SeraIntro",0)==0?0:7;}
-        void OpenBriggsDialogue(){npcConversation=2;npcBeat=PlayerPrefs.GetInt("Vault.BriggsIntro",0)==0?0:12;}
+        void OpenBriggsDialogue(){npcConversation=DebtLevel>=2&&PlayerPrefs.GetInt(PetAdoptedKey,0)==0?3:2;npcBeat=npcConversation==3?0:PlayerPrefs.GetInt("Vault.BriggsIntro",0)==0?0:12;}
         void DrawNpcConversation()
         {
+            if(npcConversation==3){DrawPetAdoptionConversation();return;}
             string[] seraJa={
                 "見ないツラだね。……ああ、その首元の鉄輪、ヴェイルの新入りか。",
                 "そんなに目立つか。",
