@@ -3,6 +3,7 @@ namespace NeonVault.Editor
 {
     public sealed class VaultArtImporter : AssetPostprocessor
     {
+        public override uint GetVersion() => 2;
         [InitializeOnLoadMethod]
         static void RepairPlayerSurfaces()
         {
@@ -66,6 +67,15 @@ namespace NeonVault.Editor
             if(assetPath.Contains("/SurvivorMaterials/")||assetPath.Contains("/Environment/"))
             {importer.mipmapEnabled=true;importer.filterMode=UnityEngine.FilterMode.Trilinear;importer.anisoLevel=8;importer.wrapMode=UnityEngine.TextureWrapMode.Clamp;importer.npotScale=TextureImporterNPOTScale.None;importer.alphaIsTransparency=false;}
             if(assetPath.Contains("/LayeredPlayer/")||assetPath.Contains("/LayeredEnemies/")){importer.mipmapEnabled=true;importer.filterMode=UnityEngine.FilterMode.Trilinear;importer.anisoLevel=4;importer.maxTextureSize=2048;}
+            // CPU-readable textures are used for pixel-based sprite construction.
+            // Keep their existing format; compress the remaining art for iOS only.
+            if(!importer.isReadable)
+            {
+                var ios=importer.GetPlatformTextureSettings("iPhone");
+                ios.name="iPhone";ios.overridden=true;ios.maxTextureSize=importer.maxTextureSize;
+                ios.format=TextureImporterFormat.ASTC_6x6;ios.compressionQuality=100;
+                importer.SetPlatformTextureSettings(ios);
+            }
         }
     }
 }
