@@ -388,6 +388,7 @@ namespace NeonVault
             bool humanGun=kind==10||RaiderBoss;
             if(humanGun)
             {
+                game.PlayEnemyGunshot(RaiderBoss || UseAssaultRifle);
                 int spreadCount=RaiderBoss&&burstShots%2==1?1:0;
                 for(int i=-spreadCount;i<=spreadCount;i++)
                     game.SpawnBullet(muzzle,Quaternion.Euler(0,i*11,0)*lockedAim,false,(RaiderBoss?12:UseAssaultRifle?9:22)*damageScale,RaiderBoss?25:UseAssaultRifle?26:22,new Color(1,.67f,.28f),GunEffect.Normal);

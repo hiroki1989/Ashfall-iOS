@@ -19,7 +19,7 @@ namespace NeonVault
             if(!petBarkScheduled){petBarkScheduled=true;petNextBarkAt=Time.time+Random.Range(30f,90f);return;}
             if(Time.time<petNextBarkAt)return;
             if(!petBarkClip)petBarkClip=Resources.Load<AudioClip>("UserSFX/pet-bark");
-            if(petBarkClip&&audioSource)audioSource.PlayOneShot(petBarkClip,.16f);
+            if(petBarkClip&&audioSource)audioSource.PlayOneShot(petBarkClip,.5f);
             petNextBarkAt=Time.time+Random.Range(45f,75f);
         }
         bool PetAdopted => !smoke&&PlayerPrefs.GetInt(PetAdoptedKey,0)!=0;

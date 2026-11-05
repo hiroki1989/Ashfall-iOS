@@ -26,6 +26,19 @@ namespace NeonVault
             footstepNext=Time.time+Mathf.Max(.4f,footstepClip?footstepClip.length:.7f);
         }
 
+        public void PlayEnemyGunshot(bool assault)
+        {
+            if (!audioSource) return;
+            string key = assault ? "AssaultRifle_fire" : "Handgun_fire";
+            if (!weaponClips.TryGetValue(key, out var clip))
+            {
+                clip = Resources.Load<AudioClip>("WeaponSFX/" + key);
+                weaponClips[key] = clip;
+            }
+            if (!clip) clip = fireSound;
+            if (clip) audioSource.PlayOneShot(clip, .35f);
+        }
+
         void StopReloadSound() { if (reloadAudioSource != null) reloadAudioSource.Stop(); }
 
         void PlayWeaponSound(Gun weapon, string action, float volume)
