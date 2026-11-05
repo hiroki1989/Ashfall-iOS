@@ -62,7 +62,7 @@ namespace NeonVault
                     renderer.sharedMaterials=mats;
                 }
                 var renderers=petObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=3f*Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
+                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=1.5f*Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
                 petAnimator=petObject.GetComponentInChildren<Animator>();if(petAnimator)petAnimator.applyRootMotion=false;
                 petPose=petObject.AddComponent<VaultPetPose>();petLastPlayerPosition=PlayerPosition;petAnimation=null;
             }
@@ -95,7 +95,7 @@ namespace NeonVault
                 // Cooldown upgrades increase attack frequency, while damage upgrades affect each bite.
                 float pelletHits=1f;if(gun!=null&&gun.pellets>1){float targetDistance=Mathf.Max(2f,Vector3.Distance(hero,target.transform.position));float targetAngle=2f*Mathf.Atan2(.5f,targetDistance)*Mathf.Rad2Deg;pelletHits=Mathf.Max(1f,gun.pellets*Mathf.Clamp01(targetAngle/Mathf.Max(1f,gun.shotgunSpreadDegrees)));}
                 float weaponDps=gun!=null?EffectiveDamage*pelletHits*Mathf.Max(.01f,EffectiveFireRate):0;
-                target.Hit(weaponDps*.1f*4f*PetDamageMultiplier(),target.transform.position+Vector3.up*.7f,Color.white,100,Color.white);
+                target.Hit(weaponDps*.02f*4f*PetDamageMultiplier(),target.transform.position+Vector3.up*.7f,Color.white,100,Color.white);
                 petAttackClock=4f*Mathf.Clamp(PetAttackIntervalMultiplier(),.15f,2f);petPose?.Bite();
                 TryPetBark();
             }
