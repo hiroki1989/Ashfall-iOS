@@ -31,7 +31,7 @@ namespace NeonVault
             var lines=VaultLanguage.Japanese?ja:en;bool playerLine=npcBeat==1||npcBeat==3;
             Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));
             DrawUnifiedDialogueScene("briggs",playerLine,playerLine?T("KNOX","ノックス"):T("BRIGGS","ブリッグス"),lines[Mathf.Clamp(npcBeat,0,lines.Length-1)],Gold);
-            var rookPortrait=LoadDialoguePortrait("rook");if(rookPortrait)GUI.DrawTexture(new Rect(604,176,232,232),rookPortrait,ScaleMode.ScaleToFit);
+            if(npcBeat>=2){var rookPortrait=LoadDialoguePortrait("rook");if(rookPortrait)GUI.DrawTexture(new Rect(604,176,232,232),rookPortrait,ScaleMode.ScaleToFit);}
             if(WorldButton(UnifiedDialoguePrimaryButton,npcBeat>=lines.Length-1?T("CONTINUE","続ける"):T("NEXT","次へ")))
             {
                 if(npcBeat<lines.Length-1){npcBeat++;return;}
@@ -62,7 +62,7 @@ namespace NeonVault
                     renderer.sharedMaterials=mats;
                 }
                 var renderers=petObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
+                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=3f*Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
                 petAnimator=petObject.GetComponentInChildren<Animator>();if(petAnimator)petAnimator.applyRootMotion=false;
                 petPose=petObject.AddComponent<VaultPetPose>();petLastPlayerPosition=PlayerPosition;petAnimation=null;
             }

@@ -53,6 +53,10 @@ namespace NeonVault.Editor
                 var ios=importer.GetPlatformTextureSettings("iPhone");ios.overridden=true;ios.maxTextureSize=4096;
                 ios.format=TextureImporterFormat.ASTC_6x6;importer.SetPlatformTextureSettings(ios);importer.SaveAndReimport();
                 tile++;if(tile<4){pixels=new Color32[Size*Size];index=0;return;}
+                // Write the activation marker only after all tiles finished successfully.
+                const string marker="Assets/Resources/Art/UI/FieldKit/aerial-city-current.txt";
+                File.WriteAllText(marker,"geography-20261105-v1\n");
+                AssetDatabase.ImportAsset(marker,ImportAssetOptions.ForceSynchronousImport);
                 EditorApplication.update-=Tick;surface=null;roofs=null;geo=null;GC.Collect();
                 File.WriteAllText("D:/Unity/QA-premium-ui/aerial-bake.txt","AERIAL_BAKE_COMPLETED / "+(EditorApplication.timeSinceStartup-started).ToString("0.0")+"s");
                 EditorApplication.Exit(0);

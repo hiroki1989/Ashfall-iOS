@@ -185,7 +185,20 @@ namespace NeonVault
             var layout=geo.Layout;if(overworldAtlasTexture!=null&&overworldAtlasSource==layout)return;
             if(overworldAtlasTexture!=null&&!aerialAtlas)Destroy(overworldAtlasTexture);
             aerialAtlas=false;
-            overworldAtlasSource=layout;const int resolution=1024;
+            overworldAtlasSource=layout;
+            // Pre-baked world atlas is generated from the same geography as the playable world.
+            // The base provides a complete map while individual detail tiles are loaded once.
+            // Activate the baked atlas only after all four tiles have been regenerated.
+            var bakeMarker=Resources.Load<TextAsset>("Art/UI/FieldKit/aerial-city-current");
+            var baked=bakeMarker!=null&&bakeMarker.text.Trim()=="geography-20261105-v1"
+                ?Resources.Load<Texture2D>("Art/UI/FieldKit/aerial-city-v1"):null;
+            if(baked!=null)
+            {
+                overworldAtlasTexture=baked;
+                aerialAtlas=true;
+                return;
+            }
+            const int resolution=1024;
             overworldAtlasTexture=new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){name="Ashfall surveyed city atlas",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
             var colors=new Color[resolution*resolution];
             for(int y=0;y<resolution;y++)for(int x=0;x<resolution;x++){
