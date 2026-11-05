@@ -266,7 +266,7 @@ namespace NeonVault
             else
             {
                 int stageLevel=finalDebtBossFight?Mathf.Max(1,DebtLevel):SelectedExpeditionStage?.level??1;
-                float levelHealth=Foe.LevelHealthScale(stageLevel),levelDamage=Foe.LevelDamageScale(stageLevel);
+                float levelHealth=Foe.LevelHealthScale(stageLevel)*(SelectedStageId==0?1f:2f*(1f+.02f*Mathf.Max(0,stageLevel-1))),levelDamage=Foe.LevelDamageScale(stageLevel);
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
             if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
@@ -672,6 +672,8 @@ namespace NeonVault
             if(!IsOverworld)OnDungeonFinished(victory);
             if(!victory)
             {
+                var deathCue=Resources.Load<AudioClip>("UserSFX/death-dramatic");
+                if(deathCue&&audioSource)audioSource.PlayOneShot(deathCue,.65f);
                 int before=Math.Max(0,Credits);
                 ApplyOverworldDeathPenalty();
                 RestoreDeathAmmoMinimum();

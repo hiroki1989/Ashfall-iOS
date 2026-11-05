@@ -103,6 +103,7 @@ namespace NeonVault
                 if(menuArt)GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),menuArt,ScaleMode.ScaleAndCrop);
                 else GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),Texture2D.blackTexture);
             }
+            if(InventoryOpen&&!manufacturerRegistry&&!actionSkillInventoryOpen){GUI.matrix=Matrix4x4.identity;Box(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),EqCanvas);}
             GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
             if(screen!=Screen.Shop)debtPage=false;
             if(worldTransitionPending){DrawWorldLoading();return;}

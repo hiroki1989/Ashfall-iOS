@@ -11,8 +11,9 @@ namespace NeonVault
         public static float GunCriticalChance(Gun item)=>item==null?0:Mathf.Clamp01(.05f+GearScoring.AffixTotal(item.affixes,"critChance"));
         public static float GunCriticalMultiplier(Gun item)=>item==null?1.5f:1.5f+GearScoring.AffixTotal(item.affixes,"critDamage");
         float ArmorCriticalBonus(string type){float value=0;foreach(var a in EquippedArmor)if(Armory.IsActiveArmor(a))value+=GearScoring.AffixTotal(a.affixes,type);return value;}
-        public float EffectiveCriticalChance=>gun==null?0:Mathf.Clamp(GunCriticalChance(gun)+ArmorCriticalBonus("critChance")+ArtifactAffixBonus("critChance")+DebtCriticalChanceBonus(VaultLanguage.DisplayModel(gun))+ActionSkillExtraValue("critical_chance")+(PlayerNearActionTurret?ActionSkillExtraValue("turret_near_critical"):0),0,.75f);
-        public float EffectiveCriticalMultiplier=>gun==null?1.5f:Mathf.Max(1.5f,GunCriticalMultiplier(gun)+ArmorCriticalBonus("critDamage")+ArtifactAffixBonus("critDamage")+DebtCriticalDamageBonus(VaultLanguage.DisplayModel(gun))+ActionSkillExtraValue("critical_damage"));
+        float EquippedMeleeAffix(string type){if(EquippedMeleeWeapon==null)return 0;MeleeWeaponCatalog.EnsureAffixes(EquippedMeleeWeapon);return GearScoring.AffixTotal(EquippedMeleeWeapon.affixes,type);}
+        public float EffectiveCriticalChance=>gun==null?0:Mathf.Clamp(GunCriticalChance(gun)+EquippedMeleeAffix("critChance")+ArmorCriticalBonus("critChance")+ArtifactAffixBonus("critChance")+DebtCriticalChanceBonus(VaultLanguage.DisplayModel(gun))+ActionSkillExtraValue("critical_chance")+(PlayerNearActionTurret?ActionSkillExtraValue("turret_near_critical"):0),0,.75f);
+        public float EffectiveCriticalMultiplier=>gun==null?1.5f:Mathf.Max(1.5f,GunCriticalMultiplier(gun)+EquippedMeleeAffix("critDamage")+ArmorCriticalBonus("critDamage")+ArtifactAffixBonus("critDamage")+DebtCriticalDamageBonus(VaultLanguage.DisplayModel(gun))+ActionSkillExtraValue("critical_damage"));
         public static float MeleeDamageMin(MeleeWeaponItem item)=>item==null?0:item.damage*.85f;
         public static float MeleeDamageMax(MeleeWeaponItem item)=>item==null?0:item.damage*1.15f;
         public float EffectiveMeleeDamageMin(MeleeWeaponItem item)=>MeleeDamage(item)*.85f;

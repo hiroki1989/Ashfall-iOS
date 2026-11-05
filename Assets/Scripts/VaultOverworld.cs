@@ -265,7 +265,7 @@ namespace NeonVault
         void ConfigureOverworldFoe(Foe foe)
         {
             int level=spawningWorldEnemy!=null?spawningWorldEnemy.level:Mathf.Max(1,DebtLevel+rng.Next(-1,2));worldEnemyLevels[foe]=level;
-            float hpScale=1.5f*Foe.LevelHealthScale(level),damageScale=Foe.LevelDamageScale(level);
+            float hpScale=3f*Foe.LevelHealthScale(level)*(1f+.02f*Mathf.Max(0,level-1)),damageScale=Foe.LevelDamageScale(level);
             var balance=VaultBalanceProfile.Current;
             foe.ConfigureDifficulty(hpScale*(balance!=null?Mathf.Max(.01f,balance.enemyHpMultiplier):1),damageScale*(balance!=null?Mathf.Max(.01f,balance.enemyDamageMultiplier):1),Mathf.Min(.25f,(level-1)*.005f));
         }

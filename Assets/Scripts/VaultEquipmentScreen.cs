@@ -80,7 +80,7 @@ namespace NeonVault
             else if(item is ArmorItem a){c.key="a:"+a.id;c.name=Armory.Name(a);c.equipped=IsArmorEquipped(a);score=GearScoring.Score(a);reference=MobileArmorComparison(a,out has);level=a.level;rarity=a.rarity;maker=ManufacturerBranding.Maker(a);
                 c.description=T("BASE STATS\n","基本特性\n")+Armory.SlotName(a.slot)+"\n"+EqFormatStats(Armory.Stats(a).TrimEnd(' ','·'));
                 if(!string.IsNullOrEmpty(a.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(a,LegendaryCatalog.Description(a,VaultLanguage.Japanese)));
-                c.fullDescription=string.IsNullOrEmpty(a.legendaryKey)?EqAppend(c.description,LegendaryDescription(a,Armory.Description(a))):c.description;}
+                c.fullDescription=c.description;}
             else if(item is ArtifactItem m){c.key="m:"+m.id;c.name=ArtifactCatalog.DisplayName(m);c.equipped=Array.IndexOf(EquippedArtifacts,m)>=0;score=GearScoring.Score(m);reference=MobileModuleComparison(m,out has);level=m.level;rarity=m.rarity;maker=ManufacturerBranding.Maker(m);
                 string effect=m.Description;int line=effect.IndexOf('\n');if(line>=0)effect=effect.Substring(line+1);int clause=effect.IndexOf(" / ",StringComparison.Ordinal);string shortEffect=clause>=0?effect.Substring(0,clause):effect;
                 c.description=shortEffect;c.description=EqAppend(c.description,EqFormatStats(GearScoring.AffixSummary(m)));if(m.rarity==Rarity.Legendary)c.description=EqAppend(c.description,T("Unique effect in details","固有効果は詳細で確認"));
@@ -97,7 +97,7 @@ namespace NeonVault
         static string EqAppend(string source,string extra)=>string.IsNullOrWhiteSpace(extra)?source:source+"\n"+extra;
         int EqGunComparison(out bool found)
         {int lowest=int.MaxValue;for(int i=0;i<AvailableWeaponSlotCount;i++){var equipped=WeaponInSlot(i);if(equipped!=null)lowest=Mathf.Min(lowest,GearScoring.Score(equipped));}found=lowest!=int.MaxValue;return found?lowest:0;}
-        void EqPortrait(Rect r,object item,bool detailed=false)
+        void EqPortrait(Rect r,object item,bool detailed=false,bool showMaker=true)
         {
             bool previousBadge=ManufacturerBranding.PortraitBadgeEnabled;
             ManufacturerBranding.PortraitBadgeEnabled=false;
@@ -117,10 +117,10 @@ namespace NeonVault
             else {ManufacturerBranding.PortraitBadgeEnabled=previousBadge;return;}
             ManufacturerBranding.PortraitBadgeEnabled=previousBadge;
             string maker=item is Gun dg?ManufacturerBranding.Maker(dg):item is ArmorItem da?ManufacturerBranding.Maker(da):item is ArtifactItem dm?ManufacturerBranding.Maker(dm):item is MeleeWeaponItem dw?ManufacturerBranding.Maker(dw):null;
-            if(!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(detailed
+            if(showMaker&&!string.IsNullOrEmpty(maker))ManufacturerBranding.Badge(detailed
                 ?new Rect(r.x-22,r.y+53,190,62)
                 :new Rect(r.x-10,r.y+50,82,52),maker);
-            var style=new GUIStyle(eqCopy){font=this.font,fontStyle=FontStyle.Normal,
+            var style=new GUIStyle(eqCopy){font=Resources.Load<Font>("Fonts/AprilGothicOne-R")??this.font,fontStyle=FontStyle.Normal,
                 fontSize=r.width>200?29:24,alignment=TextAnchor.LowerRight,wordWrap=false};
             string value=score.ToString("N0");
             while(style.fontSize>16&&style.CalcSize(new GUIContent(value)).x>r.width-18)style.fontSize--;
@@ -183,12 +183,13 @@ namespace NeonVault
                 var previousActionStyle=eqButtonStyle;
                 var actionStyle=new GUIStyle(eqButtonStyle){wordWrap=false};
                 string actionCaption=T("ACTION SKILL","アクションスキル");
-                while(actionStyle.fontSize>14&&actionStyle.CalcSize(new GUIContent(actionCaption)).x>220)actionStyle.fontSize--;
+                while(actionStyle.fontSize>14&&actionStyle.CalcSize(new GUIContent(actionCaption)).x>200)actionStyle.fontSize--;
                 eqButtonStyle=actionStyle;
-                if(EqButton(new Rect(650,24,240,60),actionCaption))actionSkillInventoryOpen=true;
+                if(EqButton(new Rect(535,24,220,60),actionCaption))actionSkillInventoryOpen=true;
+                if(EqButton(new Rect(765,24,150,60),T("CATALOG","装備図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;manufacturerScroll=Vector2.zero;}
                 eqButtonStyle=previousActionStyle;
             }
-            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(900,24,164,60),T("STASH","倉庫")))VaultStorageOpen();
+            if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(925,24,140,60),T("STASH","倉庫")))VaultStorageOpen();
             FieldUIArt.Plate(new Rect(502,652,406,126),false);
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();
@@ -266,9 +267,9 @@ namespace NeonVault
         {
             var lines=new List<string>{T("CURRENT LOADOUT","現在の装備"),"HP "+maxHp.ToString("0")+T(" / MOVE "," / 移動 ")+EffectiveMoveSpeed.ToString("0.0"),T("DAMAGE REDUCTION ","被ダメージ軽減 ")+(DamageReduction*100).ToString("0")+"%"};
             float health=EquippedWeaponAffixBonus("health")+ArtifactAffixBonus("health");
-            float damage=ArtifactAffixBonus("damage"),fire=ArtifactAffixBonus("fireRate"),reload=ArtifactAffixBonus("reload"),accuracy=ArtifactAffixBonus("accuracy");
+            float damage=ArtifactAffixBonus("damage")+EquippedMeleeAffix("damage"),fire=ArtifactAffixBonus("fireRate")+EquippedMeleeAffix("fireRate"),reload=ArtifactAffixBonus("reload"),accuracy=ArtifactAffixBonus("accuracy");
             float move=EquippedWeaponAffixBonus("moveSpeed")+ArtifactAffixBonus("moveSpeed"),mitigation=EquippedWeaponAffixBonus("mitigation")+ArtifactAffixBonus("mitigation"),regen=EquippedWeaponAffixBonus("regen")+ArtifactAffixBonus("regen");
-            float dodge=0,ammoBonus=ArtifactAffixBonus("ammo"),critChance=ArtifactAffixBonus("critChance"),critDamage=ArtifactAffixBonus("critDamage");
+            float dodge=0,ammoBonus=ArtifactAffixBonus("ammo"),critChance=ArtifactAffixBonus("critChance")+EquippedMeleeAffix("critChance"),critDamage=ArtifactAffixBonus("critDamage")+EquippedMeleeAffix("critDamage");
             foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))
             {health+=armor.maxHealth;damage+=armor.damageBonus;fire+=armor.fireBonus;reload+=armor.reloadBonus;accuracy+=armor.accuracyBonus;move+=armor.moveBonus;mitigation+=armor.damageReduction;regen+=armor.regenBonus;dodge+=armor.dodgeBonus;ammoBonus+=armor.ammoBonus;critChance+=GearScoring.AffixTotal(armor.affixes,"critChance");critDamage+=GearScoring.AffixTotal(armor.affixes,"critDamage");}
             void Add(string en,string ja,float value,bool percent=true){if(Mathf.Abs(value)>.0001f)lines.Add(T(en,ja)+" +"+(percent?value*100:value).ToString(percent?"0.#":"0.#")+(percent?"%":""));}
@@ -296,7 +297,7 @@ namespace NeonVault
                 {
                     var card=EqMake(items[i]);
                     if(card.key==eqSelectedKey)Box(new Rect(x,y,94,3),EqAccent);
-                    EqPortrait(new Rect(x+3,y+36,88,82),items[i]);
+                    EqPortrait(new Rect(x+3,y+36,88,82),items[i],false,false);
                     // The list is intentionally not scrolled when the equipped slot is selected.
                     if(selectable && GUI.Button(r,GUIContent.none,GUIStyle.none))
                     {eqSelectedKey=card.key;eqShowFullDetails=false;eqDetailScroll=Vector2.zero;PlayUserSound("skill",.09f);}

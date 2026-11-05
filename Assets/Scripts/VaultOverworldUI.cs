@@ -45,7 +45,7 @@ namespace NeonVault
         {
             if(aerialAtlas)return;
             const int size=2048;
-            if(buildingAtlasGeography==null)buildingAtlasGeography=new OverworldGeography();
+            if(buildingAtlasGeography==null)buildingAtlasGeography=WorldGeography;
             if(worldBuildingAtlas==null)
             {
                 worldBuildingAtlas=new Texture2D(size,size,TextureFormat.RGBA32,false){name="Surveyed building footprints",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
@@ -82,7 +82,9 @@ namespace NeonVault
                     int k=worldBuildingQueue[worldBuildingQueueIndex++];
                     if(worldBuildingChunksReady[k])continue;
                     int x=k%100-50,z=k/100-50;count++;
-                    foreach(var building in buildingAtlasGeography.GetChunk(x,z).Buildings)
+                    var surveyedChunk=buildingAtlasGeography.GetChunk(x,z);
+                    foreach(var tree in surveyedChunk.Trees){int px=Mathf.Clamp(Mathf.RoundToInt((tree.x+5000)*size/10000),0,size-1),py=Mathf.Clamp(Mathf.RoundToInt((tree.z+5000)*size/10000),0,size-1);worldBuildingPixels[py*size+px]=new Color32(61,91,57,230);worldBuildingDirtyTiles[(py/64)*32+px/64]=true;worldBuildingDirty=true;}
+                    foreach(var building in surveyedChunk.Buildings)
                     {
                         int left=Mathf.Clamp(Mathf.CeilToInt((building.xMin+5001)*size/10000),0,size-1),right=Mathf.Clamp(Mathf.FloorToInt((building.xMax+4999)*size/10000),0,size-1);
                         int bottom=Mathf.Clamp(Mathf.CeilToInt((building.yMin+5001)*size/10000),0,size-1),top=Mathf.Clamp(Mathf.FloorToInt((building.yMax+4999)*size/10000),0,size-1);
@@ -182,8 +184,6 @@ namespace NeonVault
             var geo=WorldGeography;if(geo==null||geo.Layout==null)return;
             var layout=geo.Layout;if(overworldAtlasTexture!=null&&overworldAtlasSource==layout)return;
             if(overworldAtlasTexture!=null&&!aerialAtlas)Destroy(overworldAtlasTexture);
-            var aerial=Resources.Load<Texture2D>("Art/UI/FieldKit/aerial-city-v1");
-            if(aerial){overworldAtlasTexture=aerial;overworldAtlasSource=layout;aerialAtlas=true;return;}
             aerialAtlas=false;
             overworldAtlasSource=layout;const int resolution=1024;
             overworldAtlasTexture=new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){name="Ashfall surveyed city atlas",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
@@ -423,6 +423,10 @@ namespace NeonVault
                 var p=new Vector3(origin.x+x+.5f,0,origin.y+z+.5f);
                 worldLocalPixels[z*200+x]=geo.River(p)&&!geo.Bridge(p.z)?new Color(.12f,.23f,.26f):LocalMapBuilding(geo,p)?new Color(.38f,.36f,.31f):geo.RoadClearance(p)<0?new Color(.62f,.58f,.48f):geo.Park(p)||geo.PocketPark(p)||geo.DenseForest(p)?new Color(.22f,.29f,.23f):new Color(.16f,.19f,.19f);
             }
+            // Paint generated tree positions once per chunk rather than searching every tree for every pixel.
+            for(int cz=Mathf.FloorToInt((origin.y-3)/100);cz<=Mathf.FloorToInt((origin.y+153)/100);cz++)
+            for(int cx=Mathf.FloorToInt((origin.x-3)/100);cx<=Mathf.FloorToInt((origin.x+203)/100);cx++)
+            foreach(var tree in geo.GetChunk(cx,cz).Trees){int tx=Mathf.FloorToInt(tree.x-origin.x),tz=Mathf.FloorToInt(tree.z-origin.y);for(int dz=-2;dz<=2;dz++)for(int dx=-2;dx<=2;dx++){int x=tx+dx,z=tz+dz;if(x>=0&&x<200&&z>=0&&z<150&&dx*dx+dz*dz<=4)worldLocalPixels[z*200+x]=new Color(.27f,.38f,.24f);}}
             worldLocalTexture.SetPixels(worldLocalPixels);worldLocalTexture.Apply(false,false);
         }
         bool LocalMapBuilding(OverworldGeography geo,Vector3 p){var chunk=geo.GetChunk(Mathf.FloorToInt(p.x/100),Mathf.FloorToInt(p.z/100));foreach(var b in chunk.Buildings)if(b.Contains(new Vector2(p.x,p.z)))return true;return false;}

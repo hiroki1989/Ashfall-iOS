@@ -43,7 +43,7 @@ namespace NeonVault {
   public static bool Place(string category,Transform parent,Vector3 position,int seed){
    if(PlaceRustyVehicle(category,parent,position,seed))return true;
    if(PlacePolyHaven(category,parent,position,seed))return true;
-   if(!groups.TryGetValue(category,out var prefabs)){prefabs=Array.FindAll(Resources.LoadAll<GameObject>("ImportedWorld/"+category),p=>!EquipmentChestVisual.IsReserved(p));groups[category]=prefabs;}
+   if(!groups.TryGetValue(category,out var prefabs)){prefabs=Array.FindAll(Resources.LoadAll<GameObject>("ImportedWorld/"+category),p=>!EquipmentChestVisual.IsReserved(p)&&(category!="tree"||p.name.IndexOf("bare",StringComparison.OrdinalIgnoreCase)<0));groups[category]=prefabs;}
    if(prefabs.Length==0)return false;
    var source=prefabs[(seed&int.MaxValue)%prefabs.Length];
    if(parent.name.StartsWith("Stream /")){var scale=Vector3.one;var place=position;var name=source.name.ToLowerInvariant();if(name.Contains("barrel")||name.Contains("drum")||name.Contains("cone")){var bounds=ImportedWorldBatch.SourceBounds(source);float height=name.Contains("cone")?.72f:.90f;if(bounds.size.y>.001f){float s=height/bounds.size.y;scale=Vector3.one*s;place.y-=bounds.min.y*s;}}ImportedWorldBatch.Add(parent,source,place,Quaternion.Euler(0,category=="building"||category=="car"?0:seed%4*90,0),scale,tree:category=="tree");return true;}

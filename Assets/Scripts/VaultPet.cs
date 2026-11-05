@@ -11,6 +11,17 @@ namespace NeonVault
         float petAttackClock,petIdleClock,petWanderClock;
         Vector3 petFollowOffset=new Vector3(.8f,0,-2.1f),petLastPlayerPosition;
         string petAnimation;
+        AudioClip petBarkClip;
+        float petNextBarkAt;
+        bool petBarkScheduled;
+        void TryPetBark()
+        {
+            if(!petBarkScheduled){petBarkScheduled=true;petNextBarkAt=Time.time+Random.Range(30f,90f);return;}
+            if(Time.time<petNextBarkAt)return;
+            if(!petBarkClip)petBarkClip=Resources.Load<AudioClip>("UserSFX/pet-bark");
+            if(petBarkClip&&audioSource)audioSource.PlayOneShot(petBarkClip,.16f);
+            petNextBarkAt=Time.time+Random.Range(45f,75f);
+        }
         bool PetAdopted => !smoke&&PlayerPrefs.GetInt(PetAdoptedKey,0)!=0;
 
         void DrawPetAdoptionConversation()
@@ -20,6 +31,7 @@ namespace NeonVault
             var lines=VaultLanguage.Japanese?ja:en;bool playerLine=npcBeat==1||npcBeat==3;
             Box(new Rect(0,0,1440,900),new Color(0,0,0,.76f));
             DrawUnifiedDialogueScene("briggs",playerLine,playerLine?T("KNOX","ノックス"):T("BRIGGS","ブリッグス"),lines[Mathf.Clamp(npcBeat,0,lines.Length-1)],Gold);
+            var rookPortrait=LoadDialoguePortrait("rook");if(rookPortrait)GUI.DrawTexture(new Rect(604,176,232,232),rookPortrait,ScaleMode.ScaleToFit);
             if(WorldButton(UnifiedDialoguePrimaryButton,npcBeat>=lines.Length-1?T("CONTINUE","続ける"):T("NEXT","次へ")))
             {
                 if(npcBeat<lines.Length-1){npcBeat++;return;}
@@ -50,7 +62,7 @@ namespace NeonVault
                     renderer.sharedMaterials=mats;
                 }
                 var renderers=petObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-                if(renderers.Length>0){var height=renderers[0].bounds.size.y;if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(.95f/height,.01f,10f);}
+                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
                 petAnimator=petObject.GetComponentInChildren<Animator>();if(petAnimator)petAnimator.applyRootMotion=false;
                 petPose=petObject.AddComponent<VaultPetPose>();petLastPlayerPosition=PlayerPosition;petAnimation=null;
             }
@@ -81,11 +93,13 @@ namespace NeonVault
             if(bite)
             {
                 // Cooldown upgrades increase attack frequency, while damage upgrades affect each bite.
-                float weaponDps=gun!=null?EffectiveDamage*Mathf.Max(1,gun.pellets)*Mathf.Max(.01f,EffectiveFireRate):0;
+                float pelletHits=1f;if(gun!=null&&gun.pellets>1){float targetDistance=Mathf.Max(2f,Vector3.Distance(hero,target.transform.position));float targetAngle=2f*Mathf.Atan2(.5f,targetDistance)*Mathf.Rad2Deg;pelletHits=Mathf.Max(1f,gun.pellets*Mathf.Clamp01(targetAngle/Mathf.Max(1f,gun.shotgunSpreadDegrees)));}
+                float weaponDps=gun!=null?EffectiveDamage*pelletHits*Mathf.Max(.01f,EffectiveFireRate):0;
                 target.Hit(weaponDps*.1f*4f*PetDamageMultiplier(),target.transform.position+Vector3.up*.7f,Color.white,100,Color.white);
                 petAttackClock=4f*Mathf.Clamp(PetAttackIntervalMultiplier(),.15f,2f);petPose?.Bite();
-                var bark=Resources.Load<AudioClip>("PetDog/Bark");if(bark&&audioSource)audioSource.PlayOneShot(bark,.3f);
+                TryPetBark();
             }
+            if(!bite&&approaching&&speed>4f)TryPetBark();
             bool sitting=!target&&petIdleClock>=10;
             if(petPose)petPose.sitting=sitting;
             string animation=approaching?(speed>4?"1 type_Run Loop":"1 type_Walk_Loop"):(petWanderClock<1.5f&&!sitting?"1 type_Idle_Playing":"1 type_Idle Breathing");

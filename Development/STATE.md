@@ -1261,3 +1261,16 @@ OutPost/Resources accounts for approximately 419 MiB in the previous Windows bui
 
 ## 2026-11-04 / Exclude unused OutPost resources
 Moved Assets/OutPost/Resources and its meta together to Assets/OutPost/OutpostSourceAssets, preserving GUIDs and source assets. Windows integrated build succeeded: build report 5.3 GB to 4.9 GB; 579 OutPost Resources entries reduced to one 0.1 KB script assembly entry. No game C# compile errors. Changed WaterWorks Volumetric_Water fallback to Off to remove missing Shader Graph fallback warning; subsequent Unity import succeeded, visual water rendering not yet verified. Logs D:/Unity/BuildTemp/exclude-outpost-build.log and exclude-outpost-final-import.log. Numerous CS0618 warnings and licensing/D3D12 messages remain; user's original Console messages not yet identified. iOS size and device testing not measured.
+## 2026-11-05 地図・チュートリアル・難易度・立ち絵
+- iOS、Steam、Steam DEMO: ダンジョン下限をプレイヤーLv-1。01を除く敵HPを2倍からレベルごとに追加上昇、01は既存HP係数を維持。
+- 最寄りの別拠点をチュートリアル終了前に目的地設定し、到達まで案内。森林と建物は生成データをもとに地図へ描画し、枯れ木アセットを配置候補から除外。
+- 立ち絵v5を追加、旧ファイルは保持。各プロジェクトでコンパイル確認。iOS Unityの地理・レベル・立ち絵ロード検査 MAP_LEVEL_PORTRAIT_QA_PASS (trees=1636 buildings=300)。
+- 未検証: 完成画面の実際の地図表示、ゲーム内戦闘バランス、チュートリアル通し操作、および実機。
+## 2026-11-05 / 会話立ち絵v7
+3版の会話画像8点を写実寄りへ統一。レッドクロウは指定の上段v5を維持、コヨーテは指定画像から背景を除去、商人は短髪の武骨な中年男性として描き直し。他の人物・犬も同じタッチで調整。旧素材は保持しv7優先で読込。透過PNGを検証し、iOS Unity MAP_LEVEL_PORTRAIT_QA_PASS、SteamとDEMO Unity batch成功。ゲーム内の会話画面での最終目視は未実施。
+## 2026-11-05 / 会話立ち絵v8
+iOS・Steam・DEMOへ人物7点のv8を追加。主人公、ヴェイル、ブリッグス、武器商人、イオナは人物の役割から新規構築。レッドクロウ・コヨーテは姿勢を維持し革と服の質感を変更。イオナはマスク着用、犬はv7を維持。旧素材は保存。iOS Unity素材読込QA PASS、Steam / DEMO Unity batch成功。ゲーム内会話画面の目視は未実施。
+## 2026-11-05 / 会話画像v9
+主人公はメニュー画を参照して左向き・腕を下ろした姿、ブリッグスと武器商人は若い戦闘員として異なるポーズと装備に変更。犬は人型でない頭と首のみ。イオナの会話参照は既存で単一のionaキー。3版に反映。iOS Unity素材QA PASS、Steam・DEMO batch成功。実際の会話画面の目視は未実施。
+## 2026-11-05 / 会話画像v10
+主人公はユーザー添付PNGそのものを使用し、会話の主人公画像描画だけGUI行列で左右反転後に元へ復帰。武器商人はヘルメット・整った若い戦闘員の画像へ更新。3版へ反映。iOS Unity読み込みQA PASS、Steam・DEMO Unity batch成功。実際の会話画面の見た目は未検証。

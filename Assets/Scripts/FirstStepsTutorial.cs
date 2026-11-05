@@ -113,6 +113,7 @@ namespace NeonVault
                 if(id>=0&&id<ExpeditionMap.StageCount){target=WorldGeography.Entrances[id];return true;}
             }
             if(FirstStepsStage==4||FirstStepsStage==6||FirstStepsStage==7){target=WorldGeography.Camps[LastVisitedCamp];return true;}
+            if(FirstStepsStage==8&&OverworldWaypointKind==1){target=OverworldWaypointPosition;return true;}
             return false;
         }
         void SetFirstStepsStage(int stage)
@@ -137,7 +138,7 @@ namespace NeonVault
             if(DebtLevel>=2)SetFirstStepsStage(7);
             else { SetFirstStepsStage(3);PlayerPrefs.SetInt(FirstStepsTargetKey,0);SetOverworldWaypoint(2,0); }
         }
-        void FirstStepsSkillUpgraded(){if(smoke)return;if(FirstStepsStage==7){SetFirstStepsStage(5);PlayerPrefs.DeleteKey(FirstStepsTargetKey);SetOverworldWaypoint(0,-1);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}}
+        void FirstStepsSkillUpgraded(){if(smoke)return;if(FirstStepsStage==7){SetFirstStepsStage(8);PlayerPrefs.DeleteKey(FirstStepsTargetKey);int nearest=-1;float distance=float.PositiveInfinity;var camps=WorldGeography.Camps;var origin=camps[Mathf.Clamp(LastVisitedCamp,0,camps.Length-1)];for(int i=0;i<camps.Length;i++){if(i==LastVisitedCamp)continue;float d=(camps[i]-origin).sqrMagnitude;if(d<distance){distance=d;nearest=i;}}if(nearest>=0)SetOverworldWaypoint(1,nearest);Notify("FIRST STEPS COMPLETE / Visit the nearest camp and repay the billion","チュートリアル完了 / 近くの別の拠点へ向かい、10億スクラップの返済を目指そう");}}
         void DrawFirstStepsTutorial()
         {
             if (smoke || InventoryOpen || manufacturerRegistry || WorldBossConversationVisible || worldTransitionPending) return;
@@ -154,8 +155,8 @@ namespace NeonVault
                 if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
                 return;
             }
-            string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (screen == Screen.Hub ? "Leave the safehouse and return to dungeon 01." : IsOverworld ? "Follow the marker and clear dungeon 01." : "Complete the mission and leave the dungeon.") : stage == 4 ? "Return to a safehouse and sell spare equipment to Sera." : stage == 6 ? "Talk to Briggs and repay your debt." : "Talk to Briggs and spend a skill point to improve an action skill.";
-            string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (screen == Screen.Hub ? "街へ出て、01のダンジョンに再挑戦しよう。" : IsOverworld ? "目的地へ向かい、01のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : stage == 4 ? "拠点に戻り、セラに不要な装備を売ろう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済しよう。" : "ブリッグスに話しかけ、スキルポイントでアクションスキルを強化しよう。";
+            string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (screen == Screen.Hub ? "Leave the safehouse and return to dungeon 01." : IsOverworld ? "Follow the marker and clear dungeon 01." : "Complete the mission and leave the dungeon.") : stage == 4 ? "Return to a safehouse and sell spare equipment to Sera." : stage == 6 ? "Talk to Briggs and repay your debt." : stage == 8 ? "Follow the marker to the nearest other camp." : "Talk to Briggs and spend a skill point to improve an action skill.";
+            string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (screen == Screen.Hub ? "街へ出て、01のダンジョンに再挑戦しよう。" : IsOverworld ? "目的地へ向かい、01のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : stage == 4 ? "拠点に戻り、セラに不要な装備を売ろう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済しよう。" : stage == 8 ? "目的地をたどり、最も近い別の拠点へ向かおう。" : "ブリッグスに話しかけ、スキルポイントでアクションスキルを強化しよう。";
             if (screen == Screen.Hub || screen == Screen.Playing)
             {
                 Box(new Rect(410,76,620,82),new Color(.02f,.03f,.04f,.88f));

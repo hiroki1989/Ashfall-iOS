@@ -105,7 +105,7 @@ namespace NeonVault
         public static ExpeditionStage Get(int id,int playerLevel=1)
         {
             id=Mathf.Clamp(id,0,StageCount-1);
-            int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-3);
+            int danger=Mathf.Max(OverworldGeography.DungeonLevel(id),playerLevel-1);
             if(id>=RegularStageCount)
             {
                 int bossIndex=id-RegularStageCount;
