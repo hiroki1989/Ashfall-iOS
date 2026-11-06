@@ -103,6 +103,7 @@ namespace NeonVault
                     if(!StoreArtifact(LastActivityRewardModule)){AddArtifactDrop(LastActivityRewardModule,position);LastActivityRewardOnGround=true;}
                     break;
             }
+            if(rarity==Rarity.Legendary&&!LastActivityRewardOnGround)PlayLegendaryRewardSound();
         }
         void GrantActivityScrap(int seed)
         {

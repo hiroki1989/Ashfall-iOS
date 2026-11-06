@@ -118,6 +118,7 @@ namespace NeonVault
                 default: var module=ArtifactCatalog.Create(rng,DungeonIndex,rarity,level); StoreArtifact(module,true); dailyChestLastReward=module; break;
             }
             dailyChestRewardVisible=true;
+            if(rarity==Rarity.Legendary)PlayLegendaryRewardSound();
             EquipmentChestVisual.Open(dailyChestVisual);
             PlayUserSound("transaction",.35f);
             Notify("DAILY BONUS / "+rarity+" GEAR","デイリーボーナス / "+VaultLanguage.RarityName(rarity)+"装備");

@@ -57,14 +57,19 @@ namespace NeonVault
             (type==AmmoType.Handgun?"ハンドガン弾":type==AmmoType.Shotgun?"ショットガン弾":type==AmmoType.SniperRifle?"スナイパーライフル弾":type==AmmoType.AssaultRifle?"アサルトライフル弾":"ヘビーマシンガン弾")+" ×"+amount;
 
         /// <summary>Creates a distinct, readable 3D field prop without baking UI text into art.</summary>
+        void PlayLegendaryRewardSound()
+        {
+            if(!legendaryDropSound)legendaryDropSound=Resources.Load<AudioClip>("SoundEffects/legendary-drop");
+            if(legendaryDropSound&&audioSource)audioSource.PlayOneShot(legendaryDropSound);
+        }
+
         public GameObject CreateLootPresentation(string displayName, Vector3 position, Vector3 size, Color accent,
             LootPresentationKind kind, AmmoType ammoType = AmmoType.AssaultRifle, int amount = 0,
             Rarity rarity = Rarity.Common)
         {
             if(!restoringLoot&&rarity==Rarity.Legendary&&(kind==LootPresentationKind.Weapon||kind==LootPresentationKind.Armor||kind==LootPresentationKind.Module||kind==LootPresentationKind.Melee))
             {
-                if(!legendaryDropSound)legendaryDropSound=Resources.Load<AudioClip>("SoundEffects/legendary-drop");
-                if(legendaryDropSound&&audioSource)audioSource.PlayOneShot(legendaryDropSound);
+                PlayLegendaryRewardSound();
             }
             var root = new GameObject("Loot / " + displayName);
             root.transform.SetParent(world, false);

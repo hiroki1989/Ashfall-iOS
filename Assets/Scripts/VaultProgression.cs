@@ -49,11 +49,11 @@ namespace NeonVault {
      cacheEn="SCRAP +"+scrap.ToString("N0");cacheJa="スクラップ +"+scrap.ToString("N0");break;
     case 1:
      var gear=RollExpeditionGun(r,RollExpeditionRewardRarity(r,true));
-     if(StoreWeapon(gear,true)){completedRewardGun=gear;cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
+     if(StoreWeapon(gear,true)){completedRewardGun=gear;if(gear.rarity==Rarity.Legendary)PlayLegendaryRewardSound();cacheEn="WEAPON CACHE";cacheJa="銃の報酬箱";}
      else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
     case 2:
      var armor=RollExpeditionArmor(r,RollExpeditionRewardRarity(r,true));
-     if(StoreArmor(armor,true)){completedRewardArmor=armor;cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
+     if(StoreArmor(armor,true)){completedRewardArmor=armor;if(armor.rarity==Rarity.Legendary)PlayLegendaryRewardSound();cacheEn="ARMOR CACHE";cacheJa="防具の報酬箱";}
      else {int salvage=ScaleScrap(40000000);AwardCredits(salvage);cacheEn="SALVAGE +"+salvage.ToString("N0");cacheJa="換金 +"+salvage.ToString("N0");}break;
     default:ExpeditionTokens++;cacheEn="SKILL POINT +1";cacheJa="スキルポイント +1";break;
    }
@@ -78,7 +78,7 @@ namespace NeonVault {
    Rarity rarity=RollExpeditionRewardRarity(r);
    var repeatGun=weapon?RollExpeditionGun(r,rarity):null;var repeatArmor=weapon?null:RollExpeditionArmor(r,rarity);
    bool stored=weapon?StoreWeapon(repeatGun,true):StoreArmor(repeatArmor,true);
-   if(stored){completedRewardGun=repeatGun;completedRewardArmor=repeatArmor;}
+   if(stored){completedRewardGun=repeatGun;completedRewardArmor=repeatArmor;if(rarity==Rarity.Legendary)PlayLegendaryRewardSound();}
    if(stored)Notify(weapon?"REPEAT REWARD / WEAPON":"REPEAT REWARD / ARMOR",weapon?"再攻略報酬 / 銃":"再攻略報酬 / 防具");
    else {int salvage=ScaleScrap(18000000);AwardCredits(salvage);Notify("REPEAT REWARD / SALVAGE +"+salvage.ToString("N0"),"再攻略報酬 / 換金 +"+salvage.ToString("N0"));}
   }
