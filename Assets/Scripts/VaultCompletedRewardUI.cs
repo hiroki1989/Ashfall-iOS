@@ -25,7 +25,7 @@ namespace NeonVault {
    var content=new Rect(0,0,textWidth-16,Mathf.Max(viewport.height,contentHeight));
    completedRewardScroll=GUI.BeginScrollView(viewport,completedRewardScroll,content);
    GUI.color=accent;GUI.Label(new Rect(0,0,content.width,nameHeight),name,nameStyle);
-   GUI.color=Mist;GUI.Label(new Rect(0,nameHeight+2,content.width,28),VaultLanguage.RarityName(rarity)+"  ·  Lv "+(weapon!=null?weapon.level:armor.level),metaStyle);
+   GUI.color=Mist;GUI.Label(new Rect(0,nameHeight+2,content.width,28),VaultLanguage.RarityName(rarity)+"  ·  Lv "+(weapon!=null?weapon.level:armor.level)+"  ·  "+T("SCORE ","評価 ")+(weapon!=null?GearScoring.Score(weapon):GearScoring.Score(armor)),metaStyle);
    if(!string.IsNullOrEmpty(detail)){GUI.color=Color.white;GUI.Label(new Rect(0,nameHeight+32,content.width,detailHeight),detail,detailStyle);}
    GUI.color=Color.white;GUI.EndScrollView();
   }
