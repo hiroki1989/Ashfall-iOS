@@ -62,7 +62,7 @@ namespace NeonVault
                     renderer.sharedMaterials=mats;
                 }
                 var renderers=petObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=1.5f*Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
+                if(renderers.Length>0){Bounds dogBounds=renderers[0].bounds;foreach(var r in renderers)dogBounds.Encapsulate(r.bounds);float height=dogBounds.size.y;float heroHeight=0;foreach(var r in player.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.enabled)heroHeight=Mathf.Max(heroHeight,r.bounds.size.y);float targetHeight=1.8f*Mathf.Max(1.05f,heroHeight*.5f);if(height>.01f)petObject.transform.localScale*=Mathf.Clamp(targetHeight/height,.01f,10f);}
                 petAnimator=petObject.GetComponentInChildren<Animator>();if(petAnimator)petAnimator.applyRootMotion=false;
                 petPose=petObject.AddComponent<VaultPetPose>();petLastPlayerPosition=PlayerPosition;petAnimation=null;
             }

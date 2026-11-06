@@ -5,7 +5,7 @@ namespace NeonVault
     public partial class VaultGame
     {
         readonly List<LegendaryAftershock> legendaryAftershocks=new List<LegendaryAftershock>();
-        sealed class LegendaryAftershock { public Vector3 position;public float next,damage,radius;public int ticks,maker; }
+        sealed class LegendaryAftershock { public Vector3 position;public float next,damage,radius;public int ticks,maker;public GameObject device; }
         readonly Dictionary<string,float> legendaryReady=new Dictionary<string,float>();
         float legendaryClock,legendaryPrecisionUntil;int legendaryShots;bool legendaryResolving;
         public static bool DecodeLegendaryKey(string key,out int maker,out int variant)
@@ -20,7 +20,7 @@ namespace NeonVault
             return DistinctLegendaryGunDescription(maker,variant,japanese);
         }
         public static Color LegendaryEffectColor(int maker)=>new[]{new Color(.65f,.9f,1),new Color(1,.55f,.18f),new Color(.5f,.4f,1),new Color(.3f,1,.4f),new Color(1,.25f,.08f),new Color(.1f,.95f,1)}[Mathf.Clamp(maker,0,5)];
-        void ResetLegendaryEffects(){legendaryReady.Clear();legendaryAftershocks.Clear();legendaryClock=0;legendaryShots=0;legendaryPrecisionUntil=0;legendaryResolving=false;}
+        void ResetLegendaryEffects(){legendaryReady.Clear();foreach(var pulse in legendaryAftershocks)if(pulse.device)Destroy(pulse.device);legendaryAftershocks.Clear();legendaryClock=0;legendaryShots=0;legendaryPrecisionUntil=0;legendaryResolving=false;}
         void TickLegendaryEffects(float dt)
         {
             legendaryClock+=Mathf.Max(0,dt);if(!Active)return;
@@ -29,15 +29,15 @@ namespace NeonVault
                 var pulse=legendaryAftershocks[i];if(legendaryClock<pulse.next)continue;
                 pulse.next=legendaryClock+.5f;pulse.ticks--;legendaryResolving=true;
                 try{if(world!=null){if(pulse.maker==3)CombatVisuals.ElementImpact(pulse.position,GunElement.Poison,world);else CombatVisuals.ElementBlast(pulse.position,pulse.radius,world);}Burst(pulse.position,LegendaryEffectColor(pulse.maker),12);foreach(var foe in Enemies.ToArray())if(foe!=null&&!foe.dead&&(foe.transform.position-pulse.position).sqrMagnitude<=pulse.radius*pulse.radius&&LineOfSight(pulse.position,foe.transform.position))LegendaryStrike(foe,pulse.damage,LegendaryEffectColor(pulse.maker));}finally{legendaryResolving=false;}
-                if(pulse.ticks<=0)legendaryAftershocks.RemoveAt(i);
+                if(pulse.ticks<=0){if(pulse.device)Destroy(pulse.device);legendaryAftershocks.RemoveAt(i);}
             }
             LegendaryTrigger("pulse",PlayerPosition);
         }
         void ScheduleLegendaryPulse(Vector3 position,float damage,float radius,int ticks,int maker,float initialDelay=.35f)
         {
-            if(legendaryAftershocks.Count>=16)legendaryAftershocks.RemoveAt(0);
+            if(legendaryAftershocks.Count>=16){if(legendaryAftershocks[0].device)Destroy(legendaryAftershocks[0].device);legendaryAftershocks.RemoveAt(0);}
             Burst(position,LegendaryEffectColor(maker),9);
-            legendaryAftershocks.Add(new LegendaryAftershock{position=position,damage=damage,radius=radius,ticks=ticks,maker=maker,next=legendaryClock+initialDelay});
+            legendaryAftershocks.Add(new LegendaryAftershock{position=position,damage=damage,radius=radius,ticks=ticks,maker=maker,next=legendaryClock+initialDelay,device=LegendaryDeviceVisual.Create(world,position,maker)});
         }
         void LegendaryTrigger(string trigger,Vector3 origin,Foe struck=null)
         {

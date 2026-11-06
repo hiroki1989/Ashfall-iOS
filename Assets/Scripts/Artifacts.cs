@@ -93,11 +93,11 @@ namespace NeonVault {
     case 23:return VaultLanguage.T("fire a round that bursts into a five-way radial volley","飛行中に5方向へ分裂する弾を放つ");
     case 24:return VaultLanguage.T("fire a round that bursts into a five-shot fan","飛行中に扇状5発に分裂する弾を放つ");
     case 25:return VaultLanguage.T("fire a round that weaves from side to side","左右に蛇行する弾を放つ");
-    case 26:return VaultLanguage.T("fire an accelerating round that sheds rounds sideways","加速しながら左右に弾を放つ弾を放つ");
-    case 27:return VaultLanguage.T("fire a round that sheds rounds in successive directions","飛行中に周囲へ弾を放つ弾を放つ");
+    case 26:return VaultLanguage.T("fire an accelerating round that sheds rounds sideways","加速しながら左右へ弾を放つ");
+    case 27:return VaultLanguage.T("fire a round that sheds rounds in successive directions","飛行中に周囲へ弾を放つ");
     case 28:return VaultLanguage.T("fire a spiraling round","らせんを描く弾を放つ");
     case 29:return VaultLanguage.T("fire an electric round that chains to enemies","敵へ連鎖する電撃弾を放つ");
-    case 30:return VaultLanguage.T("fire a rotating round that releases rounds behind it","回転しながら後方に弾を放つ弾を放つ");
+    case 30:return VaultLanguage.T("fire a rotating round that releases rounds behind it","回転しながら後方へ弾を放つ");
     case 31:return VaultLanguage.T("fire a flame round","炎属性の弾を放つ");
     case 32:return VaultLanguage.T("fire a toxic round","毒属性の弾を放つ");
     case 33:return VaultLanguage.T("fire an explosive round","爆発属性の弾を放つ");

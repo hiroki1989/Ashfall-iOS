@@ -605,7 +605,7 @@ namespace NeonVault
         {
             Vector2[] sites={new Vector2(-1350,-2100),new Vector2(-1700,-650),new Vector2(-700,-500),new Vector2(700,400),new Vector2(3650,650),new Vector2(2900,2800),new Vector2(-2350,2300),new Vector2(1400,-1950),new Vector2(-2850,-1450),new Vector2(2350,1550)};
             string[] en={"SOUTH MARKET / CLOCK TOWER","OLD CITY / MEMORIAL ARCH","RIVERFRONT PARK / FOUNTAIN","CIVIC QUARTER / ROTUNDA","EAST MARKET / WATER TOWER","NORTH COMMON / OBELISK","WESTWOOD / RADIO SPIRE","SOUTHWORKS / SILO PLAZA","DEEPWOOD FOREST","EASTERN WOODS"};
-            string[] ja={"南部市場・時計塔跡","旧市街・記念門","河岸公園・大噴水","市庁舎地区・円堂跡","東部市場・給水塔","北の公園・記念碑","西の森・通信塔","南部工業・サイロ広場","西部密林地帯","東部密林地帯"};
+            string[] ja={"サウス・マーケット／クロック・タワー","オールド・シティ／メモリアル・アーチ","リバーフロント・パーク／ファウンテン","シビック・クォーター／ロタンダ","イースト・マーケット／ウォーター・タワー","ノース・コモン／オベリスク","ウェストウッド／ラジオ・スパイア","サウスワークス／サイロ・プラザ","ディープウッド・フォレスト","イースタン・ウッズ"};
             for(int i=0;i<sites.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,new Vector3(sites[i].x,0,sites[i].y));

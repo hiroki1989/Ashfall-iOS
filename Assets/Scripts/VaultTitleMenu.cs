@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace NeonVault
 {
@@ -8,7 +8,6 @@ namespace NeonVault
         // OnGUI separately fills the physical display behind the mobile safe area.
         void DrawTitleMenu(bool mobile)
         {
-            if(menuArt) GUI.DrawTexture(new Rect(0,0,1440,900),menuArt,ScaleMode.ScaleAndCrop);
             // A soft shadow behind the title makes it legible without hiding the hero.
             for(int i=0;i<48;i++)
             {

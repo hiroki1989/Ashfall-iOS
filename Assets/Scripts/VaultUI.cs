@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 namespace NeonVault
 {
     public partial class VaultGame
@@ -95,10 +95,9 @@ namespace NeonVault
         void OnGUI()
         {
             Styles();float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
-            if(MobileTouchControls.Enabled && screen==Screen.Menu && !InventoryOpen && !manufacturerRegistry)
+            if(screen==Screen.Menu && !InventoryOpen && !manufacturerRegistry)
             {
-                // Cover the physical display, including the unsafe margins around the
-                // camera cutout; interactive controls remain inside the safe area.
+                // Cover the physical display once; controls remain inside the safe canvas.
                 GUI.matrix=Matrix4x4.identity;
                 if(menuArt)GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),menuArt,ScaleMode.ScaleAndCrop);
                 else GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),Texture2D.blackTexture);

@@ -71,10 +71,10 @@ namespace NeonVault
                 GUI.DrawTexture(new Rect(0, 0, 1440 * expeditionCityZoom, 1000 * expeditionCityZoom), expeditionCityAtlas, ScaleMode.StretchToFill);
             }
             else DrawCityAtlasFallback();
-            CityLandmark(178, 122, T("CIVIC CITADEL", "市庁要塞跡"), 0);
-            CityLandmark(1153, 762, T("BOTANICAL RESERVE", "植物保護区跡"), 1);
-            CityLandmark(1068, 117, T("RAIL TERMINAL", "中央貨物駅"), 2);
-            CityLandmark(216, 810, T("COLLAPSED STADIUM", "崩落スタジアム"), 3);
+            CityLandmark(178, 122, T("CIVIC CITADEL", "シビック・シタデル"), 0);
+            CityLandmark(1153, 762, T("BOTANICAL RESERVE", "ボタニカル・リザーブ"), 1);
+            CityLandmark(1068, 117, T("RAIL TERMINAL", "レール・ターミナル"), 2);
+            CityLandmark(216, 810, T("COLLAPSED STADIUM", "コラプスト・スタジアム"), 3);
             CityText(38, 7, T("N ↑  / ASHFALL REGIONAL SURVEY", "北 ↑ / アッシュフォール地方測量図"), Mist, 650);
             CityText(760, 960, T("CANAL / FLOOD BARRIER", "中央運河 / 防潮堤"), new Color(.4f,.72f,.76f), 420);
             for (int id = 0; id < ExpeditionMap.StageCount; id++) DrawCitySite(id);

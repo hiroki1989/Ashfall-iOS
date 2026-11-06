@@ -28,6 +28,7 @@ namespace NeonVault
             Vector3 source=PlayerPosition+Vector3.up*.7f;Vector3 direction=center-PlayerPosition;direction.y=0;
             if(direction.sqrMagnitude<.001f)direction=aim;
             if(id<15){LegendarySpecialFlight(source,direction,damage*.8f,color,id);return;}
+            if(id==17){foreach(var target in LegendaryGunTargets(center,8f))if(target!=struck){LegendaryHomingShot(center+Vector3.up*.7f,target,damage*.8f,color,struck);break;}return;}
             if(id<35){var shot=SpawnBullet(source,direction.normalized,true,damage*.8f,20,color,GunEffect.Normal,100);shot.life=1.2f;shot.legendaryEffect=true;shot.skillProjectile=true;shot.last=struck;var flight=shot.gameObject.AddComponent<LegendaryModuleFlight>();flight.shot=shot;flight.mode=id-15;return;}
             switch(id)
             {

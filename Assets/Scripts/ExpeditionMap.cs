@@ -54,7 +54,7 @@ namespace NeonVault
                 83 + row * 91 + Mathf.Cos(slot * 1.73f) * 10) + (id >= 100 ? new Vector2(30, 30) : Vector2.zero);
         }
         static readonly string[] regions = { "Ruinbelt", "Iron Veins", "Floodworks", "Green Fringe", "Red Expanse" };
-        static readonly string[] regionsJa = { "崩壊都市帯", "鉄鉱脈", "氾濫工業地帯", "森林化郊外", "赤い荒野" };
+        static readonly string[] regionsJa = { "ルインベルト", "アイアン・ヴェインズ", "フラッドワークス", "グリーン・フリンジ", "レッド・エクスパンス" };
         static readonly string[][] places = {
             new[]{"Glass Mile","Civic Rotunda","Sunken Market","East Stack","Ash Terminal"},
             new[]{"Warden Pit","Copper Spine","Black Lift","Kiln Gallery","Ore Chapel"},
@@ -63,11 +63,11 @@ namespace NeonVault
             new[]{"White Static","Crater Verge","Salt Observatory","Red Choir","Null Meridian"}
         };
         static readonly string[][] placesJa = {
-            new[]{"硝子通り","市民広場跡","沈没市場","東棟群","灰の駅"},
-            new[]{"監視坑","銅の背骨","黒昇降機","焼成回廊","鉱石礼拝堂"},
-            new[]{"泥濘鋳造所","ポンプ大聖堂","水没線路","塩水ヤード","第九水門"},
-            new[]{"苔むす団地","樹冠環状路","キツネノテブクロ・モール","根道貨物駅","シダ貯水池"},
-            new[]{"白い雑音","クレーター縁","塩の天文台","赤い聖歌隊","無の子午線"}
+            new[]{"グラス・マイル通り","シビック・ロタンダ","サンケン・マーケット","イースト・スタック","アッシュ・ターミナル"},
+            new[]{"ウォーデン・ピット","コッパー・スパイン","ブラック・リフト","キルン・ギャラリー","オア・チャペル"},
+            new[]{"シルト・ファウンドリー","ポンプ・カテドラル","ドラウンド・レール","ブライン・ヤード","ロック・ナイン"},
+            new[]{"モス・エステーツ","キャノピー・ループ","フォックスグローブ・モール","ルートライン・デポ","ファーン・レザボア"},
+            new[]{"ホワイト・スタティック","クレーター・ヴァージ","ソルト・オブザーバトリー","レッド・クワイア","ヌル・メリディアン"}
         };
         static readonly string[][] biomes = {
             new[]{"Collapsed downtown","Dust-choked towers","Subway sinkhole","Neon ruin","Concrete canyon"},
