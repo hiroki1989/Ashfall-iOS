@@ -29,7 +29,7 @@ namespace NeonVault
             string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONA / COLLECTOR","調べる：イオナ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
             Text(380,740,string.IsNullOrEmpty(hubDialogue)?hint:hubDialogue,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,680);
             if(toastTimer>0){Panel(new Rect(30,170,620,145),Gold);Text(50,185,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,580);}
-            DrawCollectorDialog();
+            DrawCollectorDialog();DrawDailyChestAdConfirm();
         }
         void DrawMobileHUD()
         {
@@ -68,6 +68,9 @@ namespace NeonVault
         {
             Box(new Rect(0,0,1440,900),new Color(.01f,.02f,.025f,.88f));Text(300,190,T("EXPEDITION PAUSED","探索一時停止"),heading,Gold,900);
             DrawCameraZoom(300,225,400,true);DrawMasterVolume(740,225,400,true);
+#if UNITY_IOS && !UNITY_EDITOR
+            if(VaultRewardedAds.PrivacyOptionsRequired && MobileButton(new Rect(1110,130,260,65),T("AD PRIVACY","広告設定")))VaultRewardedAds.ShowPrivacyOptions();
+#endif
             if(MobileButton(new Rect(300,320,840,120),T("RESUME","探索を再開"))){screen=Screen.Playing;Time.timeScale=1;}
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
             if(MobileButton(new Rect(300,755,840,100),T("WORLD MAP","広域地図")))OpenOverworldMap();

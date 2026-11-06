@@ -151,7 +151,7 @@ namespace NeonVault
                 Box(new Rect(0,0,1440,900),new Color(0,0,0,.72f));
                 Panel(new Rect(230,190,980,490),Gold);
                 Text(270,225,T("YOUR SAFEHOUSE","拠点について"),heading,Gold,900);
-                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage.\nBriggs records debt payments and awards levels.\nUse the exit to explore the city.\nYour nearest level 1 dungeon has been marked on the map.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。\nブリッグスに返済するとレベルが上がります。\n出口から街へ出ましょう。\n最も近いレベル1のダンジョンを地図に示しました。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage.\nBriggs records debt payments and awards levels.\nOpen the daily chest once for free, then watch ads for up to 3 extra opens each day.\nUse the exit to explore the city.\nYour nearest level 1 dungeon has been marked on the map.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。\nブリッグスに返済するとレベルが上がります。\n日次の箱は毎日1回無料で開けられ、広告視聴でさらに最大3回開けられます。\n出口から街へ出ましょう。\n最も近いレベル1のダンジョンを地図に示しました。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
                 if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
                 return;
             }

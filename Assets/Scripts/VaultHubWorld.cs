@@ -10,7 +10,7 @@ namespace NeonVault
             get
             {
                 if(player==null||worldTransitionPending)return false;
-                if(screen==Screen.Hub)return Vector3.Distance(PlayerPosition,debtCollectorPosition)<3||Vector3.Distance(PlayerPosition,merchantPosition)<3||Vector3.Distance(PlayerPosition,portalPosition)<3||Vector3.Distance(PlayerPosition,archivistPosition)<3;
+                if(screen==Screen.Hub)return DailyChestNearby||Vector3.Distance(PlayerPosition,debtCollectorPosition)<3||Vector3.Distance(PlayerPosition,merchantPosition)<3||Vector3.Distance(PlayerPosition,portalPosition)<3||Vector3.Distance(PlayerPosition,archivistPosition)<3;
                 if(!Active)return false;
                 if(IsOverworld)return NearbyWorldCamp>=0||NearbyWorldEntrance>=0||NearbyOverworldActivity>=0;
                 return Layout!=null&&ExpeditionExitOpen&&Vector3.Distance(PlayerPosition,ExitPosition)<3;
@@ -112,19 +112,21 @@ namespace NeonVault
             // Restore the clear interaction marker at the doorway, without
             // changing the hub's established interior layout.
             art.Ring("Hub exit / yellow floor marker",new Vector3(0,.035f,10.9f),1.45f,.11f,VaultArt.Gold,true);
+            BuildDailyChest();
             player=art.Character(new Vector3(0,.65f,-3),true);barrel=art.Weapon(player,gun.color);VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));PlayerAppearance.ApplyArmor(EquippedArmor);
             foreach(var animation in world.GetComponentsInChildren<Animation>(true)){animation.Stop();animation.enabled=false;}foreach(var animator in world.GetComponentsInChildren<Animator>(true))if(!animator.GetComponentInParent<ImportedEnemyVisual>()){animator.Rebind();animator.Update(0);animator.enabled=false;}
             hp=maxHp;aim=Vector3.right;PlayerWeapon.Aim(aim);hubDialogue="";cam.orthographicSize=11/CameraZoom;UpdateCamera(true);
         }
         void UpdateHub()
         {
-            toastTimer=Mathf.Max(0,toastTimer-Time.deltaTime);if(collectorOpen)return;
+            toastTimer=Mathf.Max(0,toastTimer-Time.deltaTime);UpdateDailyChestMarker();if(collectorOpen||dailyChestAdConfirm||dailyChestAdPending)return;
             if(bossDeparting&&departingRaiderBoss){var target=new Vector3(portalPosition.x,departingRaiderBoss.position.y,portalPosition.z+1);var delta=target-departingRaiderBoss.position;delta.y=0;if(delta.sqrMagnitude<.04f){Destroy(departingRaiderBoss.gameObject);departingRaiderBoss=null;bossDeparting=false;}else{departingRaiderBoss.rotation=Quaternion.LookRotation(delta);departingRaiderBoss.position=Vector3.MoveTowards(departingRaiderBoss.position,target,2.5f*Time.deltaTime);}}
             var move=ReadPlayerMovement();var previousPosition=player.position;player.position=MoveWithinRoom(player.position,move*EffectiveMoveSpeed*Time.deltaTime,.45f);TickFootsteps(previousPosition,player.position);
             if(!VaultMobileInputBridge.Enabled&&move.sqrMagnitude>.01f){aim=move.normalized;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);}
             if(VaultMobileInputBridge.Enabled)ApplyMobileAim(VaultMobileInputBridge.Aim);
             if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)){
-                if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){OpenBriggsDialogue();}
+                if(DailyChestNearby){InteractDailyChest();}
+                else if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){OpenBriggsDialogue();}
                 else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){OpenMerchantDialogue();}
                 else if(Vector3.Distance(PlayerPosition,portalPosition)<3){ExitCampToOverworld();return;}
                 else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)OpenCollector();
@@ -137,6 +139,7 @@ namespace NeonVault
         {
             if(toastTimer>0){Panel(new Rect(270,130,880,90),Gold);Text(290,145,Toast,new GUIStyle(small){wordWrap=true},Gold,840);}
             string key=MobileTouchControls.Enabled?"":" [E]";
+            DrawDailyChestLabel(key);
             DrawWorldLabel(merchantPosition+Vector3.up*2,T("SERA / MERCHANT","セラ / 装備商人")+key,Gold);
             DrawWorldLabel(archivistPosition+Vector3.up*2,T("IONA / COLLECTOR","イオナ / コレクター")+key,Cyan);
             DrawWorldLabel(debtCollectorPosition+Vector3.up*2,T("BRIGGS / DEBT COLLECTOR","ブリッグス / 借金取り")+key,new Color(1,.35f,.24f));
