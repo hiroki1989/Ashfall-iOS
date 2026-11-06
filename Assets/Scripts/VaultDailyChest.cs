@@ -11,6 +11,7 @@ namespace NeonVault
         Transform dailyChestMarker;
         GameObject dailyChestVisual;
         bool dailyChestAdPending, dailyChestAdConfirm;
+        object dailyChestLastReward; bool dailyChestRewardVisible;
         bool DailyChestNearby => Vector3.Distance(PlayerPosition,dailyChestPosition)<2.5f;
         bool DailyChestFreeAvailable
         {
@@ -76,6 +77,27 @@ namespace NeonVault
                 else Notify("AD REWARD NOT EARNED","広告報酬を獲得できませんでした");
             });
         }
+        void DrawDailyChestReward()
+        {
+            if(!dailyChestRewardVisible || dailyChestLastReward==null)return;
+            object item=dailyChestLastReward;
+            Gun weapon=item as Gun; ArmorItem armor=item as ArmorItem; ArtifactItem module=item as ArtifactItem;
+            Rarity rarity=weapon!=null?weapon.rarity:armor!=null?armor.rarity:module.rarity;
+            int level=weapon!=null?weapon.level:armor!=null?armor.level:module.level;
+            int score=weapon!=null?GearScoring.Score(weapon):armor!=null?GearScoring.Score(armor):GearScoring.Score(module);
+            string name=weapon!=null?VaultLanguage.GunName(weapon):armor!=null?Armory.Name(armor):ArtifactCatalog.DisplayName(module);
+            string details=weapon!=null?LegendaryDescription(weapon,VaultLanguage.GunDescription(weapon)):armor!=null?LegendaryDescription(armor,Armory.Description(armor)):GearScoring.AffixSummary(module);
+            Box(new Rect(0,0,1440,900),new Color(0,0,0,.83f));
+            Panel(new Rect(220,170,1000,560),Arsenal.Colors[(int)rarity]);
+            Text(260,195,T("DAILY BONUS","デイリーボーナス"),heading,Gold,920);
+            Rect picture=new Rect(260,285,300,300);
+            if(weapon!=null)ItemPortraits.Draw(picture,weapon);else if(armor!=null)ItemPortraits.Draw(picture,armor);else ManufacturerBranding.ModulePortrait(picture,module);
+            var body=new GUIStyle(label){fontSize=29,wordWrap=true};
+            Text(600,290,name,body,Color.white,560);
+            Text(600,390,VaultLanguage.RarityName(rarity)+"  ·  Lv "+level+"  ·  "+T("SCORE ","評価 ")+score,new GUIStyle(label){fontSize=25},Arsenal.Colors[(int)rarity],560);
+            Text(600,450,details,new GUIStyle(small){fontSize=23,wordWrap=true,richText=true},Mist,560);
+            if(WorldButton(new Rect(420,625,600,72),T("CONFIRM","確認")))dailyChestRewardVisible=false;
+        }
         Rarity RollDailyChestRarity()
         {
             // Conditioning the ordinary chest distribution to the top three tiers;
@@ -91,10 +113,11 @@ namespace NeonVault
             int level=Mathf.Max(1,DebtLevel);
             switch(rng.Next(3))
             {
-                case 0: StoreWeapon(Arsenal.CreateForDungeon(rng,DungeonIndex,rarity,level),true); break;
-                case 1: StoreArmor(Armory.CreateForDungeon(rng,DungeonIndex,rarity,level),true); break;
-                default: StoreArtifact(ArtifactCatalog.Create(rng,DungeonIndex,rarity,level),true); break;
+                case 0: var weapon=Arsenal.CreateForDungeon(rng,DungeonIndex,rarity,level); StoreWeapon(weapon,true); dailyChestLastReward=weapon; break;
+                case 1: var armor=Armory.CreateForDungeon(rng,DungeonIndex,rarity,level); StoreArmor(armor,true); dailyChestLastReward=armor; break;
+                default: var module=ArtifactCatalog.Create(rng,DungeonIndex,rarity,level); StoreArtifact(module,true); dailyChestLastReward=module; break;
             }
+            dailyChestRewardVisible=true;
             EquipmentChestVisual.Open(dailyChestVisual);
             PlayUserSound("transaction",.35f);
             Notify("DAILY BONUS / "+rarity+" GEAR","デイリーボーナス / "+VaultLanguage.RarityName(rarity)+"装備");

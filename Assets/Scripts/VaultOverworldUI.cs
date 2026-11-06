@@ -348,6 +348,26 @@ namespace NeonVault
             foreach(var d in artifactDrops)if(d.item.rarity==Rarity.Legendary)LootDot(d.position);
             foreach(var d in meleeDrops)if(d.item.rarity==Rarity.Legendary)LootDot(d.position);
             var player=Local(PlayerPosition);WorldMarker(player.x,player.y,5,Cyan);
+            // The event cache is an independent objective; do not replace the player's waypoint.
+            if(HasActiveOverworldClue)
+            {
+                Vector2 target=Local(ActiveOverworldCluePosition), direction=target-player;
+                Rect safe=new Rect(inside.x+15,inside.y+15,inside.width-30,inside.height-30);
+                Vector2 marker=target;
+                if(!inside.Contains(target) && direction.sqrMagnitude>0.001f)
+                {
+                    Vector2 origin=new Vector2(Mathf.Clamp(player.x,safe.xMin,safe.xMax),Mathf.Clamp(player.y,safe.yMin,safe.yMax));
+                    float fraction=float.MaxValue;
+                    if(direction.x>0)fraction=Mathf.Min(fraction,(safe.xMax-origin.x)/direction.x);
+                    if(direction.x<0)fraction=Mathf.Min(fraction,(safe.xMin-origin.x)/direction.x);
+                    if(direction.y>0)fraction=Mathf.Min(fraction,(safe.yMax-origin.y)/direction.y);
+                    if(direction.y<0)fraction=Mathf.Min(fraction,(safe.yMin-origin.y)/direction.y);
+                    marker=origin+direction*Mathf.Max(0,fraction);
+                }
+                Color eventColor=new Color(.76f,.36f,1f,1f);
+                Diamond(marker.x,marker.y,10,eventColor);
+                Box(new Rect(marker.x-3,marker.y-3,6,6),Color.white);
+            }
             bool tutorialTarget=TryFirstStepsWaypoint(out Vector3 firstStepsTarget);
             if(tutorialTarget||OverworldWaypointKind!=0)
             {
