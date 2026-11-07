@@ -463,6 +463,7 @@ namespace NeonVault
                     Burst(origin,Gold,3);
                 }
                 var shot=SpawnBullet(origin,direction,true,UnityEngine.Random.Range(EffectiveDamageMin,EffectiveDamageMax),gun.speed,gun.effect==GunEffect.Ricochet?Cyan:gun.color,gun.effect,EffectiveAccuracy);
+                shot.ConfigureDamageFalloff(gun,RangeRetentionBonus);
                 shot.element=gun.element;shot.elementPercent=gun.elementPercent;shot.elementRadius=gun.elementRadius;shot.elementDuration=gun.elementDuration;shot.elementChains=gun.elementChains;shot.elementBonus=1f+ArtifactAffixBonus("elementDamage")+ActionSkillElementBonus(gun.element);
                 shot.actionCharge=ActionSkillChargeMax*.01f*7.7f/Mathf.Max(.1f,EffectiveFireRate)/Mathf.Max(1,gun.pellets)*(1+ActionSkillExtraValue("action_charge")+(ActionTurretActive?ActionSkillExtraValue("turret_hit_charge"):0)+(PlayerInActionHealingField?ActionSkillExtraValue("medic_field_charge"):0));
                 shot.critical=UnityEngine.Random.value<EffectiveCriticalChance;shot.moduleAmplified=ArtifactDamageMultiplier>1.0001f||ArtifactAffixBonus("damage")>0||ArtifactGunDamageBonus(gun)>0;

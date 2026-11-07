@@ -20,6 +20,8 @@ namespace NeonVault
         public float damage, interval, speed, reloadSeconds = 1.15f;
         // Zero in older saves means use the model default; new instances serialize their score.
         public float accuracy;
+        // Damage retained at 30 metres, as a fraction; zero denotes an older save.
+        public float rangeRetention;
         public GearAffix[] affixes;
         // Non-weapon bonuses are retained as rolled values so the loadout layer can
         // apply them without hiding them inside firearm damage or magazine stats.
@@ -29,6 +31,7 @@ namespace NeonVault
         public float shotgunSpreadDegrees;
         public int shotgunProfileVersion;
         public int weaponDamageRevision;
+        public int classCorrectionVersion;
         public GunElement element;
         public float elementPercent, elementRadius, elementDuration;
         public int elementChains, elementVersion, elementAffinityRevision;
@@ -97,6 +100,35 @@ namespace NeonVault
             switch(model){case 1:return 70;case 2:return 97;case 7:return 96;case 8:return 98;case 12:return 94;case 3:return 48;case 4:return 55;case 5:return 40;case 13:return 52;case 6:return 76;case 14:return 89;case 15:return 86;case 16:return 78;case 17:return 91;default:return 85;}
         }
         public static float Accuracy(Gun gun)=>gun==null?0:Mathf.Clamp(gun.accuracy>0?gun.accuracy:DefaultAccuracy(VaultLanguage.DisplayModel(gun)),1,100);
+        public static float RangeRetention(Gun gun)
+        {
+            if(gun==null)return 1f;
+            if(gun.rangeRetention>0f)return Mathf.Clamp(gun.rangeRetention,.1f,1f);
+            float baseline;
+            switch(Category(VaultLanguage.DisplayModel(gun)))
+            {
+                case WeaponClass.SniperRifle: baseline=.86f;break;
+                case WeaponClass.Shotgun: baseline=.39f;break;
+                case WeaponClass.Handgun: baseline=.59f;break;
+                case WeaponClass.HeavyMachineGun: baseline=.70f;break;
+                default: baseline=.72f;break;
+            }
+            // Stable per-instance variation allows inaccurate guns with strong range.
+            string identity=!string.IsNullOrEmpty(gun.id)?gun.id:(!string.IsNullOrEmpty(gun.catalogId)?gun.catalogId:gun.modelVariant.ToString());
+            unchecked { uint hash=2166136261;foreach(char c in identity){hash^=c;hash*=16777619;}
+                float variation=((hash%2001)/1000f-1f)*.13f;
+                gun.rangeRetention=Mathf.Clamp(baseline+variation+(Accuracy(gun)-75f)*.001f,.15f,.98f);
+            }
+            return gun.rangeRetention;
+        }
+        public static float DamageAtDistance(float retention,float distance,float closeBonus=0f)
+        {
+            // Shotguns gain 25% at point-blank range, tapering to zero by 8 m.
+            // Retention affects only the distance penalty, never the close bonus.
+            float falloff=Mathf.Lerp(1f,Mathf.Clamp(retention,.1f,1f),Mathf.Clamp01((distance-5f)/25f));
+            float close=Mathf.Clamp01((8f-Mathf.Max(0f,distance))/6f);
+            return falloff*(1f+Mathf.Max(0f,closeBonus)*close);
+        }
         // Accuracy is a spread score, rather than a promise of hitting a moving target.
         public static float SpreadHalfAngle(Gun gun)
         {

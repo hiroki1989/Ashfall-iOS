@@ -24,6 +24,7 @@ namespace NeonVault
         public static void Migrate(Gun g)
         {
             if(g==null)return;
+            GunClassCorrections.Migrate(g);
             Arsenal.EnsureShotgunProfile(g);
             Arsenal.EnsureWeaponDamageBalance(g);
             GunElements.MigrateLegendaryAffinity(g);

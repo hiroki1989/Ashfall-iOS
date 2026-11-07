@@ -85,6 +85,7 @@ namespace NeonVault
         public float EffectiveFireRate=>gun==null?0:(1+fireBonus+EquippedMeleeAffix("fireRate")+DebtFireRateBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.fireBonus)+ArtifactAffixBonus("fireRate")+ActionSkillExtraValue("fire_rate"))/gun.interval;
         public float EffectiveReload=>gun==null?1:Mathf.Max(.35f,gun.reloadSeconds/(1+DebtReloadBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.reloadBonus)+ArtifactAffixBonus("reload")+ActionSkillExtraValue("reload_speed")+ActionPositionBonus("turret_near_reload","medic_field_reload")));
         public float EffectiveAccuracy=>gun==null?0:Mathf.Clamp(Arsenal.Accuracy(gun)+100*DebtAccuracyBonus(VaultLanguage.DisplayModel(gun))+100*ArmorTotal(a=>a.accuracyBonus)+100*ArtifactAffixBonus("accuracy")+100*ActionSkillExtraValue("accuracy"),1,100);
+        public float RangeRetentionBonus=>ArmorTotal(a=>GearScoring.AffixTotal(a.affixes,"rangeRetention"))+ArtifactAffixBonus("rangeRetention");
         public float EffectiveMoveSpeed=>7*(1+Mathf.Min(.65f,ArmorTotal(a=>a.moveBonus)+EquippedWeaponAffixBonus("moveSpeed")+ArtifactAffixBonus("moveSpeed")+ActionSkillExtraValue("move_speed")));
         public float DamageReduction=>Mathf.Clamp(ArmorTotal(a=>a.damageReduction)+EquippedWeaponAffixBonus("mitigation")+ArtifactAffixBonus("mitigation")+DebtDamageReductionBonus+ActionSkillExtraValue("damage_reduction"),0,.65f);
         public float HealthRegen=>ArmorTotal(a=>a.regenBonus)+EquippedWeaponAffixBonus("regen")+ArtifactAffixBonus("regen")+DebtRecoveryBonus;

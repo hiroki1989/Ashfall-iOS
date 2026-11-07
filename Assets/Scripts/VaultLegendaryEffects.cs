@@ -120,7 +120,8 @@ namespace NeonVault
             if(trigger!=expected||(!armor&&variant%5==0&&legendaryShots%3!=0)||(armor&&variant==4&&legendaryClock<5))return;
             // One timer per catalog effect prevents stacked armor duplicates and recursive procs.
             if(legendaryReady.TryGetValue(key,out float ready)&&legendaryClock<ready)return;
-            float cooldown=armor?(variant==4?5:4):variant%5==0?1:variant%5<3?2:3;
+            if(armor&&maker==3&&variant==2&&hp>=maxHp*.5f)return;
+            float cooldown=armor?(maker==3&&variant==2?60:variant==4?5:4):variant%5==0?1:variant%5<3?2:3;
             legendaryReady[key]=legendaryClock+cooldown;legendaryResolving=true;
             try{ResolveLegendaryEffect(maker,variant,armor,origin,struck);}finally{legendaryResolving=false;}
         }
@@ -150,6 +151,7 @@ namespace NeonVault
                 {"","撃破地点に3回波動する胞子領域を設置","HP半分以下なら最大HPの12%を回復","敵に囲まれた時に3回の胞子波動を放つ","シールドをHPに変換。シールドがなければ少量生成"},
                 {"","撃破地点に遅延地雷を設置","前方の扇形範囲を爆破","ダッシュ後方に遅延炎域を2つ残す","最寄の敵の周囲を爆破"},
                 {"","シールドを20得る","近くの敵弾を最大10発迎撃する","後方に2回爆発する罠を残す","シールドを消費して防衛反撃を放つ"}};
+            if(maker==3&&variant==2)return (ja?"リロード時（クールダウン60秒）：":"On reload (60s cooldown): ")+(ja?jp:en)[maker,variant];
             return (ja?triggerJa:triggerEn)[variant]+(ja?jp:en)[maker,variant];
         }
         void ResolveArmorLegendary(int maker,int variant,Vector3 origin)

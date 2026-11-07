@@ -30,6 +30,7 @@ namespace NeonVault
         {
             bool ja=japanese??Japanese;
             if(gun==null)return ja?"不明":"Unknown";
+            if(GunClassCorrections.IsStrongholdBastion(gun))return ja?"アサルトライフル":"Assault Rifle";
             var recipe=DistinctEquipmentDesigns.Find(gun.catalogId);
             if(recipe!=null&&!recipe.legendary&&gun.catalogId.StartsWith("distinct.gun."))return GunSeriesDesigns.ClassName(recipe.gunClass,ja);
             int model=DisplayModel(gun);
@@ -44,6 +45,7 @@ namespace NeonVault
         }
         static string GunMechanismDescription(Gun gun,bool ja)
         {
+            if(GunClassCorrections.IsStrongholdBastion(gun))return ja?"アサルトライフル / 安定した連射":"Assault rifle / controlled automatic fire";
             if(gun.visualSet==Arsenal.TrailWardenVisualSet)return ja?(DisplayModel(gun)==15?"トレイルウォーデンの自動拳銃 / 素早い鉛弾連射":"トレイルウォーデンの木製銃床ライフル / 制御しやすい鉛弾連射"):(DisplayModel(gun)==15?"Trail Warden automatic sidearm / rapid lead fire":"Trail Warden wood-stock rifle / controlled automatic fire");
             var recipe=DistinctEquipmentDesigns.For(gun);if(recipe!=null&&!recipe.legendary)return GunSeriesDesigns.Description(recipe,ja);
             if(!ja)return Arsenal.ModelDescription(DisplayModel(gun));
@@ -58,6 +60,7 @@ namespace NeonVault
         }
         public static int DisplayModel(Gun gun)
         {
+            if(GunClassCorrections.IsStrongholdBastion(gun))return 12;
             int bespoke=BespokeLegendaryDesigns.Index(gun);if(bespoke>=0)return BespokeLegendaryDesigns.Model(bespoke);
             var recipe=DistinctEquipmentDesigns.Find(gun.catalogId);if(recipe!=null&&!recipe.legendary&&gun.catalogId.StartsWith("distinct.gun."))return recipe.family;
             // Legacy saves keep their IDs, statistics and stored names; presentation migrates only.

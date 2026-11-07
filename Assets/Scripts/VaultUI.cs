@@ -280,6 +280,7 @@ namespace NeonVault
         }
         void DrawCrosshair(float mx,float my)
         {
+            if(reload>0){float progress=Mathf.Clamp01(1f-reload/Mathf.Max(.01f,reloadDuration));Box(new Rect(mx-26,my-4,52,8),new Color(.008f,.012f,.018f,.9f));Box(new Rect(mx-24,my-2,48,4),new Color(.23f,.25f,.25f,.9f));Box(new Rect(mx-24,my-2,48*progress,4),Gold);return;}
             float finalAccuracy=EffectiveAccuracy;
             float reticleGap=2+(100-finalAccuracy)*.16f+Mathf.Clamp01(fireTimer/Mathf.Max(.01f,gun.interval))*2;
             Color reticle=reload>0?Gold:new Color(.72f,1,.96f,1);

@@ -87,9 +87,9 @@ namespace NeonVault
         {
             if(gun==null||reload>0||ammo>=EffectiveMagazine||AmmoReserve(AmmoForGun(gun))<=0)return false;
             reloadPending=Mathf.Min(EffectiveMagazine-ammo,AmmoReserve(AmmoForGun(gun)));
-            if(reloadPending<=0)return false;reload=EffectiveReload;PlayWeaponSound(gun,"reload",.7f);return true;
+            if(reloadPending<=0)return false;reload=EffectiveReload;reloadDuration=reload;PlayWeaponSound(gun,"reload",.7f);return true;
         }
-        int reloadPending;
+        int reloadPending; float reloadDuration;
         void CompleteAmmoReload()
         {
             StopReloadSound();

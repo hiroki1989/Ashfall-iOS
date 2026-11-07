@@ -673,6 +673,61 @@ namespace NeonVault
             float x=backdrop.x+8,y=backdrop.y+22;Box(new Rect(x,y,width,3),UiPaper);Box(new Rect(x,y-5,2,10),UiPaper);Box(new Rect(x+width-2,y-5,2,10),UiPaper);
             WorldLabel(new Rect(x+width+12,backdrop.y+5,115,30),"1 km",UiPaper,17);
         }
+        readonly System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<object>> worldExclusivePreview=new System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<object>>();
+        Vector2 worldExclusiveScroll;
+        int worldExclusiveStage=-1;
+        System.Collections.Generic.List<object> WorldExclusiveItems(int stageId)
+        {
+            if(worldExclusivePreview.TryGetValue(stageId,out var result))return result;
+            result=new System.Collections.Generic.List<object>();
+            var random=new System.Random(7193+stageId);
+            if(DungeonBossExclusive.TryGetStageExclusive(stageId,out var drop))
+            {
+                object item=DungeonBossExclusive.CreateStageExclusiveItem(drop,random,1);
+                if(item!=null)result.Add(item);
+            }
+            if(IsFactionHeadquarters(stageId))
+            {
+                int boss=IsRedClawBossStage(stageId)?0:1;
+                for(int category=0;category<BossRelicFoundation.CategoryCount;category++)
+                    result.Add(BossRelicFoundation.Create(boss,category,1,random));
+            }
+            worldExclusivePreview[stageId]=result;
+            return result;
+        }
+        void DrawWorldExclusiveItems(int stageId,Rect area)
+        {
+            var items=WorldExclusiveItems(stageId);
+            if(items.Count==0)return;
+            if(worldExclusiveStage!=stageId){worldExclusiveStage=stageId;worldExclusiveScroll=Vector2.zero;}
+            WorldLabel(new Rect(area.x,area.y,area.width,25),T("BOSS EXCLUSIVE","ボス固有装備"),Gold,18);
+            var style=new GUIStyle(GUI.skin.label){fontSize=17,wordWrap=true,normal={textColor=UiPaper}};
+            float width=area.width-100;
+            float height=0;
+            foreach(var item in items){string detail=WorldExclusiveDetail(item);height+=Mathf.Max(78,style.CalcHeight(new GUIContent(detail),width)+8);}
+            worldExclusiveScroll=GUI.BeginScrollView(new Rect(area.x,area.y+26,area.width,area.height-26),worldExclusiveScroll,new Rect(0,0,area.width-20,height));
+            float y=0;
+            foreach(var item in items)
+            {
+                string detail=WorldExclusiveDetail(item);float row=Mathf.Max(78,style.CalcHeight(new GUIContent(detail),width)+8);
+                var picture=new Rect(0,y+2,70,70);
+                if(item is Gun g)ItemPortraits.Draw(picture,g);
+                else if(item is ArmorItem a)ItemPortraits.Draw(picture,a);
+                else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(picture,m);
+                else if(item is MeleeWeaponItem w)ManufacturerPortraits.Melee(picture,w);
+                GUI.Label(new Rect(78,y,width,row),detail,style);y+=row;
+            }
+            GUI.EndScrollView();
+        }
+        string WorldExclusiveDetail(object item)
+        {
+            if(!EquipmentDiscovery.Known(item))return "???\n???";
+            if(item is Gun g)return VaultLanguage.GunName(g)+"\n"+(!string.IsNullOrEmpty(g.bossRelicId)?BossRelicFoundation.Description(g.bossRelicId,VaultLanguage.Japanese):LegendaryCatalog.Description(g,VaultLanguage.Japanese));
+            if(item is ArmorItem a)return Armory.Name(a)+"\n"+(!string.IsNullOrEmpty(a.bossRelicId)?BossRelicFoundation.Description(a.bossRelicId,VaultLanguage.Japanese):LegendaryCatalog.Description(a,VaultLanguage.Japanese));
+            if(item is ArtifactItem m)return ArtifactCatalog.DisplayName(m)+"\n"+m.Description;
+            if(item is MeleeWeaponItem w)return MeleeWeaponCatalog.Name(w)+"\n"+(!string.IsNullOrEmpty(w.bossRelicId)?BossRelicFoundation.Description(w.bossRelicId,VaultLanguage.Japanese):MeleeWeaponCatalog.LegendaryDescription(w));
+            return "???\n???";
+        }
         void DrawWorldStageBriefing()
         {
             var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id)||IsFactionHeadquarters(stage.id);
@@ -680,8 +735,9 @@ namespace NeonVault
             WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,29);
             WorldLabel(new Rect(975,220,410,75),discovered?stage.Location+" / "+stage.Biome:"?",Mist,23);
             WorldLabel(new Rect(975,305,410,70),T("LEVEL ","レベル ")+stage.level,Cyan,25);
-            WorldLabel(new Rect(975,375,410,105),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",!hqUnlocked?UiDanger:UiPaper,26);
-            WorldLabel(new Rect(975,490,410,80),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,22);
+            WorldLabel(new Rect(975,370,410,80),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",!hqUnlocked?UiDanger:UiPaper,23);
+            WorldLabel(new Rect(975,445,410,52),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,19);
+            if(discovered)DrawWorldExclusiveItems(stage.id,new Rect(975,490,410,80));
             WorldLabel(new Rect(975,575,410,40),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,21);
             bool tracking=OverworldWaypointKind==2&&OverworldWaypointId==stage.id;
             if(WorldButton(new Rect(975,615,410,60),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:2,stage.id);

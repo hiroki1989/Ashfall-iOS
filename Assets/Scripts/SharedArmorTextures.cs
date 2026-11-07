@@ -120,7 +120,12 @@ namespace NeonVault
                     continue;
                 // Each item owns an illustrated atlas in the approved Warden UV layout.
                 // A palette LUT would retain the starter outfit's wrinkles and markings.
-                var texture = LoadAtlas(AtlasName(item.catalogId), factionMobile && (Application.isMobilePlatform || FactionPresetBakeSettings.Enabled));
+                // The portrait resolves legacy products to an authored recipe. Use
+                // the same recipe for the worn atlas so saved legacy items cannot
+                // show one product in the inventory and another on the character.
+                var recipe = DistinctEquipmentDesigns.For(item);
+                string atlasId = recipe != null ? recipe.id : item.catalogId;
+                var texture = LoadAtlas(AtlasName(atlasId), factionMobile && (Application.isMobilePlatform || FactionPresetBakeSettings.Enabled));
                 if (!texture) { renderer.sharedMaterials = source; assigned.Remove(renderer); continue; }
                 var next = new Material[source.Length];
                 for (int i = 0; i < source.Length; i++)

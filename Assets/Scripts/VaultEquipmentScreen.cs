@@ -72,6 +72,8 @@ namespace NeonVault
             if(item is Gun g){c.key="g:"+g.id;c.name=VaultLanguage.GunName(g);c.color=g.color;c.equipped=EquippedWeaponSlot(g)>=0;score=GearScoring.Score(g);reference=EqGunComparison(out has);level=g.level;rarity=g.rarity;maker=ManufacturerBranding.Maker(g);
                 string damage=T("DMG ","威力 ")+GunDamageMin(g).ToString("0.0")+"-"+GunDamageMax(g).ToString("0.0")+(g.pellets>1?" ×"+g.pellets:"");
                 c.description=T("BASE STATS\n","基本特性\n")+T("TYPE ","銃種 ")+VaultLanguage.GunClassName(g)+"\n"+damage+T("\nRATE ","\n連射 ")+(1/Mathf.Max(.001f,g.interval)).ToString("0.0")+T("/s\nMAG ","/秒\n装弾 ")+g.magazine+T("\nRELOAD ","\nリロード ")+g.reloadSeconds.ToString("0.0")+T("s\nCRIT ","秒\n会心 ")+(GunCriticalChance(g)*100).ToString("0.#")+"%";
+                c.description=EqAppend(c.description,T("Damage retained at 30m: ","30mでの威力残存: ")+(Arsenal.RangeRetention(g)*100).ToString("0.#")+"%");
+                if(Arsenal.Category(VaultLanguage.DisplayModel(g))==WeaponClass.Shotgun)c.description=EqAppend(c.description,T("Close range: +25% damage within 2m, fading by 8m","近距離威力 +25%（2m以内、8mで消失）"));
                 c.description=EqAppend(c.description,EqFormatStats(GearScoring.AffixSummary(g)));
                 c.description=EqAppend(c.description,GunElements.Description(g,VaultLanguage.Japanese));
                 if(!string.IsNullOrEmpty(g.legendaryKey))c.description=EqAppend(c.description,LegendaryDescription(g,LegendaryCatalog.Description(g,VaultLanguage.Japanese)));
@@ -273,6 +275,8 @@ namespace NeonVault
             foreach(var armor in EquippedArmor)if(Armory.IsActiveArmor(armor))
             {health+=armor.maxHealth;damage+=armor.damageBonus;fire+=armor.fireBonus;reload+=armor.reloadBonus;accuracy+=armor.accuracyBonus;move+=armor.moveBonus;mitigation+=armor.damageReduction;regen+=armor.regenBonus;dodge+=armor.dodgeBonus;ammoBonus+=armor.ammoBonus;critChance+=GearScoring.AffixTotal(armor.affixes,"critChance");critDamage+=GearScoring.AffixTotal(armor.affixes,"critDamage");}
             void Add(string en,string ja,float value,bool percent=true){if(Mathf.Abs(value)>.0001f)lines.Add(T(en,ja)+" +"+(percent?value*100:value).ToString(percent?"0.#":"0.#")+(percent?"%":""));}
+            Add("DAMAGE RETENTION","距離減衰耐性",RangeRetentionBonus);
+            if(gun!=null)lines.Add(T("30m DAMAGE RETAINED ","30m威力残存 ")+(Mathf.Clamp01(Arsenal.RangeRetention(gun)+RangeRetentionBonus)*100).ToString("0.#")+"%");
             Add("GEAR HP","装備HP",health,false);Add("DAMAGE","威力",damage);Add("FIRE RATE","連射速度",fire);Add("RELOAD","リロード速度",reload);Add("ACCURACY","命中精度",accuracy);Add("MOVE","移動速度",move);Add("MITIGATION","被ダメージ軽減",mitigation);Add("REGEN","HP回復",regen,false);Add("DODGE","回避",dodge);Add("AMMO","弾数",ammoBonus);Add("CRIT CHANCE","会心率",critChance);Add("CRIT DAMAGE","会心倍率",critDamage);
             var style=new GUIStyle(eqCopy){fontSize=MobileTouchControls.Enabled?19:17};float height=lines.Count*27+12;
             eqLoadoutScroll=GUI.BeginScrollView(new Rect(532,660,364,111),eqLoadoutScroll,new Rect(0,0,336,Mathf.Max(111,height)));

@@ -20,13 +20,13 @@ namespace NeonVault {
   }
   static void RollAffixes(ArtifactItem a,System.Random r)
   {
-   int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage","elementDamage","handgunDamage","shotgunDamage","rifleDamage","sniperDamage","heavyDamage","petDamage","petSpeed"};
+   int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage","elementDamage","handgunDamage","shotgunDamage","rifleDamage","sniperDamage","heavyDamage","petDamage","petSpeed","rangeRetention"};
    var used=new System.Collections.Generic.HashSet<int>();a.affixes=new GearAffix[count];
    if(r==null)return;
    for(int i=0;i<count;i++)
    {
     int p;if(i==0&&!string.IsNullOrEmpty(a.manufacturerId)){var product=ModuleProductCatalog.Find(a.catalogId);p=product==null?r.Next(types.Length):System.Array.IndexOf(types,product.preferredAffix);if(p<0)p=r.Next(types.Length);used.Add(p);}else{do{p=r.Next(types.Length);}while(!used.Add(p));}
-    float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.015f,.06f,.04f,.04f,.04f,.04f,.04f,.04f,.08f,.06f};
+    float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.015f,.06f,.04f,.04f,.04f,.04f,.04f,.04f,.08f,.06f,.025f};
     a.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*(p>=17?Mathf.Clamp(a.power,1f,3f):a.power)*Arsenal.Range(r,.85f,1.15f)};
    }
   }

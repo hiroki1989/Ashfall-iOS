@@ -7,3 +7,5 @@ C:/Users/hiroki/OneDrive/ドキュメント/ChatGPT/見下ろし視点ハクス�
 この起動ファイルはUnityプロセスのTEMP/TMPを D:/Unity/ProcessTemp/Ashfall-iOS、UPM_CACHE_ROOTを D:/Unity/SharedCaches/PackageCache、Editorログを D:/Unity/Ashfall-iOS/Logs/Editor.log に設定する。
 Unity Hubから直接起動すると、このプロセス専用TEMP/ログ設定は適用されない。Unity共有キャッシュのCパスはDへのジャンクションにするため、従来の参照でもデータ本体はDへ書かれる。
 セーブ・会話・旧PC版・他プロジェクト本体・Windowsの設定・認証情報は移動しない。
+## ChatGPT/Codexデータ（2026-11-07 ユーザー指示による例外移動）
+C:\Users\hiroki\.codex、AppData\Roaming\Codex、AppData\Local\Codex、AppData\Local\OpenAI は D:\CodexMigration 配下へ移動し、C側はジャンクション。今後の会話・生成画像・キャッシュはDに保存される。C側の旧バックアップ(*.bak)はユーザー指示により2026-11-07に削除済み。

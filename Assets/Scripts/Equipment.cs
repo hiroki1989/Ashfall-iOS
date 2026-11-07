@@ -72,9 +72,9 @@ namespace NeonVault
         static void RollAffixes(ArmorItem item,System.Random random)
         {
             if(random==null){item.affixes=System.Array.Empty<GearAffix>();return;}
-            int count=Mathf.Clamp((int)item.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage"};
+            int count=Mathf.Clamp((int)item.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage","rangeRetention"};
             float scale=GearBalance.LevelPower(item.rarity,item.level);var used=new HashSet<int>();item.affixes=new GearAffix[count];
-            for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while((p==7&&random.NextDouble()>=.15)||!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f,.015f,.06f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*scale*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
+            for(int i=0;i<count;i++){int p;do{p=random.Next(types.Length);}while((p==7&&random.NextDouble()>=.15)||!used.Add(p));float[] ranges={.03f,5,.03f,.03f,.02f,.01f,.02f,.2f,.06f,.015f,.06f,.025f};item.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*(p==11?Mathf.Clamp(scale,1f,3f):scale)*Arsenal.Range(random,.8f,1.2f)};ApplyAffix(item,item.affixes[i]);}
         }
         static void ApplyAffix(ArmorItem a,GearAffix x){switch(x.type){case "damage":a.damageBonus+=x.value;break;case "health":a.maxHealth+=x.value;break;case "fireRate":a.fireBonus+=x.value;break;case "reload":a.reloadBonus+=x.value;break;case "accuracy":a.accuracyBonus+=x.value;break;case "ammo":a.ammoBonus+=x.value;break;case "mitigation":a.damageReduction=Mathf.Min(.65f,a.damageReduction+x.value);break;case "moveSpeed":a.moveBonus+=x.value;break;case "regen":a.regenBonus+=x.value;break;}}
         static Color ArmorColor(ArmorSlot slot,Rarity rarity,System.Random random)

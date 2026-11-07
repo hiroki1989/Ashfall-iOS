@@ -41,7 +41,7 @@ namespace NeonVault
             float rate=1/Mathf.Max(.001f,item.interval);
             float reloadTime=item.reloadSeconds;
             return T("SCORE ","評価 ")+GearScoring.Score(item)+T("  BASE · Lv ","  基礎値 · Lv ")+item.level+T("  DMG ","  威力 ")+GunDamageMin(item).ToString("0.0")+"-"+GunDamageMax(item).ToString("0.0")+T(" × "," × ")+item.pellets+
-                T("  RATE ","  連射 ")+rate.ToString("0.0")+T("/s  MAG ","/秒  弾数 ")+item.magazine+T("  RELOAD ","  リロード ")+reloadTime.ToString("0.00")+T("s  SPEED ","秒  弾速 ")+item.speed.ToString("0.0")+T("  ACCURACY ","  命中精度 ")+Arsenal.Accuracy(item).ToString("0.0")+"%"+T("  CRIT ","  会心 ")+(GunCriticalChance(item)*100).ToString("0.#")+"% ×"+GunCriticalMultiplier(item).ToString("0.00")+"\n"+GearScoring.AffixSummary(item);
+                T("  RATE ","  連射 ")+rate.ToString("0.0")+T("/s  MAG ","/秒  弾数 ")+item.magazine+T("  RELOAD ","  リロード ")+reloadTime.ToString("0.00")+T("s  SPEED ","秒  弾速 ")+item.speed.ToString("0.0")+T("  ACCURACY ","  命中精度 ")+Arsenal.Accuracy(item).ToString("0.0")+"%"+T(" / 30m damage retention "," / 30m威力残存 ")+(Arsenal.RangeRetention(item)*100).ToString("0.#")+"%"+T("  CRIT ","  会心 ")+(GunCriticalChance(item)*100).ToString("0.#")+"% ×"+GunCriticalMultiplier(item).ToString("0.00")+"\n"+GearScoring.AffixSummary(item);
         }
         void InventoryCopy(float x,float y,string value,GUIStyle style,Color color,float width)
         {GUI.color=color;GUIStyle copy=value!=null&&value.Contains(LegendaryRedOpen)?new GUIStyle(style){richText=true}:style;GUI.Label(new Rect(x,y,width,copy.CalcHeight(new GUIContent(value),width)+4),value,copy);GUI.color=Color.white;}

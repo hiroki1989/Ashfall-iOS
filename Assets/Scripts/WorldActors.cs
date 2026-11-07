@@ -464,6 +464,13 @@ namespace NeonVault
         public Vector3 velocity;
         public float damage, life=3;
         public float hitAccuracy=100;
+        float falloffRetention=1f,travelDistance,closeBonus;
+        public void ConfigureDamageFalloff(Gun gun,float bonus)
+        {
+            falloffRetention=Mathf.Clamp01(Arsenal.RangeRetention(gun)+Mathf.Max(0f,bonus));
+            closeBonus=gun!=null&&Arsenal.Category(VaultLanguage.DisplayModel(gun))==WeaponClass.Shotgun?.25f:0f;
+            travelDistance=0f;
+        }
         public float actionCharge;
         public GunElement element;public float elementPercent,elementRadius,elementDuration,elementBonus=1f;public int elementChains;
         public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect,parabolic,skillProjectile;
@@ -507,6 +514,10 @@ namespace NeonVault
                 if(target!=null)
                 {
                     Vector3 hitPoint=ContactPoint(target.transform.position,old,transform.position,target.kind==3?1.2f:.65f);
+                    travelDistance+=Vector3.Distance(old,hitPoint);
+                    damage*=Arsenal.DamageAtDistance(falloffRetention,travelDistance,closeBonus);
+                    travelDistance=0f;
+                    closeBonus=0f; // A ricochet is no longer a point-blank shot.
                     transform.position=hitPoint;CombatVisuals.Impact(hitPoint,velocity,visualColor,effect,transform.parent);
                     if(!target.Hit(damage,hitPoint,DamageNumberColor,hitAccuracy,DamageNumberColor)){Destroy(gameObject);return;}
                     GunElements.Apply(this,target,hitPoint);
@@ -529,6 +540,7 @@ namespace NeonVault
                     Destroy(gameObject); return;
                 }
             }
+            if(friendly)travelDistance+=Vector3.Distance(old,transform.position);
             else if((!parabolic||transform.position.y<=1.65f)&&DistanceToSegment(game.PlayerPosition,old,transform.position)<.65f) { CombatVisuals.Impact(ContactPoint(game.PlayerPosition,old,transform.position,.6f),velocity,visualColor,effect,transform.parent);if(parabolic)CombatVisuals.Burst(transform.position,visualColor,10,transform.parent);game.Hurt(damage); LeaveAcid();Destroy(gameObject); return; }
             if((parabolic&&transform.position.y<=.12f)||blocked||life<0)
             {
