@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -61,6 +62,7 @@ namespace NeonVault
         static void Bootstrap() { if(Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-label-font-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--ios-premium-screenshot")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--action-tree-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--real-city-scenery-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--enemy-cache-review")>=0)return; if(FindAnyObjectByType<VaultGame>()==null) new GameObject("ASHFALL / runtime").AddComponent<VaultGame>(); }
         void Awake()
         {
+            GameCenterSyncManager.Initialize();
             Time.timeScale=1;
             Application.targetFrameRate=MobileTouchControls.Enabled?30:120;
             if(MobileTouchControls.Enabled)QualitySettings.vSyncCount=0;
@@ -95,7 +97,8 @@ namespace NeonVault
             meleeAttack=gameObject.AddComponent<VaultMelee>();meleeAttack.Initialize(this);
             smoke=Array.IndexOf(Environment.GetCommandLineArgs(),"--gameplay-screenshot")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--dungeon-entry-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--live-building-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--premium-ui-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--asset-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--overworld-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--economy-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--equipment-screen-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--mobile-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--manufacturer-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--smoke")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--world-visual-review")>=0||Array.IndexOf(Environment.GetCommandLineArgs(),"--hero3d-playcheck")>=0;
             // Debt skill unlocks determine whether slots 3/4 survive loadout repair.
-            ProgressionInitialize();LoadInventory();screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);
+            if(smoke){ProgressionInitialize();LoadInventory();saveSlotInitialized=true;}
+            screen=Screen.Menu;seed=Environment.TickCount&int.MaxValue;rng=new System.Random(seed);
             // The title screen uses menuArt. Building a dungeon here loads every
             // environment and character asset before the first UI frame on iOS.
             // BuildRoom is called by a new or resumed expedition instead.
@@ -163,7 +166,10 @@ namespace NeonVault
             if(world!=null) { world.gameObject.SetActive(false); Destroy(world.gameObject); }
             foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();
             world=new GameObject("Generated sector "+room).transform; satellites.Clear();
-            ClearArtifactDrops();Layout=new SectorLayout(new System.Random(seed+room*7919),DungeonIndex,dungeonLayoutVersion>0&&((seed+room*7919)&3)==0);
+            ClearArtifactDrops();
+            bool isBossFloor = (CurrentDungeon != null && room >= CurrentDungeon.AreaCount - 1);
+            bool useOpenArena = isBossFloor && (((seed + room * 7919) & 1) == 0);
+            Layout = new SectorLayout(new System.Random(seed + room * 7919), DungeonIndex, true, useOpenArena);
             halfWidth=Layout.Columns*SectorLayout.Cell/2;halfDepth=Layout.Rows*SectorLayout.Cell/2;cleared=false;
             int dungeonInteriorStyle=SelectedStageId>=0?SelectedStageId:DungeonIndex;
             art=new VaultArt(world,materials,new System.Random(seed+room*7919));art.Floor(halfWidth,halfDepth,dungeonInteriorStyle);
@@ -182,6 +188,7 @@ namespace NeonVault
             {
                 if(room==CurrentDungeon.AreaCount-1)
                 {
+                    if(SelectedStageId>=0)MarkDungeonBossFought(SelectedStageId);
                     SpawnFoe(Layout.Exit,3);
                     int champions=IsFactionHeadquarters(SelectedStageId)?5:rng.Next(3,6);
                     for(int i=0;i<champions;i++)
@@ -233,8 +240,9 @@ namespace NeonVault
             position=SeparateEnemySpawn(position,kind);
             if(IsOverworld)position.y=.71f; // Legacy enemy root subtracts .62m; sole plane is root minus .09m.
             var faction=IsOverworld?DungeonFaction.None:ExpeditionMap.FactionForStage(SelectedStageId);
-            bool raiderBoss=kind==3&&(finalDebtBossFight||faction!=DungeonFaction.None);
-            bool factionHuman=kind==10&&faction!=DungeonFaction.None||raiderBoss;
+            bool infectedMajorBoss=kind==3&&!IsOverworld&&IsInfectedBossStage(SelectedStageId);
+            bool raiderBoss=kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId));
+            bool factionHuman=kind==10&&faction!=DungeonFaction.None||raiderBoss&&!infectedMajorBoss;
             // Faction humans use the articulated survivor mesh. The old path first
             // constructed a complete FaithfulEnemy3D for every human, then hid it.
             // On a crowded iOS floor that doubled mesh/material memory at entry.
@@ -260,7 +268,17 @@ namespace NeonVault
             // Keep the existing actor origin and faction model floor alignment.
                 human.transform.localPosition=Vector3.down*.03f;
             }
-            else ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);
+            else if(infectedMajorBoss)
+                InfectedRenegadeVisual.TryAttach(f.gameObject);
+            else
+            {
+                bool landmarkMutant=IsOverworld&&spawningWorldEnemy!=null&&spawningWorldEnemy.landmarkBoss&&spawningWorldEnemy.landmarkId>=0&&OverworldGeography.LandmarkBossFaction(spawningWorldEnemy.landmarkId)==0;
+                bool infectedDungeonBoss=!IsOverworld&&kind==3&&room==CurrentDungeon.AreaCount-1&&ExpeditionMap.IsInfectedDungeonStage(SelectedStageId);
+                bool useFantastic=(landmarkMutant&&spawningWorldEnemy.landmarkId%2==0)||(infectedDungeonBoss&&rng.NextDouble()<.35);
+                if(useFantastic&&FantasticCreatureVisual.TryAttach(f.gameObject)) { }
+                else if(!((kind==0||kind==4||kind==8)&&rng.NextDouble()<.25&&FemaleZombieVisual.TryAttach(f.gameObject)))
+                    ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);
+            }
             Enemies.Add(f);
             if(IsOverworld)ConfigureOverworldFoe(f);
             else
@@ -270,8 +288,8 @@ namespace NeonVault
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
             if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
-            else if(IsFactionHeadquarters(SelectedStageId)&&kind==3)f.ConfigureDifficulty(2.4f,1.5f,.20f);
-            if(kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId))){f.MajorBoss=true;f.speed*=1.2f;}
+            else if(IsFactionHeadquarters(SelectedStageId)&&kind==3)f.ConfigureDifficulty(infectedMajorBoss?3.0f:2.4f,infectedMajorBoss?1.75f:1.5f,infectedMajorBoss?.24f:.20f);
+            if(kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)||IsOverworld&&spawningWorldEnemy!=null&&spawningWorldEnemy.landmarkBoss)){f.MajorBoss=true;f.speed*=1.2f;}
             bool elite=!restoringChampionCheckpoint&&kind!=3&&(forceElite||(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275));
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;
@@ -360,6 +378,7 @@ namespace NeonVault
                 foreach(var enemy in Enemies)if(enemy&&!enemy.dead&&enemy.kind==3&&Vector3.Distance(enemy.transform.position,PlayerPosition)<14f){BeginFactionBossConversation();break;}
             if(FactionBossConversationVisible)return;
             TickPet(Time.deltaTime);
+            if(screen==Screen.Playing&&Active)TickPetSkillAura();
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
             if(IsOverworld&&OverworldActivityChoiceOpen)
@@ -368,7 +387,7 @@ namespace NeonVault
                 return;
             }
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
-            if(InventoryOpen){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))ToggleInventory();return;}
+            if(InventoryOpen){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){if(petSkillInventoryOpen)petSkillInventoryOpen=false;else ToggleInventory();}return;}
             if(MobileTouchControls.Enabled&&manufacturerRegistry)return;
             if(screen==Screen.Hub){UpdateHub();return;}
             if(screen==Screen.DungeonSelect&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){CloseOverworldMap();return;}
@@ -510,15 +529,17 @@ namespace NeonVault
             hp-=AbsorbArtifactDamage(damage*(1-DamageReduction)*(1-fieldGuard));LegendaryTrigger("hurt",PlayerPosition);lastHurt=Time.time; invincible=.45f; shake=1; audioSource.PlayOneShot(hitSound); Burst(player.position,Color.red,8);
             if(hp<=0) { hp=0; Finish(false); }
         }
+        int activeLootLandmarkId=-1;
         public void FoeKilled(Foe f)
         {
+            activeLootLandmarkId=IsOverworld&&TryGetLandmarkBossId(f,out int lid)?lid:-1;
             if(IsOverworld)OnOverworldEnemyKilled(f);
-            kills++;ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)HealPlayer(DebtHealOnKill);if(runHarvest>0)HealPlayer(runHarvest);Burst(f.transform.position,Gold,9);
+            kills++;PetSkillOnEnemyKilled(f.transform.position);ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)HealPlayer(DebtHealOnKill);if(runHarvest>0)HealPlayer(runHarvest);Burst(f.transform.position,Gold,9);
             if(!IsOverworld)ExpeditionEnemyKilled(f);
-            bool boss=f.kind==3,finalBoss=boss&&room==CurrentDungeon.AreaCount-1;
+            bool boss=f.kind==3||activeLootLandmarkId>=0,finalBoss=boss&&!IsOverworld&&room==CurrentDungeon.AreaCount-1;
             if(finalBoss&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)))
             {
-                DropBossRelic(f,finalDebtBossFight?2:IsRedClawBossStage(SelectedStageId)?0:1);
+                DropBossRelic(f,finalDebtBossFight?2:IsInfectedBossStage(SelectedStageId)?3:IsRedClawBossStage(SelectedStageId)?0:1);
                 if(finalDebtBossFight){PlayerPrefs.SetInt(DebtBossDefeatedKey,1);PlayerPrefs.Save();}
                 else if(f.Escaping)
                 {
@@ -535,14 +556,19 @@ namespace NeonVault
             float gunDropChance=boss?(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceBoss : 1f/6f)
                 :(VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.weaponDropChanceNormal : .04f);
             gunDropChance=Mathf.Clamp01(gunDropChance);
-            if(rng.NextDouble()<gunDropChance)AddDrop(RollExpeditionGun(rng,boss),f.transform.position);
+            petEnemyLootRoll=true;
+            try {
+            // Four independent equipment rolls share the bonus, so a 5-point
+            // increase is approximately five points overall, not 20 points.
+            if(rng.NextDouble()<Mathf.Clamp01(gunDropChance+PetGearDropBonus*.25f))AddDrop(RollExpeditionGun(rng,boss),f.transform.position);
             if(rng.NextDouble()<Mathf.Clamp01(gunDropChance*2f))AddHealthPackDrop(f.transform.position+new Vector3(.55f,0,.55f));
             float armorChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.armorDropChanceBoss:VaultBalanceProfile.Current.armorDropChance) : (boss?1f/6f:.0435f);
             float moduleChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.moduleDropChanceBoss:VaultBalanceProfile.Current.moduleDropChance) : (boss?.0915f:.02f);
             float meleeChance=VaultBalanceProfile.Current != null ? (boss?VaultBalanceProfile.Current.meleeDropChanceBoss:VaultBalanceProfile.Current.meleeDropChance) : (boss?.125f:.03f);
-            if(rng.NextDouble()<Mathf.Clamp01(armorChance))AddArmorDrop(RollExpeditionArmor(rng,boss),f.transform.position+Vector3.right*.8f);
-            if(rng.NextDouble()<Mathf.Clamp01(moduleChance))AddArtifactDrop(RollExpeditionArtifact(rng,boss),f.transform.position+Vector3.left*.8f);
-            if(rng.NextDouble()<Mathf.Clamp01(meleeChance))AddMeleeDrop(RollExpeditionMelee(rng,boss),f.transform.position+Vector3.forward*.8f);
+            if(rng.NextDouble()<Mathf.Clamp01(armorChance+PetGearDropBonus*.25f))AddArmorDrop(RollExpeditionArmor(rng,boss),f.transform.position+Vector3.right*.8f);
+            if(rng.NextDouble()<Mathf.Clamp01(moduleChance+PetGearDropBonus*.25f))AddArtifactDrop(RollExpeditionArtifact(rng,boss),f.transform.position+Vector3.left*.8f);
+            if(rng.NextDouble()<Mathf.Clamp01(meleeChance+PetGearDropBonus*.25f))AddMeleeDrop(RollExpeditionMelee(rng,boss),f.transform.position+Vector3.forward*.8f);
+            } finally {petEnemyLootRoll=false;activeLootLandmarkId=-1;}
             if(IsOverworld)return;
             bool alive=false; foreach(var e in Enemies) if(e!=null&&!e.dead)alive=true;
             if(!alive)
@@ -670,7 +696,7 @@ namespace NeonVault
             screen=victory?Screen.Victory:Screen.Dead;
             ClearRunCheckpoint();shake=0;
             SaveInventory();
-            if(!IsOverworld)OnDungeonFinished(victory);
+            if(!IsOverworld){if(SelectedStageId>=0)MarkDungeonFastTravelUnlocked(SelectedStageId);OnDungeonFinished(victory);}
             if(!victory)
             {
                 var deathCue=Resources.Load<AudioClip>("UserSFX/death-dramatic");

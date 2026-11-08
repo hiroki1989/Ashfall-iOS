@@ -18,7 +18,8 @@ namespace NeonVault
             public Vector3 position;
             public int kind,level,faction;
             public float hp=-1;
-            public bool defeated,elite;
+            public bool defeated,elite,landmarkBoss;
+            public int landmarkId=-1;
             public Foe active;
         }
         readonly List<WorldEnemySpawn> worldEnemySpawns=new List<WorldEnemySpawn>();
@@ -28,17 +29,29 @@ namespace NeonVault
         public int OverworldEnemySpawnCount=>worldEnemySpawns.Count;
         public int OverworldEnemyDefeatedCount=>worldEnemyDefeated;
         public int ActiveOverworldEnemyCount=>worldEnemyInstances.Count;
+        public bool TryGetLandmarkBossId(Foe foe,out int landmarkId)
+        {
+            if(foe!=null&&worldEnemyInstances.TryGetValue(foe,out var spawn)&&spawn.landmarkBoss&&spawn.landmarkId>=0)
+            {
+                landmarkId=spawn.landmarkId;
+                return true;
+            }
+            landmarkId=-1;
+            return false;
+        }
         bool worldAtlasFromHub;
         public bool WorldBossConversationVisible => screen==Screen.Hub&&!WorldStorySeen;
         public bool CanWorldFastTravel => WorldStorySeen&&(screen==Screen.Hub||screen==Screen.Shop||IsOverworld&&(screen==Screen.Playing||screen==Screen.Pause||screen==Screen.DungeonSelect)||screen==Screen.DungeonSelect&&worldAtlasFromHub);
         public int NearbyWorldEntrance => IsOverworld?NearestWorldSite(WorldGeography.Entrances,3.5f):-1;
         public int NearbyWorldCamp => IsOverworld?NearestWorldSite(WorldGeography.Camps,3.5f):-1;
+        public int NearbyWorldLandmark => IsOverworld?NearestWorldSite(WorldGeography.Landmarks,32f):-1;
         int NearestWorldSite(Vector3[] sites,float distance)
         {int best=-1;float sq=distance*distance;for(int i=0;i<sites.Length;i++){float d=(sites[i]-PlayerPosition).sqrMagnitude;if(d<sq){sq=d;best=i;}}return best;}
         public int GetOverworldEnemyLevel(Foe foe)=>foe!=null&&worldEnemyLevels.TryGetValue(foe,out int level)?level:DebtLevel;
 
         public void ContinueOverworldGame()
         {
+            RestorePetOverworldCooldown();
             EnsureOverworldState();
             if(!WorldStorySeen){EnterHub();return;}
             if(SavedOutside){BuildOverworld(SavedOverworldPosition);return;}
@@ -80,6 +93,17 @@ namespace NeonVault
             EnsureOverworldState();if(!CanWorldFastTravel||!IsCampVisited(camp))return false;
             VisitOverworldCamp(camp);RememberOverworldPosition(WorldGeography.Camps[camp],false);SetOverworldReturnStage(-1);
             EnterHub();Notify("SAFE CAMP / "+OverworldCampName(camp,false),"拠点へ移動 / "+OverworldCampName(camp,true));return true;
+        }
+        public bool FastTravelToDungeon(int stage)
+        {
+            EnsureOverworldState();
+            if(!CanWorldFastTravel||stage<0||stage>=ExpeditionMap.StageCount||!IsDungeonFastTravelUnlocked(stage))return false;
+            Vector3 outsidePos=WorldGeography.Entrances[stage]+Vector3.back*2.2f;
+            RememberOverworldPosition(outsidePos,true);
+            SetOverworldReturnStage(-1);
+            BuildOverworld(outsidePos);
+            Notify("FAST TRAVEL / Dungeon entrance unlocked", "ファストトラベル / ダンジョン前へ移動");
+            return true;
         }
         public bool EnterNearbyWorldDungeon(int stage)
         {
@@ -199,12 +223,50 @@ namespace NeonVault
                 int patrolFaction=(Mathf.Abs(x*31+z*17)%4==0)?(x+z<0?1:2):0;
                 foreach(var p in positions)worldEnemySpawns.Add(new WorldEnemySpawn{position=p,kind=patrolFaction>0?10:roster[random.Next(roster.Length)],level=level,faction=patrolFaction,elite=random.NextDouble()<.0225});
             }
+            // Spawn a dedicated Landmark Boss and 2 elite guards at each of the 30 Landmarks.
+            for(int i=0;i<WorldGeography.Landmarks.Length;i++)
+            {
+                Vector3 center=WorldGeography.Landmarks[i];
+                int bossLevel=OverworldGeography.LandmarkBossLevel(i,DebtLevel);
+                int bossFaction=OverworldGeography.LandmarkBossFaction(i);
+                Vector3 bossPos=center+new Vector3(0,.65f,-10.5f);
+                worldEnemySpawns.Add(new WorldEnemySpawn
+                {
+                    position=bossPos,
+                    kind=3,
+                    level=bossLevel,
+                    faction=bossFaction,
+                    elite=true,
+                    landmarkBoss=true,
+                    landmarkId=i
+                });
+                for(int g=0;g<2;g++)
+                {
+                    float side=g==0?-5.5f:5.5f;
+                    int guardKind=bossFaction>0?10:roster[(i*3+g)%roster.Length];
+                    worldEnemySpawns.Add(new WorldEnemySpawn
+                    {
+                        position=center+new Vector3(side,.65f,-12f),
+                        kind=guardKind,
+                        level=Mathf.Max(1,bossLevel-1),
+                        faction=bossFaction,
+                        elite=true,
+                        landmarkBoss=false,
+                        landmarkId=i
+                    });
+                }
+            }
         }
 
         public void OnOverworldEnemyKilled(Foe foe)
         {
             if(foe==null||!worldEnemyInstances.TryGetValue(foe,out var spawn))return;
             if(!spawn.defeated){spawn.defeated=true;worldEnemyDefeated++;}
+            if(spawn.landmarkBoss&&spawn.landmarkId>=0)
+            {
+                MarkLandmarkBossDefeated(spawn.landmarkId);
+                Notify("LANDMARK BOSS DEFEATED / "+OverworldGeography.LandmarkBossName(spawn.landmarkId,false),"ランドマークボス撃破 / "+OverworldGeography.LandmarkBossName(spawn.landmarkId,true));
+            }
             spawn.active=null;worldEnemyInstances.Remove(foe);worldEnemyLevels.Remove(foe);
         }
         void StreamOverworldEnemies()
@@ -214,6 +276,11 @@ namespace NeonVault
                 var foe=Enemies[i];
                 if(foe==null){Enemies.RemoveAt(i);continue;}
                 if(foe.dead){OnOverworldEnemyKilled(foe);Enemies.RemoveAt(i);continue;}
+                if(worldEnemyInstances.TryGetValue(foe,out var activeSpawn)&&activeSpawn.landmarkBoss&&activeSpawn.landmarkId>=0)
+                {
+                    if(foe.hp<foe.maxHp-.01f||(foe.transform.position-PlayerPosition).sqrMagnitude<=24f*24f)
+                        MarkLandmarkBossFought(activeSpawn.landmarkId);
+                }
                 if((foe.transform.position-PlayerPosition).sqrMagnitude<=130*130)continue;
                 if(worldEnemyInstances.TryGetValue(foe,out var spawn))
                 {spawn.position=foe.transform.position;spawn.position.y=.65f;spawn.hp=foe.hp;spawn.active=null;worldEnemyInstances.Remove(foe);}
@@ -225,16 +292,20 @@ namespace NeonVault
             Vector3 focus=PlayerPosition;
             foreach(var spawn in worldEnemySpawns)
                 if(!spawn.defeated&&spawn.active==null&&(spawn.position-focus).sqrMagnitude<90*90)nearby.Add(spawn);
-            nearby.Sort((a,b)=>(a.position-focus).sqrMagnitude.CompareTo((b.position-focus).sqrMagnitude));
+            nearby.Sort((a,b)=>
+            {
+                if(a.landmarkBoss!=b.landmarkBoss)return a.landmarkBoss?-1:1;
+                return (a.position-focus).sqrMagnitude.CompareTo((b.position-focus).sqrMagnitude);
+            });
             foreach(var nearest in nearby)
             {
-                if(worldEnemyInstances.Count>=streamLimit)break;
+                if(worldEnemyInstances.Count>=streamLimit&&!nearest.landmarkBoss)break;
                 // Geography is generated lazily; validate the actual footprint only for
                 // nearby spawns so the initial world load does not build every chunk.
                 if(WorldGeography.Blocked(nearest.position,.8f)||WorldEntranceBuildings.Blocked(nearest.position,.8f,WorldGeography))
                 {
                     Vector3 original=nearest.position; bool found=false;
-                    for(int ring=1;ring<=8&&!found;ring++)for(int direction=0;direction<8;direction++)
+                    for(int ring=1;ring<=10&&!found;ring++)for(int direction=0;direction<8;direction++)
                     {
                         float angle=direction*Mathf.PI/4f;
                         var candidate=original+new Vector3(Mathf.Cos(angle)*ring*2,0,Mathf.Sin(angle)*ring*2);
@@ -248,7 +319,21 @@ namespace NeonVault
                     SpawnFoe(nearest.position,nearest.kind);
                     var foe=Enemies[Enemies.Count-1];nearest.position=foe.transform.position;nearest.position.y=.65f;nearest.active=foe;worldEnemyInstances.Add(foe,nearest);
                     if(nearest.hp>=0)foe.hp=Mathf.Clamp(nearest.hp,.001f,foe.maxHp);
-                    if(nearest.faction>0&&foe.GetComponentInChildren<HumanFactionVisual>()==null){foreach(var renderer in foe.GetComponentsInChildren<Renderer>(true))renderer.enabled=false;var human=HumanFactionVisual.Create(foe.transform,nearest.faction,foe.UseAssaultRifle?0:1);human.transform.localScale=Vector3.one*1.12f;human.transform.localPosition=Vector3.down*.03f;}
+                    if(nearest.faction>0&&foe.GetComponentInChildren<HumanFactionVisual>()==null)
+                    {
+                        foreach(var renderer in foe.GetComponentsInChildren<Renderer>(true))renderer.enabled=false;
+                        var human=HumanFactionVisual.Create(foe.transform,nearest.faction,nearest.landmarkBoss?0:foe.UseAssaultRifle?0:1);
+                        human.transform.localScale=Vector3.one*(nearest.landmarkBoss?1.32f:1.12f);
+                        human.transform.localPosition=Vector3.down*.03f;
+                    }
+                    else if(nearest.landmarkBoss)
+                    {
+                        foe.transform.localScale*=1.25f;
+                    }
+                    if(nearest.landmarkBoss&&nearest.landmarkId>=0&&(foe.transform.position-focus).sqrMagnitude<=24f*24f)
+                    {
+                        MarkLandmarkBossFought(nearest.landmarkId);
+                    }
                 }
                 finally{spawningWorldEnemy=null;}
             }
@@ -257,7 +342,8 @@ namespace NeonVault
         {
             if(!IsOverworld||camp<0||camp>=WorldGeography.Camps.Length||(WorldGeography.Camps[camp]-PlayerPosition).sqrMagnitude>3.5f*3.5f)return false;
             VisitOverworldCamp(camp);SaveInventory();RememberOverworldPosition(WorldGeography.Camps[camp],false);EnterHub();return true;
-        }        bool HandleOverworldInteraction()
+        }
+        bool HandleOverworldInteraction()
         {
             if(!IsOverworld)return false;
             int camp=NearbyWorldCamp;if(camp>=0)return EnterNearbyWorldCamp(camp);
@@ -268,6 +354,12 @@ namespace NeonVault
         {
             int level=spawningWorldEnemy!=null?spawningWorldEnemy.level:Mathf.Max(1,DebtLevel+rng.Next(-1,2));worldEnemyLevels[foe]=level;
             float hpScale=3f*Foe.LevelHealthScale(level)*(1f+.02f*Mathf.Max(0,level-1)),damageScale=Foe.LevelDamageScale(level);
+            if(spawningWorldEnemy!=null&&spawningWorldEnemy.landmarkBoss)
+            {
+                bool infectedLandmark=spawningWorldEnemy.landmarkId>=0&&OverworldGeography.LandmarkBossFaction(spawningWorldEnemy.landmarkId)==0;
+                hpScale*=infectedLandmark?3.0f:2.2f;
+                damageScale*=infectedLandmark?1.65f:1.35f;
+            }
             var balance=VaultBalanceProfile.Current;
             foe.ConfigureDifficulty(hpScale*(balance!=null?Mathf.Max(.01f,balance.enemyHpMultiplier):1),damageScale*(balance!=null?Mathf.Max(.01f,balance.enemyDamageMultiplier):1),Mathf.Min(.25f,(level-1)*.005f));
         }
@@ -282,11 +374,8 @@ namespace NeonVault
             Notify(rewardEn+" / BACK AT ENTRANCE",rewardJa+" / ダンジョン入口へ帰還");
         }
         void SaveWorldLocationOnSuspend()
-        {if(IsOverworld&&screen!=Screen.Dead&&player!=null){RememberOverworldPosition(PlayerPosition,true);SaveInventory();}}
+        {if(IsOverworld&&screen!=Screen.Dead&&screen!=Screen.Menu&&player!=null){RememberOverworldPosition(PlayerPosition,true);SaveInventory();}}
         void OnApplicationPause(bool paused){if(paused)SaveWorldLocationOnSuspend();}
         void OnApplicationQuit(){SaveWorldLocationOnSuspend();}
     }
 }
-
-
-

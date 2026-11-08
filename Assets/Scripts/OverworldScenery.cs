@@ -31,14 +31,22 @@ namespace NeonVault
             var primitive=GameObject.CreatePrimitive(PrimitiveType.Cube);cube=primitive.GetComponent<MeshFilter>().sharedMesh;Destroy(primitive);primitive=GameObject.CreatePrimitive(PrimitiveType.Sphere);sphere=primitive.GetComponent<MeshFilter>().sharedMesh;Destroy(primitive);
         }
         static GameObject[] addedCityBuildingSources;
+        static GameObject[] newCityBuildingSources;
+        static GameObject[] ruinedCityBuildingSources;
+        static GameObject[] cc0StructureSources;
         static bool PlaceAddedCityBuilding(Transform parent,Rect footprint,int seed)
         {
             // The site occupies the same geography footprint as its replacement;
             // ownership covers every mesh so camera obstruction fades the whole site.
-            if((seed&15)!=3)return false;
+            int pick=Mathf.Abs(seed)%12;
+            if(pick>3)return false;
             if(addedCityBuildingSources==null)addedCityBuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/RuinedCityBuildingsV2");
-            if(addedCityBuildingSources.Length==0)return false;
-            var source=addedCityBuildingSources[((seed&int.MaxValue)>>4)%addedCityBuildingSources.Length];
+            if(newCityBuildingSources==null)newCityBuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/NewCityBuildings");
+            if(ruinedCityBuildingSources==null)ruinedCityBuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/RuinedCityBuildings");
+            GameObject[] pool=pick==0?addedCityBuildingSources:pick==1?newCityBuildingSources:ruinedCityBuildingSources;
+            if(pool==null||pool.Length==0)pool=addedCityBuildingSources;
+            if(pool==null||pool.Length==0)return false;
+            var source=pool[((seed&int.MaxValue)>>4)%pool.Length];
             var bounds=ImportedWorldBatch.SourceBounds(source);
             if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
             float scale=Mathf.Min((footprint.width-.4f)/bounds.size.x,(footprint.height-.4f)/bounds.size.z,18f/bounds.size.y);
@@ -50,11 +58,12 @@ namespace NeonVault
         static GameObject[] cc0BuildingSources;
         static bool PlaceCC0Building(Transform parent,Rect rect,int seed)
         {
-            // A minority of city buildings use the curated CC0 set; missing imports fall back.
+            // A curated portion of city buildings uses the CC0 & Apocalyptic sets; missing imports fall back.
             if((seed&3)!=0)return false;
             if(cc0BuildingSources==null)cc0BuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/ApocalypticBuildings");
-            var sources=cc0BuildingSources;
-            if(sources.Length==0)return false;
+            if(cc0StructureSources==null)cc0StructureSources=Resources.LoadAll<GameObject>("ImportedWorld/CC0Buildings");
+            var sources=((seed&4)==0&&cc0StructureSources!=null&&cc0StructureSources.Length>0)?cc0StructureSources:cc0BuildingSources;
+            if(sources==null||sources.Length==0)return false;
             var source=sources[((seed&int.MaxValue)/4)%sources.Length];
             var bounds=ImportedWorldBatch.SourceBounds(source);
             if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
@@ -65,8 +74,16 @@ namespace NeonVault
             return true;
         }
         static GameObject[] weatheredStreetSources;
+        static GameObject streetLampPrefab;
+        static GameObject[] rockSetPrefabs;
         static bool PlaceWeatheredStreet(Transform parent,Vector3 position,int seed)
         {
+            if(streetLampPrefab==null)streetLampPrefab=Resources.Load<GameObject>("ImportedWorld/PolyHaven/street_lamp_01");
+            if((seed&7)==1&&streetLampPrefab!=null)
+            {
+                LandmarkArchitecture.PlaceNormalizedProp(parent,streetLampPrefab,position,((seed>>3)&3)*90f,4.3f);
+                return true;
+            }
             // Low frequency and shared meshes/materials keep outdoor chunks bounded on mobile.
             if((seed&3)!=0)return false;
             if(weatheredStreetSources==null)weatheredStreetSources=Resources.LoadAll<GameObject>("ImportedWorld/NewStreet");
@@ -154,52 +171,22 @@ namespace NeonVault
             foreach(var car in data.Cars)
             {if(OverworldScenery.AssetAdapter?.Invoke("car",obj.transform,car,index++)==true)continue;Box(car+Vector3.up*.4f,new Vector3(1.8f,.6f,4.8f),6);Box(car+Vector3.up*.95f,new Vector3(1.55f,.55f,2),2);for(int side=-1;side<=1;side+=2)for(int end=-1;end<=1;end+=2)Box(car+new Vector3(side*.85f,.3f,end*1.5f),new Vector3(.22f,.6f,.65f),2,0,true);}
             var rng=new System.Random(unchecked(OverworldGeography.Seed+x*331+z*7741));
-            // Passable ankle-height plants replace upright primitive grass. No unregistered rocks.
+            // Passable ankle-height plants replace upright primitive grass.
             for(int i=0;i<(Application.isMobilePlatform?160:400);i++){
                 var p=new Vector3(x*100+(float)rng.NextDouble()*100,0,z*100+(float)rng.NextDouble()*100);
                 if(!geography.River(p)&&geography.RoadClearance(p)>1.5f&&!geography.SiteProtected(p,2))ImportedWorldAssets.PlaceGroundcover(obj.transform,p,i+x*47+z*11);
             }
+            // High-detail Pocket Parks & City Park Pavilions (Gazebo, Tiered Fountain, Heroic Statue & Botanical Conservatory)
             for(int parkX=Mathf.FloorToInt(x*100/250f)-1;parkX<=Mathf.FloorToInt((x+1)*100/250f);parkX++)for(int parkZ=Mathf.FloorToInt(z*100/250f)-1;parkZ<=Mathf.FloorToInt((z+1)*100/250f);parkZ++){
                 var centre=new Vector3(parkX*250+150,0,parkZ*250+150);if(centre.x<x*100||centre.x>=(x+1)*100||centre.z<z*100||centre.z>=(z+1)*100||!geography.PocketPark(centre)||geography.SiteProtected(centre,10))continue;
-                Box(centre+Vector3.down*.005f,new Vector3(24,.015f,2.5f),7);Box(centre+Vector3.down*.004f,new Vector3(2.5f,.015f,24),7);
-                for(int seat=0;seat<8;seat++){float a=seat*Mathf.PI*.25f;var bench=Resources.Load<GameObject>("ImportedWorld/props/bench");if(bench)ImportedWorldBatch.Add(obj.transform,bench,centre+new Vector3(Mathf.Cos(a)*10,0,Mathf.Sin(a)*10),Quaternion.Euler(0,-a*Mathf.Rad2Deg-90,0),Vector3.one);Box(centre+new Vector3(Mathf.Cos(a)*11.6f,1.6f,Mathf.Sin(a)*11.6f),new Vector3(.14f,3.2f,.14f),2);Box(centre+new Vector3(Mathf.Cos(a)*11.6f,3.3f,Mathf.Sin(a)*11.6f),new Vector3(.45f,.35f,.45f),7,0,true);}
-                Box(centre+Vector3.up*.04f,new Vector3(6.4f,.08f,6.4f),0,45);Box(centre+Vector3.up*.18f,new Vector3(3.6f,.28f,3.6f),3,0,true);Box(centre+Vector3.up*1.1f,new Vector3(.65f,2.1f,.65f),0);Box(centre+Vector3.up*2.2f,new Vector3(1.5f,.35f,1.5f),7,0,true);
-                for(int bed=0;bed<4;bed++){float ba=bed*Mathf.PI*.5f+Mathf.PI*.25f;var bp=centre+new Vector3(Mathf.Cos(ba)*7.5f,.06f,Mathf.Sin(ba)*7.5f);Box(bp,new Vector3(3.2f,.12f,3.2f),7,ba*Mathf.Rad2Deg);Box(bp+Vector3.up*.18f,new Vector3(2.6f,.25f,2.6f),1,ba*Mathf.Rad2Deg,true);}
+                if(geography.LandmarkKind(new Vector2Int(x,z),out Vector3 nearLm)>=0&&(centre-nearLm).sqrMagnitude<32f*32f)continue;
+                LandmarkArchitecture.PlacePocketPark(obj.transform,centre,parkX*31+parkZ*17);
             }
+            // High-detail Landmarks (all 23 architectural & industrial archetypes across 30 named landmarks + district landmarks)
             int landmarkKind=geography.LandmarkKind(new Vector2Int(x,z),out Vector3 lPos);
             if(landmarkKind>=0&&!geography.River(lPos)&&geography.RoadClearance(lPos)>4f&&!geography.SiteProtected(lPos,12))
             {
-                Box(lPos+Vector3.up*.06f,new Vector3(16,.12f,16),7);Box(lPos+Vector3.up*.14f,new Vector3(12,.16f,12),0,45);
-                if(landmarkKind==0)
-                {
-                    Box(lPos+Vector3.up*6.5f,new Vector3(3.2f,13f,3.2f),4);Box(lPos+Vector3.up*13.4f,new Vector3(3.8f,1.2f,3.8f),0);Box(lPos+Vector3.up*15.2f,new Vector3(2.2f,2.4f,2.2f),2,45);Box(lPos+Vector3.up*17.5f,new Vector3(.3f,3.5f,.3f),2);
-                    for(int face=0;face<4;face++){float a=face*Mathf.PI*.5f;Box(lPos+new Vector3(Mathf.Cos(a)*1.68f,11.2f,Mathf.Sin(a)*1.68f),new Vector3(1.5f,1.5f,.18f),7,a*Mathf.Rad2Deg,true);}
-                }
-                else if(landmarkKind==1)
-                {
-                    for(int side=-1;side<=1;side+=2){Box(lPos+new Vector3(side*3.8f,4.2f,0),new Vector3(2.1f,8.4f,2.4f),0);Box(lPos+new Vector3(side*3.8f,.6f,0),new Vector3(2.8f,1.2f,3.1f),4);}
-                    Box(lPos+Vector3.up*9.1f,new Vector3(10.2f,1.8f,2.8f),0);Box(lPos+Vector3.up*10.4f,new Vector3(7.6f,1.1f,2.2f),4);
-                }
-                else if(landmarkKind==2)
-                {
-                    Box(lPos+Vector3.up*.3f,new Vector3(9.5f,.6f,9.5f),0,0,true);Box(lPos+Vector3.up*.5f,new Vector3(7.6f,.45f,7.6f),3,0,true);
-                    Box(lPos+Vector3.up*2.4f,new Vector3(1.8f,4.2f,1.8f),0);Box(lPos+Vector3.up*4.8f,new Vector3(3.4f,.5f,3.4f),7,0,true);Box(lPos+Vector3.up*6.2f,new Vector3(1.1f,2.6f,1.1f),2,25);
-                }
-                else if(landmarkKind==3)
-                {
-                    for(int col=0;col<8;col++){float a=col*Mathf.PI*.25f;Box(lPos+new Vector3(Mathf.Cos(a)*4.8f,3.2f,Mathf.Sin(a)*4.8f),new Vector3(.75f,6.4f,.75f),0);}
-                    Box(lPos+Vector3.up*6.6f,new Vector3(10.8f,.6f,10.8f),0,0,true);Box(lPos+Vector3.up*8.2f,new Vector3(8.4f,3.8f,8.4f),2,0,true);
-                }
-                else if(landmarkKind==4)
-                {
-                    for(int leg=0;leg<4;leg++){float a=leg*Mathf.PI*.5f+Mathf.PI*.25f;Box(lPos+new Vector3(Mathf.Cos(a)*2.6f,4.5f,Mathf.Sin(a)*2.6f),new Vector3(.45f,9f,.45f),2,leg*15);}
-                    Box(lPos+Vector3.up*9f,new Vector3(5.8f,.4f,5.8f),2);Box(lPos+Vector3.up*11.6f,new Vector3(5.2f,4.8f,5.2f),6,0,true);Box(lPos+Vector3.up*14.5f,new Vector3(1.8f,1.2f,1.8f),4);
-                }
-                else
-                {
-                    Box(lPos+Vector3.up*1.1f,new Vector3(3.6f,2.2f,3.6f),0);Box(lPos+Vector3.up*6.8f,new Vector3(1.6f,10.5f,1.6f),7,15);Box(lPos+Vector3.up*12.5f,new Vector3(1.1f,1.8f,1.1f),0,45,true);
-                    for(int p=0;p<6;p++){float a=p*Mathf.PI/3f;Box(lPos+new Vector3(Mathf.Cos(a)*5.6f,1.8f,Mathf.Sin(a)*5.6f),new Vector3(.9f,3.6f,.6f),4,a*Mathf.Rad2Deg);}
-                }
+                LandmarkArchitecture.PlaceLandmark(obj.transform,lPos,landmarkKind,unchecked(x*419+z*883));
             }
             // Broken masonry gathers along ruined foundations instead of uniform scattering.
             foreach(var building in data.Buildings)for(int corner=0;corner<4;corner++){
@@ -220,7 +207,19 @@ namespace NeonVault
                 bool occupied=false;foreach(var building in data.Buildings)if(new Rect(building.xMin-1,building.yMin-1,building.width+2,building.height+2).Contains(new Vector2(p.x,p.z))){occupied=true;break;}if(occupied)continue;
                 float clearance=geography.RoadClearance(p);
                 if(clearance>1.6f&&clearance<3.5f){int propSeed=i+x*113+z*71;if(!PlaceWeatheredStreet(obj.transform,p,propSeed))OverworldScenery.AssetAdapter?.Invoke("street",obj.transform,p,propSeed);}
-                else if(clearance>3.5f)OverworldScenery.AssetAdapter?.Invoke("debris",obj.transform,p,i+x*57+z*31);
+                else if(clearance>3.5f)
+                {
+                    if((geography.Park(p)||geography.PocketPark(p)||geography.DenseForest(p))&&(i%9==0))
+                    {
+                        if(rockSetPrefabs==null)rockSetPrefabs=Resources.LoadAll<GameObject>("ImportedWorld/rock");
+                        if(rockSetPrefabs!=null&&rockSetPrefabs.Length>0)
+                        {
+                            LandmarkArchitecture.PlaceNormalizedProp(obj.transform,rockSetPrefabs[(i+Mathf.Abs(x)+Mathf.Abs(z))%rockSetPrefabs.Length],p,(i*45)%360,1.15f);
+                            continue;
+                        }
+                    }
+                    OverworldScenery.AssetAdapter?.Invoke("debris",obj.transform,p,i+x*57+z*31);
+                }
             }
             for(int mat=0;mat<batches.Length;mat++)
             {if(batches[mat].Count==0)continue;var mesh=new Mesh{name="Stream mesh",indexFormat=IndexFormat.UInt32};mesh.CombineMeshes(batches[mat].ToArray(),true,true);if(mat==0||mat==1||mat==2||mat==7){var vertices=mesh.vertices;var uv=new Vector2[vertices.Length];for(int v=0;v<vertices.Length;v++)uv[v]=new Vector2(vertices[v].x/4,vertices[v].z/4);mesh.uv=uv;}mesh.RecalculateBounds();life.Meshes.Add(mesh);var child=new GameObject("Material "+mat);child.transform.SetParent(obj.transform,false);child.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=child.AddComponent<MeshRenderer>();renderer.sharedMaterial=materials[mat];bool castShadow=Application.isMobilePlatform?(mat==0||mat==4):mat!=3;renderer.shadowCastingMode=castShadow?ShadowCastingMode.On:ShadowCastingMode.Off;}
@@ -233,5 +232,3 @@ namespace NeonVault
         void OnDestroy(){foreach(var mesh in Meshes)if(mesh!=null)Destroy(mesh);}
     }
 }
-
-

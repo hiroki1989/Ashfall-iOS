@@ -7,12 +7,15 @@ namespace NeonVault
     {
         bool actionSkillInventoryOpen, actionSkillInventoryTree;
         Texture2D actionSkillArt, actionSkillDisc, actionTreeRing;
+        Texture2D skillTreeIconsTex, skillNodeFramesTex;
         int actionTreeKind, actionTreeBranch, actionTreeTier;
         int actionTreeSlot = -1;
-        Vector2 actionTreeDescriptionScroll;
+        Vector2 actionTreeScroll, actionTreeDescriptionScroll;
         string actionTreeLastDescription;
+        float skillTreeNavCooldown;
+
         static readonly Color[] ActionTreeColors = {
-            new Color(.38f,.70f,.76f), new Color(.91f,.53f,.27f), new Color(.44f,.76f,.53f)
+            new Color(.32f,.76f,.86f), new Color(.96f,.52f,.22f), new Color(.38f,.84f,.54f)
         };
 
         string ActionSkillName(ActionSkillKind kind)
@@ -74,31 +77,161 @@ namespace NeonVault
             }
             tex.SetPixels32(pixels);tex.Apply(false,true);actionTreeRing=tex;return tex;
         }
-        static readonly Color[] ActionBranchHighlights = {new Color(.31f,.70f,.83f),new Color(.92f,.61f,.28f),new Color(.65f,.46f,.82f)};
+
+        static readonly Color[] ActionBranchHighlights = {new Color(.28f,.78f,.92f),new Color(.96f,.58f,.24f),new Color(.72f,.46f,.90f)};
         Color ActionBranchColor(int kind,int branch)
         {
             return Color.Lerp(ActionTreeColors[kind],ActionBranchHighlights[branch],.58f);
         }
-        bool DrawActionTreeNode(Rect r, string title, int rank, int max, bool available, bool selected, Color accent, bool diamond=false)
+
+        void EnsureSkillTreeTextures()
         {
-            Color edge=selected?UiPaper:rank>0?accent:available?new Color(.58f,.64f,.64f):new Color(.28f,.32f,.33f);
-            float cx=r.x+19,cy=r.center.y;
-            if(rank>0)Diamond(cx,cy,20,new Color(accent.r,accent.g,accent.b,.12f));
-            if(diamond)
+            if(!skillTreeIconsTex)skillTreeIconsTex=Resources.Load<Texture2D>("Art/UI/skill_tree_icons");
+            if(!skillNodeFramesTex)skillNodeFramesTex=Resources.Load<Texture2D>("Art/UI/skill_node_frames");
+        }
+
+        public void DrawSkillAtlasIcon(Rect r, int iconIndex, Color tint)
+        {
+            EnsureSkillTreeTextures();
+            if(!skillTreeIconsTex)return;
+            int idx=Mathf.Clamp(iconIndex,0,31);
+            int col=idx%8, row=idx/8;
+            Rect uv=new Rect(col/8f, 1f-(row+1)/4f, 1f/8f, 1f/4f);
+            Color old=GUI.color; GUI.color=tint;
+            GUI.DrawTextureWithTexCoords(r, skillTreeIconsTex, uv, true);
+            GUI.color=old;
+        }
+
+        public void DrawSkillNodeFrame(Rect r, int frameKind, Color tint)
+        {
+            EnsureSkillTreeTextures();
+            if(!skillNodeFramesTex)return;
+            int k=Mathf.Clamp(frameKind,0,3);
+            Rect uv=new Rect(k/4f, 0f, 1f/4f, 1f);
+            Color old=GUI.color; GUI.color=tint;
+            GUI.DrawTextureWithTexCoords(r, skillNodeFramesTex, uv, true);
+            GUI.color=old;
+        }
+
+        int GetActionNodeIconIndex(ActionSkillKind kind, int branch, int tier, int slot)
+        {
+            if(slot < 0)
             {
-                Diamond(cx,cy,17,edge);
-                Diamond(cx,cy,13,new Color(.065f,.078f,.085f,.98f));
-                Diamond(cx,cy,rank>0?7:4,rank>0?accent:edge);
+                if(tier == 4) return 24; // Capstone Crown
+                if(tier == 1)
+                {
+                    if(kind == ActionSkillKind.Mechanic) return branch==0?0:branch==1?6:2;
+                    if(kind == ActionSkillKind.Bomber) return branch==0?0:branch==1?9:4;
+                    return branch==0?11:branch==1?3:13;
+                }
+                if(tier == 3 && branch == 1) return kind==ActionSkillKind.Medic?11:1;
+                if(kind == ActionSkillKind.Mechanic) return branch==0?5:branch==1?6:1;
+                if(kind == ActionSkillKind.Bomber) return branch==0?10:branch==1?9:8;
+                return branch==0?11:branch==1?12:13;
             }
-            else
+            string id = ExtraEffect(kind, branch, tier, slot);
+            switch(id)
             {
-                Color old=GUI.color;GUI.color=edge;
-                GUI.DrawTexture(new Rect(cx-18,cy-18,36,36),ActionTreeRing());GUI.color=old;
-                Diamond(cx,cy,rank>0?7:4,rank>0?accent:edge);
+                case "turret_damage": case "turret_near_damage": return 5;
+                case "turret_rate": case "fire_rate": return 1;
+                case "turret_range": case "accuracy": case "sniper_damage": return 3;
+                case "turret_duration": case "medic_duration": return 6;
+                case "turret_double": return 7;
+                case "turret_focus": case "critical_chance": case "critical_damage": case "turret_near_critical": return 4;
+                case "turret_follow": case "medic_follow": case "move_speed": return 14;
+                case "turret_element": case "electric_damage": case "action_charge": case "turret_hit_charge": case "grenade_hit_charge": case "medic_field_charge": case "turret_near_element": return 15;
+                case "grenade_damage": case "explosive_damage": case "grenade_element": return 8;
+                case "grenade_radius": case "grenade_suppress": case "grenade_slow": return 9;
+                case "grenade_count": return 10;
+                case "grenade_heal": case "grenade_hit_heal": case "medic_heal": case "max_health": return 11;
+                case "medic_radius": case "medic_field_damage": return 12;
+                case "medic_guard": case "damage_reduction": case "turret_near_guard": return 13;
+                case "medic_damage": case "medic_debuff": case "poison_damage": return 17;
+                case "fire_damage": return 16;
+                case "reload_speed": case "turret_near_reload": case "medic_field_reload": return 2;
+                case "pet_damage": case "pet_speed": return 19;
+                default: return 0;
             }
-            if(selected)Box(new Rect(r.x+41,r.yMax-2,r.width-44,2),accent);
-            ActionLabel(new Rect(r.x+42,r.y,r.width-44,r.height),title+"  "+rank+"/"+max,rank>0?accent:available?UiPaper:Mist,20,TextAnchor.MiddleLeft);
-            return GUI.Button(r,GUIContent.none,GUIStyle.none);
+        }
+
+        public void DrawSkillConnectorPipe(Vector2 from, Vector2 to, bool unlocked, bool available, Color accent)
+        {
+            Color outer = unlocked ? new Color(accent.r*.45f, accent.g*.45f, accent.b*.45f, .95f) :
+                          available ? new Color(.25f, .30f, .33f, .85f) : new Color(.14f, .16f, .18f, .75f);
+            Color core = unlocked ? Color.Lerp(accent, Color.white, .32f) :
+                         available ? new Color(.48f, .54f, .56f, .75f) : new Color(.22f, .25f, .27f, .55f);
+            Line(from, to, outer, unlocked ? 7f : 5f);
+            Line(from, to, core, unlocked ? 3.2f : 2f);
+            if(unlocked)
+            {
+                float pulse = Mathf.Repeat(Time.unscaledTime * 1.15f, 1f);
+                Vector2 dot = Vector2.Lerp(from, to, pulse);
+                Diamond(dot.x, dot.y, 4.5f, Color.white);
+            }
+        }
+
+        bool DrawBorderlandsSkillNode(Vector2 center, float size, int iconIdx, int frameKind, string title, int rank, int max, bool available, bool selected, Color accent)
+        {
+            Rect r = new Rect(center.x - size*.5f, center.y - size*.5f, size, size);
+            bool hover = r.Contains(Event.current.mousePosition);
+            bool unlocked = rank > 0;
+            bool maxed = rank >= max;
+
+            // Outer glow for selected or unlocked nodes
+            if(selected || unlocked || hover)
+            {
+                float glowSize = size * (selected ? 1.48f : 1.28f);
+                Color glowCol = selected ? new Color(1f, .92f, .65f, .82f) :
+                                maxed ? new Color(accent.r, accent.g, accent.b, .62f) :
+                                unlocked ? new Color(accent.r, accent.g, accent.b, .36f) :
+                                new Color(1f, 1f, 1f, .22f);
+                DrawSkillNodeFrame(new Rect(center.x - glowSize*.5f, center.y - glowSize*.5f, glowSize, glowSize), 3, glowCol);
+            }
+
+            // Inner background tint
+            Color bgCol = unlocked ? Color.Lerp(new Color(.08f,.10f,.12f,.96f), accent, maxed ? .38f : .22f) :
+                          available ? new Color(.11f,.13f,.15f,.95f) : new Color(.05f,.06f,.07f,.92f);
+            Box(new Rect(r.x + size*.14f, r.y + size*.14f, size*.72f, size*.72f), bgCol);
+
+            // Frame
+            Color frameCol = selected ? new Color(1f, .95f, .78f) :
+                             maxed ? Color.Lerp(accent, new Color(1f,.88f,.45f), .45f) :
+                             unlocked ? accent :
+                             available ? new Color(.64f, .70f, .72f) : new Color(.28f, .31f, .33f);
+            DrawSkillNodeFrame(r, frameKind, frameCol);
+
+            // Icon
+            float iconSize = size * .58f;
+            Color iconCol = unlocked ? Color.white : available ? new Color(.84f, .88f, .90f, .92f) : new Color(.42f, .45f, .48f, .55f);
+            DrawSkillAtlasIcon(new Rect(center.x - iconSize*.5f, center.y - iconSize*.5f - 2f, iconSize, iconSize), iconIdx, iconCol);
+
+            // Selection bracket corners
+            if(selected)
+            {
+                Color selCol = new Color(1f, .88f, .42f);
+                float b = 9f;
+                Box(new Rect(r.x-3, r.y-3, b, 2), selCol); Box(new Rect(r.x-3, r.y-3, 2, b), selCol);
+                Box(new Rect(r.xMax+3-b, r.y-3, b, 2), selCol); Box(new Rect(r.xMax+1, r.y-3, 2, b), selCol);
+                Box(new Rect(r.x-3, r.yMax+1, b, 2), selCol); Box(new Rect(r.x-3, r.yMax+3-b, 2, b), selCol);
+                Box(new Rect(r.xMax+3-b, r.yMax+1, b, 2), selCol); Box(new Rect(r.xMax+1, r.yMax+3-b, 2, b), selCol);
+            }
+
+            // Rank Pill Badge at bottom center of node
+            Rect badge = new Rect(center.x - 24f, r.yMax - 11f, 48f, 18f);
+            Box(badge, new Color(.03f, .04f, .05f, .96f));
+            Box(new Rect(badge.x, badge.y, badge.width, 1), frameCol);
+            Box(new Rect(badge.x, badge.yMax-1, badge.width, 1), frameCol);
+            Color rankCol = maxed ? new Color(1f, .86f, .36f) : unlocked ? accent : available ? UiPaper : Mist;
+            ActionLabel(badge, rank + "/" + max, rankCol, 12, TextAnchor.MiddleCenter);
+
+            // Short label beneath badge
+            if(!string.IsNullOrEmpty(title))
+            {
+                Rect lbl = new Rect(center.x - 84f, badge.yMax + 1f, 168f, 20f);
+                ActionLabel(lbl, title, selected ? Color.white : unlocked ? UiPaper : Mist, 13, TextAnchor.UpperCenter, false);
+            }
+
+            return GUI.Button(new Rect(r.x-4, r.y-4, r.width+8, r.height+22), GUIContent.none, GUIStyle.none);
         }
 
         void ActionTreeDescription(Rect area,string value,Color color,int size)
@@ -124,41 +257,237 @@ namespace NeonVault
             GUI.EndScrollView();
         }
 
+        void HandleActionTreeControllerInput(ActionSkillKind selected, int kind, int branch)
+        {
+            if(Event.current.type != EventType.Layout) return;
+            float now = Time.unscaledTime;
+
+            // Cancel / Back
+            if(Input.GetKeyDown(KeyCode.JoystickButton1))
+            {
+                if(actionSkillInventoryTree) actionSkillInventoryTree = false;
+                else debtSkillTreePage = false;
+                PlayUserSound("skill", .12f);
+                return;
+            }
+            // Upgrade selected node (A / Cross / Return / Space)
+            if(Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
+            {
+                int t = Mathf.Clamp(actionTreeTier, 0, 4);
+                if(actionTreeSlot >= 0) TryUpgradeActionSkillExtra(selected, branch, t, actionTreeSlot);
+                else TryUpgradeActionSkill(selected, branch, t);
+            }
+            // Switch Branch (LB / RB or Q / E)
+            if(Input.GetKeyDown(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.Q))
+            {
+                actionTreeBranch = (branch + 2) % 3;
+                PlayUserSound("skill", .1f);
+            }
+            if(Input.GetKeyDown(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.E))
+            {
+                actionTreeBranch = (branch + 1) % 3;
+                PlayUserSound("skill", .1f);
+            }
+            // Switch Class (Y / Triangle or Tab)
+            if(Input.GetKeyDown(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.Tab))
+            {
+                actionTreeKind = (kind + 1) % 3;
+                PlayUserSound("skill", .12f);
+            }
+
+            if(now < skillTreeNavCooldown) return;
+            float hx = Input.GetAxisRaw("Horizontal");
+            float vy = Input.GetAxisRaw("Vertical");
+            if(Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) hx = -1f;
+            if(Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) hx = 1f;
+            if(Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) vy = 1f;
+            if(Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) vy = -1f;
+
+            if(Mathf.Abs(hx) < 0.45f && Mathf.Abs(vy) < 0.45f) return;
+            skillTreeNavCooldown = now + 0.19f;
+
+            int curTier = Mathf.Clamp(actionTreeTier, 0, 4);
+            int curSlot = actionTreeSlot;
+
+            int subRow = curSlot < 0 ? 0 : curSlot == 0 ? 1 : (curSlot == 1 || curSlot == 2) ? 2 : 3;
+
+            if(Mathf.Abs(vy) >= Mathf.Abs(hx))
+            {
+                int dir = vy < 0 ? 1 : -1;
+                subRow += dir;
+                if(subRow > 3)
+                {
+                    if(curTier < 4) { curTier++; subRow = 0; }
+                    else subRow = 3;
+                }
+                else if(subRow < 0)
+                {
+                    if(curTier > 0) { curTier--; subRow = 3; }
+                    else subRow = 0;
+                }
+                actionTreeTier = curTier;
+                actionTreeSlot = subRow == 0 ? -1 : subRow == 1 ? 0 : subRow == 2 ? (curSlot == 2 ? 2 : 1) : 3;
+            }
+            else
+            {
+                if(subRow == 2)
+                {
+                    actionTreeSlot = hx > 0 ? 2 : 1;
+                }
+                else
+                {
+                    actionTreeBranch = hx > 0 ? (branch + 1) % 3 : (branch + 2) % 3;
+                }
+            }
+            EnsureActionNodeScrollVisible(actionTreeTier, actionTreeSlot);
+            PlayUserSound("skill", .08f);
+        }
+
+        void EnsureActionNodeScrollVisible(int tier, int slot)
+        {
+            float subY = slot < 0 ? 0f : slot == 0 ? 82f : (slot == 1 || slot == 2) ? 162f : 242f;
+            float nodeY = 58f + tier * 320f + subY;
+            float viewH = 610f;
+            if(nodeY - 80f < actionTreeScroll.y) actionTreeScroll.y = Mathf.Max(0f, nodeY - 80f);
+            else if(nodeY + 95f > actionTreeScroll.y + viewH) actionTreeScroll.y = Mathf.Min(1660f - viewH, nodeY + 95f - viewH);
+        }
+
         void DrawActionSkillTree()
         {
             int kind=Mathf.Clamp(actionTreeKind,0,2), branch=Mathf.Clamp(actionTreeBranch,0,2), tier=Mathf.Clamp(actionTreeTier,0,4);
-            var selected=(ActionSkillKind)kind; Color accent=ActionTreeColors[kind];
-            Box(new Rect(0,0,1440,900),new Color(.045f,.053f,.059f,.99f));
-            ActionLabel(new Rect(46,20,760,48),T("ACTION SKILL TREE","アクションスキルツリー"),UiPaper,32);
-            ActionLabel(new Rect(48,67,700,32),T("AVAILABLE POINTS  ","残りポイント  ")+ActionSkillAvailablePoints,accent,22);
-            if(ActionButton(new Rect(1195,20,200,65),T("BACK","戻る"),false,accent)) {if(actionSkillInventoryTree)actionSkillInventoryTree=false;else debtSkillTreePage=false;return;}
+            var selected=(ActionSkillKind)kind; Color classAccent=ActionTreeColors[kind];
+            HandleActionTreeControllerInput(selected, kind, branch);
+            kind=Mathf.Clamp(actionTreeKind,0,2); branch=Mathf.Clamp(actionTreeBranch,0,2); tier=Mathf.Clamp(actionTreeTier,0,4);
+            selected=(ActionSkillKind)kind; classAccent=ActionTreeColors[kind];
+
+            Box(new Rect(0,0,1440,900),new Color(.035f,.042f,.048f,.99f));
+            ActionLabel(new Rect(46,16,580,44),T("ACTION SKILL TREE","アクションスキルツリー"),UiPaper,32);
+
+            Rect ptsBox = new Rect(610, 18, 298, 44);
+            FieldUIArt.Plate(ptsBox, true);
+            ActionLabel(ptsBox, T("SKILL POINTS: ","残りポイント: ")+ActionSkillAvailablePoints, classAccent, 21, TextAnchor.MiddleCenter);
+
+            if(ActionButton(new Rect(1195,16,200,56),T("BACK","戻る"),false,classAccent))
+            {
+                if(actionSkillInventoryTree)actionSkillInventoryTree=false;
+                else debtSkillTreePage=false;
+                return;
+            }
+
             for(int i=0;i<3;i++)
-                if(ActionButton(new Rect(48+i*300,105,285,55),ActionSkillName((ActionSkillKind)i),kind==i,ActionTreeColors[i],22))
-                {actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;kind=i;selected=(ActionSkillKind)i;accent=ActionTreeColors[i];branch=tier=0;}
+            {
+                Rect tab = new Rect(46+i*296, 72, 284, 52);
+                if(ActionButton(tab, ActionSkillName((ActionSkillKind)i), kind==i, ActionTreeColors[i], 21))
+                {
+                    actionTreeKind=i; actionTreeBranch=0; actionTreeTier=0; actionTreeSlot=-1;
+                    kind=i; selected=(ActionSkillKind)i; classAccent=ActionTreeColors[i]; branch=tier=0;
+                    actionTreeScroll=Vector2.zero;
+                }
+            }
+
             for(int b=0;b<3;b++)
-                if(ActionButton(new Rect(48+b*300,172,285,55),ActionBranchName(kind,b),branch==b,ActionBranchColor(kind,b),20))
-                {actionTreeBranch=b;actionTreeTier=0;actionTreeSlot=-1;branch=b;tier=0;}
-            accent=ActionBranchColor(kind,branch);
-            Box(new Rect(48,240,870,580),new Color(.065f,.074f,.078f,.96f));
-            ActionLabel(new Rect(68,245,800,27),T("BASE  →  BRANCH  →  SPECIALIZATION","基礎  →  分岐  →  特化"),accent,16);
+            {
+                Color bCol = ActionBranchColor(kind,b);
+                Rect bTab = new Rect(46+b*296, 132, 284, 48);
+                if(ActionButton(bTab, ActionBranchName(kind,b), branch==b, bCol, 19))
+                {
+                    actionTreeBranch=b; actionTreeTier=0; actionTreeSlot=-1; branch=b; tier=0;
+                    actionTreeScroll=Vector2.zero;
+                }
+            }
+
+            Color accent=ActionBranchColor(kind,branch);
+
+            Rect treeFrame = new Rect(46, 190, 882, 650);
+            FieldUIArt.Plate(treeFrame, false);
+            Box(new Rect(treeFrame.x+2, treeFrame.y+2, treeFrame.width-4, 32), new Color(.06f,.075f,.085f,.95f));
+            ActionLabel(new Rect(treeFrame.x+18, treeFrame.y+4, 840, 28),
+                T("TOP-DOWN SKILL TREE  ·  CORE  ▼  ORIGIN  ▼  SPLIT BRANCH  ▼  SYNERGY","上から下へ分岐  ·  基礎スキル  ▼  派生起点  ▼  左右分岐  ▼  特化統合"),
+                accent, 15, TextAnchor.MiddleLeft);
+
+            Rect scrollArea = new Rect(treeFrame.x+4, treeFrame.y+36, treeFrame.width-8, treeFrame.height-40);
+            const float contentW = 846f;
+            const float contentH = 1660f;
+            const float tierPitch = 320f;
+            float cx = contentW * 0.5f;
+
+            if(Event.current.type == EventType.ScrollWheel && scrollArea.Contains(Event.current.mousePosition))
+            {
+                actionTreeScroll.y = Mathf.Clamp(actionTreeScroll.y + Event.current.delta.y * 28f, 0f, contentH - scrollArea.height);
+                Event.current.Use();
+            }
+
+            actionTreeScroll = GUI.BeginScrollView(scrollArea, actionTreeScroll, new Rect(0, 0, contentW, contentH), false, true);
+
             for(int t=0;t<5;t++)
             {
-                float cy=305+t*101;
-                Rect root=new Rect(68,cy-23,145,46), first=new Rect(245,cy-23,145,46);
-                Rect upper=new Rect(430,cy-47,145,44), lower=new Rect(430,cy+3,145,44), end=new Rect(635,cy-23,145,46);
-                Color line=new Color(accent.r,accent.g,accent.b,.42f);
-                if(t<4)Line(new Vector2(root.center.x,cy+23),new Vector2(root.center.x,cy+78),line,2);
-                Line(new Vector2(root.xMax,cy),new Vector2(first.x,cy),line,2);
-                Line(new Vector2(first.xMax,cy),new Vector2(upper.x,upper.center.y),line,2);
-                Line(new Vector2(first.xMax,cy),new Vector2(lower.x,lower.center.y),line,2);
-                Line(new Vector2(upper.xMax,upper.center.y),new Vector2(end.x,cy),line,2);
-                Line(new Vector2(lower.xMax,lower.center.y),new Vector2(end.x,cy),line,2);
-                if(DrawActionTreeNode(root,(t+1)+"-0",ActionSkillRank(selected,branch,t),ActionSkillMaxRank(t),ActionSkillTierAvailable(selected,branch,t),tier==t&&actionTreeSlot<0,accent)){actionTreeTier=t;actionTreeSlot=-1;tier=t;}
-                Rect[] nodes={first,upper,lower,end};
-                for(int slot=0;slot<4;slot++)
-                    if(DrawActionTreeNode(nodes[slot],(t+1)+"-"+((char)('A'+slot)),ActionSkillExtraRank(selected,branch,t,slot),1,ActionSkillExtraAvailable(selected,branch,t,slot),tier==t&&actionTreeSlot==slot,accent,slot==3)){actionTreeTier=t;actionTreeSlot=slot;tier=t;}
+                float topY = 58f + t * tierPitch;
+
+                Rect tierBand = new Rect(16f, topY - 40f, contentW - 32f, tierPitch - 14f);
+                Box(tierBand, t % 2 == 0 ? new Color(.055f,.066f,.074f,.55f) : new Color(.042f,.050f,.058f,.55f));
+                Box(new Rect(tierBand.x, tierBand.y, 4f, tierBand.height), new Color(accent.r, accent.g, accent.b, .45f));
+                ActionLabel(new Rect(tierBand.x + 14f, tierBand.y + 8f, 220f, 24f),
+                    t == 4 ? T("TIER 5 // CAPSTONE","第5段階 // 最終奥義") : (T("TIER ","第") + (t+1) + T("", "段階")),
+                    new Color(accent.r, accent.g, accent.b, .85f), 16, TextAnchor.MiddleLeft);
+
+                Vector2 pRoot  = new Vector2(cx, topY);
+                Vector2 pOrig  = new Vector2(cx, topY + 82f);
+                Vector2 pLeft  = new Vector2(cx - 175f, topY + 162f);
+                Vector2 pRight = new Vector2(cx + 175f, topY + 162f);
+                Vector2 pConv  = new Vector2(cx, topY + 242f);
+
+                int rRoot = ActionSkillRank(selected, branch, t);
+                int mRoot = ActionSkillMaxRank(t);
+                bool avRoot = ActionSkillTierAvailable(selected, branch, t);
+
+                int r0 = ActionSkillExtraRank(selected, branch, t, 0);
+                int r1 = ActionSkillExtraRank(selected, branch, t, 1);
+                int r2 = ActionSkillExtraRank(selected, branch, t, 2);
+                int r3 = ActionSkillExtraRank(selected, branch, t, 3);
+
+                bool av0 = ActionSkillExtraAvailable(selected, branch, t, 0);
+                bool av1 = ActionSkillExtraAvailable(selected, branch, t, 1);
+                bool av2 = ActionSkillExtraAvailable(selected, branch, t, 2);
+                bool av3 = ActionSkillExtraAvailable(selected, branch, t, 3);
+
+                if(t < 4)
+                {
+                    Vector2 nextRoot = new Vector2(cx, topY + tierPitch);
+                    bool nextUnl = ActionSkillRank(selected, branch, t+1) > 0;
+                    bool nextAv = ActionSkillTierAvailable(selected, branch, t+1);
+                    DrawSkillConnectorPipe(pConv, nextRoot, nextUnl, nextAv, accent);
+                }
+
+                DrawSkillConnectorPipe(pRoot, pOrig, r0 > 0, av0 || rRoot > 0, accent);
+                DrawSkillConnectorPipe(pOrig, pLeft, r1 > 0, av1 || r0 > 0, accent);
+                DrawSkillConnectorPipe(pOrig, pRight, r2 > 0, av2 || r0 > 0, accent);
+                DrawSkillConnectorPipe(pLeft, pConv, r3 > 0 && r1 > 0, av3 && r1 > 0, accent);
+                DrawSkillConnectorPipe(pRight, pConv, r3 > 0 && r2 > 0, av3 && r2 > 0, accent);
+
+                int icRoot = GetActionNodeIconIndex(selected, branch, t, -1);
+                if(DrawBorderlandsSkillNode(pRoot, t==4 ? 68f : 62f, icRoot, t==4 ? 2 : 0, ActionSkillNodeTitle(selected, branch, t), rRoot, mRoot, avRoot, tier==t && actionTreeSlot<0, accent))
+                { actionTreeTier=t; actionTreeSlot=-1; tier=t; PlayUserSound("skill",.08f); }
+
+                int ic0 = GetActionNodeIconIndex(selected, branch, t, 0);
+                if(DrawBorderlandsSkillNode(pOrig, 52f, ic0, 1, "", r0, 1, av0, tier==t && actionTreeSlot==0, accent))
+                { actionTreeTier=t; actionTreeSlot=0; tier=t; PlayUserSound("skill",.08f); }
+
+                int ic1 = GetActionNodeIconIndex(selected, branch, t, 1);
+                if(DrawBorderlandsSkillNode(pLeft, 54f, ic1, 1, ActionSkillExtraTitle(selected, branch, t, 1), r1, 1, av1, tier==t && actionTreeSlot==1, accent))
+                { actionTreeTier=t; actionTreeSlot=1; tier=t; PlayUserSound("skill",.08f); }
+
+                int ic2 = GetActionNodeIconIndex(selected, branch, t, 2);
+                if(DrawBorderlandsSkillNode(pRight, 54f, ic2, 1, ActionSkillExtraTitle(selected, branch, t, 2), r2, 1, av2, tier==t && actionTreeSlot==2, accent))
+                { actionTreeTier=t; actionTreeSlot=2; tier=t; PlayUserSound("skill",.08f); }
+
+                int ic3 = GetActionNodeIconIndex(selected, branch, t, 3);
+                if(DrawBorderlandsSkillNode(pConv, 58f, ic3, 2, ActionSkillExtraTitle(selected, branch, t, 3), r3, 1, av3, tier==t && actionTreeSlot==3, accent))
+                { actionTreeTier=t; actionTreeSlot=3; tier=t; PlayUserSound("skill",.08f); }
             }
-            Rect panel=new Rect(955,172,438,648);FieldUIArt.Plate(panel,false);
+
+            GUI.EndScrollView();
+
+            Rect panel=new Rect(948,132,446,708);FieldUIArt.Plate(panel,false);
             int chosenSlot=actionTreeSlot;
             bool extra=chosenSlot>=0;
             int rank=extra?ActionSkillExtraRank(selected,branch,tier,chosenSlot):ActionSkillRank(selected,branch,tier);
@@ -168,20 +497,40 @@ namespace NeonVault
             string title=extra?ActionSkillExtraTitle(selected,branch,tier,chosenSlot):ActionSkillNodeTitle(selected,branch,tier);
             string desc=extra?ActionSkillExtraDescription(selected,branch,tier,chosenSlot):ActionSkillNodeDescription(selected,branch,tier);
             string nodeId=(tier+1)+"-"+(extra?((char)('A'+chosenSlot)).ToString():"0");
-            ActionLabel(new Rect(978,198,385,38),ActionBranchName(kind,branch)+" / "+nodeId,accent,22);
-            ActionLabel(new Rect(978,245,385,76),title,UiPaper,25,TextAnchor.MiddleLeft,true);
-            ActionTreeDescription(new Rect(978,330,385,235),desc,UiPaper,22);
-            ActionLabel(new Rect(978,580,385,42),T("RANK ","ランク ")+rank+" / "+max,accent,22);
+
+            int inspectIcon = GetActionNodeIconIndex(selected, branch, tier, chosenSlot);
+            int inspectFrame = extra ? (chosenSlot==3 ? 2 : 1) : (tier==4 ? 2 : 0);
+            Rect inspectIconRect = new Rect(972, 152, 74, 74);
+            DrawSkillNodeFrame(inspectIconRect, inspectFrame, rank>0 ? accent : UiPaper);
+            DrawSkillAtlasIcon(new Rect(986, 166, 46, 46), inspectIcon, Color.white);
+
+            ActionLabel(new Rect(1058,154,315,28),ActionBranchName(kind,branch)+" // NODE "+nodeId,accent,19);
+            ActionLabel(new Rect(1058,184,315,58),title,UiPaper,24,TextAnchor.MiddleLeft,true);
+
+            Box(new Rect(972, 246, 398, 2), new Color(accent.r, accent.g, accent.b, .35f));
+
+            ActionLabel(new Rect(978,262,385,34),T("SKILL EFFECT","スキル効果"),Mist,17);
+            Box(new Rect(972,324,396,246),new Color(.03f,.038f,.044f,.92f));
+            ActionTreeDescription(new Rect(978,330,385,235),desc,UiPaper,21);
+
+            ActionLabel(new Rect(978,582,385,38),T("INVESTED RANK:  ","習得ランク:  ")+rank+" / "+max, rank>=max ? Gold : accent, 22);
+
             string button=rank>=max?T("MAX RANK","最大ランク"):T("UPGRADE / 1 POINT","強化 / 1ポイント");
-            if(ActionButton(new Rect(978,660,390,72),button,canUnlock,accent,21,canUnlock))
+            if(ActionButton(new Rect(976,632,390,68),button,canUnlock,accent,21,canUnlock))
             {if(extra)TryUpgradeActionSkillExtra(selected,branch,tier,chosenSlot);else TryUpgradeActionSkill(selected,branch,tier);}
+
             if(!canUnlock&&rank<max)
             {
                 string reason=ActionSkillAvailablePoints<=0?T("Not enough points","ポイントが足りません"):
                     extra?(chosenSlot==0?T("Acquire this tier's base skill","同段階の基礎スキルが必要"):chosenSlot==3?T("Acquire either preceding branch","手前の分岐をいずれか取得"):T("Acquire the branch origin","分岐の起点を取得")):
                     tier==4?T("Previous tier: rank 6 required","前段階をランク6にする"):T("Previous tier: rank 3 required","前段階をランク3にする");
-                ActionLabel(new Rect(978,740,390,48),reason,Mist,17,TextAnchor.MiddleLeft,true);
+                ActionLabel(new Rect(978,708,390,44),reason,new Color(.95f,.52f,.42f),17,TextAnchor.MiddleLeft,true);
             }
+
+            ActionLabel(new Rect(46, 848, 1348, 36),
+                T("[D-Pad / Stick] Select Node   ·   [A / Enter] Upgrade   ·   [LB / RB] Switch Branch   ·   [Y / Tab] Switch Class   ·   [B / Esc] Back",
+                  "[十字キー / スティック] ノード選択   ·   [A / Enter] スキル強化   ·   [LB / RB] 分岐切替   ·   [Y / Tab] クラス切替   ·   [B / Esc] 戻る"),
+                Mist, 16, TextAnchor.MiddleCenter);
         }
 
         void DrawActionSkillInventory()
@@ -191,6 +540,18 @@ namespace NeonVault
             ActionLabel(new Rect(50,28,930,60),T("ACTION SKILL","アクションスキル"),UiPaper,36);
             ActionLabel(new Rect(52,95,1000,40),T("Changing skills resets your action gauge.","スキルを切り替えるとゲージは0になります。"),Mist,22);
             if(ActionButton(new Rect(1195,26,200,70),T("BACK","戻る"),false,EqAccent)){actionSkillInventoryOpen=false;return;}
+
+            if(Event.current.type == EventType.Layout)
+            {
+                if(Input.GetKeyDown(KeyCode.JoystickButton1)) { actionSkillInventoryOpen=false; return; }
+                if(Input.GetKeyDown(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.Return))
+                {
+                    actionTreeKind = (int)ActionSkillSelected;
+                    actionTreeBranch = 0; actionTreeTier = 0; actionTreeSlot = -1;
+                    actionSkillInventoryTree = true;
+                }
+            }
+
             for(int i=0;i<3;i++)
             {
                 var kind=(ActionSkillKind)i;Color accent=ActionTreeColors[i];bool equipped=ActionSkillSelected==kind;

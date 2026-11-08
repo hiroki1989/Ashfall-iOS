@@ -19,8 +19,8 @@ namespace NeonVault
             if(brand) GUI.DrawTextureWithTexCoords(new Rect(72,90,500,340),brand,new Rect(.07f,.15f,.39f,.70f),true);
             else Text(76,180,"DUST & DEBT",new GUIStyle(title){fontSize=68},UiPaper,620);
             float h=mobile?96:72, y=mobile?490:488, w=mobile?505:440;
-            if(TitleMenuButton(new Rect(76,y,w,h),T("START GAME","ゲーム開始"),true,mobile)) ContinueOverworldGame();
-            if(HasSavedRun && TitleMenuButton(new Rect(76,y+h+16,w,h),T("RESUME EXPEDITION","探索を再開"),false,mobile)) ResumeSavedRun();
+            if(TitleMenuButton(new Rect(76,y,w,h),T("START GAME","ゲーム開始"),true,mobile)) saveSlotMenuOpen=true;
+            if(HasSavedRun && TitleMenuButton(new Rect(76,y+h+16,w,h),T("RESUME EXPEDITION","探索を再開"),false,mobile)) saveSlotMenuOpen=true;
         }
         bool TitleMenuButton(Rect r,string caption,bool primary,bool mobile)
         {

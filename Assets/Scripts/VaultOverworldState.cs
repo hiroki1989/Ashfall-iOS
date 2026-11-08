@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,6 +26,60 @@ namespace NeonVault
             EnsureOverworldState();if(id<0||id>=discoveredOverworldDungeons.Length||discoveredOverworldDungeons[id])return;
             discoveredOverworldDungeons[id]=true;SaveOverworldState();
         }
+        public bool IsDungeonFastTravelUnlocked(int id)
+        {
+            if(id<0||id>=ExpeditionMap.StageCount)return false;
+            return PlayerPrefs.GetInt("Vault.DungeonVisited."+id, 0) != 0 || (clearedExpeditionStages!=null && clearedExpeditionStages.Contains(id));
+        }
+        public void MarkDungeonFastTravelUnlocked(int id)
+        {
+            if(id<0||id>=ExpeditionMap.StageCount)return;
+            PlayerPrefs.SetInt("Vault.DungeonVisited."+id, 1);
+            PlayerPrefs.Save();
+        }
+        public bool IsDungeonBossFought(int id)
+        {
+            if(id<0||id>=ExpeditionMap.StageCount)return false;
+            return PlayerPrefs.GetInt("Vault.DungeonBossFought."+id, 0) != 0 || (clearedExpeditionStages!=null && clearedExpeditionStages.Contains(id));
+        }
+        public void MarkDungeonBossFought(int id)
+        {
+            if(id<0||id>=ExpeditionMap.StageCount)return;
+            if(PlayerPrefs.GetInt("Vault.DungeonBossFought."+id, 0) == 0)
+            {
+                PlayerPrefs.SetInt("Vault.DungeonBossFought."+id, 1);
+                PlayerPrefs.Save();
+            }
+        }
+        public bool IsLandmarkBossFought(int landmarkId)
+        {
+            if(landmarkId<0||landmarkId>=OverworldGeography.LandmarkCount)return false;
+            return PlayerPrefs.GetInt("Vault.LandmarkBossFought."+landmarkId, 0) != 0;
+        }
+        public void MarkLandmarkBossFought(int landmarkId)
+        {
+            if(landmarkId<0||landmarkId>=OverworldGeography.LandmarkCount)return;
+            if(PlayerPrefs.GetInt("Vault.LandmarkBossFought."+landmarkId, 0) == 0)
+            {
+                PlayerPrefs.SetInt("Vault.LandmarkBossFought."+landmarkId, 1);
+                PlayerPrefs.Save();
+            }
+        }
+        public bool IsLandmarkBossDefeated(int landmarkId)
+        {
+            if(landmarkId<0||landmarkId>=OverworldGeography.LandmarkCount)return false;
+            return PlayerPrefs.GetInt("Vault.LandmarkBossDefeated."+landmarkId, 0) != 0;
+        }
+        public void MarkLandmarkBossDefeated(int landmarkId)
+        {
+            if(landmarkId<0||landmarkId>=OverworldGeography.LandmarkCount)return;
+            MarkLandmarkBossFought(landmarkId);
+            if(PlayerPrefs.GetInt("Vault.LandmarkBossDefeated."+landmarkId, 0) == 0)
+            {
+                PlayerPrefs.SetInt("Vault.LandmarkBossDefeated."+landmarkId, 1);
+                PlayerPrefs.Save();
+            }
+        }
         readonly int[] overworldChestOpenedAt = new int[OverworldChestCount];
         readonly HashSet<int> completedOverworldActivities = new HashSet<int>();
         int activeOverworldClueId = -1;
@@ -34,7 +89,7 @@ namespace NeonVault
         public int ActiveOverworldClueId { get { EnsureOverworldState(); return activeOverworldClueId; } }
         public IReadOnlyList<bool> VisitedOverworldCamps { get { EnsureOverworldState(); return Array.AsReadOnly(visitedOverworldCamps); } }
         public IReadOnlyList<int> OverworldChestOpenedAt { get { EnsureOverworldState(); return Array.AsReadOnly(overworldChestOpenedAt); } }
-        // 0: none, 1: camp, 2: dungeon entrance.
+        // 0: none, 1: camp, 2: dungeon entrance, 3: landmark.
         int overworldWaypointKind, overworldWaypointId = -1;
         public int OverworldWaypointKind { get { EnsureOverworldState(); return overworldWaypointKind; } }
         public int OverworldWaypointId { get { EnsureOverworldState(); return overworldWaypointId; } }
@@ -44,14 +99,15 @@ namespace NeonVault
             {
                 EnsureOverworldState();
                 return overworldWaypointKind == 1 ? WorldGeography.Camps[overworldWaypointId] :
-                    overworldWaypointKind == 2 ? WorldGeography.Entrances[overworldWaypointId] : Vector3.zero;
+                    overworldWaypointKind == 2 ? WorldGeography.Entrances[overworldWaypointId] :
+                    overworldWaypointKind == 3 ? WorldGeography.Landmarks[overworldWaypointId] : Vector3.zero;
             }
         }
         public void SetOverworldWaypoint(int kind, int id)
         {
             EnsureOverworldState();
-            if (kind != 1 && kind != 2) { kind = 0; id = -1; }
-            else if (id < 0 || id >= (kind == 1 ? OverworldCampCount : ExpeditionMap.StageCount)) return;
+            if (kind != 1 && kind != 2 && kind != 3) { kind = 0; id = -1; }
+            else if (id < 0 || id >= (kind == 1 ? OverworldCampCount : kind == 2 ? ExpeditionMap.StageCount : OverworldGeography.LandmarkCount)) return;
             if (overworldWaypointKind == kind && overworldWaypointId == id) return;
             overworldWaypointKind = kind; overworldWaypointId = id;
             SaveOverworldState();
@@ -106,7 +162,8 @@ namespace NeonVault
                 if (s.hasActiveClue && s.activeClueId >= 0 && completedOverworldActivities.Contains(s.activeClueId) && FiniteOverworldPosition(s.activeCluePosition))
                 { activeOverworldClueId = s.activeClueId; activeOverworldCluePosition = s.activeCluePosition; }
                 if (s.waypointKind == 1 && s.waypointId >= 0 && s.waypointId < OverworldCampCount ||
-                    s.waypointKind == 2 && ValidOverworldStage(s.waypointId))
+                    s.waypointKind == 2 && ValidOverworldStage(s.waypointId) ||
+                    s.waypointKind == 3 && s.waypointId >= 0 && s.waypointId < OverworldGeography.LandmarkCount)
                 { overworldWaypointKind = s.waypointKind; overworldWaypointId = s.waypointId; }
                 if (s.version == OverworldSaveVersion && FiniteOverworldPosition(s.position))
                 {

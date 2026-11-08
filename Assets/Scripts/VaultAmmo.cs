@@ -27,7 +27,7 @@ namespace NeonVault
         readonly List<SupplyDrop> supplyDrops=new List<SupplyDrop>();
         int chestRoomForRun=-1;
         class Chest { public Vector3 position; public GameObject visual; public bool opened; public bool rare; }
-        class SupplyDrop { public int credits; public AmmoType ammoType; public int ammoAmount; public bool healthPack; public Vector3 position; public GameObject visual; }
+        class SupplyDrop { public int credits; public AmmoType ammoType; public int ammoAmount; public bool healthPack; public float healthFraction; public Vector3 position; public GameObject visual; }
 
         public static AmmoType AmmoForGun(Gun item)
         {
@@ -105,7 +105,7 @@ namespace NeonVault
                 if(d.healthPack)
                 {
                     if(hp>=maxHp-.01f)continue;
-                    float restored=Mathf.Min(maxHp-hp,maxHp*.05f);
+                    float restored=Mathf.Min(maxHp-hp,maxHp*(d.healthFraction>0?d.healthFraction:.05f));
                     HealPlayer(restored);
                     if(d.visual!=null)Destroy(d.visual);supplyDrops.RemoveAt(i);audioSource.PlayOneShot(pickupSound);
                     Notify("HEALTH PACK +"+Mathf.CeilToInt(restored)+" HP","回復パック HP +"+Mathf.CeilToInt(restored));
@@ -129,11 +129,11 @@ namespace NeonVault
             p.y=.22f;Color color=type==AmmoType.Shotgun?new Color(1,.64f,.22f):type==AmmoType.SniperRifle?new Color(.45f,.8f,1):type==AmmoType.Handgun?new Color(.86f,.82f,.56f):Cyan;
             var visual=CreateLootPresentation(AmmoPickupName(type,amount),p,new Vector3(.62f,.24f,.58f),color,LootPresentationKind.Ammo,type,amount);supplyDrops.Add(new SupplyDrop{ammoType=type,ammoAmount=amount,position=p,visual=visual});
         }
-        void AddHealthPackDrop(Vector3 p)
+        void AddHealthPackDrop(Vector3 p,float fraction=.05f)
         {
             p.y=.24f;
             var visual=CreateLootPresentation(VaultLanguage.T("Health pack","回復パック"),p,new Vector3(.50f,.25f,.42f),new Color(.89f,.22f,.19f),LootPresentationKind.HealthPack);
-            supplyDrops.Add(new SupplyDrop{healthPack=true,position=p,visual=visual});
+            supplyDrops.Add(new SupplyDrop{healthPack=true,healthFraction=fraction,position=p,visual=visual});
         }
         void SpawnRoomChest()
         {

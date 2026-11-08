@@ -112,17 +112,18 @@ namespace NeonVault
             if(NpcConversationVisible){DrawNpcConversation();return;}
             if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(VaultStorageVisible){DrawVaultStorage();return;}
+            if(screen==Screen.Menu&&HandleSaveSlotMenu())return;
             if(MobileTouchControls.Enabled)
             {
                 if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
                 if(DebtIntroVisible){DrawMobileDebtIntro();return;}
                 if(manufacturerRegistry)DrawMobileManufacturer();
-                else if(InventoryOpen){if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
+                else if(InventoryOpen){if(petSkillInventoryOpen)DrawPetSkillInventory();else if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
                 else if(screen==Screen.Menu)DrawMobileMenu();
                 else if(screen==Screen.Hub)DrawMobileHub();
                 else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawMobileShop();}
                 else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
-                else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();}
+                else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();DrawPetSkillHUD();}
                 else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
                 else DrawMobileOverlay();
                 DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
@@ -131,14 +132,14 @@ namespace NeonVault
             if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
             if(DebtIntroVisible){DrawDebtIntro();return;}
             if(manufacturerRegistry)DrawManufacturerRegistry();
-            else if(InventoryOpen){if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
+            else if(InventoryOpen){if(petSkillInventoryOpen)DrawPetSkillInventory();else if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
             else if(screen==Screen.Menu)DrawMenu();
             else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,260,42),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}DrawCollectorDialog();DrawDailyChestAdConfirm();DrawDailyChestReward();}
             else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawShop();}
             else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
             else
             {
-                if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing)DrawActionSkillHUD();else DrawOverlay();
+                if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing){DrawActionSkillHUD();DrawPetSkillHUD();}else DrawOverlay();
             }
             DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
@@ -153,8 +154,19 @@ namespace NeonVault
             GUI.matrix=Matrix4x4.identity;
             Box(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),new Color(.008f,.008f,.01f,backdrop));
             GUI.matrix=deathCanvas;
-            var title=new GUIStyle(heading){fontSize=80,alignment=TextAnchor.MiddleCenter};
-            Text(170,330,"YOU DIED",title,new Color(.78f,.16f,.14f,titleAlpha),1100);
+            var logo=Resources.Load<Texture2D>("Art/UI/you_died_logo");
+            if(logo!=null)
+            {
+                var prevColor=GUI.color;
+                GUI.color=new Color(1,1,1,titleAlpha);
+                GUI.DrawTexture(new Rect(170,290,1100,282),logo,ScaleMode.ScaleToFit,true);
+                GUI.color=prevColor;
+            }
+            else
+            {
+                var title=new GUIStyle(heading){fontSize=80,alignment=TextAnchor.MiddleCenter};
+                Text(170,330,"YOU DIED",title,new Color(.78f,.16f,.14f,titleAlpha),1100);
+            }
             float blackout=Mathf.SmoothStep(0,1,Mathf.Clamp01((elapsed-3.65f)/.75f));
             if(blackout>0){GUI.matrix=Matrix4x4.identity;Box(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),new Color(0,0,0,blackout));GUI.matrix=deathCanvas;}
         }
@@ -260,7 +272,9 @@ namespace NeonVault
         string EnemyHealthLabel(Foe foe)
         {
             int level=IsOverworld?GetOverworldEnemyLevel(foe):SelectedExpeditionStage!=null?SelectedExpeditionStage.level:CurrentDungeon.minLevel;
-            if(foe.kind==3&&foe.MajorBoss&&IsFactionHeadquarters(SelectedStageId))return "Lv."+Mathf.Max(1,level)+" "+(IsRedClawBossStage(SelectedStageId)?T("RAVEN","レイヴン"):T("VEX","ヴェックス"));
+            if(IsOverworld&&TryGetLandmarkBossId(foe,out int landmarkId))
+                return "Lv."+Mathf.Max(1,level)+" ★ "+OverworldGeography.LandmarkBossName(landmarkId,VaultLanguage.Japanese);
+            if(foe.kind==3&&foe.MajorBoss&&IsFactionHeadquarters(SelectedStageId))return "Lv."+Mathf.Max(1,level)+" "+(IsInfectedBossStage(SelectedStageId)?T("THE RENEGADE","レネゲード"):IsRedClawBossStage(SelectedStageId)?T("RAVEN","レイヴン"):T("VEX","ヴェックス"));
             var human=foe.GetComponentInChildren<HumanFactionVisual>();
             string name=human&&human.Faction==1?T("RED CLAW","レッドクロウ"):human&&human.Faction==2?T("COYOTES","コヨーテ"):Foe.Name(foe.kind);
             return "Lv."+Mathf.Max(1,level)+" "+name;
@@ -309,7 +323,7 @@ namespace NeonVault
             Text(1042,422,T("CONTRACT","任務"),tiny,Mist,320);
             Text(1042,445,ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese),label,Gold,330);
             Text(1042,481,T("MARKED TARGET","標的"),tiny,Mist,320);
-            Text(1042,503,stage.Target,small,new Color(1,.51f,.37f),330);
+            Text(1042,503,IsDungeonBossFought(stage.id)?stage.Target:"???",small,new Color(1,.51f,.37f),330);
             Text(1042,548,cleared?T("REPEAT CLEAR REWARD","再攻略報酬"):T("FIRST CLEAR CACHE","初回クリア報酬"),tiny,Mist,320);
             Text(1042,572,ExpeditionRewardDescription(stage.id),small,Cyan,330);
             Text(1042,609,cleared?T("MISSION PAYOUT CLAIMED","任務報酬は受取済み"):T("MISSION PAYOUT / ","任務達成報酬 / ")+MissionRewardDescription(stage.id),tiny,Gold,330);
@@ -334,8 +348,3 @@ namespace NeonVault
         {Vector2Int c=Layout.ToCell(p);float x=origin.x+(c.x+.5f)*tile,y=origin.y+(Layout.Rows-.5f-c.y)*tile;Diamond(x,y,size,color);Box(new Rect(x-1,y-1,2,2),color);}
     }
 }
-
-
-
-
-

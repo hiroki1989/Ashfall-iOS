@@ -364,11 +364,6 @@ for dz in (-.28, .28, .1):
 sx_ = .19; sz_ = H * .47
 box(M["leather"], "pelvis", (.16, .07, .14), (sx_, .03, sz_), bevel=.015)
 box(M["jacketdk"], "pelvis", (.165, .075, .06), (sx_, .03, sz_ + .05), bevel=.008)
-cyl(M["glow"], "pelvis", .01, .01, (sx_, -.009, sz_ + .04), rot=(math.radians(90), 0, 0), verts=12)
-# glowing data ledger in right hand (positioned under palm/fingers so hand holds it without clipping)
-hr = rig.data.bones["hand_r"]; hp = hr.head_local + (hr.tail_local - hr.head_local) * 1.2
-box(M["leather"], "hand_r", (.2, .14, .014), (hp.x - .07, hp.y - .075, hp.z - .082), rot=(math.radians(25), 0, math.radians(-12)), bevel=.004)
-box(M["glow"], "hand_r", (.17, .11, .004), (hp.x - .07, hp.y - .079, hp.z - .075), rot=(math.radians(25), 0, math.radians(-12)), bevel=0)
 
 # ---------------- join, strip helper geometry, rig, export ----------------
 sel(human); bm = bmesh.new(); bm.from_mesh(human.data); bm.verts.ensure_lookup_table()

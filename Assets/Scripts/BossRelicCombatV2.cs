@@ -22,6 +22,26 @@ namespace NeonVault
                 Vector3 side=Vector3.Cross(Vector3.up,forward).normalized;
                 List<Foe> targets=LegendaryGunTargets(origin,12f);
                 Foe first=targets.Count>0?targets[0]:null;
+                if(boss==3)
+                {
+                    color=new Color(.64f,.90f,.30f);
+                    Burst(origin,color,16);
+                    switch(category)
+                    {
+                        case 0: if(first!=null)for(int i=-1;i<=1;i+=2)LegendaryHomingShot(source+side*i*.4f,first,power*.9f,color,null);break;
+                        case 1: ScheduleLegendaryPulse(origin,power*.9f,2.4f,2,4,.25f);break;
+                        case 2: for(int i=0;i<Mathf.Min(3,targets.Count);i++)LegendaryHomingShot(source,targets[i],power*.85f,color,null);break;
+                        case 3: if(targets.Count>0)LegendaryHomingShot(source,targets[targets.Count-1],power*2.3f,color,null);break;
+                        case 4: for(int i=0;i<8;i++){float a=i*Mathf.PI/4;LegendaryGunShot(source,new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),power*.7f,color);}break;
+                        case 5: HealPlayer(maxHp*.10f);break;
+                        case 6: ArmorBarrier(20);break;
+                        case 7: dodgeCooldown=0;break;
+                        case 8: invincible=Mathf.Max(invincible,.8f);break;
+                        case 9: if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+18);}break;
+                        case 10: LegendaryGunBlast(origin,3.5f,power*1.6f,color,false);break;
+                    }
+                    return;
+                }
                 Burst(origin,color,16);
                 switch(category)
                 {

@@ -94,6 +94,32 @@ public static class IonaModelReview
             Debug.Log("IONA_REVIEW " + key + " ok bounds=" + b + " mats=" + r.sharedMaterials.Length);
             Object.DestroyImmediate(root.gameObject);
         }
+        // Side-by-side scale comparison with Player (DetailedHeroPlayer3D)
+        var cmpRoot = new GameObject("ScaleCompare").transform;
+        var playerActor = new GameObject("Player").transform;
+        playerActor.SetParent(cmpRoot, false);
+        playerActor.position = new Vector3(-1.35f, .65f, 0);
+        playerActor.rotation = Quaternion.LookRotation(Vector3.back);
+        NeonVault.DetailedHeroPlayer3D.Create(playerActor);
+        float[] xs = { -0.45f, 0.45f, 1.35f };
+        string[] keys = { "Iona", "Sera", "Briggs" };
+        for (int i = 0; i < 3; i++)
+        {
+            var m = Resources.Load<GameObject>("Characters/" + keys[i] + "/" + keys[i]);
+            var nRoot = new GameObject(keys[i]).transform;
+            nRoot.SetParent(cmpRoot, false);
+            nRoot.position = new Vector3(xs[i], 0, 0);
+            nRoot.rotation = Quaternion.LookRotation(Vector3.back);
+            var npc = Object.Instantiate(m, nRoot, false);
+            npc.transform.localScale = Vector3.one * (keys[i] == "Iona" ? 1.20f : 1.09f);
+        }
+        var rtCmp = new RenderTexture(1200, 800, 24); cam.targetTexture = rtCmp;
+        var texCmp = new Texture2D(1200, 800, TextureFormat.RGB24, false);
+        RenderTexture.active = rtCmp;
+        cam.orthographicSize = 1.45f; cam.transform.position = new Vector3(0, 1.25f, -5); cam.transform.LookAt(new Vector3(0, 1.15f, 0));
+        cam.Render(); texCmp.ReadPixels(new Rect(0, 0, 1200, 800), 0, 0);
+        File.WriteAllBytes("D:/Unity/AssetIntegration/Iona/hub-npc-scale-compare.png", texCmp.EncodeToPNG());
+        Object.DestroyImmediate(cmpRoot.gameObject);
         AssetDatabase.SaveAssets();
         EditorApplication.Exit(0);
     }

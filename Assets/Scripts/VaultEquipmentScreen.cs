@@ -13,9 +13,20 @@ namespace NeonVault
         Vector2 eqGridScroll,eqDetailScroll,eqLoadoutScroll;
         GUIStyle eqCopy,eqCaption,eqButtonStyle;
         float eqGridExtent,eqDetailExtent;
-        public bool EquipmentMenuVisible=>InventoryOpen||(screen==Screen.Shop&&!debtPage);
+        public bool EquipmentMenuVisible=>InventoryOpen||(screen==Screen.Shop&&!debtPage)||debtSkillTreePage;
         public int EquipmentGestureRegion(Vector2 point)
         {
+            if(actionSkillInventoryTree||debtSkillTreePage)
+            {
+                if(new Rect(46,190,882,650).Contains(point))return 5;
+                if(new Rect(978,330,385,235).Contains(point))return 6;
+                return 0;
+            }
+            if(petSkillInventoryOpen)
+            {
+                if(new Rect(42,136,904,704).Contains(point))return 7;
+                return 0;
+            }
             if(!EquipmentMenuVisible||eqUpgradePage||!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null)return 0;
             float top=InventoryOpen?122:196,gridTop=top+86;
             if(new Rect(36,gridTop+8,432,766-gridTop).Contains(point))return 1;
@@ -31,6 +42,9 @@ namespace NeonVault
             if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(362-top)));
             if(region==3&&equipmentHeroPreview)equipmentHeroPreview.Angle=Mathf.Repeat(equipmentHeroPreview.Angle-delta.x*.55f+155,360)-155;
             if(region==4)eqLoadoutScroll.y=Mathf.Max(0,eqLoadoutScroll.y-delta.y);
+            if(region==5)actionTreeScroll.y=Mathf.Clamp(actionTreeScroll.y-delta.y,0,1050);
+            if(region==6)actionTreeDescriptionScroll.y=Mathf.Max(0,actionTreeDescriptionScroll.y-delta.y);
+            if(region==7)petSkillScroll.y=Mathf.Clamp(petSkillScroll.y-delta.y,0,200);
         }
         sealed class EqCard
         {
@@ -187,8 +201,9 @@ namespace NeonVault
                 string actionCaption=T("ACTION SKILL","アクションスキル");
                 while(actionStyle.fontSize>14&&actionStyle.CalcSize(new GUIContent(actionCaption)).x>200)actionStyle.fontSize--;
                 eqButtonStyle=actionStyle;
-                if(EqButton(new Rect(535,24,220,60),actionCaption))actionSkillInventoryOpen=true;
-                if(EqButton(new Rect(765,24,150,60),T("CATALOG","装備図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;manufacturerScroll=Vector2.zero;}
+                if(EqButton(new Rect(485,24,205,60),actionCaption))actionSkillInventoryOpen=true;
+                if(EqButton(new Rect(698,24,100,60),T("PET","ペット")))petSkillInventoryOpen=true;
+                if(EqButton(new Rect(802,24,118,60),T("CATALOG","装備図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;manufacturerScroll=Vector2.zero;}
                 eqButtonStyle=previousActionStyle;
             }
             if(!merchant&&screen==Screen.Hub&&EqButton(new Rect(925,24,140,60),T("STASH","倉庫")))VaultStorageOpen();

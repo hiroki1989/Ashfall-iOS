@@ -11,6 +11,12 @@ namespace NeonVault
         public AnimationClip idleClip, walkClip, attackClip, deathClip;
         public Transform model;
         public Animator nativeAnimator;
+        // Imported humanoids without an animation controller may have an avatar
+        // that is present but not initialized. Their named skeleton is still
+        // sufficient for the shared procedural infected animation.
+        public bool useNamedBones;
+        public bool suppressMask;
+        public bool suppressBossRifle;
         public float targetHeight=2.16f;
         Transform[] scaleTransforms; Vector3[] authoredScales;
         public Transform raiderRifle;
@@ -55,7 +61,7 @@ namespace NeonVault
             var driver=instance.GetComponent<ImportedEnemyVisual>();
             if(!driver){Destroy(instance);return null;}driver.Bind(instance.transform,null,0);return instance.transform;
         }
-        void Bind(Transform target,Foe foe,float groundOffset)
+        public void Bind(Transform target,Foe foe,float groundOffset)
         {
             actor=target;owner=foe;previous=actor.position;
             if(transform!=actor)transform.localPosition=Vector3.up*groundOffset;
@@ -74,7 +80,7 @@ namespace NeonVault
             }
             if(idleClip&&!idleClip.humanMotion){idleClip.SampleAnimation(model.gameObject,0);RestoreScales();model.localPosition=modelPosition;model.localRotation=modelRotation;}
             CacheLimbs();
-            if(owner&&owner.RaiderBoss)BuildRaiderBossRifle();
+            if(owner&&owner.RaiderBoss&&!suppressBossRifle)BuildRaiderBossRifle();
             if(owner&&owner.kind==10)
             {
                 handgun=!owner.UseAssaultRifle;
@@ -90,7 +96,7 @@ namespace NeonVault
             }
             Animate(0,0);
             NormalizeVisibleModel(targetHeight);
-            if((owner&&(owner.kind==10||owner.RaiderBoss))||(!owner&&name.Contains("RaiderBossNPC"))) AttachRaiderMask();
+            if(!suppressMask&&((owner&&(owner.kind==10||owner.RaiderBoss))||(!owner&&name.Contains("RaiderBossNPC")))) AttachRaiderMask();
             // Normalization becomes the persistent scale, including during sampled animation.
             for(int i=0;i<scaleTransforms.Length;i++)authoredScales[i]=scaleTransforms[i].localScale;
         }
@@ -469,7 +475,7 @@ namespace NeonVault
         void CacheLimbs()
         {
             Animator human=null;
-            foreach(var animator in model.GetComponentsInChildren<Animator>())
+            if(!useNamedBones)foreach(var animator in model.GetComponentsInChildren<Animator>())
                 if(animator.avatar&&animator.avatar.isValid&&animator.avatar.isHuman){human=animator;break;}
             foreach(int side in new[]{-1,1})
             {
@@ -504,6 +510,7 @@ namespace NeonVault
                     string canonical=n.Replace("_","").Replace("left","").Replace("right","");
                     if(n.EndsWith("_l")||n.EndsWith("_r"))canonical=canonical.Substring(0,canonical.Length-1);
                     if(token=="leg"&&canonical.Contains("upleg"))continue;
+                    if(token=="arm"&&(canonical.Contains("forearm")||canonical.Contains("lowerarm")))continue;
                     if(canonical.EndsWith(token))return candidate;
                 }
             return null;

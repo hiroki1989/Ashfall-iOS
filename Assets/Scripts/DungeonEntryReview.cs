@@ -39,7 +39,7 @@ namespace NeonVault
                     if (ExpeditionMap.FactionForStage(id) == DungeonFaction.Raiders) raiders++;
                     if (ExpeditionMap.FactionForStage(id) == DungeonFaction.Gang) gang++;
                 }
-                if (raiders != 50 || gang != 50 || ExpeditionMap.StageCount != 206) throw new InvalidOperationException("Faction allocation changed: " + raiders + "/" + gang + " stages=" + ExpeditionMap.StageCount);
+                if (raiders != 50 || gang != 50 || ExpeditionMap.StageCount != 209 || VaultGame.RequiredFactionDungeonClears(VaultGame.InfectedBoss30) != 30 || VaultGame.RequiredFactionDungeonClears(VaultGame.InfectedBoss60) != 60 || VaultGame.RequiredFactionDungeonClears(VaultGame.InfectedHeadquarters) != 100) throw new InvalidOperationException("Faction allocation or infected milestone requirement changed: " + raiders + "/" + gang + " stages=" + ExpeditionMap.StageCount);
                 File.WriteAllText(path, "PASS: Dungeon 01 entered; foes=" + game.Enemies.Count +
                     "; faction rigs=0; faction sites=" + raiders + "/" + gang +
                     "; allocated memory=" + Profiler.GetTotalAllocatedMemoryLong());

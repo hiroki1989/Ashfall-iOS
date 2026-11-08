@@ -59,6 +59,8 @@ namespace NeonVault
             if(boss!=null)boss.Hit(float.MaxValue,null,null,1000);
             bool expectedEscape=VaultGame.IsFactionBossEscapeStage(stage);
             Check(boss!=null&&boss.dead&&boss.Escaping==expectedEscape,(expectedEscape?"30%/60% faction boss escapes on defeat / ":"100% faction boss dies on defeat / ")+stage);
+            var dropMethod=typeof(VaultGame).GetMethod("DropBossRelic",BindingFlags.Instance|BindingFlags.NonPublic);
+            for(int attempt=0;attempt<24&&ExtractBossRelicCategory(game,bossId)<0&&boss!=null&&dropMethod!=null;attempt++)dropMethod.Invoke(game,new object[]{boss,bossId});
             int category=ExtractBossRelicCategory(game,bossId);
             Check(PlayerPrefs.GetInt(relicFlag,0)==1&&category>=0,"first faction boss kill emits a boss-exclusive legendary / "+stage);
             foreach(var foe in new List<Foe>(game.Enemies))if(foe!=null&&!foe.dead)foe.Hit(float.MaxValue,null,null,1000);
@@ -166,6 +168,8 @@ namespace NeonVault
             // StartValeRematch marks the encounter before BuildRoom; this flag stays active through the run.
             Check(game.room==game.CurrentDungeon.AreaCount-1&&(bool)Field("finalDebtBossFight").GetValue(game),"Vale rematch path starts on the dedicated final floor");
             var vale=game.Enemies.Find(e=>e!=null&&e.kind==3&&e.MajorBoss);if(vale!=null)vale.Hit(float.MaxValue,null,null,1000);
+            var dropValeMethod=typeof(VaultGame).GetMethod("DropBossRelic",BindingFlags.Instance|BindingFlags.NonPublic);
+            for(int attempt=0;attempt<24&&ExtractBossRelicCategory(game,2)<0&&vale!=null&&dropValeMethod!=null;attempt++)dropValeMethod.Invoke(game,new object[]{vale,2});
             Check(PlayerPrefs.GetInt("Vault.BossRelic.Defeated.2",0)==1&&ExtractBossRelicCategory(game,2)>=0,"first Vale kill emits a Vale-exclusive legendary");
             foreach(var foe in new List<Foe>(game.Enemies))if(foe!=null&&!foe.dead)foe.Hit(float.MaxValue,null,null,1000);
             game.Advance();Check(game.screen==VaultGame.Screen.Victory,"Vale defeat reaches the completion screen");

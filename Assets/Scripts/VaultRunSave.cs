@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace NeonVault
         [Serializable] sealed class RunCheckpoint
         {
             public int version=1, seed, dungeon, stage, room, kills, ammo, activeWeaponSlot, missionKills, debtChainCount, chestRoomForRun, ammoCratePlanCount, layoutVersion;
-            public float actionSkillPoints;
+            public float actionSkillPoints,petSkillCooldownRemaining;
             public int explorationColumns, explorationRows; public string explorationBits;
             public int[] routeX, routeY, ammoReserves, ammoCrateRooms, upgradeKeys, upgradeValues;
             public float hp, baseMaxHp, damageBonus, fireBonus, runDamage, runFire, runVitality, runDash, runChain, runHarvest, runTime, artifactShield, artifactClock;
@@ -31,7 +32,7 @@ namespace NeonVault
         [Serializable] sealed class ArmorDropCheckpoint { public ArmorItem item; public Vector3 position; }
         [Serializable] sealed class ArtifactDropCheckpoint { public ArtifactItem item; public Vector3 position; }
         [Serializable] sealed class MeleeDropCheckpoint { public MeleeWeaponItem item; public Vector3 position; }
-        [Serializable] sealed class SupplyCheckpoint { public int credits,ammoType,ammoAmount; public bool healthPack; public Vector3 position; }
+        [Serializable] sealed class SupplyCheckpoint { public int credits,ammoType,ammoAmount; public bool healthPack; public float healthFraction; public Vector3 position; }
         [Serializable] sealed class PositionCheckpoint { public Vector3 position; public bool rare; }
         [Serializable] sealed class AmmoCrateCheckpoint { public Vector3 position; public int type,amount; public bool mission; }
 
@@ -40,12 +41,12 @@ namespace NeonVault
 
         public bool SaveRunCheckpoint()
         {
-            if(IsOverworld){if(screen!=Screen.Pause||smoke)return false;RememberOverworldPosition(PlayerPosition,true);SaveInventory();SaveProgression();return true;}
+            if(IsOverworld){if(screen!=Screen.Pause||smoke)return false;SavePetOverworldCooldown();RememberOverworldPosition(PlayerPosition,true);SaveInventory();SaveProgression();return true;}
             if(smoke||screen!=Screen.Pause||player==null||world==null)return false;
             var save=new RunCheckpoint
             {
                 seed=seed,dungeon=DungeonIndex,stage=SelectedStageId,room=room,kills=kills,ammo=ammo,activeWeaponSlot=ActiveWeaponSlot,layoutVersion=dungeonLayoutVersion,
-                missionKills=missionKills,missionCompleted=missionCompleted,debtChainCount=debtChainCount,chestRoomForRun=chestRoomForRun,actionSkillPoints=ActionSkillPoints,
+                missionKills=missionKills,missionCompleted=missionCompleted,debtChainCount=debtChainCount,chestRoomForRun=chestRoomForRun,actionSkillPoints=ActionSkillPoints,petSkillCooldownRemaining=PetCooldownRemaining,
                 ammoCratePlanCount=ammoCratePlanCount,hp=hp,baseMaxHp=baseMaxHp,damageBonus=damageBonus,fireBonus=fireBonus,
                 runDamage=runDamage,runFire=runFire,runVitality=runVitality,runDash=runDash,runChain=runChain,runHarvest=runHarvest,
                 runTime=runTime,artifactShield=ArtifactShield,artifactClock=artifactCombatClock,playerX=player.position.x,playerZ=player.position.z,
@@ -59,7 +60,7 @@ namespace NeonVault
             foreach(var d in armorDrops)save.armor.Add(new ArmorDropCheckpoint{item=d.item,position=d.position});
             foreach(var d in artifactDrops)save.modules.Add(new ArtifactDropCheckpoint{item=d.item,position=d.position});
             foreach(var d in meleeDrops)save.melee.Add(new MeleeDropCheckpoint{item=d.item,position=d.position});
-            foreach(var d in supplyDrops)save.supplies.Add(new SupplyCheckpoint{credits=d.credits,ammoType=(int)d.ammoType,ammoAmount=d.ammoAmount,healthPack=d.healthPack,position=d.position});
+            foreach(var d in supplyDrops)save.supplies.Add(new SupplyCheckpoint{credits=d.credits,ammoType=(int)d.ammoType,ammoAmount=d.ammoAmount,healthPack=d.healthPack,healthFraction=d.healthFraction,position=d.position});
             foreach(var chest in chests)if(chest!=null&&!chest.opened)save.chests.Add(new PositionCheckpoint{position=chest.position,rare=chest.rare});
             foreach(var crate in fieldAmmoCrates)if(crate!=null&&crate.visual!=null)save.ammoCrates.Add(new AmmoCrateCheckpoint{position=crate.position,type=(int)crate.type,amount=crate.amount,mission=crate.mission});
             SaveInventory();SaveProgression();PlayerPrefs.SetString(RunSaveKey,JsonUtility.ToJson(save));PlayerPrefs.Save();return true;
@@ -80,7 +81,7 @@ namespace NeonVault
             DungeonIndex=save.dungeon;SelectedStageId=save.stage<0?-1:Mathf.Clamp(save.stage,0,ExpeditionMap.StageCount-1);ResetGameplayOverlays();shake=0;meleeAttack?.ResetCooldown();seed=save.seed;room=Mathf.Clamp(save.room,0,CurrentDungeon.AreaCount-1);rng=new System.Random(seed^unchecked((room+1)*7919)^save.kills);
             if(save.foes==null)save.foes=new List<FoeCheckpoint>();if(save.guns==null)save.guns=new List<GunDropCheckpoint>();if(save.armor==null)save.armor=new List<ArmorDropCheckpoint>();if(save.modules==null)save.modules=new List<ArtifactDropCheckpoint>();if(save.melee==null)save.melee=new List<MeleeDropCheckpoint>();if(save.supplies==null)save.supplies=new List<SupplyCheckpoint>();if(save.chests==null)save.chests=new List<PositionCheckpoint>();if(save.ammoCrates==null)save.ammoCrates=new List<AmmoCrateCheckpoint>();
             route.Clear();for(int i=0;i<save.routeX.Length;i++)route.Add(new Vector2Int(save.routeX[i],save.routeY[i]));
-            kills=save.kills;ActionSkillPoints=Mathf.Clamp(save.actionSkillPoints,0,ActionSkillChargeMax);ricochetEvents=0;splitEvents=0;runTime=save.runTime;baseMaxHp=save.baseMaxHp;runDamage=save.runDamage;runFire=save.runFire;runVitality=save.runVitality;runDash=save.runDash;runChain=save.runChain;runHarvest=save.runHarvest;
+            kills=save.kills;RestorePetCooldown(save.petSkillCooldownRemaining);ActionSkillPoints=Mathf.Clamp(save.actionSkillPoints,0,ActionSkillChargeMax);ricochetEvents=0;splitEvents=0;runTime=save.runTime;baseMaxHp=save.baseMaxHp;runDamage=save.runDamage;runFire=save.runFire;runVitality=save.runVitality;runDash=save.runDash;runChain=save.runChain;runHarvest=save.runHarvest;
             damageBonus=save.damageBonus;fireBonus=save.fireBonus;RecalculateArmor();hp=Mathf.Clamp(save.hp,1,maxHp);LoadAmmoReserves(save.ammoReserves);ActiveWeaponSlot=Mathf.Clamp(save.activeWeaponSlot,0,AvailableWeaponSlotCount-1);gun=WeaponInSlot(ActiveWeaponSlot)??WeaponInSlot(0)??Weapons[0];ActiveWeaponSlot=Mathf.Max(0,EquippedWeaponSlot(gun));SelectedWeapon=Weapons.IndexOf(gun);ammo=Mathf.Clamp(save.ammo,0,EffectiveMagazine);reload=0;reloadPending=0;invincible=1;dodgeCooldown=0;dodgeTimer=0;fireTimer=0;debtChainCount=save.debtChainCount;
             chestRoomForRun=save.chestRoomForRun;ammoCratePlanCount=save.ammoCratePlanCount;ammoCrateRoomPlan.Clear();if(save.ammoCrateRooms!=null)ammoCrateRoomPlan.AddRange(save.ammoCrateRooms);
             ResetArtifactCombat();ArtifactShield=save.artifactShield;artifactCombatClock=save.artifactClock;missionKills=save.missionKills;missionCompleted=save.missionCompleted;
@@ -93,7 +94,7 @@ namespace NeonVault
             foreach(var d in save.modules)if(d.item!=null)AddArtifactDrop(d.item,d.position);
             foreach(var d in save.melee)if(d.item!=null)AddMeleeDrop(d.item,d.position);
             restoringLoot=false;
-            foreach(var d in save.supplies){if(d.healthPack)AddHealthPackDrop(d.position);else if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,NormalizeAmmoType((AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1)),d.ammoAmount);}
+            foreach(var d in save.supplies){if(d.healthPack)AddHealthPackDrop(d.position,d.healthFraction>0?d.healthFraction:.05f);else if(d.credits>0)AddScrapDrop(d.position,d.credits);else if(d.ammoAmount>0)AddAmmoDrop(d.position,NormalizeAmmoType((AmmoType)Mathf.Clamp(d.ammoType,0,AmmoTypeCount-1)),d.ammoAmount);}
             foreach(var c in save.chests){Vector3 p=c.position;p.y=0;var obj=CreateLootPresentation("EQUIPMENT CHEST",p,new Vector3(1.8f,.88f,1.0f),Gold,LootPresentationKind.Chest);if(c.rare)EquipmentChestVisual.SetRare(obj);chests.Add(new Chest{position=p,visual=obj,rare=c.rare});}
             foreach(var c in save.ammoCrates){
                 if(c.mission){var obj=CreateLootPresentation("MISSION SUPPLIES",c.position,new Vector3(1.15f,.55f,.9f),new Color(.9f,.48f,.19f),LootPresentationKind.AmmoCrate);ObjectiveGroundRing.Create(obj.transform,new Vector3(c.position.x,0,c.position.z),1.15f);fieldAmmoCrates.Add(new FieldAmmoCrate{position=c.position,visual=obj,mission=true});}

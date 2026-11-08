@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace NeonVault {
 #endif
    return true;
   }
-  public bool EnterExpeditionStage(int stageId){if(stageId<0||stageId>=ExpeditionMap.StageCount||!FactionHeadquartersUnlocked(stageId)||!CanAccessFreeVersionStage(stageId))return false;if(!smoke&&(!IsOverworld||(WorldGeography.Entrances[stageId]-PlayerPosition).sqrMagnitude>3.5f*3.5f))return false;var stage=ExpeditionMap.Get(stageId,DebtLevel);SelectedStageId=stageId;ResetExpeditionMission();DungeonIndex=stage.legacyDungeonIndex;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
+  public bool EnterExpeditionStage(int stageId){if(stageId<0||stageId>=ExpeditionMap.StageCount||!FactionHeadquartersUnlocked(stageId)||!CanAccessFreeVersionStage(stageId))return false;if(!smoke&&(!IsOverworld||(WorldGeography.Entrances[stageId]-PlayerPosition).sqrMagnitude>3.5f*3.5f))return false;MarkDungeonFastTravelUnlocked(stageId);var stage=ExpeditionMap.Get(stageId,DebtLevel);SelectedStageId=stageId;ResetExpeditionMission();DungeonIndex=stage.legacyDungeonIndex;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
   public void OnDungeonFinished(bool won){completedRewardGun=null;completedRewardArmor=null;int rewardCreditsBefore=Credits,rewardPointsBefore=ExpeditionTokens;completedScrapReward=0;completedSkillPointReward=0;if(won){ExpeditionRunCompleted();if(SelectedExpeditionStage==null||MissionCompleted){if(SelectedStageId==0)FirstStepsDungeonCleared();HighestUnlocked=Mathf.Min(2,Mathf.Max(HighestUnlocked,DungeonIndex+1));AwardCredits(ScaleScrap(new[]{5000000,10000000,20000000}[DungeonIndex]));if(SelectedStageId>=0){if(clearedExpeditionStages.Contains(SelectedStageId))GrantRepeatExpeditionReward(SelectedStageId);else GrantExpeditionReward(SelectedStageId);}}else Notify("MISSION FAILED / EXTRACTION PAYOUT ONLY","任務失敗 / 脱出報酬のみ");}completedScrapReward=Mathf.Max(0,Credits-rewardCreditsBefore);completedSkillPointReward=Mathf.Max(0,ExpeditionTokens-rewardPointsBefore);shopCycle++;shopPurchased.Clear();CreateShopStock();SaveProgression();}
   void GrantExpeditionReward(int stageId)
   {
@@ -58,12 +59,12 @@ namespace NeonVault {
     default:ExpeditionTokens++;cacheEn="SKILL POINT +1";cacheJa="スキルポイント +1";break;
    }
    int missionScrap=MissionCompleted?TryClaimMissionReward():0;
-   int raidersBefore=ClearedFactionDungeonCount(DungeonFaction.Raiders),gangBefore=ClearedFactionDungeonCount(DungeonFaction.Gang);
+   int raidersBefore=ClearedFactionDungeonCount(DungeonFaction.Raiders),gangBefore=ClearedFactionDungeonCount(DungeonFaction.Gang),infectedBefore=ClearedFactionDungeonCount(DungeonFaction.None);
    clearedExpeditionStages.Add(stageId);SaveProgression();
    string missionEn=missionScrap>0?" / MISSION SCRAP +"+missionScrap.ToString("N0"):"";
    string missionJa=missionScrap>0?" / 任務スクラップ +"+missionScrap.ToString("N0"):"";
    Notify("FIRST CLEAR / "+cacheEn+missionEn,"初回クリア / "+cacheJa+missionJa);
-   UpdateFactionBossUnlocks(raidersBefore,gangBefore);
+   UpdateFactionBossUnlocks(raidersBefore,gangBefore,infectedBefore);
   }
   void GrantRepeatExpeditionReward(int stageId)
   {

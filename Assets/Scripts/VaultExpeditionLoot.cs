@@ -14,7 +14,7 @@ namespace NeonVault
         }
         int ExpeditionLootLevel(System.Random random)
         {
-            if(IsOverworld)return Mathf.Max(1,DebtLevel+random.Next(-1,2));
+            if(IsOverworld)return activeLootLandmarkId>=0?OverworldGeography.LandmarkBossLevel(activeLootLandmarkId,DebtLevel):Mathf.Max(1,DebtLevel+random.Next(-1,2));
             var stage=SelectedExpeditionStage;
             return stage==null?DungeonCatalog.ItemLevel(random,DungeonIndex):Mathf.Max(1,stage.level+random.Next(-1,3));
         }
@@ -24,7 +24,7 @@ namespace NeonVault
             var stage=SelectedExpeditionStage;
             if(stage!=null&&random.NextDouble()<(.08+stage.region*.04+(int)stage.mission*.02)*.95)
                 rarity=(Rarity)Mathf.Max((int)rarity,(int)DungeonCatalog.RollRarity(random,boss));
-            return rarity;
+            return PetImproveEnemyRarity(random,rarity,boss);
         }
         // Contract equipment has its own rarity table; ordinary enemy/cache drops
         // keep their existing rates. A first-clear cache adds ten percentage points
@@ -62,8 +62,14 @@ namespace NeonVault
         }
         public Gun RollExpeditionGun(System.Random random,bool boss=false)
         {
-            if(IsOverworld)return Arsenal.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
-            if(SelectedExpeditionStage==null)return Arsenal.RollForDungeon(random,DungeonIndex,boss);
+            if(IsOverworld)
+            {
+                Rarity owRarity=ExpeditionLootRarity(random,boss);int owLevel=ExpeditionLootLevel(random);
+                if(boss&&owRarity==Rarity.Legendary&&activeLootLandmarkId>=0&&DungeonBossExclusive.TryGetLandmarkExclusive(activeLootLandmarkId,out var lg)&&lg.category==ExclusiveLegendaryCategory.Gun&&random.NextDouble()<.5)
+                    return (Gun)DungeonBossExclusive.CreateStageExclusiveItem(lg,random,owLevel);
+                return Arsenal.CreateForDungeon(random,DungeonIndex,owRarity,owLevel);
+            }
+            if(SelectedExpeditionStage==null)return petEnemyLootRoll?Arsenal.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random)):Arsenal.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var eg)&&eg.category==ExclusiveLegendaryCategory.Gun&&random.NextDouble()<.5)return (Gun)DungeonBossExclusive.CreateStageExclusiveItem(eg,random,level);bool focus=random.NextDouble()<.70;Gun item=null;
             for(int i=0;i<10;i++)
@@ -75,8 +81,14 @@ namespace NeonVault
         }
         public ArmorItem RollExpeditionArmor(System.Random random,bool boss=false)
         {
-            if(IsOverworld)return Armory.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
-            if(SelectedExpeditionStage==null)return Armory.RollForDungeon(random,DungeonIndex,boss);
+            if(IsOverworld)
+            {
+                Rarity owRarity=ExpeditionLootRarity(random,boss);int owLevel=ExpeditionLootLevel(random);
+                if(boss&&owRarity==Rarity.Legendary&&activeLootLandmarkId>=0&&DungeonBossExclusive.TryGetLandmarkExclusive(activeLootLandmarkId,out var la)&&la.category==ExclusiveLegendaryCategory.Armor&&random.NextDouble()<.5)
+                    return (ArmorItem)DungeonBossExclusive.CreateStageExclusiveItem(la,random,owLevel);
+                return Armory.CreateForDungeon(random,DungeonIndex,owRarity,owLevel);
+            }
+            if(SelectedExpeditionStage==null)return petEnemyLootRoll?Armory.CreateForDungeon(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random)):Armory.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var ea)&&ea.category==ExclusiveLegendaryCategory.Armor&&random.NextDouble()<.5)return (ArmorItem)DungeonBossExclusive.CreateStageExclusiveItem(ea,random,level);bool focus=random.NextDouble()<.70;ArmorItem item=null;
             for(int i=0;i<10;i++)
@@ -88,8 +100,14 @@ namespace NeonVault
         }
         public ArtifactItem RollExpeditionArtifact(System.Random random,bool boss=false)
         {
-            if(IsOverworld)return ArtifactCatalog.Create(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random));
-            if(SelectedExpeditionStage==null)return ArtifactCatalog.RollForDungeon(random,DungeonIndex,boss);
+            if(IsOverworld)
+            {
+                Rarity owRarity=ExpeditionLootRarity(random,boss);int owLevel=ExpeditionLootLevel(random);
+                if(boss&&owRarity==Rarity.Legendary&&activeLootLandmarkId>=0&&DungeonBossExclusive.TryGetLandmarkExclusive(activeLootLandmarkId,out var lm)&&lm.category==ExclusiveLegendaryCategory.Module&&random.NextDouble()<.5)
+                    return (ArtifactItem)DungeonBossExclusive.CreateStageExclusiveItem(lm,random,owLevel);
+                return ArtifactCatalog.Create(random,DungeonIndex,owRarity,owLevel);
+            }
+            if(SelectedExpeditionStage==null)return petEnemyLootRoll?ArtifactCatalog.Create(random,DungeonIndex,ExpeditionLootRarity(random,boss),ExpeditionLootLevel(random)):ArtifactCatalog.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var em)&&em.category==ExclusiveLegendaryCategory.Module&&random.NextDouble()<.5)return (ArtifactItem)DungeonBossExclusive.CreateStageExclusiveItem(em,random,level);bool focus=random.NextDouble()<.70;ArtifactItem item=null;
             for(int i=0;i<10;i++)
@@ -101,8 +119,14 @@ namespace NeonVault
         }
         public MeleeWeaponItem RollExpeditionMelee(System.Random random,bool boss=false)
         {
-            if(IsOverworld)return MeleeWeaponCatalog.Create(random,ExpeditionLootLevel(random),ExpeditionLootRarity(random,boss));
-            if(SelectedExpeditionStage==null)return MeleeWeaponCatalog.RollForDungeon(random,DungeonIndex,boss);
+            if(IsOverworld)
+            {
+                Rarity owRarity=ExpeditionLootRarity(random,boss);int owLevel=ExpeditionLootLevel(random);
+                if(boss&&owRarity==Rarity.Legendary&&activeLootLandmarkId>=0&&DungeonBossExclusive.TryGetLandmarkExclusive(activeLootLandmarkId,out var lw)&&lw.category==ExclusiveLegendaryCategory.Melee&&random.NextDouble()<.5)
+                    return (MeleeWeaponItem)DungeonBossExclusive.CreateStageExclusiveItem(lw,random,owLevel);
+                return MeleeWeaponCatalog.Create(random,owLevel,owRarity);
+            }
+            if(SelectedExpeditionStage==null)return petEnemyLootRoll?MeleeWeaponCatalog.Create(random,ExpeditionLootLevel(random),ExpeditionLootRarity(random,boss)):MeleeWeaponCatalog.RollForDungeon(random,DungeonIndex,boss);
             Rarity rarity=ExpeditionLootRarity(random,boss);int level=ExpeditionLootLevel(random);
             if(boss&&rarity==Rarity.Legendary&&DungeonBossExclusive.TryGetStageExclusive(SelectedStageId,out var ew)&&ew.category==ExclusiveLegendaryCategory.Melee&&random.NextDouble()<.5)return (MeleeWeaponItem)DungeonBossExclusive.CreateStageExclusiveItem(ew,random,level);bool focus=random.NextDouble()<.70;MeleeWeaponItem item=null;
             for(int i=0;i<10;i++)

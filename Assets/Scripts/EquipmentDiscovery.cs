@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace NeonVault
         [Serializable] sealed class Save { public string[] ids; }
         static readonly HashSet<string> ids = new HashSet<string>(StringComparer.Ordinal);
         static bool loaded;
+        internal static void ResetSlotCache() { ids.Clear(); loaded=false; }
 
         static void Load()
         {

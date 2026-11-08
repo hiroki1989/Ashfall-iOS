@@ -12,24 +12,30 @@ namespace NeonVault
         public int index;
         public string catalogId;
         public int stageId;
+        public int landmarkId;
     }
 
-    // Curates the top ~1/3 strongest non-faction-boss legendaries across firearms,
+    // Curates the strongest non-faction-boss legendaries across firearms,
     // armor, modules, and melee weapons, and binds each one exclusively to a specific
-    // regular dungeon boss (stages 0..199, displayed in UI as 01..200).
+    // regular dungeon boss (83 HuntTarget dungeons) or a named overworld landmark boss (30 landmarks).
     // Exclusive legendaries never roll from non-boss or non-matching sources; when the
-    // assigned dungeon boss drops a legendary, it has a 50% chance to be its exclusive.
+    // assigned dungeon boss or landmark boss drops a legendary, it has a 50% chance to be its exclusive.
     public static class DungeonBossExclusive
     {
-        // Top 30 strongest legendary firearms (out of 90 = 33.3%):
+        public const int LandmarkBossCount = 30;
+
+        // Top 30 strongest legendary firearms for dungeon bosses (out of 90 = 33.3%):
         // 5 per manufacturer: the 4 strongest bespoke triggers (variants 0..3) + the strongest expanded mechanism (variant 14: Final Bearing / heavy blast + outer shockwave).
         static readonly int[] ExclusiveGunVariants = { 0, 1, 2, 3, 14 };
 
-        // Top 8 strongest legendary armor pieces (out of 24 active slots = 33.3%):
-        // armor-0-1 (Ghost Ledger), armor-1-1 (Iron Epitaph), armor-2-1 (Blackout Jacket),
-        // armor-3-1 (Grave Bloom), armor-3-4 (Undying Root), armor-4-2 (Fuse Match),
-        // armor-5-1 (Widow's Wall), armor-5-3 (Safe Passage).
+        // Next 12 strongest legendary firearms for overworld landmark bosses (2 per manufacturer: variants 4 & 13):
+        static readonly int[] LandmarkExclusiveGunVariants = { 4, 13 };
+
+        // Top 8 strongest legendary armor pieces for dungeon bosses (out of 24 active slots = 33.3%):
         static readonly int[] ExclusiveArmorIndices = { 1, 6, 11, 16, 19, 22, 26, 28 };
+
+        // Next 4 strongest legendary armor pieces for overworld landmark bosses:
+        static readonly int[] LandmarkExclusiveArmorIndices = { 2, 7, 12, 23 };
 
         static readonly HashSet<string> exclusiveGunKeys = new HashSet<string>(StringComparer.Ordinal);
         static readonly HashSet<string> exclusiveArmorKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -38,6 +44,9 @@ namespace NeonVault
 
         static readonly Dictionary<string, int> itemKeyToStage = new Dictionary<string, int>(StringComparer.Ordinal);
         static readonly Dictionary<int, ExclusiveLegendaryDrop> stageToExclusive = new Dictionary<int, ExclusiveLegendaryDrop>();
+
+        static readonly Dictionary<string, int> itemKeyToLandmark = new Dictionary<string, int>(StringComparer.Ordinal);
+        static readonly Dictionary<int, ExclusiveLegendaryDrop> landmarkToExclusive = new Dictionary<int, ExclusiveLegendaryDrop>();
 
         static readonly int[] nonExclusiveGunCatalogIndices;
         static readonly int[] nonExclusiveArmorIndices;
@@ -48,7 +57,7 @@ namespace NeonVault
         {
             var drops = new List<ExclusiveLegendaryDrop>(84);
 
-            // 1. 30 Legendary Firearms (5 per manufacturer, 30 / 90 = 1/3)
+            // 1. 30 Legendary Firearms for Dungeon Bosses (5 per manufacturer, 30 / 90 = 1/3)
             for (int maker = 0; maker < 6; maker++)
             {
                 for (int v = 0; v < ExclusiveGunVariants.Length; v++)
@@ -61,12 +70,14 @@ namespace NeonVault
                     {
                         category = ExclusiveLegendaryCategory.Gun,
                         index = catIndex,
-                        catalogId = key
+                        catalogId = key,
+                        stageId = -1,
+                        landmarkId = -1
                     });
                 }
             }
 
-            // 2. 8 Legendary Armor Pieces (8 / 24 = 1/3)
+            // 2. 8 Legendary Armor Pieces for Dungeon Bosses (8 / 24 = 1/3)
             for (int i = 0; i < ExclusiveArmorIndices.Length; i++)
             {
                 int armorIndex = ExclusiveArmorIndices[i];
@@ -76,11 +87,13 @@ namespace NeonVault
                 {
                     category = ExclusiveLegendaryCategory.Armor,
                     index = armorIndex,
-                    catalogId = key
+                    catalogId = key,
+                    stageId = -1,
+                    landmarkId = -1
                 });
             }
 
-            // 3. 28 Legendary Modules (28 / 84 = 1/3), ranked by combat impact (invulnerability, multi-target AoE/line strike, stagger, barrier, and output scale)
+            // 3. Legendary Modules ranked by combat impact
             var legendaryModules = new List<ModuleProduct>();
             foreach (var p in ModuleProductCatalog.All)
                 if (p.legendary && p.family >= 4 && p.family <= 6)
@@ -94,7 +107,7 @@ namespace NeonVault
                 return cmp != 0 ? cmp : string.CompareOrdinal(a.id, b.id);
             });
 
-            int moduleTargetCount = 28; // 28 / 84 = 1/3
+            int moduleTargetCount = 28; // 28 for dungeon bosses
             for (int i = 0; i < Mathf.Min(moduleTargetCount, legendaryModules.Count); i++)
             {
                 var mod = legendaryModules[i];
@@ -103,11 +116,13 @@ namespace NeonVault
                 {
                     category = ExclusiveLegendaryCategory.Module,
                     index = mod.designVariant,
-                    catalogId = mod.id
+                    catalogId = mod.id,
+                    stageId = -1,
+                    landmarkId = -1
                 });
             }
 
-            // 4. 17 Legendary Melee Weapons (17 / 50 = 34%, closest integer to 1/3), ranked by legendary hit effect & base DPS
+            // 4. Legendary Melee Weapons ranked by legendary hit effect & base DPS
             var meleeCandidates = new List<int>(MeleeWeaponCatalog.CatalogCount);
             for (int i = 0; i < MeleeWeaponCatalog.CatalogCount; i++) meleeCandidates.Add(i);
             meleeCandidates.Sort((a, b) =>
@@ -118,7 +133,7 @@ namespace NeonVault
                 return cmp != 0 ? cmp : a.CompareTo(b);
             });
 
-            int meleeTargetCount = 17;
+            int meleeTargetCount = 17; // 17 for dungeon bosses
             for (int i = 0; i < Mathf.Min(meleeTargetCount, meleeCandidates.Count); i++)
             {
                 int meleeIdx = meleeCandidates[i];
@@ -128,17 +143,17 @@ namespace NeonVault
                 {
                     category = ExclusiveLegendaryCategory.Melee,
                     index = meleeIdx,
-                    catalogId = key
+                    catalogId = key,
+                    stageId = -1,
+                    landmarkId = -1
                 });
             }
 
             // Deterministically assign each of the 83 exclusive legendaries to a distinct HuntTarget boss dungeon
-            // across stages 0..199 (excluding stage 0 tutorial so stage 1..199 are used cleanly, or evenly across HuntTarget stages).
+            // across stages 0..199 (excluding stage 0 tutorial so stage 2..198 are used cleanly).
             int total = drops.Count; // 83
             for (int i = 0; i < total; i++)
             {
-                // Even-numbered stages (2, 4, ..., 198) are dedicated HuntTarget boss dungeons;
-                // spread across 83 distinct dungeons in 0..199.
                 int stageId = 2 + ((i * 23) % 99) * 2;
                 while (stageToExclusive.ContainsKey(stageId))
                     stageId = (stageId + 2) % ExpeditionMap.RegularStageCount;
@@ -150,8 +165,82 @@ namespace NeonVault
                 itemKeyToStage[entry.catalogId] = stageId;
             }
 
-            // Build non-exclusive pools for the remaining 2/3 of legendaries
-            var gunPool = new List<int>(60);
+            // 5. Build 30 Exclusive Legendaries for the 30 Overworld Landmark Bosses
+            // (12 Guns + 4 Armors + 8 Modules + 6 Melee = 30 Landmark Boss Exclusives)
+            var landmarkDrops = new List<ExclusiveLegendaryDrop>(LandmarkBossCount);
+            for (int maker = 0; maker < 6; maker++)
+            {
+                for (int v = 0; v < LandmarkExclusiveGunVariants.Length; v++)
+                {
+                    int variant = LandmarkExclusiveGunVariants[v];
+                    int catIndex = LegendaryCatalog.CatalogIndex(maker, variant);
+                    string key = LegendaryCatalog.Key(false, catIndex);
+                    exclusiveGunKeys.Add(key);
+                    landmarkDrops.Add(new ExclusiveLegendaryDrop
+                    {
+                        category = ExclusiveLegendaryCategory.Gun,
+                        index = catIndex,
+                        catalogId = key,
+                        stageId = -1
+                    });
+                }
+            }
+            for (int i = 0; i < LandmarkExclusiveArmorIndices.Length; i++)
+            {
+                int armorIndex = LandmarkExclusiveArmorIndices[i];
+                string key = LegendaryCatalog.Key(true, armorIndex);
+                exclusiveArmorKeys.Add(key);
+                landmarkDrops.Add(new ExclusiveLegendaryDrop
+                {
+                    category = ExclusiveLegendaryCategory.Armor,
+                    index = armorIndex,
+                    catalogId = key,
+                    stageId = -1
+                });
+            }
+            for (int i = moduleTargetCount; i < Mathf.Min(moduleTargetCount + 8, legendaryModules.Count); i++)
+            {
+                var mod = legendaryModules[i];
+                exclusiveModuleIds.Add(mod.id);
+                landmarkDrops.Add(new ExclusiveLegendaryDrop
+                {
+                    category = ExclusiveLegendaryCategory.Module,
+                    index = mod.designVariant,
+                    catalogId = mod.id,
+                    stageId = -1
+                });
+            }
+            for (int i = meleeTargetCount; i < Mathf.Min(meleeTargetCount + 6, meleeCandidates.Count); i++)
+            {
+                int meleeIdx = meleeCandidates[i];
+                exclusiveMeleeIndices.Add(meleeIdx);
+                string key = MeleeKey(meleeIdx);
+                landmarkDrops.Add(new ExclusiveLegendaryDrop
+                {
+                    category = ExclusiveLegendaryCategory.Melee,
+                    index = meleeIdx,
+                    catalogId = key,
+                    stageId = -1
+                });
+            }
+
+            for (int i = 0; i < landmarkDrops.Count && i < LandmarkBossCount; i++)
+            {
+                // Interleave categories across the 30 landmarks so neighboring landmarks offer diverse gear types
+                int landmarkId = (i * 7) % LandmarkBossCount;
+                while (landmarkToExclusive.ContainsKey(landmarkId))
+                    landmarkId = (landmarkId + 1) % LandmarkBossCount;
+
+                var entry = landmarkDrops[i];
+                entry.landmarkId = landmarkId;
+                landmarkDrops[i] = entry;
+                landmarkToExclusive[landmarkId] = entry;
+                itemKeyToLandmark[entry.catalogId] = landmarkId;
+            }
+
+            // Build non-exclusive pools for the remaining general-pool legendaries
+            // (never includes any dungeon boss exclusive or landmark boss exclusive)
+            var gunPool = new List<int>(48);
             for (int maker = 0; maker < 6; maker++)
             {
                 for (int variant = 0; variant < 15; variant++)
@@ -164,7 +253,7 @@ namespace NeonVault
             }
             nonExclusiveGunCatalogIndices = gunPool.ToArray();
 
-            var armorPool = new List<int>(16);
+            var armorPool = new List<int>(12);
             for (int maker = 0; maker < 6; maker++)
             {
                 for (int variant = 1; variant <= 4; variant++)
@@ -187,7 +276,7 @@ namespace NeonVault
                 nonExclusiveModulesByFamily[f - 4] = famList.ToArray();
             }
 
-            var meleePool = new List<int>(33);
+            var meleePool = new List<int>(27);
             for (int i = 0; i < MeleeWeaponCatalog.CatalogCount; i++)
                 if (!exclusiveMeleeIndices.Contains(i))
                     meleePool.Add(i);
@@ -199,8 +288,6 @@ namespace NeonVault
             var r = DistinctEquipmentDesigns.Find(p.id);
             if (r == null) return 0f;
             int mode = (r.attachment + r.body * 2) % 10;
-            // Mode weights based on combat power:
-            // 4 (invulnerability), 1 (3-target 6x burst), 7 (3-target 5x line pierce), 9 (2-target 4x + 0.7s delay), 0 (+3 barrier), 8 (instant melee reset), 2 (-0.45s dodge cd)
             float modeScore = mode == 4 ? 100f : mode == 1 ? 92f : mode == 7 ? 86f : mode == 9 ? 82f : mode == 0 ? 75f : mode == 8 ? 64f : mode == 2 ? 58f : mode == 3 ? 52f : 40f;
             float makerBonus = r.maker == 5 ? 14f : (r.maker == 1 || r.maker == 4) ? 9f : 5f;
             float ratio = p.powerScale / Mathf.Max(.4f, p.cooldownScale);
@@ -271,6 +358,9 @@ namespace NeonVault
         public static bool TryGetStageExclusive(int stageId, out ExclusiveLegendaryDrop drop) =>
             stageToExclusive.TryGetValue(stageId, out drop);
 
+        public static bool TryGetLandmarkExclusive(int landmarkId, out ExclusiveLegendaryDrop drop) =>
+            landmarkToExclusive.TryGetValue(landmarkId, out drop);
+
         public static object CreateStageExclusiveItem(ExclusiveLegendaryDrop drop, System.Random random, int level)
         {
             level = Mathf.Max(1, level);
@@ -290,26 +380,34 @@ namespace NeonVault
             }
         }
 
-        public static bool TryGetExclusiveStageForItem(object item, out int stageId)
+        static string ExtractItemKey(object item)
         {
-            stageId = -1;
-            if (item == null) return false;
+            if (item == null) return null;
             string relic = item is Gun rg ? rg.bossRelicId : item is ArmorItem ra ? ra.bossRelicId : item is ArtifactItem rm ? rm.bossRelicId : item is MeleeWeaponItem rw ? rw.bossRelicId : null;
-            if (!string.IsNullOrEmpty(relic)) return false;
-
-            if (item is Gun gun && !string.IsNullOrEmpty(gun.legendaryKey))
-                return itemKeyToStage.TryGetValue(gun.legendaryKey, out stageId);
-            if (item is ArmorItem armor && !string.IsNullOrEmpty(armor.legendaryKey))
-                return itemKeyToStage.TryGetValue(armor.legendaryKey, out stageId);
-            if (item is ArtifactItem module && (module.rarity == Rarity.Legendary || module.uniqueEffect > 0) && !string.IsNullOrEmpty(module.catalogId))
-                return itemKeyToStage.TryGetValue(module.catalogId, out stageId);
+            if (!string.IsNullOrEmpty(relic)) return null;
+            if (item is Gun gun && !string.IsNullOrEmpty(gun.legendaryKey)) return gun.legendaryKey;
+            if (item is ArmorItem armor && !string.IsNullOrEmpty(armor.legendaryKey)) return armor.legendaryKey;
+            if (item is ArtifactItem module && (module.rarity == Rarity.Legendary || module.uniqueEffect > 0) && !string.IsNullOrEmpty(module.catalogId)) return module.catalogId;
             if (item is MeleeWeaponItem melee && melee.uniqueEffect)
             {
                 MeleeWeaponCatalog.InferIdentity(melee);
-                if (!string.IsNullOrEmpty(melee.catalogId))
-                    return itemKeyToStage.TryGetValue(melee.catalogId, out stageId);
+                return melee.catalogId;
             }
-            return false;
+            return null;
+        }
+
+        public static bool TryGetExclusiveStageForItem(object item, out int stageId)
+        {
+            stageId = -1;
+            string key = ExtractItemKey(item);
+            return !string.IsNullOrEmpty(key) && itemKeyToStage.TryGetValue(key, out stageId);
+        }
+
+        public static bool TryGetExclusiveLandmarkForItem(object item, out int landmarkId)
+        {
+            landmarkId = -1;
+            string key = ExtractItemKey(item);
+            return !string.IsNullOrEmpty(key) && itemKeyToLandmark.TryGetValue(key, out landmarkId);
         }
 
         public static string DungeonNumberLabel(int stageId, bool japanese)
@@ -318,6 +416,14 @@ namespace NeonVault
             return japanese
                 ? "【ダンジョン " + num + " ボス固有ドロップ】"
                 : "[Dungeon " + num + " Boss Exclusive]";
+        }
+
+        public static string LandmarkBossLabel(int landmarkId, bool japanese)
+        {
+            string title = OverworldGeography.LandmarkShortTitle(landmarkId, japanese);
+            return japanese
+                ? "【ランドマーク「" + title + "」ボス固有ドロップ】"
+                : "[Landmark '" + title + "' Boss Exclusive]";
         }
     }
 }

@@ -26,21 +26,25 @@ namespace NeonVault
     public static class ExpeditionMap
     {
         public const int RegularStageCount = 200;
-        public const int StageCount = 206;
-        // Stable per-stage assignment: 50 raider hideouts, 50 gang hideouts, 100 original sites, plus 6 faction boss strongholds (200..205).
+        public const int StageCount = 209;
+        // Stable per-stage assignment: 50 raider hideouts, 50 gang hideouts, 100
+        // infected/neutral sites, six raider/coyote strongholds and three infected bosses.
         // The first contract is the infected tutorial. Keep its authored mission and
         // low-cost enemy roster; move its Red Claw allocation to site 03 so the
         // faction totals remain 50 / 50 without loading a crowd of full human rigs
         // during the first transition on memory-constrained phones.
+        public static bool IsInfectedDungeonStage(int id) => id >= 0 && id < RegularStageCount && FactionForStage(id) == DungeonFaction.None;
         public static DungeonFaction FactionForStage(int id) => id < 0 || id >= StageCount ? DungeonFaction.None
             : id >= 200 && id <= 202 ? DungeonFaction.Raiders
             : id >= 203 && id <= 205 ? DungeonFaction.Gang
+            : id >= 206 ? DungeonFaction.None
             : id == 0 ? DungeonFaction.None : id == 2 ? DungeonFaction.Raiders
             : id % 4 == 0 ? DungeonFaction.Raiders : id % 4 == 1 ? DungeonFaction.Gang : DungeonFaction.None;
         public static readonly Vector2 CityCanvasSize = new Vector2(1440, 1000);
         static readonly Vector2[] BossCityPoints = {
             new Vector2(210, 745), new Vector2(165, 840), new Vector2(115, 920),
-            new Vector2(1230, 255), new Vector2(1285, 165), new Vector2(1335, 85)
+            new Vector2(1230, 255), new Vector2(1285, 165), new Vector2(1335, 85),
+            new Vector2(630, 190), new Vector2(695, 115), new Vector2(765, 60)
         };
         // A coprime permutation scatters stable stage IDs
         // across the city without changing progression, rewards, or claimed contracts.
@@ -100,8 +104,8 @@ namespace NeonVault
         static readonly string[] missionEn = {"Defeat 18 hostiles","Defeat the boss","Recover 3 supplies across 2 floors","Break the infestation: 8 kills and 2 supplies","Recover supplies on each of 2 floors","Recover 5 supplies across 3 floors"};
         static readonly string[] missionJa = {"敵を18体倒す","ボスを倒す","2フロア以上で物資を3つ回収","感染網を断つ：敵8体と物資2つを回収","別々の2フロアで物資を1つずつ回収","3フロア以上で物資を5つ回収"};
         static readonly Color[] colors = {new Color(.31f,.63f,.55f),new Color(.84f,.43f,.23f),new Color(.23f,.62f,.72f),new Color(.48f,.68f,.35f),new Color(.86f,.28f,.20f)};
-        static readonly string[] bossNamesEn = {"RED CLAW OUTPOST","RED CLAW WAR CAMP","RED CLAW STRONGHOLD","COYOTE OUTPOST","COYOTE WAR DEN","COYOTE STRONGHOLD"};
-        static readonly string[] bossNamesJa = {"レッドクロウ前線基地","レッドクロウ軍事拠点","レッドクロウ本拠地","コヨーテ前線基地","コヨーテ軍事拠点","コヨーテ本拠地"};
+        static readonly string[] bossNamesEn = {"RED CLAW OUTPOST","RED CLAW WAR CAMP","RED CLAW STRONGHOLD","COYOTE OUTPOST","COYOTE WAR DEN","COYOTE STRONGHOLD","INFECTED OUTBREAK","INFECTED HIVE","INFECTED CORE"};
+        static readonly string[] bossNamesJa = {"レッドクロウ前線基地","レッドクロウ軍事拠点","レッドクロウ本拠地","コヨーテ前線基地","コヨーテ軍事拠点","コヨーテ本拠地","感染者の巣・前線","感染者の巣・中枢","感染者の巣・核心"};
         public static ExpeditionStage Get(int id,int playerLevel=1)
         {
             id=Mathf.Clamp(id,0,StageCount-1);
@@ -109,16 +113,16 @@ namespace NeonVault
             if(id>=RegularStageCount)
             {
                 int bossIndex=id-RegularStageCount;
-                bool red=bossIndex<3;
+                bool red=bossIndex<3, infected=bossIndex>=6;
                 int tier=bossIndex%3;
                 int bossRegion=tier==0?1:tier==1?2:4;
                 string bossLoc=places[bossRegion][red?0:4], bossLocJa=placesJa[bossRegion][red?0:4];
                 return new ExpeditionStage { id=id,region=bossRegion,level=danger,legacyDungeonIndex=tier,
                     englishName=bossNamesEn[bossIndex],japaneseName=bossNamesJa[bossIndex],
                     englishLocation=regions[bossRegion]+" — "+bossLoc,japaneseLocation=regionsJa[bossRegion]+" — "+bossLocJa,
-                    englishBiome=red?"RED CLAW COMMAND":"DUSK COYOTES COMMAND",japaneseBiome=red?"レッドクロウ司令部":"ダスク・コヨーテ司令部",
+                    englishBiome=infected?"INFECTED NEST":red?"RED CLAW COMMAND":"DUSK COYOTES COMMAND",japaneseBiome=infected?"感染者の巣":red?"レッドクロウ司令部":"ダスク・コヨーテ司令部",
                     mission=ExpeditionMission.HuntTarget,
-                    englishTarget=red?"RAVEN":"VEX",japaneseTarget=red?"レイヴン":"ヴェックス",
+                    englishTarget=infected?"THE RENEGADE":red?"RAVEN":"VEX",japaneseTarget=infected?"レネゲード":red?"レイヴン":"ヴェックス",
                     englishReward=RewardLabel(id,false),japaneseReward=RewardLabel(id,true),regionColor=colors[bossRegion] };
             }
             int region=(id%100)/20, n=id%20, place=n/4, variant=n%4+(id/100)*4;

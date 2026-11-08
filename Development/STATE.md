@@ -1,3 +1,64 @@
+## 2026-11-09 / 感染者アセットと大ボス（完了・コード検証済み）
+- iOS / Steam / Steam Demo の3プロジェクトで感染者通常サイト200枠のうち100枠を感染者勢力に設定し、制圧30%・60%・100%で感染者ボス戦（ステージ206–208）が解放されるよう統合。
+- 通常感染者へ Free Female Zombie を抽選接続。感染者ダンジョンの通常ボスは Fantastic Creature #1（プロジェクト内の `True_Horror_Creatures` / thc6 FBX・controller）を抽選し、感染者の大ボスには InfectedRenegade リソースPrefabを接続。固有レジェンダリのボス系列も追加済み。
+- 新Prefab/モデル/軽量テクスチャを3版に同期。巨大なSci-Fi元アセット一式は同期せず、実際に使うFBXと2048px圧縮テクスチャだけをResources経由で参照。
+- Steam / Demo はユーザー指定によりデイリーチェストと広告処理を除外。iOS専用機能として維持。
+- Unity 6000.6.0f1 のスクリプトコンパイルを3プロジェクトすべてで確認。iOS `D:/Unity/BuildTools/infected_ios_compile_final.log`、Steam `infected_steam_compile4.log`、Demo `infected_demo_compile.log` は成功。実機/iOS実行画面での戦闘動作QAは未実施。
+- Sci-Fi Renegade 元PrefabにAnimator Controllerがなかったため、移動・攻撃・ダウンの駆動は既存の軽量な名前付きボーン制御に接続。モデルの見た目と既存の勢力ボスAIを維持。True_Horror_CreaturesのFBX、Animator Controller、使用する待機・走行・3種攻撃・死亡ステートを照合。
+
+- Female Zombie の既存モーション用アダプターと通常感染者への出現抽選を追加。ゲーム画面・足元・モーション・実機検証は未実施。
+- 感染者の制圧率と3つのボスステージの下書きを追加したが、敵モデル・専用装備・全体統合は未完成。既存ステージ数206を維持し、未完成ステージは解放しない。
+- 指定の Fantastic Creature #1 はAssets内で未発見。True_Horror_Creaturesは同梱readmeで NighMare Creature #6 と明記。Sci_Fi_Character_08 のPrefabにはAnimator controllerが設定されていない。素材と動作の確認が必要。
+- Steam / Demo への反映と3プロジェクトの検証は未実施。Unityバッチログ `D:/Unity/BuildTools/infected_work_compile.log` を確認すること。
+
+## 2026-11-08 / プレイヤースキルツリー＆ペットスキルツリーのボーダーランズ風刷新（上から下への樹形図・カスタムアイコン・コントローラー対応・全3バージョン）
+- **新規スキルツリーUIアセット制作（Assets/Resources/Art/UI/skill_tree_icons.png, skill_node_frames.png）**:
+  - 銃撃・連射・リロード・照準・会心・タレット・二連砲台・グレネード・衝撃波・クラスター爆弾・医療クロス・サンクチュアリドーム・装甲シールド・俊敏ブーツ・電撃・火炎・毒・爆発・狼の牙/肉球・救急キット・弾帯・トレジャーダイヤ・奮起フラッグ・最終奥義クラウン等の計32種の高コントラストアイコンアトラス（1024x512）と、八角ベベル・六角ブランチ・キャップストーンダイヤ・発光ハローの4種ノードフレーム（640x160）を新規生成。
+- **プレイヤーのアクションスキルツリー刷新（Assets/Scripts/ActionSkillUI.cs, VaultEquipmentScreen.cs）**:
+  - 従来の簡素な左→右テキスト行表示から、ボーダーランズ風の**上から下へ流れる垂直分岐樹形図（Top-Down Tree）**へ一新（全5段階、スクロールビュー＆タッチドラッグ＆マウスホイール対応）。
+  - 各段階が「基礎スキル（Core）▼ 派生起点（Origin）▼ 左右分岐（Left/Right Split）▼ 特化統合（Convergence）」のダイヤ型ツリーで上から下へ視覚的に接続され、解放済みパイプにはエネルギーパルスが流れる演出を追加。
+  - 右側の詳細パネルにも選択ノードの大型アイコンプレビュー・枠・効果説明・習得ランクバッジを配置。
+- **ペット（ルーク）のスキルツリー刷新（Assets/Scripts/PetSkillUI.cs）**:
+  - 従来の横一列5枚のテキストボタンから、3系統（レスキュードッグ／サプライハウンド／トレジャースカウト）を3カラムで一覧できる**上から下への進化樹形図（相棒スキル ▼ 強いかみつき・すばやいかみつき ▼ 特別訓練 ▼ 奮起）**へ刷新。
+  - 右パネル上部にルークのお座り3Dプレビュー、下部に選択スキルのアイコン・詳細・強化ボタン・スキル装備ボタンを配置。戦闘中HUDバッジも対応スキルアイコンを描画するよう改善。
+- **コントローラー（ゲームパッド／キーボード）完全対応**:
+  - 十字キー／左スティック／WASD／矢印キーでの上下左右の直感的なノード移動（自動スクロール追従付き）、A / Enter / Space でスキル強化、X / E でペットスキル装備、LB / RB (Q / E) で分岐・系統切替、Y / Tab でクラス切替、B / Esc で戻る操作および画面下部の操作ガイドフッターを実装。
+- **全3バージョン反映・検証**:
+  - iOS版（D:/Unity/Ashfall-iOS）、Steam版（D:/Unity/DustDebt-Steam）、SteamDemo版（D:/Unity/DustDebt-Steam-Demo）のすべてに反映。Unity 6000.6.0f1バッチモードで3プロジェクトともコンパイルエラー0件・全225アクションスキルノード＆全15ペットスキルノードのアイコン割当・スクロール追従テスト通過（D:/Unity/BuildTools/skill_tree_review.log）を確認。
+
+## 2026-11-08 / ダンジョンフロア構成・ファストトラベル解放・YOU DIEDロゴ・セーブ削除・GameCenter連携（全3バージョン）
+- **通常フロアとボスフロアの構造差別化**:
+  - SectorLayout.cs に大部屋・広間構成（rena: true）のサポートを追加。通常フロアは入り組んだ多数の小部屋パターン（rena: false, compactPlan: true）を固定生成し、ボスのフロア（最終フロア 
+oom >= CurrentDungeon.AreaCount - 1）のみ「だだっ広い大部屋構成」と「入り組んだ小部屋」がランダム（50%）で出現するよう VaultGame.cs で制御。
+- **ダンジョン前ファストトラベル解放**:
+  - ダンジョン突入時・クリア時・死亡時に当該ダンジョンIDを訪問済みとして保存（Vault.DungeonVisited.<id>）。広域地図（Overworld Atlas）上で訪問済みダンジョンを選択時、直接ダンジョン入口前へ即座に移動できるファストトラベル機能を追加（FastTravelToDungeon）。
+- **死亡画面「YOU DIED」のロゴ画像化**:
+  - タイトルロゴ調の重厚な金属かすれ・血痕オーラ・世界観サブタイトル（DUST CONSUMES ALL · CONTRACT VOID）を含む透過ロゴグラフィック画像（Assets/Resources/Art/UI/you_died_logo.png）を生成・配置。安っぽいフォント文字描画からロゴテクスチャのフェードイン描画へ刷新。
+- **セーブデータ削除機能と確認ダイアログ**:
+  - SaveSlotMenu.cs に各スロットごとの「DELETE / 削除」ボタンを追加。
+  - 削除押下時に確認ポップアップ（「セーブデータを削除しますか？」）を表示し、「削除を実行」で対象スロットの全進行・装備・スキル・フラグデータを安全に初期化（SaveSlotPrefs.DeleteSlot）。
+- **iOS版 Game Center連携基盤**:
+  - Assets/Scripts/GameCenterSyncManager.cs を実装。UnityEngine.SocialPlatforms.GameCenter および Social.localUser.Authenticate によるGame Centerサインイン認証、プレイヤーID取得、端末変更や再インストール時にもセーブデータを復元できる同期フックを統合。
+- **全3バージョン適用と検証**:
+  - iOS版（D:/Unity/Ashfall-iOS）、Steam版（D:/Unity/DustDebt-Steam）、SteamDemo版（D:/Unity/DustDebt-Steam-Demo）の全プロジェクトに反映。Unity 6000.6.0f1バッチモードで全3プロジェクトのC#コンパイル・自動テストを実行し、エラー0件・全機能パス（
+ew_features_review.log）を確認。
+
+## 2026-11-08 / 3セーブスロット
+- 既存の進行データをスロット1として維持し、2・3の進行・装備・図鑑・犬スキル等を別キーで保存。言語・音量・課金権利・デイリー回数は共通。タイトルから選択し探索中断データがある場合は再開を選べる。
+- 起動時の進行読み込みをスロット選択後に延期。切替時のキャッシュと旧ワールド保存を保護。Unityでコンパイル、独立した一時キーを使う3スロット読み書きテスト成功（`D:/Unity/BuildTools/save_slot_review.log`）。実際の画面操作・中断再開・iOS実機検証は未実施。
+
+## 2026-11-08 / ペットスキル画面のお座りプレビュー
+- 犬の骨格に合わせて腰を下げ、後ろ脚を曲げ、顔が見えるカメラ位置に調整。Unity Editorで描画・コンパイル確認（`D:/Unity/BuildTools/PetSkillReview/pet-preview.png`、`D:/Unity/BuildTools/pet_sit_final.log`）。実際のインベントリ画面およびiOS実機での確認は未実施。
+
+## 2026-11-08 / ペットスキル（統合検証中）
+- iOS版55/55。独立した3系統のペットスキル、イオナへのレジェンダリ譲渡とポイント、初回会話、各系統の撃破時効果、攻撃強化、HUD、一時バフ、発動時の鳴き声を追加。
+- 旧セーブ互換を考慮し回復パックの回復率と中断時クールダウンを保存。Unity C#コンパイル成功、犬の3Dプレビュー描画確認は成功したが座り姿とカメラ構図の品質確認は未完。ゲーム内での譲渡・スキル発動・HUD・音声の実動作、iOS実機は未検証。カメラ位置を調整した後の再撮影も必要。
+
+## 2026-11-08 / 拠点NPC（イオナ・セラ・ブリッグス）のスケールをプレイヤー実寸に統一 ＆ イオナ右腰の水色オブジェクト除去（全3バージョン）
+- プレイヤー（`DetailedHeroPlayer3D`、`localScale=1.28f`、全高約2.00m）に対し、`localScale=1.0f` のままでは小さく見えていた拠点NPC3名のスケールを `VaultHubWorld.HubNpc` にてイオナ `1.20f`、セラ・ブリッグス `1.09f` に設定し、プレイヤーと並んだ際の身長・頭身・肩位置が揃うよう修正。
+- `Tools/Blender/build_iona_hq.py`（および `build_iona.py`）からイオナの右腰付近にあった水色の発光オブジェクト（記録端末）を除去して `Iona.fbx`（38,958 tris, 12マテリアル）を再出力。
+- iOS版（`D:/Unity/Ashfall-iOS`）・Steam版（`D:/Unity/DustDebt-Steam`）・SteamDemo版（`D:/Unity/DustDebt-Steam-Demo`）の3バージョンすべてに反映し、Unity 6000.6.0f1バッチモードで3プロジェクトのインポート・C#コンパイル通過（エラー0）およびプレイヤーと3名を横並びにした比較画像（`D:/Unity/AssetIntegration/Iona/hub-npc-scale-compare.png`）で目視確認。実ゲーム画面・iOS実機は未検証。
+
 ## 2026-11-08 / iOS 54・勢力旗・敵数・地図初期位置
 - `ProjectSettings.asset` のバージョン／iOSビルドを54/54に更新。
 - 勢力旗を単独画像3枚へ分離し、勢力本拠地の余分な入口旗を除去。各勢力は自勢力の画像のみ参照する。
@@ -1304,6 +1365,9 @@ iOS・Steam・DEMOへ人物7点のv8を追加。主人公、ヴェイル、ブ�
 主人公はメニュー画を参照して左向き・腕を下ろした姿、ブリッグスと武器商人は若い戦闘員として異なるポーズと装備に変更。犬は人型でない頭と首のみ。イオナの会話参照は既存で単一のionaキー。3版に反映。iOS Unity素材QA PASS、Steam・DEMO batch成功。実際の会話画面の目視は未実施。
 ## 2026-11-05 / 会話画像v10
 主人公はユーザー添付PNGそのものを使用し、会話の主人公画像描画だけGUI行列で左右反転後に元へ復帰。武器商人はヘルメット・整った若い戦闘員の画像へ更新。3版へ反映。iOS Unity読み込みQA PASS、Steam・DEMO Unity batch成功。実際の会話画面の見た目は未検証。
+
+
+
 
 
 

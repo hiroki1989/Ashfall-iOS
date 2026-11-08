@@ -42,7 +42,8 @@ namespace NeonVault
         string CatalogEffect(object item)
         {
             string relic=item is Gun rg?rg.bossRelicId:item is ArmorItem ra?ra.bossRelicId:item is ArtifactItem rm?rm.bossRelicId:item is MeleeWeaponItem rw?rw.bossRelicId:null;
-            if(BossRelicFoundation.Decode(relic,out int rBoss,out _)){string rStage=rBoss==0?T("[Dungeon 201–203 Boss Exclusive] ","【ダンジョン 201〜203 ボス固有ドロップ】"):rBoss==1?T("[Dungeon 204–206 Boss Exclusive] ","【ダンジョン 204〜206 ボス固有ドロップ】"):T("[Vale Final Boss Exclusive] ","【ヴェイル固有ドロップ】");return rStage+LegendaryRedOpen+BossRelicFoundation.Description(relic,VaultLanguage.Japanese)+LegendaryRedClose;}string exclPrefix=DungeonBossExclusive.TryGetExclusiveStageForItem(item,out int exclStage)?DungeonBossExclusive.DungeonNumberLabel(exclStage,VaultLanguage.Japanese)+" ":"";
+            if(BossRelicFoundation.Decode(relic,out int rBoss,out _)){string rStage=rBoss==0?T("[Dungeon 201–203 Boss Exclusive] ","【ダンジョン 201〜203 ボス固有ドロップ】"):rBoss==1?T("[Dungeon 204–206 Boss Exclusive] ","【ダンジョン 204〜206 ボス固有ドロップ】"):rBoss==3?T("[Infected Boss Exclusive] ","【感染者ボス固有ドロップ】"):T("[Vale Final Boss Exclusive] ","【ヴェイル固有ドロップ】");return rStage+LegendaryRedOpen+BossRelicFoundation.Description(relic,VaultLanguage.Japanese)+LegendaryRedClose;}
+            string exclPrefix=DungeonBossExclusive.TryGetExclusiveStageForItem(item,out int exclStage)?DungeonBossExclusive.DungeonNumberLabel(exclStage,VaultLanguage.Japanese)+" ":DungeonBossExclusive.TryGetExclusiveLandmarkForItem(item,out int exclLandmark)?DungeonBossExclusive.LandmarkBossLabel(exclLandmark,VaultLanguage.Japanese)+" ":"";
             if(item is Gun gun)return string.IsNullOrEmpty(gun.legendaryKey)
                 ?T("A firearm recovered from the ruined city.","廃きょの街で回収された銃器。")
                 :exclPrefix+LegendaryRedOpen+LegendaryCatalog.Description(gun,VaultLanguage.Japanese)+LegendaryRedClose;

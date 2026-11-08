@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System.Collections.Generic;
 using UnityEngine;
 

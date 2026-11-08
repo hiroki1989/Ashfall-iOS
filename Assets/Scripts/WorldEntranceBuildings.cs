@@ -89,9 +89,12 @@ namespace NeonVault
             if(factionHeadquarters)
             {
                 DressCampExterior(site.transform,key);WeatherCampFacade(site.transform,state.materials,key);
-                int flag=ExpeditionMap.FactionForStage(entranceId)==DungeonFaction.Raiders?1:2;
-                AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],-3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ west banner");
-                AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ east banner");
+                if(!VaultGame.IsInfectedBossStage(entranceId))
+                {
+                    int flag=ExpeditionMap.FactionForStage(entranceId)==DungeonFaction.Raiders?1:2;
+                    AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],-3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ west banner");
+                    AddFactionFlag(site.transform,state.materials,state.factionFlags[flag],3.75f,9.1f,2.68f,2.4f,1.7f,"Faction HQ east banner");
+                }
             }
             // A readable dark doorway and recessed jambs are always present, including imported exteriors.
             Box(site.transform,state.materials, "Door recess",new Vector3(0,1.3f,2.03f),new Vector3(2.3f,2.6f,.12f),2);

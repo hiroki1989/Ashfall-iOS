@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -81,7 +82,7 @@ namespace NeonVault
                 default:return 0;
             }
         }
-        public float EffectiveDamage=>gun==null?0:gun.damage*(1+damageBonus+EquippedMeleeAffix("damage")+DebtDamageBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage")+ArtifactGunDamageBonus(gun)+ActionSkillGunBonus(gun)+ActionPositionBonus("turret_near_damage","medic_field_damage"))*(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier*(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
+        public float EffectiveDamage=>gun==null?0:gun.damage*(1+damageBonus+EquippedMeleeAffix("damage")+DebtDamageBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage")+ArtifactGunDamageBonus(gun)+ActionSkillGunBonus(gun)+ActionPositionBonus("turret_near_damage","medic_field_damage")+PetPlayerDamageBonus)*(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier*(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
         public float EffectiveFireRate=>gun==null?0:(1+fireBonus+EquippedMeleeAffix("fireRate")+DebtFireRateBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.fireBonus)+ArtifactAffixBonus("fireRate")+ActionSkillExtraValue("fire_rate"))/gun.interval;
         public float EffectiveReload=>gun==null?1:Mathf.Max(.35f,gun.reloadSeconds/(1+DebtReloadBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.reloadBonus)+ArtifactAffixBonus("reload")+ActionSkillExtraValue("reload_speed")+ActionPositionBonus("turret_near_reload","medic_field_reload")));
         public float EffectiveAccuracy=>gun==null?0:Mathf.Clamp(Arsenal.Accuracy(gun)+100*DebtAccuracyBonus(VaultLanguage.DisplayModel(gun))+100*ArmorTotal(a=>a.accuracyBonus)+100*ArtifactAffixBonus("accuracy")+100*ActionSkillExtraValue("accuracy"),1,100);
@@ -267,7 +268,7 @@ namespace NeonVault
         public void DiscardArmor(ArmorItem item){if(!Armory.IsActiveArmor(item)||Array.IndexOf(EquippedArmor,item)>=0)return;ArmorInventory.Remove(item);SaveInventory();}
         public void ToggleInventory()
         {
-            if(InventoryOpen){actionSkillInventoryTree=false;actionSkillInventoryOpen=false;InventoryOpen=false;screen=inventoryReturn;Time.timeScale=screen==Screen.Pause||screen==Screen.DungeonSelect?0:1;return;}
+            if(InventoryOpen){petSkillInventoryOpen=false;actionSkillInventoryTree=false;actionSkillInventoryOpen=false;InventoryOpen=false;screen=inventoryReturn;Time.timeScale=screen==Screen.Pause||screen==Screen.DungeonSelect?0:1;return;}
             if(screen!=Screen.Menu&&screen!=Screen.Playing&&screen!=Screen.Pause&&screen!=Screen.Hub&&screen!=Screen.Shop&&screen!=Screen.DungeonSelect)return;
             inventoryReturn=screen;InventoryOpen=true;Time.timeScale=0;
         }

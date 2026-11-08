@@ -88,7 +88,7 @@ namespace NeonVault
                     {
                         int left=Mathf.Clamp(Mathf.CeilToInt((building.xMin+5001)*size/10000),0,size-1),right=Mathf.Clamp(Mathf.FloorToInt((building.xMax+4999)*size/10000),0,size-1);
                         int bottom=Mathf.Clamp(Mathf.CeilToInt((building.yMin+5001)*size/10000),0,size-1),top=Mathf.Clamp(Mathf.FloorToInt((building.yMax+4999)*size/10000),0,size-1);
-                                                if(right<left||top<bottom)continue;
+                        if(right<left||top<bottom)continue;
                         int tone=54+Mathf.Abs((left*73+bottom*31)%19);
                         for(int py=bottom;py<=top;py++)for(int px=left;px<=right;px++)
                         {
@@ -125,6 +125,8 @@ namespace NeonVault
         float worldLocalRefresh;
         readonly Color[] worldLocalPixels=new Color[200*150];
         int overworldSelectedCamp=-1;
+        int overworldSelectedLandmark=-1;
+        public int OverworldSelectedLandmark { get => overworldSelectedLandmark; set { overworldSelectedLandmark=value; if(value>=0)overworldSelectedCamp=-1; } }
         float worldMapZoom=2.4f;
         Vector2 worldMapCenter=new Vector2(.5f,.5f);
         bool worldMapDragging,worldMapInitialized;
@@ -224,7 +226,9 @@ namespace NeonVault
             DrawHealthPanel(new Rect(20,20,400,125),mobile);
             Box(new Rect(440,20,590,63),new Color(.025f,.04f,.05f,.55f));
             Box(new Rect(440,20,2,63),new Color(Cyan.r,Cyan.g,Cyan.b,.65f));
-            WorldLabel(new Rect(456,24,550,28),WorldGeography==null?T("WASTELAND","荒野"):WorldGeography.RegionName(PlayerPosition,VaultLanguage.Japanese),Gold,21);
+            int nearLandmark=NearbyWorldLandmark;
+            string regionText=WorldGeography==null?T("WASTELAND","荒野"):nearLandmark>=0?OverworldGeography.LandmarkTitle(nearLandmark,VaultLanguage.Japanese):WorldGeography.RegionName(PlayerPosition,VaultLanguage.Japanese);
+            WorldLabel(new Rect(456,24,550,28),regionText,Gold,21);
             WorldLabel(new Rect(456,51,550,27),T("LEVEL ","レベル ")+DebtLevel+"   /   "+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),UiPaper,19);
             if(!mobile&&WorldButton(new Rect(1240,20,180,74),T("EQUIPMENT","装備")))ToggleInventory();
             DrawWorldLocalMap(new Rect(1165,165,250,180));
@@ -260,7 +264,7 @@ namespace NeonVault
             {
                 var p=cam.WorldToScreenPoint(foe.transform.position+Vector3.up*2.6f);if(p.z<=0)continue;
                 Vector2 at=MobileTouchControls.Enabled?MobileCanvasPoint(p):new Vector2((p.x-(UnityEngine.Screen.width-1440*Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f))*.5f)/Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f),(UnityEngine.Screen.height-p.y-(UnityEngine.Screen.height-900*Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f))*.5f)/Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f));
-                DrawEnemyHealthLabel(at.x,at.y,EnemyHealthLabel(foe),UiPaper);
+                DrawEnemyHealthLabel(at.x,at.y,EnemyHealthLabel(foe),TryGetLandmarkBossId(foe,out _)?Gold:UiPaper);
                 Box(new Rect(at.x-28,at.y,56,5),Ink);Box(new Rect(at.x-28,at.y,56*Mathf.Clamp01(foe.hp/foe.maxHp),5),foe.HealthBarColor);
             }
             if(!Active)return;
@@ -316,7 +320,23 @@ namespace NeonVault
             else {UpdateWorldLocalTexture(localOrigin);GUI.DrawTexture(inside,worldLocalTexture);}
             WorldLabel(new Rect(map.x+10,map.y+3,map.width-20,27),T("LOCAL / 200 m / NORTH ↑","周辺 / 200m / 北 ↑"),Mist,17);
             Vector2 Local(Vector3 p)=>new Vector2(inside.x+(p.x/(l.Columns*l.CellSize)+.5f-left)/uw*inside.width,inside.yMax-(p.z/(l.Rows*l.CellSize)+.5f-bottom)/vh*inside.height);
-            foreach(var enemy in Enemies)if(enemy!=null&&!enemy.dead){var p=Local(enemy.transform.position);if(inside.Contains(p))Box(new Rect(p.x-2,p.y-2,4,4),UiDanger);}
+            foreach(var enemy in Enemies)if(enemy!=null&&!enemy.dead)
+            {
+                var p=Local(enemy.transform.position);
+                if(!inside.Contains(p))continue;
+                if(TryGetLandmarkBossId(enemy,out _))
+                {
+                    Diamond(p.x,p.y,6,Gold);
+                    Box(new Rect(p.x-3,p.y-3,6,6),UiDanger);
+                }
+                else Box(new Rect(p.x-2,p.y-2,4,4),UiDanger);
+            }
+            for(int i=0;i<WorldGeography.Landmarks.Length;i++)
+            {
+                var p=Local(WorldGeography.Landmarks[i]);if(!inside.Contains(p))continue;
+                Color lc=IsLandmarkBossDefeated(i)?Cyan:Gold;
+                Diamond(p.x,p.y,7,lc);Box(new Rect(p.x-3,p.y-3,6,6),lc);
+            }
             for(int i=0;i<WorldGeography.Entrances.Length;i++){var p=Local(WorldGeography.Entrances[i]);if(inside.Contains(p))DrawDungeonMapArt(new Rect(p.x-15,p.y-15,30,30),i,Color.white);}
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
@@ -553,19 +573,33 @@ namespace NeonVault
             if(GUI.Button(new Rect(map.xMax-66,map.yMax-58,52,44),GUIContent.none,GUIStyle.none)){var pos=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];worldMapCenter=new Vector2(pos.x/10000f+.5f,pos.z/10000f+.5f);ClampWorldMapCenter();}
             for(int i=0;i<WorldGeography.Entrances.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i,DebtLevel);bool selected=overworldSelectedCamp<0&&expeditionMapSelection==i;
+                Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i,DebtLevel);bool selected=overworldSelectedCamp<0&&overworldSelectedLandmark<0&&expeditionMapSelection==i;
                 Color color=OverworldWaypointKind==2&&OverworldWaypointId==i?Gold:selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):IsOverworldDungeonDiscovered(i)?UiPaper:Mist;
                 const float iconSize=42f;
                 if(selected)Box(new Rect(p.x-23,p.y-23,46,46),new Color(.02f,.04f,.06f,.9f));
                 DrawDungeonMapArt(new Rect(p.x-iconSize*.5f,p.y-iconSize*.5f,iconSize,iconSize),i,color);
                 if(OverworldWaypointKind==2&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+12,p.y-22,26,28),"▲",Gold,19);
-                if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;}
+                if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;overworldSelectedLandmark=-1;}
             }
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
                 Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;DrawMapArt(new Rect(p.x-21,p.y-21,42,42),0,IsCampVisited(i)?Color.white:Color.gray);
                 if(OverworldWaypointKind==1&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+15,p.y-24,28,28),"▲",Gold,20);
-                if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none))overworldSelectedCamp=i;
+                if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none)){overworldSelectedCamp=i;overworldSelectedLandmark=-1;}
+            }
+            for(int i=0;i<WorldGeography.Landmarks.Length;i++)
+            {
+                Vector2 p=WorldAtlasPoint(map,WorldGeography.Landmarks[i]);if(!map.Contains(p))continue;
+                bool selected=overworldSelectedLandmark==i;
+                bool fought=IsLandmarkBossFought(i),defeated=IsLandmarkBossDefeated(i);
+                Color pinColor=OverworldWaypointKind==3&&OverworldWaypointId==i?Gold:selected?new Color(1f,.64f,.24f):defeated?Cyan:fought?new Color(1f,.42f,.32f):Gold;
+                float size=selected?14f:10f;
+                Box(new Rect(p.x-size-2,p.y-size-2,(size+2)*2,(size+2)*2),new Color(.02f,.04f,.06f,.88f));
+                Diamond(p.x,p.y,size,pinColor);
+                Diamond(p.x,p.y,size*.6f,Color.white);
+                Box(new Rect(p.x-3,p.y-3,6,6),pinColor);
+                if(OverworldWaypointKind==3&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+11,p.y-22,26,28),"▲",Gold,19);
+                if(GUI.Button(new Rect(p.x-18,p.y-18,36,36),GUIContent.none,GUIStyle.none)){overworldSelectedLandmark=i;overworldSelectedCamp=-1;}
             }
             for(int i=0;i<factionCamps.Count;i++)
             {
@@ -594,25 +628,35 @@ namespace NeonVault
                 if(WorldButton(new Rect(975,500,410,75),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:1,camp);
                 if(WorldButton(new Rect(975,620,410,100),T("FAST TRAVEL","ファストトラベル"),travel))FastTravelToCamp(camp);
             }
+            else if(overworldSelectedLandmark>=0)
+            {
+                DrawWorldLandmarkBriefing(overworldSelectedLandmark);
+            }
             else DrawWorldStageBriefing();
             for(int i=0;i<WorldGeography.Camps.Length;i++)if(WorldButton(new Rect(30+(i%7)*198,784+(i/7)*52,188,46),(i+1)+" / "+OverworldCampName(i,VaultLanguage.Japanese),IsCampVisited(i)))
             {
-                overworldSelectedCamp=i;
+                overworldSelectedCamp=i;overworldSelectedLandmark=-1;
                 Vector3 camp=WorldGeography.Camps[i];worldMapCenter=new Vector2(camp.x/10000f+.5f,camp.z/10000f+.5f);ClampWorldMapCenter();
             }
         }
 
         void DrawAerialMapLegend(Rect map)
         {
-            Rect legend=new Rect(map.xMax-216,map.y+88,200,208);
+            Rect legend=new Rect(map.xMax-216,map.y+88,200,248);
             FieldUIArt.Plate(legend,false);
-            string[] names={T("Camp","拠点"),T("Infected","感染者"),T("Red Claw","レッドクロウ"),T("Coyote","コヨーテ")};
-            for(int i=0;i<4;i++)
+            string[] names={T("Camp","拠点"),T("Landmark","ランドマーク"),T("Infected","感染者"),T("Red Claw","レッドクロウ"),T("Coyote","コヨーテ")};
+            for(int i=0;i<5;i++)
             {
-                float y=legend.y+12+i*48;
-                if(i==0)DrawMapArt(new Rect(legend.x+12,y,36,36),0,Color.white);
-                else DrawDungeonMapArt(new Rect(legend.x+12,y,36,36),i==1?0:i==2?2:1,Color.white);
-                WorldLabel(new Rect(legend.x+54,y+2,140,36),names[i],UiPaper,17);
+                float y=legend.y+10+i*45;
+                if(i==0)DrawMapArt(new Rect(legend.x+12,y,34,34),0,Color.white);
+                else if(i==1)
+                {
+                    Vector2 c=new Vector2(legend.x+29,y+17);
+                    Box(new Rect(c.x-11,c.y-11,22,22),new Color(.02f,.04f,.06f,.9f));
+                    Diamond(c.x,c.y,9,Gold);Diamond(c.x,c.y,5,Color.white);Box(new Rect(c.x-2,c.y-2,4,4),Gold);
+                }
+                else DrawDungeonMapArt(new Rect(legend.x+12,y,34,34),i==2?0:i==3?2:1,Color.white);
+                WorldLabel(new Rect(legend.x+54,y+2,140,34),names[i],UiPaper,16);
             }
         }
         string WorldDistanceLabel(Vector3 destination)
@@ -623,32 +667,31 @@ namespace NeonVault
         }
         void DrawAtlasDistrictLabels(Rect map)
         {
-            Vector2[] sites={new Vector2(-1350,-2100),new Vector2(-1700,-650),new Vector2(-700,-500),new Vector2(700,400),new Vector2(3650,650),new Vector2(2900,2800),new Vector2(-2350,2300),new Vector2(1400,-1950),new Vector2(-2850,-1450),new Vector2(2350,1550)};
-            string[] en={"SOUTH MARKET / CLOCK TOWER","OLD CITY / MEMORIAL ARCH","RIVERFRONT PARK / FOUNTAIN","CIVIC QUARTER / ROTUNDA","EAST MARKET / WATER TOWER","NORTH COMMON / OBELISK","WESTWOOD / RADIO SPIRE","SOUTHWORKS / SILO PLAZA","DEEPWOOD FOREST","EASTERN WOODS"};
-            string[] ja={"サウス・マーケット／クロック・タワー","オールド・シティ／メモリアル・アーチ","リバーフロント・パーク／ファウンテン","シビック・クォーター／ロタンダ","イースト・マーケット／ウォーター・タワー","ノース・コモン／オベリスク","ウェストウッド／ラジオ・スパイア","サウスワークス／サイロ・プラザ","ディープウッド・フォレスト","イースタン・ウッズ"};
-            for(int i=0;i<sites.Length;i++)
+            for(int i=0;i<WorldGeography.Landmarks.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,new Vector3(sites[i].x,0,sites[i].y));
+                Vector3 lm=WorldGeography.Landmarks[i];
+                Vector2 p=WorldAtlasPoint(map,lm);
                 if(p.x<map.x+16||p.x>map.xMax-190||p.y<map.y+50||p.y>map.yMax-30)continue;
-                var title=VaultLanguage.Japanese?ja[i]:en[i];
-                Box(new Rect(p.x-5,p.y+5,5,5),i<8?Gold:new Color(.48f,.82f,.52f,.9f));
-                WorldLabel(new Rect(p.x+5,p.y-5,210,24),title,new Color(.85f,.89f,.84f,.92f),worldMapZoom>4?17:14);
+                string title=worldMapZoom>2.8f?OverworldGeography.LandmarkTitle(i,VaultLanguage.Japanese):OverworldGeography.LandmarkShortTitle(i,VaultLanguage.Japanese);
+                bool selected=overworldSelectedLandmark==i;
+                Color labelColor=selected?Gold:IsLandmarkBossDefeated(i)?new Color(.68f,.94f,.92f,.95f):new Color(.92f,.90f,.78f,.92f);
+                WorldLabel(new Rect(p.x+14,p.y-10,220,24),title,labelColor,worldMapZoom>4?16:13);
             }
         }
         public void DrawFactionConquestBars(Rect bounds)
         {
             Panel(bounds,Gold);
-            for(int row=0;row<2;row++)
+            for(int row=0;row<3;row++)
             {
                 bool red=row==0;
-                DungeonFaction faction=red?DungeonFaction.Raiders:DungeonFaction.Gang;
+                DungeonFaction faction=row==2?DungeonFaction.None:red?DungeonFaction.Raiders:DungeonFaction.Gang;
                 int cleared=ClearedFactionDungeonCount(faction),total=Mathf.Max(1,FactionRegularDungeonCount(faction));
                 int pct=FactionClearPercent(faction);
                 float ratio=Mathf.Clamp01(cleared/(float)total);
-                float y=bounds.y+8+row*36;
-                Color fill=red?new Color(.88f,.26f,.22f,.95f):new Color(.88f,.66f,.22f,.95f);
-                DrawDungeonMapArt(new Rect(bounds.x+10,y,28,28),red?2:1,Color.white);
-                string name=red?T("RED CLAW","レッドクロウ"):T("COYOTES","コヨーテ");
+                float y=bounds.y+3+row*25;
+                Color fill=row==2?new Color(.62f,.34f,.75f,.95f):red?new Color(.88f,.26f,.22f,.95f):new Color(.88f,.66f,.22f,.95f);
+                DrawDungeonMapArt(new Rect(bounds.x+10,y,22,22),row==2?0:red?2:1,Color.white);
+                string name=row==2?T("INFECTED","感染者"):red?T("RED CLAW","レッドクロウ"):T("COYOTES","コヨーテ");
                 WorldLabel(new Rect(bounds.x+44,y+2,136,26),name,UiPaper,16);
                 Rect bar=new Rect(bounds.x+182,y+6,290,16);
                 Box(new Rect(bar.x-1,bar.y-1,bar.width+2,bar.height+2),new Color(.35f,.44f,.46f,.85f));
@@ -674,8 +717,19 @@ namespace NeonVault
             WorldLabel(new Rect(x+width+12,backdrop.y+5,115,30),"1 km",UiPaper,17);
         }
         readonly System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<object>> worldExclusivePreview=new System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<object>>();
+        readonly System.Collections.Generic.Dictionary<int,object> landmarkExclusivePreview=new System.Collections.Generic.Dictionary<int,object>();
         Vector2 worldExclusiveScroll;
         int worldExclusiveStage=-1;
+        object LandmarkExclusiveItem(int landmarkId)
+        {
+            if(landmarkExclusivePreview.TryGetValue(landmarkId,out var cached))return cached;
+            var random=new System.Random(9137+landmarkId);
+            object item=null;
+            if(DungeonBossExclusive.TryGetLandmarkExclusive(landmarkId,out var drop))
+                item=DungeonBossExclusive.CreateStageExclusiveItem(drop,random,OverworldGeography.LandmarkBossLevel(landmarkId,1));
+            landmarkExclusivePreview[landmarkId]=item;
+            return item;
+        }
         System.Collections.Generic.List<object> WorldExclusiveItems(int stageId)
         {
             if(worldExclusivePreview.TryGetValue(stageId,out var result))return result;
@@ -688,61 +742,136 @@ namespace NeonVault
             }
             if(IsFactionHeadquarters(stageId))
             {
-                int boss=IsRedClawBossStage(stageId)?0:1;
+                int boss=IsInfectedBossStage(stageId)?3:IsRedClawBossStage(stageId)?0:1;
                 for(int category=0;category<BossRelicFoundation.CategoryCount;category++)
                     result.Add(BossRelicFoundation.Create(boss,category,1,random));
             }
             worldExclusivePreview[stageId]=result;
             return result;
         }
+        void DrawUnknownExclusiveBox(Rect picture)
+        {
+            Box(picture,new Color(.04f,.06f,.08f,.95f));
+            Box(new Rect(picture.x,picture.y,picture.width,1),Gold*.6f);
+            Box(new Rect(picture.x,picture.yMax-1,picture.width,1),Gold*.6f);
+            Box(new Rect(picture.x,picture.y,1,picture.height),Gold*.6f);
+            Box(new Rect(picture.xMax-1,picture.y,1,picture.height),Gold*.6f);
+            var qStyle=new GUIStyle(centered){fontSize=24,fontStyle=FontStyle.Bold};
+            qStyle.normal.textColor=Gold;
+            GUI.Label(picture,"???",qStyle);
+        }
         void DrawWorldExclusiveItems(int stageId,Rect area)
         {
             var items=WorldExclusiveItems(stageId);
             if(items.Count==0)return;
+            bool bossFought=IsDungeonBossFought(stageId);
             if(worldExclusiveStage!=stageId){worldExclusiveStage=stageId;worldExclusiveScroll=Vector2.zero;}
-            WorldLabel(new Rect(area.x,area.y,area.width,25),T("BOSS EXCLUSIVE","ボス固有装備"),Gold,18);
-            var style=new GUIStyle(GUI.skin.label){fontSize=17,wordWrap=true,normal={textColor=UiPaper}};
-            float width=area.width-100;
+            WorldLabel(new Rect(area.x,area.y,area.width,24),T("BOSS EXCLUSIVE DROP","固有ドロップ"),Gold,17);
+            var style=new GUIStyle(GUI.skin.label){fontSize=16,wordWrap=true,normal={textColor=UiPaper}};
+            float width=area.width-96;
             float height=0;
-            foreach(var item in items){string detail=WorldExclusiveDetail(item);height+=Mathf.Max(78,style.CalcHeight(new GUIContent(detail),width)+8);}
-            worldExclusiveScroll=GUI.BeginScrollView(new Rect(area.x,area.y+26,area.width,area.height-26),worldExclusiveScroll,new Rect(0,0,area.width-20,height));
+            foreach(var item in items){string detail=WorldExclusiveDetail(item,bossFought);height+=Mathf.Max(72,style.CalcHeight(new GUIContent(detail),width)+6);}
+            worldExclusiveScroll=GUI.BeginScrollView(new Rect(area.x,area.y+24,area.width,area.height-24),worldExclusiveScroll,new Rect(0,0,area.width-20,height));
             float y=0;
             foreach(var item in items)
             {
-                string detail=WorldExclusiveDetail(item);float row=Mathf.Max(78,style.CalcHeight(new GUIContent(detail),width)+8);
-                var picture=new Rect(0,y+2,70,70);
-                if(item is Gun g)ItemPortraits.Draw(picture,g);
+                bool reveal=bossFought||EquipmentDiscovery.Known(item);
+                string detail=WorldExclusiveDetail(item,reveal);float row=Mathf.Max(72,style.CalcHeight(new GUIContent(detail),width)+6);
+                var picture=new Rect(0,y+2,66,66);
+                if(!reveal)DrawUnknownExclusiveBox(picture);
+                else if(item is Gun g)ItemPortraits.Draw(picture,g);
                 else if(item is ArmorItem a)ItemPortraits.Draw(picture,a);
                 else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(picture,m);
                 else if(item is MeleeWeaponItem w)ManufacturerPortraits.Melee(picture,w);
-                GUI.Label(new Rect(78,y,width,row),detail,style);y+=row;
+                GUI.Label(new Rect(74,y,width,row),detail,style);y+=row;
             }
             GUI.EndScrollView();
         }
-        string WorldExclusiveDetail(object item)
+        string WorldExclusiveDetail(object item,bool revealed=false)
         {
-            if(!EquipmentDiscovery.Known(item))return "???\n???";
+            if(!revealed&&!EquipmentDiscovery.Known(item))return "???\n???";
             if(item is Gun g)return VaultLanguage.GunName(g)+"\n"+(!string.IsNullOrEmpty(g.bossRelicId)?BossRelicFoundation.Description(g.bossRelicId,VaultLanguage.Japanese):LegendaryCatalog.Description(g,VaultLanguage.Japanese));
             if(item is ArmorItem a)return Armory.Name(a)+"\n"+(!string.IsNullOrEmpty(a.bossRelicId)?BossRelicFoundation.Description(a.bossRelicId,VaultLanguage.Japanese):LegendaryCatalog.Description(a,VaultLanguage.Japanese));
             if(item is ArtifactItem m)return ArtifactCatalog.DisplayName(m)+"\n"+m.Description;
             if(item is MeleeWeaponItem w)return MeleeWeaponCatalog.Name(w)+"\n"+(!string.IsNullOrEmpty(w.bossRelicId)?BossRelicFoundation.Description(w.bossRelicId,VaultLanguage.Japanese):MeleeWeaponCatalog.LegendaryDescription(w));
             return "???\n???";
         }
+        void DrawWorldLandmarkBriefing(int landmarkId)
+        {
+            landmarkId=Mathf.Clamp(landmarkId,0,OverworldGeography.LandmarkCount-1);
+            bool fought=IsLandmarkBossFought(landmarkId);
+            bool defeated=IsLandmarkBossDefeated(landmarkId);
+            int bossLevel=OverworldGeography.LandmarkBossLevel(landmarkId,DebtLevel);
+            WorldLabel(new Rect(975,114,410,26),T("LANDMARK ","ランドマーク ")+(landmarkId+1).ToString("00")+" / "+OverworldGeography.LandmarkCount.ToString("00"),Cyan,17);
+            WorldLabel(new Rect(975,140,410,66),OverworldGeography.LandmarkTitle(landmarkId,VaultLanguage.Japanese),Gold,25);
+            WorldLabel(new Rect(975,208,410,82),OverworldGeography.LandmarkDescription(landmarkId,VaultLanguage.Japanese),Mist,18);
+            Box(new Rect(975,296,410,1),new Color(.45f,.58f,.60f,.38f));
+            WorldLabel(new Rect(975,304,410,24),T("LANDMARK BOSS","ランドマークボス"),Gold,17);
+            string bossInfo=fought
+                ?OverworldGeography.LandmarkBossName(landmarkId,VaultLanguage.Japanese)+"  (Lv."+bossLevel+")"+(defeated?T("  [DEFEATED]","  【撃破済み】"):"")
+                :"？？？";
+            WorldLabel(new Rect(975,330,410,52),bossInfo,fought?(defeated?Cyan:new Color(1f,.48f,.36f)):UiPaper,21);
+            Box(new Rect(975,388,410,1),new Color(.45f,.58f,.60f,.38f));
+            WorldLabel(new Rect(975,396,410,24),T("BOSS EXCLUSIVE DROP","固有ドロップ"),Gold,17);
+            object item=LandmarkExclusiveItem(landmarkId);
+            bool revealItem=fought||(item!=null&&EquipmentDiscovery.Known(item));
+            Rect pic=new Rect(975,426,74,74);
+            if(!revealItem||item==null)
+            {
+                DrawUnknownExclusiveBox(pic);
+                WorldLabel(new Rect(1060,432,325,68),"？？？\n"+T("Engage this landmark boss to reveal its exclusive drop.","このランドマークのボスと交戦すると固有ドロップ情報が判明します。"),Mist,18);
+            }
+            else
+            {
+                if(item is Gun g)ItemPortraits.Draw(pic,g);
+                else if(item is ArmorItem a)ItemPortraits.Draw(pic,a);
+                else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(pic,m);
+                else if(item is MeleeWeaponItem w)ManufacturerPortraits.Melee(pic,w);
+                string detail=WorldExclusiveDetail(item,true);
+                WorldLabel(new Rect(1060,424,325,112),detail,UiPaper,16);
+            }
+            WorldLabel(new Rect(975,546,410,30),T("DISTANCE ","現在地から ")+WorldDistanceLabel(WorldGeography.Landmarks[landmarkId]),Mist,20);
+            bool tracking=OverworldWaypointKind==3&&OverworldWaypointId==landmarkId;
+            if(WorldButton(new Rect(975,582,410,52),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:3,landmarkId);
+            RowLandmarkNavigation(landmarkId);
+        }
+        void RowLandmarkNavigation(int landmarkId)
+        {
+            if(WorldButton(new Rect(975,644,198,46),T("◀ PREV LANDMARK","◀ 前のランドマーク")))
+            {
+                overworldSelectedLandmark=(landmarkId+OverworldGeography.LandmarkCount-1)%OverworldGeography.LandmarkCount;
+                Vector3 lm=WorldGeography.Landmarks[overworldSelectedLandmark];
+                worldMapCenter=new Vector2(lm.x/10000f+.5f,lm.z/10000f+.5f);ClampWorldMapCenter();
+            }
+            if(WorldButton(new Rect(1187,644,198,46),T("NEXT LANDMARK ▶","次のランドマーク ▶")))
+            {
+                overworldSelectedLandmark=(landmarkId+1)%OverworldGeography.LandmarkCount;
+                Vector3 lm=WorldGeography.Landmarks[overworldSelectedLandmark];
+                worldMapCenter=new Vector2(lm.x/10000f+.5f,lm.z/10000f+.5f);ClampWorldMapCenter();
+            }
+            if(WorldButton(new Rect(975,696,410,44),T("SHOW DUNGEON BRIEFING","ダンジョン情報へ戻る")))overworldSelectedLandmark=-1;
+        }
         void DrawWorldStageBriefing()
         {
             var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id)||IsFactionHeadquarters(stage.id);
             bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);
-            WorldLabel(new Rect(975,120,410,95),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,29);
-            WorldLabel(new Rect(975,220,410,75),discovered?stage.Location+" / "+stage.Biome:"?",Mist,23);
-            WorldLabel(new Rect(975,305,410,70),T("LEVEL ","レベル ")+stage.level,Cyan,25);
-            WorldLabel(new Rect(975,370,410,80),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",!hqUnlocked?UiDanger:UiPaper,23);
-            WorldLabel(new Rect(975,445,410,52),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,19);
-            if(discovered)DrawWorldExclusiveItems(stage.id,new Rect(975,490,410,80));
-            WorldLabel(new Rect(975,575,410,40),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,21);
+            bool bossFought=IsDungeonBossFought(stage.id);
+            WorldLabel(new Rect(975,112,410,72),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,27);
+            WorldLabel(new Rect(975,186,410,54),discovered?stage.Location+" / "+stage.Biome:"?",Mist,20);
+            WorldLabel(new Rect(975,242,410,34),T("LEVEL ","レベル ")+stage.level+"   /   "+T("BOSS: ","ボス: ")+(bossFought?stage.Target:"？？？"),Cyan,20);
+            WorldLabel(new Rect(975,278,410,58),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",!hqUnlocked?UiDanger:UiPaper,20);
+            WorldLabel(new Rect(975,338,410,44),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,18);
+            DrawWorldExclusiveItems(stage.id,new Rect(975,384,410,158));
+            WorldLabel(new Rect(975,546,410,30),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,20);
             bool tracking=OverworldWaypointKind==2&&OverworldWaypointId==stage.id;
-            if(WorldButton(new Rect(975,615,410,60),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:2,stage.id);
+            if(WorldButton(new Rect(975,580,410,46),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:2,stage.id);
             bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id&&hqUnlocked;
-            if(WorldButton(new Rect(975,685,410,55),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):nearby?T("ENTER DUNGEON","ダンジョンに入る"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
+            bool canFastTravel=CanWorldFastTravel&&IsDungeonFastTravelUnlocked(stage.id)&&hqUnlocked;
+            if(canFastTravel)
+            {
+                if(WorldButton(new Rect(975,632,410,46),T("FAST TRAVEL TO ENTRANCE","ダンジョン前へ移動"),true))FastTravelToDungeon(stage.id);
+            }
+            if(WorldButton(new Rect(975,684,410,48),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):nearby?T("ENTER DUNGEON","ダンジョンに入る"):canFastTravel?T("ALREADY VISITED","訪問済み"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
         }
         public void DrawWorldBossConversation()
         {
@@ -750,7 +879,3 @@ namespace NeonVault
         }
     }
 }
-
-
-
-

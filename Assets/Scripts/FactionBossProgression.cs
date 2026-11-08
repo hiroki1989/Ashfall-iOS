@@ -1,3 +1,4 @@
+using PlayerPrefs = NeonVault.SaveSlotPrefs;
 using UnityEngine;
 namespace NeonVault
 {
@@ -5,8 +6,10 @@ namespace NeonVault
     {
         public const int RedClawBoss30=200, RedClawBoss60=201, RedClawHeadquarters=202;
         public const int CoyoteBoss30=203, CoyoteBoss60=204, CoyoteHeadquarters=205;
+        public const int InfectedBoss30=206, InfectedBoss60=207, InfectedHeadquarters=208;
         bool factionBossConversation; int factionBossConversationBeat;
-        public static bool IsFactionHeadquarters(int stage)=>stage>=RedClawBoss30&&stage<=CoyoteHeadquarters;
+        public static bool IsFactionHeadquarters(int stage)=>stage>=RedClawBoss30&&stage<ExpeditionMap.StageCount;
+        public static bool IsInfectedBossStage(int stage)=>stage>=InfectedBoss30&&stage<=InfectedHeadquarters;
         public static bool IsRedClawBossStage(int stage)=>stage>=RedClawBoss30&&stage<=RedClawHeadquarters;
         public static bool IsCoyoteBossStage(int stage)=>stage>=CoyoteBoss30&&stage<=CoyoteHeadquarters;
         public static int FactionBossTier(int stage)=>!IsFactionHeadquarters(stage)?-1:(stage-RedClawBoss30)%3;
@@ -14,14 +17,12 @@ namespace NeonVault
         public static int RequiredFactionClearPercent(int stage){int tier=FactionBossTier(stage);return tier==0?30:tier==1?60:tier==2?100:0;}
         public static int FactionRegularDungeonCount(DungeonFaction faction)
         {
-            if(faction==DungeonFaction.None)return 0;
             int count=0;
             for(int id=0;id<ExpeditionMap.RegularStageCount;id++)if(ExpeditionMap.FactionForStage(id)==faction)count++;
             return count;
         }
         public int ClearedFactionDungeonCount(DungeonFaction faction)
         {
-            if(faction==DungeonFaction.None)return 0;
             int count=0;
             for(int i=0;i<clearedExpeditionStages.Count;i++)
             {
@@ -51,7 +52,7 @@ namespace NeonVault
         {
             int stage = factionUnlockDialogs.Peek();
             int tier = FactionBossTier(stage);
-            string faction = IsRedClawBossStage(stage) ? T("RED CLAW", "\u30ec\u30c3\u30c9\u30af\u30ed\u30a6") : T("COYOTE", "\u30b3\u30e8\u30fc\u30c6");
+            string faction = IsInfectedBossStage(stage) ? T("INFECTED", "感染者") : IsRedClawBossStage(stage) ? T("RED CLAW", "\u30ec\u30c3\u30c9\u30af\u30ed\u30a6") : T("COYOTE", "\u30b3\u30e8\u30fc\u30c6");
             string location = tier == 0 ? T("OUTPOST", "\u524d\u7dda\u57fa\u5730") : tier == 1 ? T("WAR CAMP", "\u8ecd\u4e8b\u62e0\u70b9") : T("STRONGHOLD", "\u672c\u62e0\u5730");
             Box(new Rect(0, 0, 1440, 900), new Color(0, 0, 0, .76f));
             Panel(new Rect(300, 250, 840, 400), Gold);
@@ -61,10 +62,11 @@ namespace NeonVault
             if (WorldButton(new Rect(860, 555, 230, 60), T("OK", "\u78ba\u8a8d"))) factionUnlockDialogs.Dequeue();
         }
         void UpdateFactionBossUnlocks(int paidBefore) { }
-        void UpdateFactionBossUnlocks(int raidersBefore,int gangBefore)
+        void UpdateFactionBossUnlocks(int raidersBefore,int gangBefore,int infectedBefore)
         {
             int raidersNow=ClearedFactionDungeonCount(DungeonFaction.Raiders);
             int gangNow=ClearedFactionDungeonCount(DungeonFaction.Gang);
+            int infectedNow=ClearedFactionDungeonCount(DungeonFaction.None);
             int[] redStages={RedClawBoss30,RedClawBoss60,RedClawHeadquarters};
             string[] redNamesEn={"RED CLAW OUTPOST (30%)","RED CLAW WAR CAMP (60%)","RED CLAW STRONGHOLD (100%)"};
             string[] redNamesJa={"レッドクロウ前線基地（制圧30%）","レッドクロウ軍事拠点（制圧60%）","レッドクロウ本拠地（制圧100%）"};
@@ -77,6 +79,18 @@ namespace NeonVault
                     DiscoverOverworldDungeon(redStages[i]);
                     SetOverworldWaypoint(2,redStages[i]);
                     Notify(redNamesEn[i]+" UNLOCKED / Boss battle available",redNamesJa[i]+" 解放 / ボス戦ダンジョンに出撃可能");
+                }
+            }
+            int[] infectedStages={InfectedBoss30,InfectedBoss60,InfectedHeadquarters};
+            for(int i=0;i<3;i++)
+            {
+                int req=RequiredFactionDungeonClears(infectedStages[i]);
+                if(infectedStages[i]<ExpeditionMap.StageCount&&infectedBefore<req&&infectedNow>=req)
+                {
+                    factionUnlockDialogs.Enqueue(infectedStages[i]);
+                    DiscoverOverworldDungeon(infectedStages[i]);
+                    SetOverworldWaypoint(2,infectedStages[i]);
+                    Notify("INFECTED NEST UNLOCKED / Boss battle available","感染者の巣を解放 / ボス戦に出撃可能");
                 }
             }
             int[] gangStages={CoyoteBoss30,CoyoteBoss60,CoyoteHeadquarters};
@@ -100,8 +114,8 @@ namespace NeonVault
             var faction=ExpeditionMap.FactionForStage(stage);
             int pct=RequiredFactionClearPercent(stage);
             int curPct=FactionClearPercent(faction);
-            string facEn=faction==DungeonFaction.Raiders?"RED CLAW":"COYOTE";
-            string facJa=faction==DungeonFaction.Raiders?"レッドクロウ":"コヨーテ";
+            string facEn=faction==DungeonFaction.None?"INFECTED":faction==DungeonFaction.Raiders?"RED CLAW":"COYOTE";
+            string facJa=faction==DungeonFaction.None?"感染者":faction==DungeonFaction.Raiders?"レッドクロウ":"コヨーテ";
             return japanese?facJa+"拠点 "+pct+"%制圧で解放（現在 "+curPct+"%）":"REQUIRES "+pct+"% "+facEn+" CLEAR (NOW "+curPct+"%)";
         }
         public void BeginFactionBossConversation()
@@ -111,6 +125,13 @@ namespace NeonVault
         }
         public void DrawFactionBossConversation()
         {
+            if(IsInfectedBossStage(SelectedStageId))
+            {
+                Box(new Rect(0,0,1440,900),new Color(0,0,0,.8f));
+                DrawUnifiedDialogueScene("",false,T("THE RENEGADE","レネゲード"),"・・・",Gold);
+                if(WorldButton(UnifiedDialoguePrimaryButton,T("FIGHT","戦う"))){factionBossConversation=false;Time.timeScale=1;PlayerPrefs.SetInt("Vault.FactionBoss.Intro."+SelectedStageId,1);PlayerPrefs.Save();}
+                return;
+            }
             bool red=IsRedClawBossStage(SelectedStageId);
             int tier=FactionBossTier(SelectedStageId);
             bool knoxSpeaking=factionBossConversationBeat==1;

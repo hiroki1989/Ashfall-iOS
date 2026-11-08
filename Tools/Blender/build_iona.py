@@ -1,4 +1,4 @@
-﻿# Builds the stylized Iona (Collector / Archivist) hub NPC and exports FBX for Unity.
+# Builds the stylized Iona (Collector / Archivist) hub NPC and exports FBX for Unity.
 # Run: blender.exe -b -P Tools/Blender/build_iona.py -- <out.fbx> [preview.png]
 import bpy, bmesh, math, sys
 from mathutils import Vector
@@ -165,7 +165,6 @@ cyl("TubeCap", BRASS, .06, .06, .06, (-.23, .2, 1.58), rot=(0, math.radians(-18)
 cyl("TubeBand", LEATHER, .058, .058, .03, (-.13, .2, 1.3), rot=(0, math.radians(-18), 0), verts=14)
 box("Satchel", LEATHER, (.18, .08, .15), (.2, .03, .86), bevel=.02)
 box("SatchelFlap", JACKET_DK, (.185, .085, .06), (.2, .03, .92), bevel=.01)
-sph("SatchelGlow", GLOW, .015, (.2, -.015, .9), seg=8)
 
 # UVs: world-scaled cube projection for tiling materials, front planar for the face
 for o in parts:
