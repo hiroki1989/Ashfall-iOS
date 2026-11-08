@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -69,7 +69,7 @@ public static class FactionPresetBaker
             if(renderer.name=="Human faction / helmet" && source.Length>0 && source[0])
             {
                 var tint=new Material(source[0]);
-                tint.color=faction==0?new Color(.67f,.76f,.56f):faction==1?new Color(.42f,.075f,.12f):new Color(.52f,.66f,.83f);
+                tint.color=HumanFactionVisual.HelmetColor(faction);
                 source[0]=tint;renderer.SetPropertyBlock(null);
             }
             for(int i=0;i<source.Length;i++)source[i]=saveMat(source[i]);renderer.sharedMaterials=source;
@@ -94,3 +94,4 @@ public static class FactionPresetBaker
         UnityEngine.Object.Destroy(visual.gameObject);UnityEngine.Object.Destroy(holder);
     }
 }
+

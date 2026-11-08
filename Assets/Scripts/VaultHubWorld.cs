@@ -95,7 +95,7 @@ namespace NeonVault
             art=new VaultArt(world,materials,new System.Random(17017));art.Floor(16,15,0);
             for(int i=0;i<8;i++){float a=i*Mathf.PI/4;art.Column(new Vector3(Mathf.Sin(a)*12.5f,0,Mathf.Cos(a)*12.5f),2.5f);}
             art.Cover(merchantPosition+Vector3.back*2);art.Brazier(merchantPosition+Vector3.left*2);art.Cover(archivistPosition+Vector3.back*2);
-            Transform HubNpc(Vector3 p,int variant,string name){var root=new GameObject(name).transform;root.SetParent(world,false);root.position=new Vector3(p.x,0,p.z);root.rotation=Quaternion.LookRotation(Vector3.back);var visual=HumanFactionVisual.Create(root,0,variant);visual.enabled=false;return root;}
+            Transform HubNpc(Vector3 p,int variant,string name){var root=new GameObject(name).transform;root.SetParent(world,false);root.position=new Vector3(p.x,0,p.z);root.rotation=Quaternion.LookRotation(Vector3.back);var key=name.StartsWith("Iona")?"Iona":name.StartsWith("Sera")?"Sera":name.StartsWith("Briggs")?"Briggs":null;var model=key!=null?Resources.Load<GameObject>("Characters/"+key+"/"+key):null;if(model){var npc=Instantiate(model,root,false);npc.name=key+" Blender Model";npc.transform.localPosition=Vector3.zero;npc.transform.localRotation=Quaternion.identity;return root;}var visual=HumanFactionVisual.Create(root,0,variant);visual.enabled=false;return root;}
             HubNpc(merchantPosition,0,"Sera / Salvage Merchant");
             HubNpc(archivistPosition,1,"Iona / Archivist");
             HubNpc(debtCollectorPosition,0,"Briggs / Debt Collector");

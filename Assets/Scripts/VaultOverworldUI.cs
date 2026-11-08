@@ -535,7 +535,7 @@ namespace NeonVault
             worldMapVerticalScale=Mathf.Abs(GUI.matrix.m00/Mathf.Max(.001f,GUI.matrix.m11));
             if(!worldMapInitialized)
             {
-                Vector3 origin=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];
+                Vector3 origin=IsOverworld?PlayerPosition:worldAtlasFromDungeon&&SelectedStageId>=0&&SelectedStageId<WorldGeography.Entrances.Length?WorldGeography.Entrances[SelectedStageId]:WorldGeography.Camps[LastVisitedCamp];
                 worldMapCenter=new Vector2(origin.x/10000f+.5f,origin.z/10000f+.5f);
                 ClampWorldMapCenter();worldMapInitialized=true;
             }

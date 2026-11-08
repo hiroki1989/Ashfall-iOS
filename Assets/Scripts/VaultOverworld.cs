@@ -58,6 +58,8 @@ namespace NeonVault
         {
             if(InventoryOpen||!WorldStorySeen||!(IsOverworld||screen==Screen.Hub||screen==Screen.Playing||screen==Screen.Pause))return;
             worldAtlasFromDungeon=!IsOverworld&&screen!=Screen.Hub;worldAtlasReturnScreen=screen;
+            // Recenter on the player's current site every time the atlas opens.
+            worldMapInitialized=false;
             if(selectedOverworldActivity!=null)CloseOverworldActivityChoice();
             if(IsOverworld)RememberOverworldPosition(PlayerPosition,true);
             worldAtlasFromHub=screen==Screen.Hub;screen=Screen.DungeonSelect;Time.timeScale=0;

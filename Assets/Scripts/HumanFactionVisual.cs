@@ -54,16 +54,16 @@ namespace NeonVault
             if(baked)
             {
                 var ready=Instantiate(baked,parent,false);
-                if(faction==1)
+                if(true)
                 {
-                    var helmet=ready.transform.Find("Human faction / helmet");
+                    var helmet=FindHelmet(ready.transform);
                     if(helmet)
                     {
                         var renderer=helmet.GetComponent<MeshRenderer>();
                         if(renderer)
                         {
                             var tint=new MaterialPropertyBlock();
-                            tint.SetColor("_Color",new Color(.42f,.075f,.12f));
+                            tint.SetColor("_Color",HelmetColor(faction));
                             renderer.SetPropertyBlock(tint);
                         }
                     }
@@ -219,6 +219,8 @@ namespace NeonVault
         }
         // Reuse the existing portrait helmet shell profile without its separate
         // full-face respirator, so the fitted Warden mask remains visible.
+        public static Color HelmetColor(int faction)=>faction==0?new Color(.21f,.25f,.18f):faction==1?new Color(.19f,.032f,.055f):new Color(.17f,.22f,.31f);
+        static Transform FindHelmet(Transform root){foreach(var t in root.GetComponentsInChildren<Transform>(true))if(t.name=="Human faction / helmet")return t;return null;}
         void AddHelmet(int faction)
         {
             int rows=Application.isMobilePlatform?12:28, segments=Application.isMobilePlatform?24:64;
@@ -256,7 +258,7 @@ namespace NeonVault
             var helmetRenderer=shell.AddComponent<MeshRenderer>();
             helmetRenderer.sharedMaterial=DetailedHeroMaterials3D.Get("ProductSteel");
             var helmetTint=new MaterialPropertyBlock();
-            helmetTint.SetColor("_Color",faction==0?new Color(.67f,.76f,.56f):faction==1?new Color(.42f,.075f,.12f):new Color(.52f,.66f,.83f));
+            helmetTint.SetColor("_Color",HelmetColor(faction));
             helmetRenderer.SetPropertyBlock(helmetTint);
             var rim=DetailedHeroMaterials3D.Get("Dark");
             var hardware=DetailedHeroMaterials3D.Get("ProductSteel");
@@ -322,7 +324,7 @@ namespace NeonVault
             for(int slot=1;slot<3;slot++)items[slot]=new ArmorItem{slot=(ArmorSlot)slot,visualVariant=style};
             var steel=DetailedHeroMaterials3D.Get("ProductSteel");
             var accent=DetailedHeroMaterials3D.Get(faction==0?"MirelineOlive":faction==1?"Rust":"CinderOrange");
-            if(faction==1)
+            if(true)
             {
                 // Riveted irregular scrap plates make the raiders asymmetric.
                 DetailedHeroArsenal3D.Shell("Raider salvaged chest",Body.chest,steel,new Vector3(variant==0?-.08f:.08f,.015f,.16f),new Vector2(.20f,.25f),.045f);
@@ -373,6 +375,7 @@ namespace NeonVault
         }
     }
 }
+
 
 
 

@@ -58,7 +58,7 @@ Material:
     - _SurfaceKind: 3
     m_Colors:
     - _AccessoryProjectionUv: {r: 0, g: 0, b: 1, a: 1}
-    - _Color: {r: 0.8, g: 0.47, b: 0.34, a: 1}
+    - _Color: {r: 0.19, g: 0.032, b: 0.055, a: 1}
     - _InkColor: {r: 0.035, g: 0.028, b: 0.022, a: 1}
     - _ProjectionSideUv: {r: 0.02, g: 0.35, b: 0.96, a: 0.3}
     - _ProjectionUv: {r: 0, g: 0, b: 1, a: 1}

@@ -31,13 +31,13 @@ namespace NeonVault
             var rust=Resources.Load<Texture2D>("Art/WastelandSurface");
             for(int i=0;i<mats.Length;i++){mats[i]=new Material(shader){name="Streamed entrance / "+i,color=palette[i],enableInstancing=true};if(i==0&&weatheredConcrete)mats[i].mainTexture=weatheredConcrete;else if((i==1||i==3)&&rust)mats[i].mainTexture=rust;materials.Add(mats[i]);}
             var flagMaterials=new Material[3];
-            var flagAtlas=Resources.Load<Texture2D>("Art/Factions/FactionFlagsConcept");
+            string[] flagNames={"WardenFlag","RedClawFlag","CoyoteFlag"};
             var flagShader=Shader.Find("Unlit/Transparent")??Shader.Find("Sprites/Default");
-            if(flagAtlas&&flagShader)for(int i=0;i<flagMaterials.Length;i++)
+            if(flagShader)for(int i=0;i<flagMaterials.Length;i++)
             {
-                var flagMaterial=new Material(flagShader){name="Faction banner / "+i,mainTexture=flagAtlas};
-                flagMaterial.mainTextureScale=new Vector2(1f/3f,1);
-                flagMaterial.mainTextureOffset=new Vector2(i/3f,0);
+                var flagTexture=Resources.Load<Texture2D>("Art/Factions/"+flagNames[i]);
+                if(!flagTexture)continue;
+                var flagMaterial=new Material(flagShader){name="Faction banner / "+i,mainTexture=flagTexture};
                 flagMaterials[i]=flagMaterial;materials.Add(flagMaterial);
             }
             worlds[id]=new SiteState{root=root,geography=geo,materials=mats,factionFlags=flagMaterials};
@@ -100,7 +100,7 @@ namespace NeonVault
             Box(site.transform,state.materials,"Door header",new Vector3(0,3,1.85f),new Vector3(3,.32f,.45f),1);
             Box(site.transform,state.materials,"Door threshold",new Vector3(0,.08f,1),new Vector3(2.8f,.12f,1.9f),0);
             Box(site.transform,state.materials,"Entrance lamp",new Vector3(0,3.3f,1.64f),new Vector3(.65f,.16f,.18f),4);
-            if(!camp)
+            if(!camp&&!factionHeadquarters)
             {
                 var faction=ExpeditionMap.FactionForStage(key-state.geography.Camps.Length);
                 if(faction!=DungeonFaction.None)

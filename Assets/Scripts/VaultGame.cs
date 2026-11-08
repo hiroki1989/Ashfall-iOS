@@ -192,7 +192,7 @@ namespace NeonVault
                         SpawnFoeInternal(aroundBoss,kind,true);
                     }
                 }
-                else for(int i=0;i<Mathf.Max(MinimumMissionEnemiesPerFloor(),Mathf.Max(1,Mathf.RoundToInt(CurrentDungeon.EnemyCount(room)*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyCountMultiplier : 1f))));i++)
+                else for(int i=0;i<Mathf.Max(MinimumMissionEnemiesPerFloor(),Mathf.Max(1,Mathf.RoundToInt(CurrentDungeon.EnemyCount(room)*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyCountMultiplier : 1f)*(ExpeditionMap.FactionForStage(SelectedStageId)==DungeonFaction.None?1f:.7f))));i++)
                 {
                     Vector3 p; int attempts=0;
                     do {var cell=Layout.chambers[rng.Next(Layout.chambers.Count)];p=Layout.Center(cell)+new Vector3((float)rng.NextDouble()*6-3,0,(float)rng.NextDouble()*4-2);attempts++;} while((Blocked(p,.8f)||!Layout.SpawnSafe(p))&&attempts<200);

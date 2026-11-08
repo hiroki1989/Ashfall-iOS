@@ -1,3 +1,33 @@
+## 2026-11-08 / iOS 54・勢力旗・敵数・地図初期位置
+- `ProjectSettings.asset` のバージョン／iOSビルドを54/54に更新。
+- 勢力旗を単独画像3枚へ分離し、勢力本拠地の余分な入口旗を除去。各勢力は自勢力の画像のみ参照する。
+- 勢力ダンジョン通常フロアの敵生成数を約30%減。任務達成に必要な最低数と最終フロアのボス編成は維持。
+- 広域地図を開くたび、屋外ではプレイヤー位置、拠点では拠点位置、ダンジョンでは入口位置を中心に設定。
+- Unity 6000.6.0f1バッチ取り込み・C#コンパイル成功（`D:/Unity/BuildTools/version54_flag_map_compile.log`）。旗画像3枚の切り出し範囲をピクセル照合。実画面・iOS実機は未確認。
+
+## 2026-11-08 / セラ・ブリッグス3Dモデル高精細化 ＆ Steam版・SteamDemo版への全変更反映
+- **セラ（装備商人）・ブリッグス（借金取り）3Dモデルのディテール・質感大幅強化（`Tools/Blender/build_hub_npcs_hq.py`, `Assets/Editor/IonaModelReview.cs`）**:
+  - 頂点抽出衣装の境界エッジ平滑化（`smooth_boundaries`）＋Subsurfを追加し、襟元やダスターコート前開き・裾のギザギザなポリゴン断面を完全解消。
+  - ヘルメットを2分割プリミティブから一体成形の回転体シュタールヘルム（巻き縁・ベンチレーション金具・リベット・顎紐付き）へ刷新。
+  - ガスマスクを顔面に密着するスカルプト造形面体＋多孔パンチングキャップ（`sera_canister_cap.png`, `briggs_canister_cap.png`）＋正面ルーバーグリル（`sera_vent.png`, `briggs_vent.png`）＋肖像画の瞳と緑ガラス反射を焼き込んだゴーグルレンズ（`sera_lens.png`, `briggs_lens.png`）へ更新。
+  - セラに肩レザー＆リベット鉄板アーマー、上腕フラップポケット、胸ビブプレート、真鍮ベゼル付き圧力計、革ループ付きショットガン弾8発、歯付きパイプレンチ＆真鍮ノギス、ニーパッド、ブーツバックルを追加（`Assets/Resources/Characters/Sera/Sera.fbx`: 58,890 tris, 15マテリアル）。
+  - ブリッグスに立ち襟＋2層ショルダーマント、MOLLEウェビング帯、フラップ・プルタブ・真鍮スナップ付き3連マガジンポーチ、前腕レザーブレーサー、ニーパッド、ブーツバックルを追加（`Assets/Resources/Characters/Briggs/Briggs.fbx`: 68,728 tris, 12マテリアル）。
+  - 各衣装・金属・革テクスチャから法線マップ（`*_n.png`）を生成し、Unity側マテリアルの `_BumpMap` / `_Metallic` / `_Glossiness` を自動設定。
+- **Steam版（`D:/Unity/DustDebt-Steam`）・SteamDemo版（`D:/Unity/DustDebt-Steam-Demo`）への同期**:
+  - イオナ・セラ・ブリッグス3名のFBXモデル・テクスチャ・法線マップ一式（`Assets/Resources/Characters/`）、拠点NPC読込処理（`VaultHubWorld.cs`）、および雑魚敵3勢力のヘルメット暗色化（`HumanFactionVisual.cs`, `FactionPresetBaker.cs`, `Assets/Resources/FactionPresets/faction_0_0`〜`faction_2_1`）をSteam版・SteamDemo版へ反映し、Unityバッチでインポート・マテリアル設定・描画を確認。実戦画面・iOS実機は未検証。
+
+## 2026-11-08 / セラ（武器商人）・ブリッグス（借金取り）3Dモデル実装 ＆ 雑魚敵ヘルメット暗色化
+Blender 4.2 + MPFB(MakeHuman CC0ベースメッシュ＋game_engine骨格)で Tools/Blender/build_hub_npcs_hq.py を作成し、肖像 portrait-sera-v11.png 準拠のセラ（スチールヘルメット、緑反射ゴーグル、双筒ガスマスク、紺色ワークジャケット、金属チェストエプロン、圧力計・ショットガン弾帯・パイプレンチ・真鍮ノギス）を Assets/Resources/Characters/Sera/Sera.fbx（19,678 tris）に、肖像 portrait-briggs-v9.png 準拠のブリッグス（NVGマウント・イヤーポッド付きヘルメット、蛇腹ホース付きガスマスク、ダークスカーフ、MOLLEベスト＋3連マグポーチ、ブラウンダスターコート、背嚢・寝袋ロール）を Assets/Resources/Characters/Briggs/Briggs.fbx（22,810 tris）に出力。VaultHubWorld.HubNpc で3名（Iona/Sera/Briggs）すべて新モデルを読込。併せて雑魚敵3勢力（Military/Raiders/Gang）のヘルメット色 HumanFactionVisual.HelmetColor・FactionPresetBaker・ベイク済みプリセット6種（action_0_0〜action_2_1）を落ち着いた暗色へ更新。Unityバッチ IonaModelReview で全モデルのインポート・マテリアル・描画を確認。実戦画面・iOS実機は未検証。
+
+## 2026-11-08 / イオナ3Dモデル刷新（MPFB人体メッシュ＋肖像投影ベイク＋リグ）
+ユーザー選択に従い、Blender 4.2 + MPFB(MakeHuman CC0ベースメッシュ)で人体メッシュ・全身骨格(game_engineリグ)を生成する Tools/Blender/build_iona_hq.py を作成。肖像 portrait-iona-v12.png から顔テクスチャを投影しCyclesで2048x2048全身スキン(iona_body.png)へベイク、眼球(iona_eye.png)・フィット衣装(ジャケット/シャツ/パンツ/指抜きグローブ/スカーフ/ブーツ)・アクセサリー(ゴーグル/ガスマスク/巻物筒/鞄/記録端末)を構築し、Decimate(38,998 tris)して Assets/Resources/Characters/Iona/Iona.fbx を更新。Unityバッチ IonaModelReview でインポート・13マテリアル・描画を確認（D:/Unity/AssetIntegration/Iona/unity-front.png, unity-face.png, unity-review.png）。実戦画面・アニメーション・iOS実機は未検証。
+
+## 2026-11-08 / イオナ全身テクスチャ
+肖像v12準拠の生成テクスチャ9種（ジャケット/スカーフ/革/真鍮/パンツ/シャツ/髪/肌/顔）を Assets/Resources/Characters/Iona/Textures に追加（色味はPNGへ焼き込み、原本は会話artifact）。build_iona.pyでUV(キューブ投影＋顔の正面投影)を付けFBX再出力。Unityバッチで描画確認（D:/Unity/AssetIntegration/Iona/unity-front.png, unity-face.png）。実機/iOS未検証。
+
+## 2026-11-08 / イオナ3Dモデル（Blender）
+Blender 4.2で Tools/Blender/build_iona.py から肖像準拠のイオナ（オリーブのフィールドジャケット、赤スカーフ、真鍮ゴーグル/ガスマスク、巻物筒、シアン発光の記録端末）を生成し Assets/Resources/Characters/Iona/Iona.fbx（約7.3k tris）へ出力。VaultHubWorld.HubNpc でIona時に読込、欠落時は従来ビジュアル。Unityバッチ IonaModelReview で読込・向き・描画確認（D:/Unity/AssetIntegration/Iona/unity-review.png）。アニメーション・実機・iOS未検証。
+
 ## 2026-11-03 / レジェンダリ統合Windowsビルド成功
 ユーザーの指示で低メモリによる自動停止を外し、Unity 6000.6.0f1で統合Windows検証ビルドを実行。終了コード0、`ACTION_SKILL_BUILD Succeeded`。出力 `D:/Unity/BuildTemp/ActionSkillBuildReview/NeonVault.exe`、ログ `D:/Unity/BuildTemp/legendary-build-nov03-retry/unity.log`、メモリ記録同フォルダ `memory.csv`。実戦・エフェクトの見た目・iOS実機の確認は未実施。
 
@@ -1274,3 +1304,7 @@ iOS・Steam・DEMOへ人物7点のv8を追加。主人公、ヴェイル、ブ�
 主人公はメニュー画を参照して左向き・腕を下ろした姿、ブリッグスと武器商人は若い戦闘員として異なるポーズと装備に変更。犬は人型でない頭と首のみ。イオナの会話参照は既存で単一のionaキー。3版に反映。iOS Unity素材QA PASS、Steam・DEMO batch成功。実際の会話画面の目視は未実施。
 ## 2026-11-05 / 会話画像v10
 主人公はユーザー添付PNGそのものを使用し、会話の主人公画像描画だけGUI行列で左右反転後に元へ復帰。武器商人はヘルメット・整った若い戦闘員の画像へ更新。3版へ反映。iOS Unity読み込みQA PASS、Steam・DEMO Unity batch成功。実際の会話画面の見た目は未検証。
+
+
+
+
