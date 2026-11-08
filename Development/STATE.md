@@ -1,3 +1,8 @@
+## 2026-11-09 / iOS Game Center entitlement要求を無効化
+- `GameCenterSyncManager`をiOSでGame Center認証・同期APIを呼ばないno-opに変更。起動側の呼び出し契約は維持。
+- 他のiOS機能に影響する一括Capability自動検出は維持。Game Centerへのコード参照と手動entitlementはリポジトリ内に残っていないことを静的検索で確認。
+- Version / Buildは55のまま。Unity/Xcodeビルドは今回未実施。Appcircleで再ビルドして署名結果の確認が必要。
+
 ## 2026-11-09 / 感染者アセットと大ボス（完了・コード検証済み）
 - iOS / Steam / Steam Demo の3プロジェクトで感染者通常サイト200枠のうち100枠を感染者勢力に設定し、制圧30%・60%・100%で感染者ボス戦（ステージ206–208）が解放されるよう統合。
 - 通常感染者へ Free Female Zombie を抽選接続。感染者ダンジョンの通常ボスは Fantastic Creature #1（プロジェクト内の `True_Horror_Creatures` / thc6 FBX・controller）を抽選し、感染者の大ボスには InfectedRenegade リソースPrefabを接続。固有レジェンダリのボス系列も追加済み。
