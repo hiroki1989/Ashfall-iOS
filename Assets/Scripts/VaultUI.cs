@@ -94,6 +94,11 @@ namespace NeonVault
         }
         void OnGUI()
         {
+            try { OnGUIInternal(); }
+            finally { DrawMenuCrosshair(); }
+        }
+        void OnGUIInternal()
+        {
             Styles();float scale=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             if(screen==Screen.Menu && !InventoryOpen && !manufacturerRegistry)
             {
@@ -291,6 +296,34 @@ namespace NeonVault
             Text(550,640,VaultLanguage.RarityName(rarity),label,accent,440);
             Text(550,680,T("LEVEL ","レベル ")+level,small,Mist,440);
             Text(550,716,T("SCORE ","評価 ")+score,label,Color.white,440);
+        }
+        void DrawMenuCrosshair()
+        {
+            if(MobileTouchControls.Enabled||Active)return;
+            Vector2 mouse=new Vector2(Input.mousePosition.x,UnityEngine.Screen.height-Input.mousePosition.y);
+            float mx=mouse.x, my=mouse.y;
+            bool click=Input.GetMouseButton(0)||Input.GetMouseButton(1);
+            float gap=click?2.5f:6.5f;
+            float len=click?5.5f:8.5f;
+            Color reticle=new Color(1f,.88f,.12f,1f);
+            Color shadow=new Color(.02f,.02f,.02f,.95f);
+            Matrix4x4 prevMatrix=GUI.matrix;
+            Color prevColor=GUI.color;
+            GUI.matrix=Matrix4x4.identity;
+            Box(new Rect(mx-2,my-2,4,4),shadow);
+            Box(new Rect(mx-1,my-1,2,2),reticle);
+            // Horizontal and vertical crosshair bars with drop shadow
+            for(int axis=0;axis<4;axis++)
+            {
+                Rect bar=axis==0?new Rect(mx+gap,my-1,len,2):
+                         axis==1?new Rect(mx-1,my-gap-len,2,len):
+                         axis==2?new Rect(mx-gap-len,my-1,len,2):
+                         new Rect(mx-1,my+gap,2,len);
+                Box(new Rect(bar.x-1,bar.y-1,bar.width+2,bar.height+2),shadow);
+                Box(bar,reticle);
+            }
+            GUI.matrix=prevMatrix;
+            GUI.color=prevColor;
         }
         void DrawCrosshair(float mx,float my)
         {

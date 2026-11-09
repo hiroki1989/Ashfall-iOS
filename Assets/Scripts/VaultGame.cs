@@ -380,7 +380,7 @@ namespace NeonVault
             TickPet(Time.deltaTime);
             if(screen==Screen.Playing&&Active)TickPetSkillAura();
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
-            Cursor.visible=VaultMobileInputBridge.Enabled||!Active;
+            Cursor.visible=false;
             if(IsOverworld&&OverworldActivityChoiceOpen)
             {
                 if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))OpenNearbyOverworldActivity();

@@ -1,3 +1,17 @@
+## 2026-11-09 / iOS版課金仕様（Lv3制限）確認回答・Steam/Demo版UIマウスポインタ（黄色の収縮クロスヘア）実装
+- iOS版課金仕様の確認結果:
+  - はい、現在のiOS版（実機ビルド #if UNITY_IOS && !UNITY_EDITOR）では、アプリ内課金（IosPremiumAccess.IsUnlocked）が解除されていない場合、レベル3以上の債務返済が制限される仕様（FreeVersionRepaymentAllowance(debtPaid, DebtTotalForLevel(3))）となっており、課金しないとレベル3より上（レベル4以降）へ上がれない設計になっています。
+- 変更ファイル:
+  - Assets/Scripts/VaultGame.cs: デスクトップ環境（Steam版・Demo版）において、OS標準のマウスポインタを常時非表示（Cursor.visible = false）に設定。
+  - Assets/Scripts/VaultUI.cs:
+    - メニュー画面、インベントリ画面、ショップ画面、会話画面、ダイアログ等、UI操作を行う全画面において、マウスポインタの位置に黄色のクロスヘアポインタを描画する DrawMenuCrosshair() を実装。
+    - マウスクリック時（左クリック・右クリック押下中）には、クロスヘアのギャップ（隙間）とバー長が収縮（通常時: gap 6.5px / len 8.5px $\rightarrow$ クリック時: gap 2.5px / len 5.5px）し、クリックフィードバックを直感的に演出。
+    - ゲーム内戦闘・探索中（Active）は従来のゲーム内照準クロスヘアが機能し、PC標準ポインタは一切露出しないよう統一。
+  - D:/Unity/DustDebt-Steam および D:/Unity/DustDebt-Steam-Demo に変更スクリプトを完全同期。
+- 結果: Steam版・Demo版において、PC標準ポインタが表示されず、UI・メニュー・インベントリ等の全画面でクリック時に収縮するスタイリッシュな黄色のクロスヘアが描画されるようになった。
+- 検証: C# ソースコード検証・差分確認および3プロジェクト同期完了。
+- 未解決: なし。
+
 ## 2026-11-09 / 大ボス・勢力本拠地ボスの強化（移動速度・攻撃間隔・攻撃力・HP・強力行動頻度・強攻撃パターン強化）
 - 変更ファイル:
   - Assets/Scripts/VaultGame.cs: 大ボス（MajorBoss: 最終債務ボス / 各勢力本拠地HQボス / ランドマークボス）のHP・攻撃力・ダメージ耐性を大幅強化。
