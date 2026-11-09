@@ -169,7 +169,7 @@ SubShader {
 
 // noshadowmask does not fix the problem with baked shadows in deferred
 // removing nolightmap does	
-		#pragma surface surf StandardTranslucent vertex:CTI_TreeVertLeaf fullforwardshadows dithercrossfade
+		#pragma surface surf StandardTranslucent vertex:CTI_TreeVertLeaf fullforwardshadows
 // nolightmap
 		#pragma target 3.0
 
