@@ -24,6 +24,8 @@ namespace NeonVault {
    foreach(var filter in prefab.GetComponentsInChildren<MeshFilter>(true)){
     var renderer=filter.GetComponent<MeshRenderer>();if(!renderer||!renderer.enabled||!filter.sharedMesh)continue;
     var local=prefab.transform.worldToLocalMatrix*filter.transform.localToWorldMatrix;
+    // street_lamp_01 stores its Z-up correction on the prefab root; keep it so the lamp stands upright at normal height.
+    if(prefab.name=="street_lamp_01")local=Matrix4x4.Translate(-prefab.transform.position)*filter.transform.localToWorldMatrix;
     var b=filter.sharedMesh.bounds;
     for(int c=0;c<8;c++){var v=local.MultiplyPoint3x4(b.center+Vector3.Scale(b.extents,new Vector3((c&1)==0?-1:1,(c&2)==0?-1:1,(c&4)==0?-1:1)));if(first){t.bounds=new Bounds(v,Vector3.zero);first=false;}else t.bounds.Encapsulate(v);}
     var source=renderer.sharedMaterials;

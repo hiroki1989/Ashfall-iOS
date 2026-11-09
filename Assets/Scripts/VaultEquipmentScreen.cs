@@ -42,9 +42,9 @@ namespace NeonVault
             if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-(362-top)));
             if(region==3&&equipmentHeroPreview)equipmentHeroPreview.Angle=Mathf.Repeat(equipmentHeroPreview.Angle-delta.x*.55f+155,360)-155;
             if(region==4)eqLoadoutScroll.y=Mathf.Max(0,eqLoadoutScroll.y-delta.y);
-            if(region==5)actionTreeScroll.y=Mathf.Clamp(actionTreeScroll.y-delta.y,0,1050);
+            if(region==5)actionTreeScroll=new Vector2(Mathf.Clamp(actionTreeScroll.x-delta.x,0,actionTreeMaxScroll.x),Mathf.Clamp(actionTreeScroll.y-delta.y,0,actionTreeMaxScroll.y));
             if(region==6)actionTreeDescriptionScroll.y=Mathf.Max(0,actionTreeDescriptionScroll.y-delta.y);
-            if(region==7)petSkillScroll.y=Mathf.Clamp(petSkillScroll.y-delta.y,0,200);
+            if(region==7)petSkillScroll=new Vector2(Mathf.Clamp(petSkillScroll.x-delta.x,0,petSkillMaxScroll.x),Mathf.Clamp(petSkillScroll.y-delta.y,0,petSkillMaxScroll.y));
         }
         sealed class EqCard
         {

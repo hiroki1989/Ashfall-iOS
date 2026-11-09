@@ -11,6 +11,7 @@ namespace NeonVault
         int actionTreeKind, actionTreeBranch, actionTreeTier;
         int actionTreeSlot = -1;
         Vector2 actionTreeScroll, actionTreeDescriptionScroll;
+        Vector2 actionTreeMaxScroll = new Vector2(0f, 5000f), petSkillMaxScroll = new Vector2(0f, 2000f); // set each frame by the tree draw; used by touch drag
         string actionTreeLastDescription;
         float skillTreeNavCooldown;
         const float ActionTreeTierPitch = 1100f;
@@ -174,14 +175,31 @@ namespace NeonVault
                           available ? new Color(.25f, .30f, .33f, .85f) : new Color(.14f, .16f, .18f, .75f);
             Color core = unlocked ? Color.Lerp(accent, Color.white, .32f) :
                          available ? new Color(.48f, .54f, .56f, .75f) : new Color(.22f, .25f, .27f, .55f);
-            Line(from, to, outer, unlocked ? 7f : 5f);
-            Line(from, to, core, unlocked ? 3.2f : 2f);
+            // Orthogonal elbow (down / across / down) drawn with axis-aligned boxes only.
+            // Rotated GUI.matrix lines break inside GUI.BeginScrollView clipping and showed up as
+            // stray diagonal streaks that slid against the scrolling nodes, so no rotation is used here.
+            float midY = Mathf.Abs(from.x - to.x) < .5f ? to.y : (from.y + to.y) * .5f;
+            Vector2 a = from, b = new Vector2(from.x, midY), c = new Vector2(to.x, midY), d = to;
+            float ow = unlocked ? 7f : 5f, cw = unlocked ? 3.2f : 2f;
+            OrthoSeg(a, b, outer, ow); OrthoSeg(b, c, outer, ow); OrthoSeg(c, d, outer, ow);
+            OrthoSeg(a, b, core, cw); OrthoSeg(b, c, core, cw); OrthoSeg(c, d, core, cw);
             if(unlocked)
             {
-                float pulse = Mathf.Repeat(Time.unscaledTime * 1.15f, 1f);
-                Vector2 dot = Vector2.Lerp(from, to, pulse);
-                Diamond(dot.x, dot.y, 4.5f, Color.white);
+                float l1 = Mathf.Abs(b.y - a.y), l2 = Mathf.Abs(c.x - b.x), l3 = Mathf.Abs(d.y - c.y);
+                float total = Mathf.Max(1f, l1 + l2 + l3);
+                float s = Mathf.Repeat(Time.unscaledTime * 1.15f, 1f) * total;
+                Vector2 dot = s < l1 ? Vector2.Lerp(a, b, s / Mathf.Max(1f, l1)) :
+                              s < l1 + l2 ? Vector2.Lerp(b, c, (s - l1) / Mathf.Max(1f, l2)) :
+                              Vector2.Lerp(c, d, (s - l1 - l2) / Mathf.Max(1f, l3));
+                Box(new Rect(dot.x - 3.5f, dot.y - 3.5f, 7f, 7f), Color.white);
             }
+        }
+
+        void OrthoSeg(Vector2 p, Vector2 q, Color color, float w)
+        {
+            float x0 = Mathf.Min(p.x, q.x), x1 = Mathf.Max(p.x, q.x), y0 = Mathf.Min(p.y, q.y), y1 = Mathf.Max(p.y, q.y);
+            if(x1 - x0 < .5f && y1 - y0 < .5f) return;
+            Box(new Rect(x0 - w * .5f, y0 - w * .5f, x1 - x0 + w, y1 - y0 + w), color);
         }
 
         bool DrawBorderlandsSkillNode(Vector2 center, float size, int iconIdx, int frameKind, string title, int rank, int max, bool available, bool selected, Color accent)
@@ -426,6 +444,7 @@ namespace NeonVault
                 Event.current.Use();
             }
 
+            actionTreeMaxScroll = new Vector2(Mathf.Max(0f, contentW - scrollArea.width), Mathf.Max(0f, contentH - scrollArea.height));
             actionTreeScroll = GUI.BeginScrollView(scrollArea, actionTreeScroll, new Rect(0, 0, contentW, contentH), false, true);
 
             for(int t=0;t<5;t++)

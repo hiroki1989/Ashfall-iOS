@@ -139,6 +139,7 @@ namespace NeonVault
             const float contentH = 80f + (PetNodeCount-1)*96f + 60f;
             if(Event.current.type==EventType.ScrollWheel&&scrollViewRect.Contains(Event.current.mousePosition)){petSkillScroll.y=Mathf.Clamp(petSkillScroll.y+Event.current.delta.y*24f,0,contentH-scrollViewRect.height);Event.current.Use();}
             if(Event.current.type==EventType.Layout&&petSkillAutoScroll){float selectedY=petSkillNode==0?55f:80f+petSkillNode*96f;if(selectedY<petSkillScroll.y+60f)petSkillScroll.y=Mathf.Max(0,selectedY-60f);else if(selectedY>petSkillScroll.y+scrollViewRect.height-60f)petSkillScroll.y=Mathf.Min(contentH-scrollViewRect.height,selectedY-scrollViewRect.height+60f);petSkillAutoScroll=false;}
+            petSkillMaxScroll = new Vector2(Mathf.Max(0f, contentW - scrollViewRect.width), Mathf.Max(0f, contentH - scrollViewRect.height));
             petSkillScroll = GUI.BeginScrollView(scrollViewRect, petSkillScroll, new Rect(0, 0, contentW, contentH), false, false);
 
             // Each branch is a 25-stage vertical path; connectors and nodes share content coordinates.
