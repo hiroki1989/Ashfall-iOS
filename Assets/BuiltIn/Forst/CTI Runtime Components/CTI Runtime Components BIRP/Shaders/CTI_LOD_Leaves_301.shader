@@ -104,7 +104,7 @@ SubShader {
 		#pragma target 3.0
 		#pragma multi_compile_instancing
 
-		#pragma multi_compile __ LOD_FADE_CROSSFADE LOD_FADE_PERCENTAGE
+		// #pragma multi_compile __ LOD_FADE_CROSSFADE LOD_FADE_PERCENTAGE
 		// Use Wind from Script
 		#pragma shader_feature _METALLICGLOSSMAP
 		// LeafTurbulence
