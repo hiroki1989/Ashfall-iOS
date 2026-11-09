@@ -26,6 +26,7 @@ namespace NeonVault
         public int AttackVariant=>attackVariant;
         public bool IsSpinning=>spinTimer>0;
         public bool RaiderBoss { get; private set; }
+        public bool IsHumanBoss => RaiderBoss || (kind==3 && GetComponentInChildren<HumanFactionVisual>()!=null);
         public bool MajorBoss { get; set; }
         public void SetRaiderBoss(bool value){RaiderBoss=kind==3&&value;}
         public bool HeavyMelee=>kind==1||kind==2||kind==6||kind==7||kind==9;
@@ -34,9 +35,9 @@ namespace NeonVault
         public bool UseAssaultRifle { get; private set; }
         public float SeparationRadius=>kind==3?1.45f:elite?1.0f:.78f;
         public static float TargetDodgeChance(float accuracy)=>Mathf.Clamp((82-Mathf.Clamp(accuracy,1,100))*.006f,0,.30f);
-        public float TelegraphSeconds=>kind==3?(bossMove==BossMove.FlashLunge?.38f:bossMove==BossMove.ComboFrenzy?.50f:bossMove==BossMove.Rush?.60f:bossMove==BossMove.Whirlwind?.68f:bossMove==BossMove.Sweep?.82f:bossMove==BossMove.Gun?1.05f:bossMove==BossMove.ShockwaveRing?1.05f:1.25f):attackVariant==1?(kind==4?.38f:kind==0?.44f:kind==5||kind==2?.52f:kind==1||kind==8?.55f:kind==6?.58f:kind==9?.62f:.68f):attackVariant==2?(kind==8?.92f:kind==4||kind==6||kind==9?.95f:kind==0?1.05f:kind==1||kind==7?1.10f:1.15f):(kind==5||kind==10)?.95f:kind==7?1.2f:kind==4?.65f:kind==8?.42f:kind==0?.7f:.85f;
+        public float TelegraphSeconds=>kind==3?(bossMove==BossMove.FlashLunge?.38f:bossMove==BossMove.ComboFrenzy?.50f:bossMove==BossMove.Rush?.60f:bossMove==BossMove.Whirlwind?.68f:bossMove==BossMove.Sweep?.82f:bossMove==BossMove.Gun?1.05f:bossMove==BossMove.Grenade?1.15f:bossMove==BossMove.ShockwaveRing?1.05f:1.25f):attackVariant==1?(kind==4?.38f:kind==0?.44f:kind==5||kind==2?.52f:kind==1||kind==8?.55f:kind==6?.58f:kind==9?.62f:.68f):attackVariant==2?(kind==8?.92f:kind==4||kind==6||kind==9?.95f:kind==0?1.05f:kind==1||kind==7?1.10f:1.15f):(kind==5||kind==10)?.95f:kind==7?1.2f:kind==4?.65f:kind==8?.42f:kind==0?.7f:.85f;
         public static string Name(int kind)=>kind==10?VaultLanguage.T("RAIDER","レイダー"):VaultLanguage.T(new[]{"SHAMBLER","ACID SPITTER","RAD GUNNER","WASTELAND COLOSSUS","POUNCER","NEEDLE STALKER","RAD CYCLER","BLOATER","PLATED CORPSE","FLESH WEAVER"}[Mathf.Clamp(kind,0,9)],new[]{"シャンブラー","アシッドスピッター","ラッドガンナー","ウェイストランド・コロッサス","パウンサー","ニードルストーカー","ラッドサイクラー","ブロウター","プレートコープス","フレッシュウィーバー"}[Mathf.Clamp(kind,0,9)]);
-        enum BossMove { Rush, Slam, Sweep, Gun, FlashLunge, ComboFrenzy, ShockwaveRing, Whirlwind }
+        enum BossMove { Rush, Slam, Sweep, Gun, FlashLunge, ComboFrenzy, ShockwaveRing, Whirlwind, Grenade }
         bool alerted, charging;float charge,dash,damageScale=1,resistance,lockedRadialAngle,burstTimer;int burstShots;Vector3 lockedAim,lockedTarget;GameObject warning;
         BossMove bossMove;int bossAttackCount,attackVariant,enemyAttackCount,comboSteps,humanStrafeSign=1,humanShotsSinceCover,humanTactic;float dashSpeed,spinTimer,spinTick,comboTimer,sprintBoostTimer,humanTacticTimer,humanReloadTimer,humanRollTimer;bool dashLandingBlast,hasCoverTarget;Vector3 coverTarget;
         public bool IsHumanReloading=>humanReloadTimer>0;
@@ -196,8 +197,8 @@ namespace NeonVault
             contact-=Time.deltaTime; // Damage comes from readable attacks, never passive body contact.
             if(charging)
             {
-                if(kind==10&&visible&&charge>.18f){Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f){lockedAim=shotDirection.normalized;transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}if(warning!=null){muzzle=HumanMuzzlePosition();warning.transform.position=new Vector3(muzzle.x,.08f,muzzle.z);var line=warning.GetComponent<LineRenderer>();if(line!=null&&line.positionCount>=2){float length=line.GetPosition(1).magnitude;line.SetPosition(1,lockedAim*length);}}}
-                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();float baseWait=kind==3?(bossMove==BossMove.FlashLunge?.95f:bossMove==BossMove.ComboFrenzy?1.85f:bossMove==BossMove.Whirlwind?1.9f:bossMove==BossMove.ShockwaveRing?2.2f:bossMove==BossMove.Gun?2.3f:bossMove==BossMove.Slam?1.95f:bossMove==BossMove.Sweep?1.35f:1.55f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.2f:kind==7?2.8f:kind==0||kind==8?1.05f:kind==4?1.75f:kind==9?2.8f:1.85f;if(kind!=3&&kind!=10)baseWait*=attackVariant==1?.68f:attackVariant==2?1.22f:1f;if(kind==3&&hp<maxHp*.6f)baseWait*=.78f;if(MajorBoss)baseWait*=.72f;timer=baseWait;return;
+                if(kind==10&&visible&&charge>.18f){Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f){lockedAim=shotDirection.normalized;transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}if(warning!=null&&!(elite&&enemyAttackCount%4==0)){muzzle=HumanMuzzlePosition();warning.transform.position=new Vector3(muzzle.x,.08f,muzzle.z);var line=warning.GetComponent<LineRenderer>();if(line!=null&&line.positionCount>=2){float length=line.GetPosition(1).magnitude;line.SetPosition(1,lockedAim*length);}}}
+                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();float baseWait=kind==3?(bossMove==BossMove.FlashLunge?.95f:bossMove==BossMove.ComboFrenzy?1.85f:bossMove==BossMove.Whirlwind?1.9f:bossMove==BossMove.ShockwaveRing?2.2f:bossMove==BossMove.Gun?2.3f:bossMove==BossMove.Grenade?2.4f:bossMove==BossMove.Slam?1.95f:bossMove==BossMove.Sweep?1.35f:1.55f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.2f:kind==7?2.8f:kind==0||kind==8?1.05f:kind==4?1.75f:kind==9?2.8f:1.85f;if(kind!=3&&kind!=10)baseWait*=attackVariant==1?.68f:attackVariant==2?1.22f:1f;if(kind==3&&hp<maxHp*.6f)baseWait*=.78f;if(MajorBoss)baseWait*=.72f;timer=baseWait;return;
             }
             timer-=Time.deltaTime;
             if(timer>0||!visible||distance>18)return;
@@ -218,7 +219,11 @@ namespace NeonVault
                 warning=new GameObject("Colossus attack warning");warning.transform.SetParent(transform.parent,false);
                 if(bossMove==BossMove.Gun)
                 {
-                    if(RaiderBoss){for(int i=-1;i<=1;i++)CombatVisuals.WarningLine(HumanMuzzlePosition(),Quaternion.Euler(0,i*11,0)*lockedAim,Mathf.Min(distance+2,18),warning.transform);}else{for(int i=-2;i<=2;i++)CombatVisuals.WarningParabolicArc(transform.position+Vector3.up*1.5f,transform.position+Quaternion.Euler(0,i*16,0)*lockedAim*Mathf.Clamp(distance+i*.4f,3.5f,14f),1.1f,warning.transform);}
+                    if(IsHumanBoss){for(int i=-1;i<=1;i++)CombatVisuals.WarningLine(HumanMuzzlePosition(),Quaternion.Euler(0,i*11,0)*lockedAim,Mathf.Min(distance+2,18),warning.transform);}else{for(int i=-2;i<=2;i++)CombatVisuals.WarningParabolicArc(transform.position+Vector3.up*1.5f,transform.position+Quaternion.Euler(0,i*16,0)*lockedAim*Mathf.Clamp(distance+i*.4f,3.5f,14f),1.1f,warning.transform);}
+                }
+                else if(bossMove==BossMove.Grenade)
+                {
+                    CombatVisuals.WarningParabolicArc(HumanMuzzlePosition(),lockedTarget,2.8f,warning.transform,new Color(1f,.32f,.12f));
                 }
                 else if(bossMove==BossMove.Rush)
                 {
@@ -249,7 +254,19 @@ namespace NeonVault
             else if(kind==0||kind==8){if(attackVariant==1)warning=CombatVisuals.WarningLine(transform.position,lockedAim,kind==8?4.4f:3.4f,transform.parent);else if(attackVariant==2)warning=CombatVisuals.WarningArc(transform.position,lockedAim,2.2f,135f,transform.parent);else warning=CombatVisuals.WarningCircle(transform.position+lockedAim*1.1f,1.2f,transform.parent);}
             else if(kind==4){warning=CombatVisuals.WarningLine(transform.position+Vector3.up*.05f,lockedAim,attackVariant==1?6.5f:9f,transform.parent);if(attackVariant==2)CombatVisuals.WarningCircle(transform.position+lockedAim*Mathf.Min(distance,8f),2.3f,warning.transform);}
             else if(kind!=10){warning=new GameObject("Spit attack warning");warning.transform.SetParent(transform.parent,false);int ways=kind==2&&attackVariant==2?5:(kind==1&&attackVariant==2||kind==2&&attackVariant==0)?3:1;for(int i=-(ways/2);i<=ways/2;i++)CombatVisuals.WarningParabolicArc(transform.position+Vector3.up*1.3f,transform.position+Quaternion.Euler(0,i*16,0)*lockedAim*Mathf.Clamp(distance,2.5f,14f),kind==7?1.35f:.95f,warning.transform);}
-            else if(kind==10){if(warning!=null)Destroy(warning);Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f)lockedAim=shotDirection.normalized;warning=CombatVisuals.WarningLine(muzzle,lockedAim,Mathf.Min(distance+2,20),transform.parent);}
+            else if(kind==10)
+            {
+                if(warning!=null)Destroy(warning);
+                if(elite&&enemyAttackCount%4==0&&distance>4f)
+                {
+                    warning=CombatVisuals.WarningParabolicArc(HumanMuzzlePosition(),lockedTarget,2.5f,transform.parent,new Color(1f,.35f,.15f));
+                }
+                else
+                {
+                    Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f)lockedAim=shotDirection.normalized;
+                    warning=CombatVisuals.WarningLine(muzzle,lockedAim,Mathf.Min(distance+2,20),transform.parent);
+                }
+            }
         }
         bool TryFindHumanCover(out Vector3 bestPos)
         {
@@ -285,10 +302,32 @@ namespace NeonVault
         {
             BossMove chosen;
             bool enraged=hp<maxHp*.6f;
-            int cycle=bossAttackCount%7;
-            if(distance>6.2f)chosen=RaiderBoss&&cycle%2==0?BossMove.Gun:cycle==1||enraged&&cycle==4?BossMove.FlashLunge:cycle==3?BossMove.Gun:BossMove.Rush;
-            else if(distance>3.8f)chosen=cycle==0?BossMove.FlashLunge:cycle==1?BossMove.Gun:cycle==2?BossMove.Whirlwind:cycle==3?BossMove.Rush:cycle==4?BossMove.ShockwaveRing:cycle==5?BossMove.ComboFrenzy:BossMove.Sweep;
-            else chosen=cycle==0?BossMove.Slam:cycle==1?BossMove.ComboFrenzy:cycle==2?BossMove.Sweep:cycle==3?BossMove.Whirlwind:cycle==4?BossMove.ShockwaveRing:cycle==5?(RaiderBoss?BossMove.Gun:BossMove.FlashLunge):BossMove.ComboFrenzy;
+            int cycle=bossAttackCount%10;
+            if(IsHumanBoss)
+            {
+                // Human bosses fight predominantly with guns (70% Gun & Grenades, 30% Melee)
+                // At range (>5m): 80% Gun/Grenades (6 Gun, 2 Grenade), 20% Rush/FlashLunge
+                // At close range (<=5m): 60% Gun/Grenades (4 Gun, 2 Grenade), 40% Sweep/Rush (3 Sweep, 1 FlashLunge)
+                if(distance>5f)
+                {
+                    chosen=cycle==0||cycle==2||cycle==4||cycle==6||cycle==8?BossMove.Gun:
+                           cycle==1||cycle==7?BossMove.Grenade:
+                           cycle==3?BossMove.FlashLunge:BossMove.Rush;
+                }
+                else
+                {
+                    chosen=cycle==0||cycle==3||cycle==6||cycle==8?BossMove.Gun:
+                           cycle==2||cycle==7?BossMove.Grenade:
+                           cycle==1||cycle==4||cycle==9?BossMove.Sweep:BossMove.FlashLunge;
+                }
+            }
+            else
+            {
+                int mutantCycle=bossAttackCount%7;
+                if(distance>6.2f)chosen=mutantCycle==1||enraged&&mutantCycle==4?BossMove.FlashLunge:mutantCycle==3?BossMove.Gun:BossMove.Rush;
+                else if(distance>3.8f)chosen=mutantCycle==0?BossMove.FlashLunge:mutantCycle==1?BossMove.Gun:mutantCycle==2?BossMove.Whirlwind:mutantCycle==3?BossMove.Rush:mutantCycle==4?BossMove.ShockwaveRing:mutantCycle==5?BossMove.ComboFrenzy:BossMove.Sweep;
+                else chosen=mutantCycle==0?BossMove.Slam:mutantCycle==1?BossMove.ComboFrenzy:mutantCycle==2?BossMove.Sweep:mutantCycle==3?BossMove.Whirlwind:mutantCycle==4?BossMove.ShockwaveRing:mutantCycle==5?BossMove.FlashLunge:BossMove.ComboFrenzy;
+            }
             bossAttackCount++;
             return chosen;
         }
@@ -298,7 +337,8 @@ namespace NeonVault
             if(!alerted&&HeavyMelee){CombatVisuals.Burst(transform.position+lockedAim*1.1f,new Color(.55f,.32f,.18f),12,transform.parent);var d0=game.PlayerPosition-transform.position;d0.y=0;if(d0.magnitude<2.9f&&Vector3.Dot(d0.normalized,lockedAim)>-.15f&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(36*damageScale);return;}
             if(kind==3)
             {
-                if(bossMove==BossMove.Gun){FireRangedShot();burstShots=RaiderBoss?(MajorBoss?5:3):(MajorBoss?3:2);burstTimer=RaiderBoss?(MajorBoss?.12f:.20f):.18f;return;}
+                if(bossMove==BossMove.Gun){FireRangedShot();burstShots=IsHumanBoss?(MajorBoss?5:3):(MajorBoss?3:2);burstTimer=IsHumanBoss?(MajorBoss?.12f:.20f):.18f;return;}
+                if(bossMove==BossMove.Grenade){FireGrenade(lockedTarget,32*damageScale,2.8f);return;}
                 if(bossMove==BossMove.Rush){contact=0;dashSpeed=18f;dashLandingBlast=false;dash=.46f;return;}
                 if(bossMove==BossMove.FlashLunge){contact=0;dashSpeed=27f;dashLandingBlast=true;dash=.30f;CombatVisuals.Burst(transform.position,new Color(1f,.72f,.25f),14,transform.parent);return;}
                 if(bossMove==BossMove.ComboFrenzy){comboSteps=3;comboTimer=.02f;return;}
@@ -338,7 +378,14 @@ namespace NeonVault
                 foreach(var ally in game.Enemies)if(ally!=null&&!ally.dead&&ally!=this&&Vector3.Distance(ally.transform.position,transform.position)<HealingRadius&&game.LineOfSight(transform.position,ally.transform.position))ally.hp=Mathf.Min(ally.maxHp,ally.hp+ally.maxHp*.1f);
                 CombatVisuals.Burst(transform.position,new Color(.2f,1,.65f),12,transform.parent);return;
             }
-            FireRangedShot();
+            if(kind==10&&elite&&enemyAttackCount%4==0&&(game.PlayerPosition-transform.position).magnitude>3.8f)
+            {
+                FireGrenade(lockedTarget,24*damageScale,2.5f);
+            }
+            else
+            {
+                FireRangedShot();
+            }
             if(kind==10)
             {
                 if(UseAssaultRifle){burstShots=2;burstTimer=.16f;}
@@ -354,6 +401,19 @@ namespace NeonVault
             else if(kind==1&&attackVariant==1){burstShots=2;burstTimer=.18f;}
             else if(kind==5&&attackVariant==1){burstShots=1;burstTimer=.15f;}
             else if(kind==6&&attackVariant==1){burstShots=1;burstTimer=.24f;}
+        }
+        void FireGrenade(Vector3 targetPos,float dmg,float splashRad)
+        {
+            var imported=GetComponentInChildren<ImportedEnemyVisual>();
+            if(imported)imported.NotifyShot();
+            Vector3 muzzle=HumanMuzzlePosition();
+            if(weapon!=null)weapon.Kick();
+            CombatVisuals.Muzzle(muzzle,lockedAim,new Color(1f,.45f,.12f),GunEffect.Normal,transform.parent,7);
+            Vector3 flatDir=targetPos-muzzle;flatDir.y=0;
+            if(flatDir.sqrMagnitude<.001f)flatDir=lockedAim;flatDir.Normalize();
+            var shot=game.SpawnBullet(muzzle,flatDir,false,dmg,15f,new Color(1f,.42f,.12f),GunEffect.Normal);
+            shot.isGrenade=true;
+            shot.ConfigureParabolic(muzzle,targetPos,14f,19f,splashRad);
         }
         Vector3 HumanMuzzlePosition()
         {
@@ -385,13 +445,13 @@ namespace NeonVault
                 }
                 return;
             }
-            bool humanGun=kind==10||RaiderBoss;
+            bool humanGun=kind==10||IsHumanBoss;
             if(humanGun)
             {
-                game.PlayEnemyGunshot(RaiderBoss || UseAssaultRifle);
-                int spreadCount=RaiderBoss&&burstShots%2==1?1:0;
+                game.PlayEnemyGunshot(IsHumanBoss || UseAssaultRifle);
+                int spreadCount=IsHumanBoss&&burstShots%2==1?1:0;
                 for(int i=-spreadCount;i<=spreadCount;i++)
-                    game.SpawnBullet(muzzle,Quaternion.Euler(0,i*11,0)*lockedAim,false,(RaiderBoss?12:UseAssaultRifle?9:22)*damageScale,RaiderBoss?25:UseAssaultRifle?26:22,new Color(1,.67f,.28f),GunEffect.Normal);
+                    game.SpawnBullet(muzzle,Quaternion.Euler(0,i*11,0)*lockedAim,false,(IsHumanBoss?12:UseAssaultRifle?9:22)*damageScale,IsHumanBoss?25:UseAssaultRifle?26:22,new Color(1,.67f,.28f),GunEffect.Normal);
                 return;
             }
             // Zombie and mutant ranged attacks launch parabolic saliva/acid/bio-globs from the mouth.
@@ -473,7 +533,7 @@ namespace NeonVault
         }
         public float actionCharge;
         public GunElement element;public float elementPercent,elementRadius,elementDuration,elementBonus=1f;public int elementChains;
-        public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect,parabolic,skillProjectile;
+        public bool friendly,corrosive,critical,moduleAmplified,legendaryEffect,parabolic,skillProjectile,isGrenade;
         public float verticalVelocity,gravity=18f,splashRadius;
         public void ConfigureParabolic(Vector3 origin,Vector3 targetPos,float horizSpeed,float arcGravity=18f,float splash=.85f)
         {
@@ -484,7 +544,8 @@ namespace NeonVault
             velocity=(flat.sqrMagnitude>.001f?flat.normalized:Vector3.forward)*(dist/flight);
             verticalVelocity=(.12f-origin.y+.5f*arcGravity*flight*flight)/flight;
             life=flight+.35f;
-            CombatVisuals.ConfigureSpitProjectile(this,visualColor);
+            if(isGrenade) CombatVisuals.ConfigureGrenadeProjectile(this,visualColor);
+            else CombatVisuals.ConfigureSpitProjectile(this,visualColor);
         }
         public GunEffect effect;
         public int bounces;
@@ -544,7 +605,18 @@ namespace NeonVault
             else if((!parabolic||transform.position.y<=1.65f)&&DistanceToSegment(game.PlayerPosition,old,transform.position)<.65f) { CombatVisuals.Impact(ContactPoint(game.PlayerPosition,old,transform.position,.6f),velocity,visualColor,effect,transform.parent);if(parabolic)CombatVisuals.Burst(transform.position,visualColor,10,transform.parent);game.Hurt(damage); LeaveAcid();Destroy(gameObject); return; }
             if((parabolic&&transform.position.y<=.12f)||blocked||life<0)
             {
-                if(parabolic){transform.position=new Vector3(transform.position.x,.12f,transform.position.z);CombatVisuals.Burst(transform.position,visualColor,10,transform.parent);CombatVisuals.Impact(transform.position,new Vector3(velocity.x,verticalVelocity,velocity.z),visualColor,effect,transform.parent);if(splashRadius>0){Vector3 d=game.PlayerPosition-transform.position;d.y=0;if(d.magnitude<splashRadius&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(damage*.75f);}}
+                if(parabolic)
+                {
+                    transform.position=new Vector3(transform.position.x,.12f,transform.position.z);
+                    CombatVisuals.Burst(transform.position,visualColor,isGrenade?22:10,transform.parent);
+                    CombatVisuals.Impact(transform.position,new Vector3(velocity.x,verticalVelocity,velocity.z),visualColor,effect,transform.parent);
+                    if(isGrenade)
+                    {
+                        var hazard=new GameObject("Grenade ground blast");hazard.transform.SetParent(transform.parent,false);hazard.transform.position=transform.position;
+                        var blast=hazard.AddComponent<GroundBlast>();blast.game=game;blast.damage=damage;blast.radius=splashRadius>0?splashRadius:2.5f;
+                    }
+                    else if(splashRadius>0){Vector3 d=game.PlayerPosition-transform.position;d.y=0;if(d.magnitude<splashRadius&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(damage*.75f);}
+                }
                 LeaveAcid();
                 if(blocked)CombatVisuals.Impact(transform.position,velocity,visualColor,effect,transform.parent);
                 if(effect==GunEffect.Singularity && friendly) game.GravityWell(transform.position,damage,DamageNumberColor);

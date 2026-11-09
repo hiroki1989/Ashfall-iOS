@@ -184,6 +184,16 @@ namespace NeonVault
         void TickOverworld()
         {
             TickOverworldRush();
+            if(OverworldWaypointKind!=0)
+            {
+                float reachDist=OverworldWaypointKind==1?6.5f:OverworldWaypointKind==2?5.0f:18f;
+                Vector3 wp=OverworldWaypointPosition;wp.y=PlayerPosition.y;
+                if((PlayerPosition-wp).sqrMagnitude<=reachDist*reachDist)
+                {
+                    SetOverworldWaypoint(0,-1);
+                    Notify("DESTINATION REACHED","目的地に到着");
+                }
+            }
             if(selectedOverworldActivity!=null)Time.timeScale=0;
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             worldSaveTimer-=Time.deltaTime;if(worldSaveTimer<=0){worldSaveTimer=8;RememberOverworldPosition(PlayerPosition,true);SaveInventory();}
