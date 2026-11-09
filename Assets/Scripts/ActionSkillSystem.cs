@@ -73,7 +73,17 @@ namespace NeonVault
         public void SelectActionSkill(ActionSkillKind kind)
         {
             LoadActionSkills();if((int)kind<0||(int)kind>2||kind==actionSkillSelected)return;
-            ClearActiveActionSkill();actionSkillSelected=kind;ActionSkillPoints=0;SaveActionSkills();
+            ClearActiveActionSkill();actionSkillSelected=kind;SaveActionSkills();
+        }
+        public void CycleActionSkill()
+        {
+            LoadActionSkills();
+            ActionSkillKind next = (ActionSkillKind)(((int)actionSkillSelected + 1) % 3);
+            ClearActiveActionSkill();
+            actionSkillSelected = next;
+            SaveActionSkills();
+            PlayUserSound("skill", .35f);
+            Notify(ActionSkillName(actionSkillSelected) + " EQUIPPED", ActionSkillName(actionSkillSelected) + " 装備");
         }
         public void ResetActionSkills()
         {LoadActionSkills();Array.Clear(actionSkillRanks,0,actionSkillRanks.Length);Array.Clear(actionSkillExtraRanks,0,actionSkillExtraRanks.Length);actionSkillExtraValuesDirty=true;ActionSkillPoints=0;ClearActiveActionSkill();SaveActionSkills();RecalculateArmor();}

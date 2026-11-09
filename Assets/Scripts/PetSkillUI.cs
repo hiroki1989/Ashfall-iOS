@@ -125,80 +125,103 @@ namespace NeonVault
 
             Color accent=PetSkillColors[petSkillBranch];
 
-            // Left All-3-Branches Top-Down Visual Skill Tree Panel (Scrollable)
+            // Left All-3-Branches Visual Skill Tree Panel (Scrollable)
             Rect treeFrame = new Rect(42, 136, 904, 704);
             FieldUIArt.Plate(treeFrame, false);
             Box(new Rect(treeFrame.x+2, treeFrame.y+2, treeFrame.width-4, 30), new Color(.055f,.068f,.078f,.95f));
             ActionLabel(new Rect(treeFrame.x+16, treeFrame.y+3, 860, 26),
-                T("COMPANION EVOLUTION TREE  ·  FIVE STAGES  ·  CHOOSE YOUR PATH",
-                  "相棒進化ツリー  ·  5段階  ·  進む道を選択"),
-                accent, 14);
+                PetBranchName(petSkillBranch) + " // " + T("COMPANION SKILL TREE","ペットスキルツリー"),
+                accent, 16);
 
             Rect scrollViewRect = new Rect(treeFrame.x+4, treeFrame.y+34, treeFrame.width-8, treeFrame.height-38);
             const float contentW = 870f;
-            const float contentH = 80f + (PetNodeCount-1)*96f + 60f;
+            const float contentH = 1450f;
             if(Event.current.type==EventType.ScrollWheel&&scrollViewRect.Contains(Event.current.mousePosition)){petSkillScroll.y=Mathf.Clamp(petSkillScroll.y+Event.current.delta.y*24f,0,contentH-scrollViewRect.height);Event.current.Use();}
             if(Event.current.type==EventType.Layout&&petSkillAutoScroll){float selectedY=petSkillNode==0?55f:80f+petSkillNode*96f;if(selectedY<petSkillScroll.y+60f)petSkillScroll.y=Mathf.Max(0,selectedY-60f);else if(selectedY>petSkillScroll.y+scrollViewRect.height-60f)petSkillScroll.y=Mathf.Min(contentH-scrollViewRect.height,selectedY-scrollViewRect.height+60f);petSkillAutoScroll=false;}
             petSkillMaxScroll = new Vector2(Mathf.Max(0f, contentW - scrollViewRect.width), Mathf.Max(0f, contentH - scrollViewRect.height));
             petSkillScroll = GUI.BeginScrollView(scrollViewRect, petSkillScroll, new Rect(0, 0, contentW, contentH), false, false);
 
-            // Each branch is a 25-stage vertical path; connectors and nodes share content coordinates.
+            // 5 Tiers with horizontal diamond branches (Root -> Left/Right Split -> Converge -> Capstone)
+            float[] petTierY = { 50f, 320f, 590f, 860f, 1130f };
+            int[] petNodeTier = { 0, 0,0,0,0, 1, 1,1,1,1, 2, 2,2,2,2, 3, 3,3,3,3, 4, 4,4,4,4 };
+            int[] petNodeLane = { 0, -1,1,-1,1, 0, -1,1,-1,1, 0, -1,1,-1,1, 0, -1,1,-1,1, 0, -1,1,-1,1 };
+            int[] petNodeRow  = { 0, 1,1,2,2, 0, 1,1,2,2, 0, 1,1,2,2, 0, 1,1,2,2, 0, 1,1,2,2 };
+
             for(int b=0;b<3;b++)
             {
                 Color c=PetSkillColors[b];float x=148f+b*287f;
                 Rect col=new Rect(x-134f,8f,268f,contentH-16f);
                 Box(col,b==petSkillBranch?new Color(c.r*.12f,c.g*.12f,c.b*.12f,.65f):new Color(.03f,.038f,.044f,.5f));
                 ActionLabel(new Rect(col.x+8,12,252,24),PetBranchName(b)+(PetEquippedSkill==b+1?" ★":""),b==petSkillBranch?c:Mist,15,TextAnchor.MiddleCenter);
+
+                // Tier requirement indicators & inter-tier connectors
+                for(int tier=0;tier<5;tier++)
+                {
+                    if(tier>0)
+                    {
+                        int prevCap = (tier-1)*5;
+                        bool tierUnlocked = PetSkillRank(b, prevCap) > 0;
+                        Rect tReq = new Rect(x-40f, petTierY[tier]-42f, 80f, 20f);
+                        Box(tReq, new Color(.02f,.03f,.04f,.85f));
+                        ActionLabel(tReq, (tierUnlocked?"1/1":"0/1"), tierUnlocked?Gold:Mist, 12, TextAnchor.MiddleCenter);
+
+                        // Connect Tier 1st node to Next Tier 1st node
+                        Vector2 tPrevPos = new Vector2(x, petTierY[tier-1]);
+                        Vector2 tCurrPos = new Vector2(x, petTierY[tier]);
+                        DrawSkillConnectorPipe(tPrevPos, tCurrPos, tierUnlocked, tierUnlocked, c);
+                    }
+                }
+
                 for(int n=0;n<PetNodeCount;n++)
                 {
-                    Vector2 pos=new Vector2(x,n==0?55f:80f+n*96f);
-                    if(n>0){Vector2 parent=new Vector2(x,n==1?55f:80f+(n-1)*96f);DrawSkillConnectorPipe(parent,pos,PetSkillRank(b,n)>0,PetSkillState.IsUnlocked(b,n),c);}
+                    int t = petNodeTier[n], row = petNodeRow[n], lane = petNodeLane[n];
+                    Vector2 pos = new Vector2(x + lane*52f, petTierY[t] + row*78f);
+
+                    // Connectors within tier
+                    if(n % 5 != 0)
+                    {
+                        int parentNode = (row == 1) ? (t * 5) : (n - 2);
+                        int pt = petNodeTier[parentNode], prow = petNodeRow[parentNode], plane = petNodeLane[parentNode];
+                        Vector2 ppos = new Vector2(x + plane*52f, petTierY[pt] + prow*78f);
+                        DrawSkillConnectorPipe(ppos, pos, PetSkillRank(b,n)>0, PetSkillState.IsUnlocked(b,n), c);
+                    }
+
                     int rank=PetSkillRank(b,n);bool available=PetSkillState.IsUnlocked(b,n);
-                    if(DrawBorderlandsSkillNode(pos,n==0?46f:44f,GetPetNodeIconIndex(b,n),n==0||n>=20?2:0,PetNodeName(n),rank,PetSkillState.MaxRank(n),available,petSkillBranch==b&&petSkillNode==n,c))
+                    if(DrawBorderlandsSkillNode(pos, (n%5==0)?48f:42f, GetPetNodeIconIndex(b,n), (n==0||n>=20)?2:0, PetNodeName(n), rank, PetSkillState.MaxRank(n), available, petSkillBranch==b&&petSkillNode==n, c))
                     {petSkillBranch=b;petSkillNode=n;petSkillAutoScroll=true;PlayUserSound("skill",.08f);}
                 }
             }            GUI.EndScrollView();
 
-            // Right Panel: 3D Sitting Companion Preview + Selected Skill Inspector
+            // Right Panel: Expanded Selected Skill Inspector (Dog 3D preview removed for clean, focused layout)
             Rect rightPanel = new Rect(962, 74, 436, 766);
             FieldUIArt.Plate(rightPanel, false);
 
-            // Top Half of Right Panel: Sitting Dog 3D Portrait
-            Rect portraitBox = new Rect(978, 88, 404, 310);
-            Box(portraitBox, new Color(.025f,.032f,.038f,.95f));
-            Box(new Rect(portraitBox.x, portraitBox.yMax-2, portraitBox.width, 2), new Color(accent.r, accent.g, accent.b, .45f));
-            if(!petSkillPortrait)petSkillPortrait=gameObject.AddComponent<PetSkillPortrait>();
-            if(Event.current.type==EventType.Repaint)
-            {
-                var portrait=petSkillPortrait.Render();
-                if(portrait)GUI.DrawTexture(new Rect(986, 92, 388, 300), portrait, ScaleMode.ScaleToFit, true);
-            }
-            ActionLabel(new Rect(988, 94, 380, 26), T("COMPANION // ROOK","相棒 // ルーク"), accent, 16);
-
-            // Selected Skill Inspector in Bottom Half of Right Panel
             int selectedRank=PetSkillRank(petSkillBranch,petSkillNode),selectedMax=PetSkillState.MaxRank(petSkillNode);
             bool unlocked=PetSkillState.IsUnlocked(petSkillBranch,petSkillNode);
             bool canUpgrade=unlocked&&selectedRank<selectedMax&&PetPoints>0;
 
             int selIcon = GetPetNodeIconIndex(petSkillBranch, petSkillNode);
-            Rect iconPreview = new Rect(980, 412, 64, 64);
-            DrawSkillNodeFrame(iconPreview, (petSkillNode==0||petSkillNode==4)?2:0, selectedRank>0?accent:UiPaper);
-            DrawSkillAtlasIcon(new Rect(992, 424, 40, 40), selIcon, Color.white);
+            Rect iconPreview = new Rect(980, 100, 84, 84);
+            DrawSkillNodeFrame(iconPreview, (petSkillNode==0||petSkillNode>=20)?2:0, selectedRank>0?accent:UiPaper);
+            DrawSkillAtlasIcon(new Rect(iconPreview.x+16, iconPreview.y+16, 52, 52), selIcon, Color.white);
 
-            ActionLabel(new Rect(1056, 412, 320, 26), PetBranchName(petSkillBranch), accent, 18);
-            ActionLabel(new Rect(1056, 438, 320, 38), PetNodeName(petSkillNode), UiPaper, 24);
+            ActionLabel(new Rect(1076, 102, 305, 30), PetBranchName(petSkillBranch) + " // NODE " + (petSkillNode+1), accent, 19);
+            ActionLabel(new Rect(1076, 134, 305, 52), PetNodeName(petSkillNode), UiPaper, 26);
 
-            Rect descBox = new Rect(980, 488, 400, 128);
+            Box(new Rect(980, 204, 400, 2), new Color(accent.r, accent.g, accent.b, .35f));
+
+            ActionLabel(new Rect(980, 218, 400, 30), T("SKILL DETAILS","スキル詳細"), Mist, 17);
+            Rect descBox = new Rect(980, 256, 400, 280);
             Box(descBox, new Color(.03f,.038f,.044f,.92f));
-            ActionLabel(new Rect(990, 496, 380, 112), PetNodeDescription(petSkillBranch,petSkillNode), UiPaper, 19, TextAnchor.UpperLeft, true);
+            ActionTreeDescription(new Rect(990, 266, 380, 260), PetNodeDescription(petSkillBranch,petSkillNode), UiPaper, 21);
 
-            ActionLabel(new Rect(980, 624, 396, 32), T("RANK:  ","習得ランク:  ") + selectedRank + " / " + selectedMax, selectedRank>=selectedMax?Gold:accent, 21);
+            ActionLabel(new Rect(980, 560, 396, 36), T("INVESTED RANK:  ","習得ランク:  ") + selectedRank + " / " + selectedMax, selectedRank>=selectedMax?Gold:accent, 22);
 
-            if(ActionButton(new Rect(980, 664, 400, 56), selectedRank>=selectedMax?T("MAX RANK","最大ランク"):T("UPGRADE / 1 POINT","強化 / 1ポイント"), canUpgrade, accent, 20, canUpgrade))
+            if(ActionButton(new Rect(980, 616, 400, 64), selectedRank>=selectedMax?T("MAX RANK","最大ランク"):T("UPGRADE / 1 POINT","強化 / 1ポイント"), canUpgrade, accent, 21, canUpgrade))
                 SpendPetSkillPoint(petSkillBranch,petSkillNode);
 
             bool equipped=PetEquippedSkill==petSkillBranch+1;
-            if(ActionButton(new Rect(980, 728, 400, 56), equipped?T("EQUIPPED","装備中"):T("EQUIP BRANCH SKILL","この系統のスキルを装備"), equipped, accent, 20, PetSkillRank(petSkillBranch,0)>0&&!equipped))
+            if(ActionButton(new Rect(980, 696, 400, 64), equipped?T("EQUIPPED","装備中"):T("EQUIP BRANCH SKILL","この系統のスキルを装備"), equipped, accent, 20, PetSkillRank(petSkillBranch,0)>0&&!equipped))
                 EquipPetSkill(petSkillBranch);
 
             ActionLabel(new Rect(980, 792, 400, 42), T("Give Iona unwanted legendary gear for Pet Points.","不要なレジェンダリ装備をイオナに渡すとポイント獲得。"), Mist, 15, TextAnchor.MiddleCenter, true);

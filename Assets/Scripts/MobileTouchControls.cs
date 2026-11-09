@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NeonVault
 {
-    public enum MobileAction { Reload, Pickup, Dodge, Melee, SwitchWeapon, Interact, Inventory, Pause, Fire, Skill }
+    public enum MobileAction { Reload, Pickup, Dodge, Melee, SwitchWeapon, Interact, Inventory, Pause, Fire, Skill, SwitchActionSkill }
 
     /// <summary>Touch coordinates are screen pixels (bottom left); exposed layout rectangles use GUI pixels (top left).</summary>
     [DefaultExecutionOrder(-200)]
@@ -24,8 +24,8 @@ namespace NeonVault
         public static Rect SafeRect { get; private set; }
         readonly Dictionary<int, int> fingers = new Dictionary<int, int>();
         readonly HashSet<MobileAction> actions = new HashSet<MobileAction>();
-        readonly Rect[] buttons = new Rect[10];
-        readonly float[] feedback = new float[10];
+        readonly Rect[] buttons = new Rect[11];
+        readonly float[] feedback = new float[11];
         VaultGame game;
         int mode = -1, width, height;
         Rect previousSafe;
@@ -92,6 +92,7 @@ namespace NeonVault
             buttons[(int)MobileAction.Dodge] = new Rect(bx, fireY - 2*(gap+b), b, b);
             buttons[(int)MobileAction.Melee] = new Rect(AimRect.x, y-gap-b, b, b);
             buttons[(int)MobileAction.SwitchWeapon] = new Rect(SafeRect.x + pad, y - gap - b, b, b);
+            buttons[(int)MobileAction.SwitchActionSkill] = new Rect(SafeRect.x + pad + b + gap, y - gap - b, b, b);
             buttons[(int)MobileAction.Interact] = new Rect(SafeRect.center.x + b * .35f, SafeRect.yMax - pad - b, b, b);
             buttons[(int)MobileAction.Inventory] = new Rect(SafeRect.xMax - pad - 2 * b - gap, SafeRect.y + pad, b, b);
             buttons[(int)MobileAction.Pause] = new Rect(SafeRect.xMax - pad - b, SafeRect.y + pad, b, b);
@@ -189,7 +190,7 @@ namespace NeonVault
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
                 if (combat || hub) Stick(AimRect, aimStick, fingers.ContainsValue(-2));
-                string[] labels = VaultLanguage.Japanese ? new[] { "リロード", "拾う", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃" } : new[] { "RELOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE" };
+                string[] labels = VaultLanguage.Japanese ? new[] { "リロード", "拾う", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃", "", "スキル切替" } : new[] { "RELOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE", "", "SKILL" };
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {
                     if (i == (int)MobileAction.Skill) continue; // Drawn by the action skill HUD.

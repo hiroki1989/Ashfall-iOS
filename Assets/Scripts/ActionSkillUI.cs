@@ -429,8 +429,8 @@ namespace NeonVault
             FieldUIArt.Plate(treeFrame, false);
             Box(new Rect(treeFrame.x+2, treeFrame.y+2, treeFrame.width-4, 32), new Color(.06f,.075f,.085f,.95f));
             ActionLabel(new Rect(treeFrame.x+18, treeFrame.y+4, 840, 28),
-                T("TOP-DOWN SKILL TREE  ·  CORE  ▼  ORIGIN  ▼  SPLIT BRANCH  ▼  SYNERGY","上から下へ分岐  ·  基礎スキル  ▼  派生起点  ▼  左右分岐  ▼  特化統合"),
-                accent, 15, TextAnchor.MiddleLeft);
+                ActionBranchName(kind,branch) + " // " + ActionSkillName(selected),
+                accent, 16, TextAnchor.MiddleLeft);
 
             Rect scrollArea = new Rect(treeFrame.x+4, treeFrame.y+36, treeFrame.width-8, treeFrame.height-40);
             const float contentW = 846f;
@@ -457,6 +457,15 @@ namespace NeonVault
                 ActionLabel(new Rect(tierBand.x + 14f, tierBand.y + 8f, 220f, 24f),
                     t == 4 ? T("TIER 5 // CAPSTONE","第5段階 // 最終奥義") : (T("TIER ","第") + (t+1) + T("", "段階")),
                     new Color(accent.r, accent.g, accent.b, .85f), 16, TextAnchor.MiddleLeft);
+                if(t > 0)
+                {
+                    int prevReq = t == 4 ? 6 : 3;
+                    int prevCurrent = Mathf.Min(prevReq, ActionSkillRank(selected, branch, t - 1));
+                    bool prevMet = prevCurrent >= prevReq;
+                    Rect reqBadge = new Rect(tierBand.xMax - 110f, tierBand.y + 6f, 96f, 24f);
+                    Box(reqBadge, new Color(.02f,.03f,.04f,.85f));
+                    ActionLabel(reqBadge, prevCurrent + "/" + prevReq, prevMet ? Gold : Mist, 14, TextAnchor.MiddleCenter);
+                }
 
                 Vector2 pRoot  = new Vector2(cx, topY);
                 int rRoot = ActionSkillRank(selected, branch, t);
@@ -483,11 +492,9 @@ namespace NeonVault
 
                 if(t<4)
                 {
-                    bool nextUnl=ActionSkillRank(selected,branch,t+1)>0,nextAv=ActionSkillTierAvailable(selected,branch,t+1);
-                    int[] rows={1,2,2,3,4,5,5,6,7,8,8,9,10,10};int[] lanes={0,0,-1,1,0,0,-1,1,0,0,-1,1,0,1};
-                    Vector2 next=new Vector2(cx,topY+tierPitch);
-                    for(int terminal=12;terminal<=13;terminal++)
-                    {Vector2 end=new Vector2(cx+lanes[terminal]*150f,topY+65f+rows[terminal]*84f);DrawSkillConnectorPipe(end,next,ActionSkillExtraRank(selected,branch,t,terminal)>0,nextAv,accent);}
+                    bool nextAv = ActionSkillTierAvailable(selected, branch, t + 1);
+                    Vector2 nextRoot = new Vector2(cx, topY + tierPitch);
+                    DrawSkillConnectorPipe(pRoot, nextRoot, nextAv, nextAv, accent);
                 }
 
             }
@@ -545,7 +552,7 @@ namespace NeonVault
             if(actionSkillInventoryTree){DrawActionSkillTree();return;}
             Box(new Rect(0,0,1440,900),new Color(.045f,.053f,.059f,.99f));
             ActionLabel(new Rect(50,28,930,60),T("ACTION SKILL","アクションスキル"),UiPaper,36);
-            ActionLabel(new Rect(52,95,1000,40),T("Changing skills resets your action gauge.","スキルを切り替えるとゲージは0になります。"),Mist,22);
+            ActionLabel(new Rect(52,95,1000,40),T("Switch active action skill during combat with the switch button / key.","アクションスキルは対戦中もリアルタイムに切替可能です。"),Mist,22);
             if(ActionButton(new Rect(1195,26,200,70),T("BACK","戻る"),false,EqAccent)){actionSkillInventoryOpen=false;return;}
 
             if(Event.current.type == EventType.Layout)
@@ -568,8 +575,7 @@ namespace NeonVault
                 ActionLabel(new Rect(card.x+38,card.y+28,360,54),ActionSkillName(kind),UiPaper,29);
                 ActionLabel(new Rect(card.x+36,card.y+220,360,115),ActionSkillSummary(kind),UiPaper,24,TextAnchor.UpperLeft,true);
                 ActionLabel(new Rect(card.x+36,card.y+356,360,32),equipped?T("EQUIPPED","装備中"):T("AVAILABLE","選択可能"),equipped?accent:Mist,19);
-                if(ActionButton(new Rect(card.x+28,card.y+400,183,78),equipped?T("EQUIPPED","装備中"):T("EQUIP","装備する"),equipped,accent,20,!equipped))SelectActionSkill(kind);
-                if(ActionButton(new Rect(card.x+220,card.y+400,186,78),T("SKILL TREE","スキルツリー"),false,accent,19)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;actionSkillInventoryTree=true;}
+                if(ActionButton(new Rect(card.x+28,card.y+400,378,78),equipped?T("EQUIPPED (SWITCH IN COMBAT)","装備中（対戦中に切替）"):T("VIEW SKILL TREE","スキルツリーを見る"),equipped,accent,20,true)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;actionSkillInventoryTree=true;}
             }
         }
 
@@ -626,14 +632,27 @@ namespace NeonVault
             Color accent=ActionTreeColors[Mathf.Clamp((int)ActionSkillSelected,0,2)];
             if(ready)DrawActionReadyPulse(r,accent);
             FieldUIArt.Plate(r,ready);
-            Box(new Rect(r.x+9,r.yMax-12,r.width-18,4),new Color(.18f,.20f,.21f));
-            Box(new Rect(r.x+9,r.yMax-12,(r.width-18)*Mathf.Clamp01(ActionSkillPoints/(float)Mathf.Max(1,ActionSkillChargeMax)),4),accent);
+            // Equipped Action Skill Icon Badge
+            int currentIcon = ActionSkillSelected==ActionSkillKind.Mechanic?0:ActionSkillSelected==ActionSkillKind.Bomber?8:11;
+            Rect iconBadge = new Rect(r.x+6,r.y+6,52,52);
+            Box(iconBadge,new Color(.02f,.03f,.04f,.85f));
+            DrawSkillNodeFrame(iconBadge,0,accent);
+            DrawSkillAtlasIcon(new Rect(iconBadge.x+6,iconBadge.y+6,40,40),currentIcon,Color.white);
+            // Charge Bar
+            float barX = r.x + 64, barW = r.width - 72;
+            Box(new Rect(barX,r.yMax-12,barW,4),new Color(.18f,.20f,.21f));
+            Box(new Rect(barX,r.yMax-12,barW*Mathf.Clamp01(ActionSkillPoints/(float)Mathf.Max(1,ActionSkillChargeMax)),4),accent);
             var title=ActionSkillName(ActionSkillSelected);
-            ActionLabel(new Rect(r.x+5,r.y+4,r.width-10,28),title,ready?UiPaper:Mist,mobile?16:14,TextAnchor.MiddleCenter);
-            ActionLabel(new Rect(r.x+5,r.y+30,r.width-10,25),ready?(mobile?T("READY","発動可能"):T("READY / V","発動 / V")):Mathf.FloorToInt(ActionSkillPoints)+" / "+ActionSkillChargeMax,ready?accent:Mist,16,TextAnchor.MiddleCenter);
+            ActionLabel(new Rect(barX,r.y+4,barW,24),title,ready?UiPaper:Mist,14,TextAnchor.MiddleLeft);
+            ActionLabel(new Rect(barX,r.y+26,barW,22),ready?T("READY / [V]","発動 / [V]"):Mathf.FloorToInt(ActionSkillPoints)+" / "+ActionSkillChargeMax,ready?accent:Mist,14,TextAnchor.MiddleLeft);
+            // Cycle hint next to plate
+            Rect cycleBadge = new Rect(r.xMax+6,r.y+12,88,40);
+            FieldUIArt.Plate(cycleBadge,false);
+            ActionLabel(cycleBadge,T("[X / Ⓑ]\nSWITCH","[X / Ⓑ]\n切替"),Mist,11,TextAnchor.MiddleCenter);
             bool previous=GUI.enabled;GUI.enabled=previous&&ready;
             if(GUI.Button(r,GUIContent.none,GUIStyle.none))TryUseActionSkill();
             GUI.enabled=previous;
+            if(GUI.Button(cycleBadge,GUIContent.none,GUIStyle.none))CycleActionSkill();
         }
         void DrawActionReadyPulse(Rect rect,Color accent)
         {

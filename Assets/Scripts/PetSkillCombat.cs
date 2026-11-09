@@ -19,6 +19,20 @@ namespace NeonVault
         {
             if(!Valid(branch,node))return false;
             if(node==0)return true;
+            if(node==1||node==2)return Rank(branch,0)>0;
+            if(node==3||node==4)return Rank(branch,1)>0||Rank(branch,2)>0;
+            if(node==5)return Rank(branch,3)>0||Rank(branch,4)>0;
+            if(node==6||node==7)return Rank(branch,5)>0;
+            if(node==8||node==9)return Rank(branch,6)>0||Rank(branch,7)>0;
+            if(node==10)return Rank(branch,8)>0||Rank(branch,9)>0;
+            if(node==11||node==12)return Rank(branch,10)>0;
+            if(node==13||node==14)return Rank(branch,11)>0||Rank(branch,12)>0;
+            if(node==15)return Rank(branch,13)>0||Rank(branch,14)>0;
+            if(node==16||node==17)return Rank(branch,15)>0;
+            if(node==18||node==19)return Rank(branch,16)>0||Rank(branch,17)>0;
+            if(node==20)return Rank(branch,18)>0||Rank(branch,19)>0;
+            if(node==21||node==22)return Rank(branch,20)>0;
+            if(node==23||node==24)return Rank(branch,21)>0||Rank(branch,22)>0;
             return Rank(branch,node-1)>0;
         }
         public static bool CanUpgrade(int branch,int node)=>Valid(branch,node)&&Points>0&&Rank(branch,node)<MaxRank(node)&&IsUnlocked(branch,node);

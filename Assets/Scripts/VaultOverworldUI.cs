@@ -814,12 +814,12 @@ namespace NeonVault
             Box(new Rect(975,388,410,1),new Color(.45f,.58f,.60f,.38f));
             WorldLabel(new Rect(975,396,410,24),T("BOSS EXCLUSIVE DROP","固有ドロップ"),Gold,17);
             object item=LandmarkExclusiveItem(landmarkId);
-            bool revealItem=fought||(item!=null&&EquipmentDiscovery.Known(item));
+            bool revealItem=item!=null&&EquipmentDiscovery.Known(item);
             Rect pic=new Rect(975,426,74,74);
             if(!revealItem||item==null)
             {
                 DrawUnknownExclusiveBox(pic);
-                WorldLabel(new Rect(1060,432,325,68),"？？？\n"+T("Engage this landmark boss to reveal its exclusive drop.","このランドマークのボスと交戦すると固有ドロップ情報が判明します。"),Mist,18);
+                WorldLabel(new Rect(1060,432,325,68),"？？？\n"+T("Acquire this exclusive drop to reveal its details.","この固有ドロップを獲得すると詳細情報が判明します。"),Mist,18);
             }
             else
             {
