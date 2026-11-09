@@ -287,9 +287,9 @@ namespace NeonVault
                 float levelHealth=Foe.LevelHealthScale(stageLevel)*(SelectedStageId==0?1f:2f*(1f+.02f*Mathf.Max(0,stageLevel-1))),levelDamage=Foe.LevelDamageScale(stageLevel);
                 f.ConfigureDifficulty(CurrentDungeon.healthScale*1.5f*FloorCombatMultiplier*levelHealth*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyHpMultiplier : 1f),CurrentDungeon.damageScale*FloorCombatMultiplier*levelDamage*Mathf.Max(.01f,VaultBalanceProfile.Current != null ? VaultBalanceProfile.Current.enemyDamageMultiplier : 1f),DungeonIndex*.10f);
             }
-            if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(3f,1.7f,.25f);
-            else if(IsFactionHeadquarters(SelectedStageId)&&kind==3)f.ConfigureDifficulty(infectedMajorBoss?3.0f:2.4f,infectedMajorBoss?1.75f:1.5f,infectedMajorBoss?.24f:.20f);
-            if(kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)||IsOverworld&&spawningWorldEnemy!=null&&spawningWorldEnemy.landmarkBoss)){f.MajorBoss=true;f.speed*=1.2f;}
+            if(finalDebtBossFight&&kind==3)f.ConfigureDifficulty(4.8f,2.4f,.32f);
+            else if(IsFactionHeadquarters(SelectedStageId)&&kind==3)f.ConfigureDifficulty(infectedMajorBoss?4.5f:3.8f,infectedMajorBoss?2.3f:2.1f,infectedMajorBoss?.30f:.26f);
+            if(kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId)||IsOverworld&&spawningWorldEnemy!=null&&spawningWorldEnemy.landmarkBoss)){f.MajorBoss=true;f.speed*=1.38f;}
             bool elite=!restoringChampionCheckpoint&&kind!=3&&(forceElite||(IsOverworld?spawningWorldEnemy!=null&&spawningWorldEnemy.elite:rng.NextDouble()<.0275));
             if(elite){f.elite=true;f.ConfigureDifficulty(3.2f,1.35f,.12f);f.transform.localScale*=1.15f;}
             f.timer=2.5f;

@@ -367,8 +367,8 @@ namespace NeonVault
             if(spawningWorldEnemy!=null&&spawningWorldEnemy.landmarkBoss)
             {
                 bool infectedLandmark=spawningWorldEnemy.landmarkId>=0&&OverworldGeography.LandmarkBossFaction(spawningWorldEnemy.landmarkId)==0;
-                hpScale*=infectedLandmark?3.0f:2.2f;
-                damageScale*=infectedLandmark?1.65f:1.35f;
+                hpScale*=infectedLandmark?4.2f:3.2f;
+                damageScale*=infectedLandmark?2.2f:1.85f;
             }
             var balance=VaultBalanceProfile.Current;
             foe.ConfigureDifficulty(hpScale*(balance!=null?Mathf.Max(.01f,balance.enemyHpMultiplier):1),damageScale*(balance!=null?Mathf.Max(.01f,balance.enemyDamageMultiplier):1),Mathf.Min(.25f,(level-1)*.005f));

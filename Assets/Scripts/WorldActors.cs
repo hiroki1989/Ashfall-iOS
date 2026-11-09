@@ -111,7 +111,7 @@ namespace NeonVault
                 }
                 return;
             }
-            if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=MajorBoss?.14f:RaiderBoss?.22f:.16f;}if(kind==10&&lockedAim.sqrMagnitude>.01f){transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}}
+            if(burstShots>0){burstTimer-=Time.deltaTime;if(burstTimer<=0){FireRangedShot();burstShots--;burstTimer=MajorBoss?.10f:IsHumanBoss?.18f:.16f;}if(kind==10&&lockedAim.sqrMagnitude>.01f){transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}}
             Vector3 delta=game.PlayerPosition-transform.position;delta.y=0;float distance=delta.magnitude;Vector3 direction=delta.normalized;
             if(!alerted&&distance>22)return;
             if(Time.time>=visibilityNext){visibilityNext=Time.time+.14f+(kind&7)*.008f;cachedVisible=distance<35&&game.LineOfSight(transform.position,game.PlayerPosition);}
@@ -126,7 +126,7 @@ namespace NeonVault
                 if(HeavyMelee&&distance<2.1f)mobile=false;
                 if((kind==0||kind==8)&&distance<1.65f)mobile=false;
                 if(kind==3&&distance<2.4f)mobile=false;
-                if(RaiderBoss&&burstShots>0)mobile=false;
+                if(IsHumanBoss&&burstShots>0)mobile=false;
                 if(kind==7&&distance<2.2f)mobile=false;
                 if((kind==5||kind==10)&&visible&&distance<5){movement=-direction;mobile=true;}
                 if(kind==10)
@@ -190,15 +190,15 @@ namespace NeonVault
                     if(away.sqrMagnitude>0)movement=(movement+away*2.2f).normalized;
                     if(sprintBoostTimer>0)sprintBoostTimer-=Time.deltaTime;
                     else if(kind!=10&&distance>3.8f&&distance<11f&&timer<.65f&&((enemyAttackCount+kind)&1)==1)sprintBoostTimer=.45f;
-                    float moveSpeed=speed*(kind==10?(humanRollTimer>0?1.45f:humanReloadTimer>0&&hasCoverTarget?1.1f:humanTactic==1?.8f:.75f):sprintBoostTimer>0?(kind==3?1.55f:1.45f):1f);
-                    if((mobile||away.sqrMagnitude>0)&&!((RaiderBoss||kind==10)&&burstShots>0))transform.position=game.MoveWithinRoom(transform.position,movement*moveSpeed*Time.deltaTime,.6f);
+                    float moveSpeed=speed*(kind==10?(humanRollTimer>0?1.45f:humanReloadTimer>0&&hasCoverTarget?1.1f:humanTactic==1?.8f:.75f):sprintBoostTimer>0?(kind==3?1.55f:1.45f):kind==3&&MajorBoss?1.32f:1f);
+                    if((mobile||away.sqrMagnitude>0)&&!((IsHumanBoss||kind==10)&&burstShots>0))transform.position=game.MoveWithinRoom(transform.position,movement*moveSpeed*Time.deltaTime,.6f);
                 }
             }
             contact-=Time.deltaTime; // Damage comes from readable attacks, never passive body contact.
             if(charging)
             {
                 if(kind==10&&visible&&charge>.18f){Vector3 muzzle=HumanMuzzlePosition();Vector3 shotDirection=game.PlayerPosition-muzzle;shotDirection.y=0;if(shotDirection.sqrMagnitude>.0001f){lockedAim=shotDirection.normalized;transform.rotation=Quaternion.LookRotation(lockedAim);weapon?.Aim(lockedAim);}if(warning!=null&&!(elite&&enemyAttackCount%4==0)){muzzle=HumanMuzzlePosition();warning.transform.position=new Vector3(muzzle.x,.08f,muzzle.z);var line=warning.GetComponent<LineRenderer>();if(line!=null&&line.positionCount>=2){float length=line.GetPosition(1).magnitude;line.SetPosition(1,lockedAim*length);}}}
-                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();float baseWait=kind==3?(bossMove==BossMove.FlashLunge?.95f:bossMove==BossMove.ComboFrenzy?1.85f:bossMove==BossMove.Whirlwind?1.9f:bossMove==BossMove.ShockwaveRing?2.2f:bossMove==BossMove.Gun?2.3f:bossMove==BossMove.Grenade?2.4f:bossMove==BossMove.Slam?1.95f:bossMove==BossMove.Sweep?1.35f:1.55f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.2f:kind==7?2.8f:kind==0||kind==8?1.05f:kind==4?1.75f:kind==9?2.8f:1.85f;if(kind!=3&&kind!=10)baseWait*=attackVariant==1?.68f:attackVariant==2?1.22f:1f;if(kind==3&&hp<maxHp*.6f)baseWait*=.78f;if(MajorBoss)baseWait*=.72f;timer=baseWait;return;
+                charge-=Time.deltaTime;if(charge>0)return;charging=false;ClearWarning();Attack();float baseWait=kind==3?(bossMove==BossMove.FlashLunge?.95f:bossMove==BossMove.ComboFrenzy?1.85f:bossMove==BossMove.Whirlwind?1.9f:bossMove==BossMove.ShockwaveRing?2.2f:bossMove==BossMove.Gun?2.3f:bossMove==BossMove.Grenade?2.4f:bossMove==BossMove.Slam?1.95f:bossMove==BossMove.Sweep?1.35f:1.55f):kind==10?(UseAssaultRifle?3.1f:2.35f):kind==5?2.2f:kind==7?2.8f:kind==0||kind==8?1.05f:kind==4?1.75f:kind==9?2.8f:1.85f;if(kind!=3&&kind!=10)baseWait*=attackVariant==1?.68f:attackVariant==2?1.22f:1f;if(kind==3&&hp<maxHp*.6f)baseWait*=.75f;if(MajorBoss)baseWait*=.58f;timer=baseWait;return;
             }
             timer-=Time.deltaTime;
             if(timer>0||!visible||distance>18)return;
@@ -213,7 +213,7 @@ namespace NeonVault
                 bossMove=SelectBossMove(distance);
                 bossAttackCount++;
             }
-            lockedTarget=game.PlayerPosition;lockedTarget.y=.08f;lockedAim=direction;charging=true;charge=TelegraphSeconds;
+            lockedTarget=game.PlayerPosition;lockedTarget.y=.08f;lockedAim=direction;charging=true;charge=kind==3&&MajorBoss?TelegraphSeconds*.78f:TelegraphSeconds;
             if(kind==3)
             {
                 warning=new GameObject("Colossus attack warning");warning.transform.SetParent(transform.parent,false);
@@ -223,7 +223,15 @@ namespace NeonVault
                 }
                 else if(bossMove==BossMove.Grenade)
                 {
-                    CombatVisuals.WarningParabolicArc(HumanMuzzlePosition(),lockedTarget,2.8f,warning.transform,new Color(1f,.32f,.12f));
+                    CombatVisuals.WarningParabolicArc(HumanMuzzlePosition(),lockedTarget,MajorBoss?3.3f:2.8f,warning.transform,new Color(1f,.32f,.12f));
+                    if(MajorBoss)
+                    {
+                        for(int i=-1;i<=1;i+=2)
+                        {
+                            Vector3 sideTarget=lockedTarget+Quaternion.Euler(0,i*38f,0)*(lockedTarget-transform.position).normalized*2.6f;
+                            CombatVisuals.WarningParabolicArc(HumanMuzzlePosition(),sideTarget,2.5f,warning.transform,new Color(1f,.45f,.15f));
+                        }
+                    }
                 }
                 else if(bossMove==BossMove.Rush)
                 {
@@ -306,27 +314,57 @@ namespace NeonVault
             if(IsHumanBoss)
             {
                 // Human bosses fight predominantly with guns (70% Gun & Grenades, 30% Melee)
-                // At range (>5m): 80% Gun/Grenades (6 Gun, 2 Grenade), 20% Rush/FlashLunge
-                // At close range (<=5m): 60% Gun/Grenades (4 Gun, 2 Grenade), 40% Sweep/Rush (3 Sweep, 1 FlashLunge)
-                if(distance>5f)
+                // MajorBoss (Great Boss / Faction HQ Boss): uses heavy gun barrages, triple grenades, and swift flash lunges more aggressively
+                if(MajorBoss)
                 {
-                    chosen=cycle==0||cycle==2||cycle==4||cycle==6||cycle==8?BossMove.Gun:
-                           cycle==1||cycle==7?BossMove.Grenade:
-                           cycle==3?BossMove.FlashLunge:BossMove.Rush;
+                    if(distance>5f)
+                    {
+                        // 7 Gun (barrage), 2 Triple Grenades, 1 FlashLunge
+                        chosen=cycle==0||cycle==2||cycle==4||cycle==5||cycle==6||cycle==8||cycle==9?BossMove.Gun:
+                               cycle==1||cycle==7?BossMove.Grenade:
+                               BossMove.FlashLunge;
+                    }
+                    else
+                    {
+                        // Close quarters: 4 Gun bursts, 2 Triple Grenades, 3 Sweeps, 1 FlashLunge
+                        chosen=cycle==0||cycle==3||cycle==6||cycle==8?BossMove.Gun:
+                               cycle==2||cycle==7?BossMove.Grenade:
+                               cycle==1||cycle==4||cycle==9?BossMove.Sweep:
+                               BossMove.FlashLunge;
+                    }
                 }
                 else
                 {
-                    chosen=cycle==0||cycle==3||cycle==6||cycle==8?BossMove.Gun:
-                           cycle==2||cycle==7?BossMove.Grenade:
-                           cycle==1||cycle==4||cycle==9?BossMove.Sweep:BossMove.FlashLunge;
+                    if(distance>5f)
+                    {
+                        chosen=cycle==0||cycle==2||cycle==4||cycle==6||cycle==8?BossMove.Gun:
+                               cycle==1||cycle==7?BossMove.Grenade:
+                               cycle==3?BossMove.FlashLunge:BossMove.Rush;
+                    }
+                    else
+                    {
+                        chosen=cycle==0||cycle==3||cycle==6||cycle==8?BossMove.Gun:
+                               cycle==2||cycle==7?BossMove.Grenade:
+                               cycle==1||cycle==4||cycle==9?BossMove.Sweep:BossMove.FlashLunge;
+                    }
                 }
             }
             else
             {
-                int mutantCycle=bossAttackCount%7;
-                if(distance>6.2f)chosen=mutantCycle==1||enraged&&mutantCycle==4?BossMove.FlashLunge:mutantCycle==3?BossMove.Gun:BossMove.Rush;
-                else if(distance>3.8f)chosen=mutantCycle==0?BossMove.FlashLunge:mutantCycle==1?BossMove.Gun:mutantCycle==2?BossMove.Whirlwind:mutantCycle==3?BossMove.Rush:mutantCycle==4?BossMove.ShockwaveRing:mutantCycle==5?BossMove.ComboFrenzy:BossMove.Sweep;
-                else chosen=mutantCycle==0?BossMove.Slam:mutantCycle==1?BossMove.ComboFrenzy:mutantCycle==2?BossMove.Sweep:mutantCycle==3?BossMove.Whirlwind:mutantCycle==4?BossMove.ShockwaveRing:mutantCycle==5?BossMove.FlashLunge:BossMove.ComboFrenzy;
+                if(MajorBoss)
+                {
+                    // Major mutant bosses (e.g. infected HQ bosses) aggressively employ shockwave rings, whirlwinds, and lethal flash lunges
+                    if(distance>6.2f)chosen=cycle%2==0?BossMove.FlashLunge:cycle==1||cycle==5?BossMove.ShockwaveRing:BossMove.Gun;
+                    else if(distance>3.8f)chosen=cycle==0||cycle==5?BossMove.ShockwaveRing:cycle==1||cycle==6?BossMove.Whirlwind:cycle==2||cycle==7?BossMove.FlashLunge:cycle==3?BossMove.ComboFrenzy:BossMove.Gun;
+                    else chosen=cycle==0||cycle==5?BossMove.ShockwaveRing:cycle==1||cycle==6?BossMove.Whirlwind:cycle==2||cycle==7?BossMove.ComboFrenzy:cycle==3?BossMove.Slam:BossMove.Sweep;
+                }
+                else
+                {
+                    int mutantCycle=bossAttackCount%7;
+                    if(distance>6.2f)chosen=mutantCycle==1||enraged&&mutantCycle==4?BossMove.FlashLunge:mutantCycle==3?BossMove.Gun:BossMove.Rush;
+                    else if(distance>3.8f)chosen=mutantCycle==0?BossMove.FlashLunge:mutantCycle==1?BossMove.Gun:mutantCycle==2?BossMove.Whirlwind:mutantCycle==3?BossMove.Rush:mutantCycle==4?BossMove.ShockwaveRing:mutantCycle==5?BossMove.ComboFrenzy:BossMove.Sweep;
+                    else chosen=mutantCycle==0?BossMove.Slam:mutantCycle==1?BossMove.ComboFrenzy:mutantCycle==2?BossMove.Sweep:mutantCycle==3?BossMove.Whirlwind:mutantCycle==4?BossMove.ShockwaveRing:mutantCycle==5?BossMove.FlashLunge:BossMove.ComboFrenzy;
+                }
             }
             bossAttackCount++;
             return chosen;
@@ -337,8 +375,20 @@ namespace NeonVault
             if(!alerted&&HeavyMelee){CombatVisuals.Burst(transform.position+lockedAim*1.1f,new Color(.55f,.32f,.18f),12,transform.parent);var d0=game.PlayerPosition-transform.position;d0.y=0;if(d0.magnitude<2.9f&&Vector3.Dot(d0.normalized,lockedAim)>-.15f&&game.LineOfSight(transform.position,game.PlayerPosition))game.Hurt(36*damageScale);return;}
             if(kind==3)
             {
-                if(bossMove==BossMove.Gun){FireRangedShot();burstShots=IsHumanBoss?(MajorBoss?5:3):(MajorBoss?3:2);burstTimer=IsHumanBoss?(MajorBoss?.12f:.20f):.18f;return;}
-                if(bossMove==BossMove.Grenade){FireGrenade(lockedTarget,32*damageScale,2.8f);return;}
+                if(bossMove==BossMove.Gun){FireRangedShot();burstShots=IsHumanBoss?(MajorBoss?7:4):(MajorBoss?5:3);burstTimer=IsHumanBoss?(MajorBoss?.09f:.16f):.14f;return;}
+                if(bossMove==BossMove.Grenade)
+                {
+                    FireGrenade(lockedTarget,(MajorBoss?40:32)*damageScale,MajorBoss?3.3f:2.8f);
+                    if(MajorBoss)
+                    {
+                        for(int i=-1;i<=1;i+=2)
+                        {
+                            Vector3 sideTarget=lockedTarget+Quaternion.Euler(0,i*38f,0)*(lockedTarget-transform.position).normalized*2.6f;
+                            FireGrenade(sideTarget,28*damageScale,2.5f);
+                        }
+                    }
+                    return;
+                }
                 if(bossMove==BossMove.Rush){contact=0;dashSpeed=18f;dashLandingBlast=false;dash=.46f;return;}
                 if(bossMove==BossMove.FlashLunge){contact=0;dashSpeed=27f;dashLandingBlast=true;dash=.30f;CombatVisuals.Burst(transform.position,new Color(1f,.72f,.25f),14,transform.parent);return;}
                 if(bossMove==BossMove.ComboFrenzy){comboSteps=3;comboTimer=.02f;return;}
