@@ -18,8 +18,30 @@ namespace NeonVault
         public int ActionSkillChargeMax => 15;
         public ActionSkillKind ActionSkillSelected { get { LoadActionSkills(); return actionSkillSelected; } }
         public static int ActionSkillMaxRank(int tier) => tier==4?1:6;
+        public static int ActionSkillTierRequiredPoints(int tier)
+        {
+            switch(tier)
+            {
+                case 1: return 6;
+                case 2: return 8;
+                case 3: return 10;
+                case 4: return 12;
+                default: return 0;
+            }
+        }
+        public int ActionSkillTierPointsInvested(ActionSkillKind kind, int branch, int tier)
+        {
+            if(!ValidActionSkill(kind, branch, tier)) return 0;
+            int total = ActionSkillRank(kind, branch, tier);
+            for(int s = 0; s < 14; s++) total += ActionSkillExtraRank(kind, branch, tier, s);
+            return total;
+        }
         public bool ActionSkillTierAvailable(ActionSkillKind kind,int branch,int tier)
-        {return ValidActionSkill(kind,branch,tier)&&(tier==0||ActionSkillRank(kind,branch,tier-1)>=(tier==4?6:3));}
+        {
+            if(!ValidActionSkill(kind,branch,tier)) return false;
+            if(tier == 0) return true;
+            return ActionSkillTierPointsInvested(kind, branch, tier - 1) >= ActionSkillTierRequiredPoints(tier);
+        }
         static int ActionSkillIndex(ActionSkillKind kind,int branch,int tier)=>(int)kind*15+branch*5+tier;
         static bool ValidActionSkill(ActionSkillKind kind,int branch,int tier)=>(int)kind>=0&&(int)kind<3&&branch>=0&&branch<3&&tier>=0&&tier<5;
         void LoadActionSkills()
@@ -83,7 +105,6 @@ namespace NeonVault
             actionSkillSelected = next;
             SaveActionSkills();
             PlayUserSound("skill", .35f);
-            Notify(ActionSkillName(actionSkillSelected) + " EQUIPPED", ActionSkillName(actionSkillSelected) + " 装備");
         }
         public void ResetActionSkills()
         {LoadActionSkills();Array.Clear(actionSkillRanks,0,actionSkillRanks.Length);Array.Clear(actionSkillExtraRanks,0,actionSkillExtraRanks.Length);actionSkillExtraValuesDirty=true;ActionSkillPoints=0;ClearActiveActionSkill();SaveActionSkills();RecalculateArmor();}

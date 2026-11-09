@@ -15,6 +15,25 @@ namespace NeonVault
         static bool Valid(int branch,int node)=>branch>=0&&branch<3&&node>=0&&node<25;
         static string RankKey(int branch,int node)=>Prefix+"Rank."+branch+"."+node;
         public static int Rank(int branch,int node)=>Valid(branch,node)?Mathf.Clamp(PlayerPrefs.GetInt(RankKey(branch,node),0),0,MaxRank(node)):0;
+        public static int TierRequiredPoints(int tier)
+        {
+            switch(tier)
+            {
+                case 1: return 3;
+                case 2: return 5;
+                case 3: return 6;
+                case 4: return 8;
+                default: return 0;
+            }
+        }
+        public static int TierPointsInvested(int branch, int tier)
+        {
+            if(branch < 0 || branch >= 3 || tier < 0 || tier >= 5) return 0;
+            int start = tier * 5;
+            int total = 0;
+            for(int i = 0; i < 5; i++) total += Rank(branch, start + i);
+            return total;
+        }
         public static bool IsUnlocked(int branch,int node)
         {
             if(!Valid(branch,node))return false;
@@ -25,10 +44,11 @@ namespace NeonVault
             // Right Path: t*5+2 -> t*5+4
             int rem = node % 5;
             int root = (node / 5) * 5;
+            int tier = node / 5;
             if(rem == 0)
             {
-                // Tier root unlocks if previous tier's root is invested
-                return Rank(branch, root - 5) > 0;
+                // Tier root unlocks if previous tier points reach requirement
+                return TierPointsInvested(branch, tier - 1) >= TierRequiredPoints(tier);
             }
             if(rem == 1 || rem == 2) return Rank(branch, root) > 0;
             if(rem == 3) return Rank(branch, root + 1) > 0; // Pure Left branch

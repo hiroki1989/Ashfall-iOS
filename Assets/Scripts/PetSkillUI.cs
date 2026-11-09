@@ -155,17 +155,20 @@ namespace NeonVault
                 ActionLabel(new Rect(col.x+8,12,252,24),PetBranchName(b)+(PetEquippedSkill==b+1?" ★":""),b==petSkillBranch?c:Mist,15,TextAnchor.MiddleCenter);
 
                 // PASS 1: DRAW CONNECTING LINES (BEHIND ICONS)
-                // 1a) Detour inter-tier pipe (left edge of column)
+                // 1a) Detour inter-tier pipe (left edge of column) & All-tier points badge
                 for(int tier=0;tier<5;tier++)
                 {
-                    if(tier>0)
-                    {
-                        int prevCap = (tier-1)*5;
-                        bool tierUnlocked = PetSkillRank(b, prevCap) > 0;
-                        Rect tReq = new Rect(x-40f, petTierY[tier]-42f, 80f, 20f);
-                        Box(tReq, new Color(.02f,.03f,.04f,.85f));
-                        ActionLabel(tReq, (tierUnlocked?"1/1":"0/1"), tierUnlocked?Gold:Mist, 12, TextAnchor.MiddleCenter);
+                    int curTierPts = PetSkillState.TierPointsInvested(b, tier);
+                    int reqForNext = tier < 4 ? PetSkillState.TierRequiredPoints(tier + 1) : 0;
+                    bool reqMet = tier == 4 || curTierPts >= reqForNext;
+                    Rect tReq = new Rect(x-50f, petTierY[tier]-42f, 100f, 20f);
+                    Box(tReq, new Color(.02f,.03f,.04f,.85f));
+                    string badgeText = tier == 4 ? (curTierPts + T(" PTS", " 習得")) : (curTierPts + "/" + reqForNext);
+                    ActionLabel(tReq, badgeText, reqMet ? Gold : Mist, 12, TextAnchor.MiddleCenter);
 
+                    if(tier > 0)
+                    {
+                        bool tierUnlocked = PetSkillState.TierPointsInvested(b, tier - 1) >= PetSkillState.TierRequiredPoints(tier);
                         // Connect Tier 1st node to Next Tier 1st node via left detour pipe
                         Vector2 tPrevPos = new Vector2(x, petTierY[tier-1]);
                         Vector2 tCurrPos = new Vector2(x, petTierY[tier]);

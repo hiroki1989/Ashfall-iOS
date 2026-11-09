@@ -400,8 +400,8 @@ namespace NeonVault
 
         void EnsureActionNodeScrollVisible(int tier, int slot)
         {
-            int[] rows={0,1,2,2,3,4,5,5,6,7,8,8,9,10};
-            float subY = slot < 0 ? 0f : 65f + rows[slot+1]*84f;
+            int[] rows={0, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4};
+            float subY = slot < 0 ? 0f : 65f + rows[slot+1]*92f;
             float nodeY = 58f + tier * ActionTreeTierPitch + subY;
             float viewH = 610f;
             if(nodeY - 80f < actionTreeScroll.y) actionTreeScroll.y = Mathf.Max(0f, nodeY - 80f);
@@ -486,14 +486,15 @@ namespace NeonVault
                 ActionLabel(new Rect(tierBand.x + 14f, tierBand.y + 8f, 220f, 24f),
                     t == 4 ? T("TIER 5 // CAPSTONE","第5段階 // 最終奥義") : (T("TIER ","第") + (t+1) + T("", "段階")),
                     new Color(accent.r, accent.g, accent.b, .85f), 16, TextAnchor.MiddleLeft);
-                if(t > 0)
+                // Display points invested in this tier vs requirement to unlock next tier for all tiers
                 {
-                    int prevReq = t == 4 ? 6 : 3;
-                    int prevCurrent = Mathf.Min(prevReq, ActionSkillRank(selected, branch, t - 1));
-                    bool prevMet = prevCurrent >= prevReq;
-                    Rect reqBadge = new Rect(tierBand.xMax - 110f, tierBand.y + 6f, 96f, 24f);
+                    int curTierInvested = ActionSkillTierPointsInvested(selected, branch, t);
+                    int reqForNext = t < 4 ? ActionSkillTierRequiredPoints(t + 1) : 0;
+                    bool reqMet = t == 4 || curTierInvested >= reqForNext;
+                    Rect reqBadge = new Rect(tierBand.xMax - 130f, tierBand.y + 6f, 116f, 24f);
                     Box(reqBadge, new Color(.02f,.03f,.04f,.85f));
-                    ActionLabel(reqBadge, prevCurrent + "/" + prevReq, prevMet ? Gold : Mist, 14, TextAnchor.MiddleCenter);
+                    string badgeText = t == 4 ? (curTierInvested + T(" PTS", " 習得")) : (curTierInvested + "/" + reqForNext);
+                    ActionLabel(reqBadge, badgeText, reqMet ? Gold : Mist, 14, TextAnchor.MiddleCenter);
                 }
 
                 Vector2 pRoot  = new Vector2(cx, topY);
@@ -501,12 +502,19 @@ namespace NeonVault
                 int mRoot = ActionSkillMaxRank(t);
                 bool avRoot = ActionSkillTierAvailable(selected, branch, t);
 
-                // Slot geometry: pure branching without convergence.
-                // Left Stream:  1 -> 3 -> 5 -> 7 -> 9 -> 11 -> 13 (lane -1)
-                // Right Stream: 2 -> 4 -> 6 -> 8 -> 10 -> 12 (lane +1)
-                int[] row={1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7, 8};
-                int[] lane={0, -1,1, -1,1, -1,1, -1,1, -1,1, -1,1, -1};
-                int[] parentSlotMap={-1, 0,0, 1,2, 3,4, 5,6, 7,8, 9,10, 11};
+                // Slot geometry: multi-branching tree without convergence.
+                // 0: Sub-root (row 1, lane 0)
+                // 1, 2, 3: 3-way split (row 2, lanes -1, 0, 1)
+                // 4, 5: split from 1 (row 3, lanes -1.8, -1.0)
+                // 6, 7: split from 2 (row 3, lanes -0.4, 0.4)
+                // 8, 9: split from 3 (row 3, lanes 1.0, 1.8)
+                // 10: from 4 (row 4, lane -1.8)
+                // 11: from 5 (row 4, lane -1.0)
+                // 12: from 6 (row 4, lane -0.4)
+                // 13: from 8 (row 4, lane 1.0)
+                int[] row={1,  2, 2, 2,   3, 3, 3, 3, 3, 3,   4, 4, 4, 4};
+                float[] lane={0f, -1.2f, 0f, 1.2f,  -1.8f, -0.9f, -0.3f, 0.3f, 0.9f, 1.8f,  -1.8f, -0.9f, -0.3f, 0.9f};
+                int[] parentSlotMap={-1, 0, 0, 0,  1, 1, 2, 2, 3, 3,  4, 5, 6, 8};
 
                 // PASS 1: DRAW ALL CONNECTING LINES (BEHIND ICONS)
                 // 1a) Detour connecting line from Tier N to Tier N+1 on the far left
@@ -521,24 +529,24 @@ namespace NeonVault
                 // 1b) Within-tier connector lines behind nodes
                 for(int s=0;s<14;s++)
                 {
-                    float y=topY+65f+row[s]*84f;
-                    Vector2 p=new Vector2(cx+lane[s]*150f,y);
+                    float y=topY+65f+row[s]*92f;
+                    Vector2 p=new Vector2(cx+lane[s]*125f,y);
                     int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
                     bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
                     int pSlot = parentSlotMap[s];
-                    Vector2 parent = pSlot < 0 ? pRoot : new Vector2(cx+lane[pSlot]*150f, topY+65f+row[pSlot]*84f);
+                    Vector2 parent = pSlot < 0 ? pRoot : new Vector2(cx+lane[pSlot]*125f, topY+65f+row[pSlot]*92f);
                     DrawSkillConnectorPipe(parent, p, nodeRank>0, nodeAvailable, accent);
                 }
 
                 // PASS 2: DRAW ALL SKILL NODES (IN FRONT OF LINES)
                 for(int s=0;s<14;s++)
                 {
-                    float y=topY+65f+row[s]*84f;
-                    Vector2 p=new Vector2(cx+lane[s]*150f,y);
+                    float y=topY+65f+row[s]*92f;
+                    Vector2 p=new Vector2(cx+lane[s]*125f,y);
                     int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
                     bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
                     int icon=GetActionNodeIconIndex(selected,branch,t,s);
-                    if(DrawBorderlandsSkillNode(p,48f,icon,s%2==0?2:1,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,1,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
+                    if(DrawBorderlandsSkillNode(p,44f,icon,s>=10?2:s%2==0?1:0,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,1,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
                     {actionTreeTier=t;actionTreeSlot=s;PlayUserSound("skill",.08f);}
                 }
 
