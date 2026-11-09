@@ -23,17 +23,30 @@ namespace NeonVault
         {
             if(!ValidExtra(k,b,t,s)||ActionSkillExtraRank(k,b,t,s)!=0||ActionSkillAvailablePoints<=0)return false;
             if(ActionSkillRank(k,b,t)<1)return false;
-            if(s<LegacyExtraSlots)return s==0 || (s<3?ActionSkillExtraRank(k,b,t,0)>0:ActionSkillExtraRank(k,b,t,1)>0||ActionSkillExtraRank(k,b,t,2)>0);
+            // Clear fork structure without convergence:
+            // Slot 0 (Tier Root Sub-Node) -> Left: slot 1, Right: slot 2
+            // Left Path:  1 -> 3 -> 5 -> 7 -> 9 -> 11 -> 13
+            // Right Path: 2 -> 4 -> 6 -> 8 -> 10 -> 12
             switch(s)
             {
-                case 4:return ActionSkillExtraRank(k,b,t,0)>0;
-                case 5:case 6:return ActionSkillExtraRank(k,b,t,4)>0;
-                case 7:return ActionSkillExtraRank(k,b,t,5)>0||ActionSkillExtraRank(k,b,t,6)>0;
-                case 8:return ActionSkillExtraRank(k,b,t,7)>0;
-                case 9:case 10:return ActionSkillExtraRank(k,b,t,8)>0;
-                case 11:return ActionSkillExtraRank(k,b,t,9)>0||ActionSkillExtraRank(k,b,t,10)>0;
-                case 12:case 13:return ActionSkillExtraRank(k,b,t,11)>0;
-                default:return false;
+                case 0: return true;
+                // Immediate fork from slot 0
+                case 1: return ActionSkillExtraRank(k,b,t,0)>0;
+                case 2: return ActionSkillExtraRank(k,b,t,0)>0;
+                // Pure Left Line
+                case 3: return ActionSkillExtraRank(k,b,t,1)>0;
+                case 5: return ActionSkillExtraRank(k,b,t,3)>0;
+                case 7: return ActionSkillExtraRank(k,b,t,5)>0;
+                case 9: return ActionSkillExtraRank(k,b,t,7)>0;
+                case 11: return ActionSkillExtraRank(k,b,t,9)>0;
+                case 13: return ActionSkillExtraRank(k,b,t,11)>0;
+                // Pure Right Line
+                case 4: return ActionSkillExtraRank(k,b,t,2)>0;
+                case 6: return ActionSkillExtraRank(k,b,t,4)>0;
+                case 8: return ActionSkillExtraRank(k,b,t,6)>0;
+                case 10: return ActionSkillExtraRank(k,b,t,8)>0;
+                case 12: return ActionSkillExtraRank(k,b,t,10)>0;
+                default: return false;
             }
         }
         public bool TryUpgradeActionSkillExtra(ActionSkillKind k,int b,int t,int s)

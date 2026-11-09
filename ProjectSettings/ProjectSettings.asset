@@ -147,9 +147,9 @@ PlayerSettings:
   vulkanEnableLateAcquireNextImage: 0
   vulkanEnableCommandBufferRecycling: 1
   loadStoreDebugModeEnabled: 0
-  visionOSBundleVersion: 1.0
-  tvOSBundleVersion: 1.0
-  bundleVersion: 58
+  visionOSbundleVersion: 59
+  tvOSbundleVersion: 59
+  bundleVersion: 59
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -170,11 +170,11 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    iPhone: com.neonvault.ashfall.ios
+    iPhone: 59
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 58
+    iPhone: 59
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 1
@@ -472,7 +472,7 @@ PlayerSettings:
   mobileMTRendering:
     Android: 1
     VisionOS: 1
-    iPhone: 1
+    iPhone: 59
     tvOS: 1
   m_BuildTargetGroupLightmapEncodingQuality: []
   m_BuildTargetGroupHDRCubemapEncodingQuality: []
@@ -755,16 +755,16 @@ PlayerSettings:
     Standalone:
   additionalCompilerArguments: {}
   platformArchitecture:
-    iPhone: 1
+    iPhone: 59
   scriptingBackend:
     Standalone: 0
-    iPhone: 1
+    iPhone: 59
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration: {}
   il2cppLTOMode: {}
   il2cppStacktraceInformation: {}
   managedStrippingLevel:
-    iPhone: 1
+    iPhone: 59
   incrementalIl2cppBuild: {}
   suppressCommonWarnings: 1
   allowUnsafeCode: 0

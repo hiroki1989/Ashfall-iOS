@@ -154,7 +154,8 @@ namespace NeonVault
                 Box(col,b==petSkillBranch?new Color(c.r*.12f,c.g*.12f,c.b*.12f,.65f):new Color(.03f,.038f,.044f,.5f));
                 ActionLabel(new Rect(col.x+8,12,252,24),PetBranchName(b)+(PetEquippedSkill==b+1?" ★":""),b==petSkillBranch?c:Mist,15,TextAnchor.MiddleCenter);
 
-                // Tier requirement indicators & inter-tier connectors
+                // PASS 1: DRAW CONNECTING LINES (BEHIND ICONS)
+                // 1a) Detour inter-tier pipe (left edge of column)
                 for(int tier=0;tier<5;tier++)
                 {
                     if(tier>0)
@@ -165,28 +166,39 @@ namespace NeonVault
                         Box(tReq, new Color(.02f,.03f,.04f,.85f));
                         ActionLabel(tReq, (tierUnlocked?"1/1":"0/1"), tierUnlocked?Gold:Mist, 12, TextAnchor.MiddleCenter);
 
-                        // Connect Tier 1st node to Next Tier 1st node
+                        // Connect Tier 1st node to Next Tier 1st node via left detour pipe
                         Vector2 tPrevPos = new Vector2(x, petTierY[tier-1]);
                         Vector2 tCurrPos = new Vector2(x, petTierY[tier]);
-                        DrawSkillConnectorPipe(tPrevPos, tCurrPos, tierUnlocked, tierUnlocked, c);
+                        float colLeftX = col.x + 16f; // Left side of column box
+                        DrawDetourTierPipe(tPrevPos, tCurrPos, colLeftX, tierUnlocked, tierUnlocked, c);
                     }
                 }
 
+                // 1b) Within-tier connector lines behind nodes
                 for(int n=0;n<PetNodeCount;n++)
                 {
                     int t = petNodeTier[n], row = petNodeRow[n], lane = petNodeLane[n];
-                    Vector2 pos = new Vector2(x + lane*52f, petTierY[t] + row*78f);
+                    Vector2 pos = new Vector2(x + lane*58f, petTierY[t] + row*78f);
 
-                    // Connectors within tier
                     if(n % 5 != 0)
                     {
+                        // Without convergence:
+                        // row 1: Left (rem 1) or Right (rem 2) from root (t*5)
+                        // row 2: Left (rem 3) from rem 1; Right (rem 4) from rem 2
                         int parentNode = (row == 1) ? (t * 5) : (n - 2);
                         int pt = petNodeTier[parentNode], prow = petNodeRow[parentNode], plane = petNodeLane[parentNode];
-                        Vector2 ppos = new Vector2(x + plane*52f, petTierY[pt] + prow*78f);
+                        Vector2 ppos = new Vector2(x + plane*58f, petTierY[pt] + prow*78f);
                         DrawSkillConnectorPipe(ppos, pos, PetSkillRank(b,n)>0, PetSkillState.IsUnlocked(b,n), c);
                     }
+                }
 
-                    int rank=PetSkillRank(b,n);bool available=PetSkillState.IsUnlocked(b,n);
+                // PASS 2: DRAW SKILL NODES (IN FRONT OF LINES)
+                for(int n=0;n<PetNodeCount;n++)
+                {
+                    int t = petNodeTier[n], row = petNodeRow[n], lane = petNodeLane[n];
+                    Vector2 pos = new Vector2(x + lane*58f, petTierY[t] + row*78f);
+                    int rank=PetSkillRank(b,n);
+                    bool available=PetSkillState.IsUnlocked(b,n);
                     if(DrawBorderlandsSkillNode(pos, (n%5==0)?48f:42f, GetPetNodeIconIndex(b,n), (n==0||n>=20)?2:0, PetNodeName(n), rank, PetSkillState.MaxRank(n), available, petSkillBranch==b&&petSkillNode==n, c))
                     {petSkillBranch=b;petSkillNode=n;petSkillAutoScroll=true;PlayUserSound("skill",.08f);}
                 }

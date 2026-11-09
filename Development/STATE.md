@@ -1,4 +1,16 @@
-﻿## 2026-11-09 / バージョン58・アクションスキルリアルタイム切替・スキルツリー分岐拡充・ランドマーク固有ドロップ秘匿
+﻿## 2026-11-09 / バージョン59・段階間左迂回ルート・接続線裏面描画・スキルツリー非合流完全分岐化
+- 変更ファイル:
+  - ProjectSettings/ProjectSettings.asset: バージョンおよびビルド番号を 59 に更新。
+  - Assets/Scripts/ActionSkillUI.cs: 前段階の第1スキルから次段階の第1スキルへの接続線を中央の正規ルートを通さず左端へ迂回させる DrawDetourTierPipe を新設・描画。また、全接続パイプ（迂回線および段階内分岐線）を第1パス（奥側）で描画し、全スキルアイコンノードを第2パス（手前側）で描画するよう描画順を分離（線がアイコンの裏側に回り、手前にノードが重なるよう修正）。
+  - Assets/Scripts/ActionSkillExpansion.cs: アクションスキルツリーの追加ノードで合流（ダイアモンドマージ）を廃止。ルート（スロット0）から左系統（スロット1->3->5->7->9->11->13）と右系統（スロット2->4->6->8->10->12）に完全分離し、一方を選択すると奥の強力なスキル取得に向けて独自の道を進む戦略的ツリーへ再設計。
+  - Assets/Scripts/PetSkillCombat.cs: ペットスキルツリーの前提ノード解除条件（PetSkillState.IsUnlocked）から合流条件を撤廃。段階ルートから左分岐（rem 1 -> rem 3）と右分岐（rem 2 -> rem 4）へ完全独立分岐。
+  - Assets/Scripts/PetSkillUI.cs: 段階間ルート接続をカラム左端へ迂回する DrawDetourTierPipe 経由へ変更。接続パイプ描画（第1パス）とノードアイコン描画（第2パス）を分離して線がアイコンの裏側を通るよう対応。
+  - D:/Unity/DustDebt-Steam および D:/Unity/DustDebt-Steam-Demo に共通コードを同期。
+- 結果: iOS/Steam/Demo 全3環境で、スキルツリーの段階間接続線が左側へ迂回して見通しが改善し、接続線がノードアイコンの裏側を通る正しい奥行きで描画され、プレイヤー・ペット共に合流のない完全分岐ツリー（片方を選ぶともう片方は取れない戦略性）が確立。
+- 検証: Unity 6000.6.0f1 バッチモードコンパイルにて、iOS版 (D:/Unity/BuildTools/ios_compile_59.log)、Steam版 (steam_compile_59.log)、Demo版 (demo_compile_59.log) の全3プロジェクトでエラー0件 (error CS: 0) を確認。
+- 未解決: 実機端末での実寸表示確認。
+
+## 2026-11-09 / バージョン58・アクションスキルリアルタイム切替・スキルツリー分岐拡充・ランドマーク固有ドロップ秘匿
 - 変更ファイル:
   - ProjectSettings/ProjectSettings.asset: バージョンおよびビルド番号を 58 に更新。
   - Assets/Scripts/ActionSkillSystem.cs: 戦闘中リアルタイム切替 CycleActionSkill() 実装、チャージゲージ保持。

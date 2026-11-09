@@ -176,8 +176,6 @@ namespace NeonVault
             Color core = unlocked ? Color.Lerp(accent, Color.white, .32f) :
                          available ? new Color(.48f, .54f, .56f, .75f) : new Color(.22f, .25f, .27f, .55f);
             // Orthogonal elbow (down / across / down) drawn with axis-aligned boxes only.
-            // Rotated GUI.matrix lines break inside GUI.BeginScrollView clipping and showed up as
-            // stray diagonal streaks that slid against the scrolling nodes, so no rotation is used here.
             float midY = Mathf.Abs(from.x - to.x) < .5f ? to.y : (from.y + to.y) * .5f;
             Vector2 a = from, b = new Vector2(from.x, midY), c = new Vector2(to.x, midY), d = to;
             float ow = unlocked ? 7f : 5f, cw = unlocked ? 3.2f : 2f;
@@ -192,6 +190,37 @@ namespace NeonVault
                               s < l1 + l2 ? Vector2.Lerp(b, c, (s - l1) / Mathf.Max(1f, l2)) :
                               Vector2.Lerp(c, d, (s - l1 - l2) / Mathf.Max(1f, l3));
                 Box(new Rect(dot.x - 3.5f, dot.y - 3.5f, 7f, 7f), Color.white);
+            }
+        }
+
+        public void DrawDetourTierPipe(Vector2 from, Vector2 to, float detourX, bool unlocked, bool available, Color accent)
+        {
+            Color outer = unlocked ? new Color(accent.r*.55f, accent.g*.55f, accent.b*.55f, .95f) :
+                          available ? new Color(.25f, .30f, .33f, .85f) : new Color(.14f, .16f, .18f, .75f);
+            Color core = unlocked ? Color.Lerp(accent, Color.white, .45f) :
+                         available ? new Color(.48f, .54f, .56f, .75f) : new Color(.22f, .25f, .27f, .55f);
+            // Leftward detour route:
+            // p0 (from) -> p1 (detourX, from.y) -> p2 (detourX, to.y) -> p3 (to)
+            Vector2 p0 = from;
+            Vector2 p1 = new Vector2(detourX, from.y);
+            Vector2 p2 = new Vector2(detourX, to.y);
+            Vector2 p3 = to;
+
+            float ow = unlocked ? 7.5f : 5f, cw = unlocked ? 3.5f : 2f;
+            OrthoSeg(p0, p1, outer, ow); OrthoSeg(p1, p2, outer, ow); OrthoSeg(p2, p3, outer, ow);
+            OrthoSeg(p0, p1, core, cw);  OrthoSeg(p1, p2, core, cw);  OrthoSeg(p2, p3, core, cw);
+
+            if(unlocked)
+            {
+                float d1 = Mathf.Abs(p1.x - p0.x);
+                float d2 = Mathf.Abs(p2.y - p1.y);
+                float d3 = Mathf.Abs(p3.x - p2.x);
+                float total = Mathf.Max(1f, d1 + d2 + d3);
+                float s = Mathf.Repeat(Time.unscaledTime * 1.25f, 1f) * total;
+                Vector2 dot = s < d1 ? Vector2.Lerp(p0, p1, s / Mathf.Max(1f, d1)) :
+                              s < d1 + d2 ? Vector2.Lerp(p1, p2, (s - d1) / Mathf.Max(1f, d2)) :
+                              Vector2.Lerp(p2, p3, (s - d1 - d2) / Mathf.Max(1f, d3));
+                Box(new Rect(dot.x - 4f, dot.y - 4f, 8f, 8f), Color.white);
             }
         }
 
@@ -472,30 +501,50 @@ namespace NeonVault
                 int mRoot = ActionSkillMaxRank(t);
                 bool avRoot = ActionSkillTierAvailable(selected, branch, t);
 
+                // Slot geometry: pure branching without convergence.
+                // Left Stream:  1 -> 3 -> 5 -> 7 -> 9 -> 11 -> 13 (lane -1)
+                // Right Stream: 2 -> 4 -> 6 -> 8 -> 10 -> 12 (lane +1)
+                int[] row={1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7, 8};
+                int[] lane={0, -1,1, -1,1, -1,1, -1,1, -1,1, -1,1, -1};
+                int[] parentSlotMap={-1, 0,0, 1,2, 3,4, 5,6, 7,8, 9,10, 11};
+
+                // PASS 1: DRAW ALL CONNECTING LINES (BEHIND ICONS)
+                // 1a) Detour connecting line from Tier N to Tier N+1 on the far left
+                if(t<4)
+                {
+                    bool nextAv = ActionSkillTierAvailable(selected, branch, t + 1);
+                    Vector2 nextRoot = new Vector2(cx, topY + tierPitch);
+                    float detourLeftX = 42f; // Far left margin of tier band
+                    DrawDetourTierPipe(pRoot, nextRoot, detourLeftX, nextAv, nextAv, accent);
+                }
+
+                // 1b) Within-tier connector lines behind nodes
                 for(int s=0;s<14;s++)
                 {
-                    int[] row={1,2,2,3,4,5,5,6,7,8,8,9,10,10};
-                    int[] lane={0,0,-1,1,0,0,-1,1,0,0,-1,1,0,1};
-                    float y=topY+65f+row[s]*84f;Vector2 p=new Vector2(cx+lane[s]*150f,y);
-                    int nodeRank=ActionSkillExtraRank(selected,branch,t,s);bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
-                    int parentSlot=s==0? -1:s==1||s==2?0:s==3?(ActionSkillExtraRank(selected,branch,t,1)>0?1:2):s==4?3:s==5||s==6?4:s==7?(ActionSkillExtraRank(selected,branch,t,5)>0?5:6):s==8?7:s==9||s==10?8:s==11?(ActionSkillExtraRank(selected,branch,t,9)>0?9:10):11;
-                    Vector2 parent=parentSlot<0?pRoot:new Vector2(cx+lane[parentSlot]*150f,topY+65f+row[parentSlot]*84f);
-                    DrawSkillConnectorPipe(parent,p,nodeRank>0,nodeAvailable,accent);
+                    float y=topY+65f+row[s]*84f;
+                    Vector2 p=new Vector2(cx+lane[s]*150f,y);
+                    int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
+                    bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
+                    int pSlot = parentSlotMap[s];
+                    Vector2 parent = pSlot < 0 ? pRoot : new Vector2(cx+lane[pSlot]*150f, topY+65f+row[pSlot]*84f);
+                    DrawSkillConnectorPipe(parent, p, nodeRank>0, nodeAvailable, accent);
+                }
+
+                // PASS 2: DRAW ALL SKILL NODES (IN FRONT OF LINES)
+                for(int s=0;s<14;s++)
+                {
+                    float y=topY+65f+row[s]*84f;
+                    Vector2 p=new Vector2(cx+lane[s]*150f,y);
+                    int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
+                    bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
                     int icon=GetActionNodeIconIndex(selected,branch,t,s);
-                    if(DrawBorderlandsSkillNode(p,48f,icon,s%4==3?2:1,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,1,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
+                    if(DrawBorderlandsSkillNode(p,48f,icon,s%2==0?2:1,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,1,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
                     {actionTreeTier=t;actionTreeSlot=s;PlayUserSound("skill",.08f);}
                 }
 
                 int icRoot = GetActionNodeIconIndex(selected, branch, t, -1);
                 if(DrawBorderlandsSkillNode(pRoot, t==4 ? 68f : 62f, icRoot, t==4 ? 2 : 0, ActionSkillNodeTitle(selected, branch, t), rRoot, mRoot, avRoot, tier==t && actionTreeSlot<0, accent))
                 { actionTreeTier=t; actionTreeSlot=-1; tier=t; PlayUserSound("skill",.08f); }
-
-                if(t<4)
-                {
-                    bool nextAv = ActionSkillTierAvailable(selected, branch, t + 1);
-                    Vector2 nextRoot = new Vector2(cx, topY + tierPitch);
-                    DrawSkillConnectorPipe(pRoot, nextRoot, nextAv, nextAv, accent);
-                }
 
             }
 
