@@ -1,4 +1,28 @@
-﻿## 2026-11-09 / バージョン59・段階間左迂回ルート・接続線裏面描画・スキルツリー非合流完全分岐化
+﻿## 2026-11-09 / バージョン60・対戦中アクションスキル切替ボタン新規アイコン表示対応
+- 変更ファイル:
+  - ProjectSettings/ProjectSettings.asset: バージョン（undleVersion）およびビルド番号（iPhone:buildNumber）のみを 60 に更新（他の設定項目は維持）。
+  - Assets/Resources/Art/UI/action_skill_switch_icons.png / .meta: インベントリ画面のアクションスキルカード（Mechanic=タレット、Bomber=グレネード、Medic=メディカルフィールド）をベースに高コントラストかつ視認性の高いアクションスキル切替用アイコンアトラスを新規作成。
+  - Assets/Scripts/MobileTouchControls.cs: 対戦中のアクションスキル切替ボタンに現在装備中のアクションスキル（Mechanic / Bomber / Medic）の新規アイコンを鮮明に描画するよう対応。
+  - Assets/Scripts/ActionSkillUI.cs: PC / HUD 側の装備中アクションスキルアイコン枠にも新規アイコンを同期描画。
+  - D:/Unity/DustDebt-Steam および D:/Unity/DustDebt-Steam-Demo にアセットおよびスクリプトを同期。
+- 結果: 対戦中のアクションスキル切替ボタン上に、現在装備中のアクションスキルが直感的にわかる新規アイコンが表示されるようになり、バージョン60へ更新完了。
+- 検証: Unity 6000.6.0f1 バッチモードコンパイルにて、iOS版 (D:/Unity/BuildTools/ios_compile_60.log) でエラー0件 (error CS: 0) を確認。
+- 未解決: 実機端末での実寸表示確認。
+
+## 2026-11-09 / Unity Cloud Build エラー修正（ManagedStrippingLevel・CTIシェーダーキーワード重複）
+- 原因調査:
+  - ユーザー提供のビルドログ 15669800575202-ash-8-default-ios-5.log を解析。2点のエラーによりPlayer Exportが失敗していた：
+    1. ArgumentException: Unhandled ManagedStrippingLevel value: ProjectSettings.asset の managedStrippingLevel や pplicationIdentifier 等の複数フィールドが誤置換により iPhone: 59 に汚染されていた。
+    2. Shader error in CTI/BIRP/LOD Leaves 301: Keyword LOD_FADE_CROSSFADE is duplicated in several directives: CTI LOD Leaves 301 シェーダー内で LOD_FADE_CROSSFADE および #pragma surface ... dithercrossfade が競合して重複エラーを引き起こしていた。
+- 変更ファイル:
+  - ProjectSettings/ProjectSettings.asset: 正常な設定（pplicationIdentifier: com.neonvault.ashfall.ios、managedStrippingLevel: 1、undleVersion: 59、uildNumber iPhone: 59）に完全復元。
+  - Assets/BuiltIn/Forst/CTI Runtime Components/CTI Runtime Components BIRP/Shaders/CTI_LOD_Leaves_301.shader: 重複キーワードディレクティブをコメントアウトし、サーフェスシェーダー pragma の冗長な dithercrossfade を解消。
+  - Assets/Forst/CTI Runtime Components/CTI Runtime Components BIRP/Shaders/CTI_LOD_Leaves_301.shader: 同上。
+- 結果: GitHub（origin/main）へ修正コミットをプッシュ完了（commit 54b3add）。Unity Cloud Build / Appcircle 等の次回ビルドでエクスポートエラーが解消。
+- 検証: ローカル Unity 6000.6.0f1 バッチモードコンパイルにてシェーダーエラー0件・C#コンパイルエラー0件 (Shader error: 0, error CS: 0) を確認。
+- 未解決: クラウドビルド実行完了とIPA生成の待機。
+
+## 2026-11-09 / バージョン59・段階間左迂回ルート・接続線裏面描画・スキルツリー非合流完全分岐化
 - 変更ファイル:
   - ProjectSettings/ProjectSettings.asset: バージョンおよびビルド番号を 59 に更新。
   - Assets/Scripts/ActionSkillUI.cs: 前段階の第1スキルから次段階の第1スキルへの接続線を中央の正規ルートを通さず左端へ迂回させる DrawDetourTierPipe を新設・描画。また、全接続パイプ（迂回線および段階内分岐線）を第1パス（奥側）で描画し、全スキルアイコンノードを第2パス（手前側）で描画するよう描画順を分離（線がアイコンの裏側に回り、手前にノードが重なるよう修正）。

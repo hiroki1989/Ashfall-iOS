@@ -682,11 +682,21 @@ namespace NeonVault
             if(ready)DrawActionReadyPulse(r,accent);
             FieldUIArt.Plate(r,ready);
             // Equipped Action Skill Icon Badge
-            int currentIcon = ActionSkillSelected==ActionSkillKind.Mechanic?0:ActionSkillSelected==ActionSkillKind.Bomber?8:11;
             Rect iconBadge = new Rect(r.x+6,r.y+6,52,52);
             Box(iconBadge,new Color(.02f,.03f,.04f,.85f));
             DrawSkillNodeFrame(iconBadge,0,accent);
-            DrawSkillAtlasIcon(new Rect(iconBadge.x+6,iconBadge.y+6,40,40),currentIcon,Color.white);
+            Texture2D switchTex = Resources.Load<Texture2D>("Art/UI/action_skill_switch_icons");
+            if(switchTex)
+            {
+                int sIdx = Mathf.Clamp((int)ActionSkillSelected, 0, 2);
+                Rect uv = new Rect(sIdx / 3f, 0f, 1f / 3f, 1f);
+                GUI.DrawTextureWithTexCoords(new Rect(iconBadge.x+3, iconBadge.y+3, 46, 46), switchTex, uv, true);
+            }
+            else
+            {
+                int currentIcon = ActionSkillSelected==ActionSkillKind.Mechanic?0:ActionSkillSelected==ActionSkillKind.Bomber?8:11;
+                DrawSkillAtlasIcon(new Rect(iconBadge.x+6,iconBadge.y+6,40,40),currentIcon,Color.white);
+            }
             // Charge Bar
             float barX = r.x + 64, barW = r.width - 72;
             Box(new Rect(barX,r.yMax-12,barW,4),new Color(.18f,.20f,.21f));
