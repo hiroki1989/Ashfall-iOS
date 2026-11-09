@@ -624,7 +624,7 @@ namespace NeonVault
                 ActionLabel(new Rect(card.x+38,card.y+28,360,54),ActionSkillName(kind),UiPaper,29);
                 ActionLabel(new Rect(card.x+36,card.y+220,360,115),ActionSkillSummary(kind),UiPaper,24,TextAnchor.UpperLeft,true);
                 ActionLabel(new Rect(card.x+36,card.y+356,360,32),equipped?T("EQUIPPED","装備中"):T("AVAILABLE","選択可能"),equipped?accent:Mist,19);
-                if(ActionButton(new Rect(card.x+28,card.y+400,378,78),equipped?T("EQUIPPED (SWITCH IN COMBAT)","装備中（対戦中に切替）"):T("VIEW SKILL TREE","スキルツリーを見る"),equipped,accent,20,true)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;actionSkillInventoryTree=true;}
+                if(ActionButton(new Rect(card.x+28,card.y+400,378,78),equipped?T("EQUIPPED","装備中"):T("VIEW SKILL TREE","スキルツリーを見る"),equipped,accent,20,true)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;actionSkillInventoryTree=true;}
             }
         }
 
