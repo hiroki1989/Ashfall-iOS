@@ -1,3 +1,11 @@
+## 2026-11-09 / App Store Connect への IPA アップロード完了（バージョン60）
+- 対象ファイル: D:/downloads2/15669800821777-ash-8-default-ios-3.ipa（バージョン60 / ビルド60、1,454,000,086 バイト）
+- 処理内容:
+  - App Store Connect API（App ID: 6823882669）に buildUpload（ID: 56b2f0a-b5f6-478f-906a-26ce00121ada）を作成。
+  - 全22パートの並列アップロードおよびMD5チェックサム（8364a9528cce3dfb63d86b4925e226b9）コミットが正常完了（assetDeliveryState: COMPLETE）。
+  - アップロード後の Apple 側インジェスト処理（PROCESSING）へ引き渡し完了。
+- 結果: App Store Connect へのアップロードが正常完了。
+
 ## 2026-11-09 / iOS版課金仕様（Lv3制限）確認回答・Steam/Demo版UIマウスポインタ（黄色の収縮クロスヘア）実装
 - iOS版課金仕様の確認結果:
   - はい、現在のiOS版（実機ビルド #if UNITY_IOS && !UNITY_EDITOR）では、アプリ内課金（IosPremiumAccess.IsUnlocked）が解除されていない場合、レベル3以上の債務返済が制限される仕様（FreeVersionRepaymentAllowance(debtPaid, DebtTotalForLevel(3))）となっており、課金しないとレベル3より上（レベル4以降）へ上がれない設計になっています。
