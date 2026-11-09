@@ -8,7 +8,7 @@ namespace NeonVault {
    if (!source) return false;
    var bounds = ImportedWorldBatch.SourceBounds(source);
    if (bounds.size.x < .001f || bounds.size.y < .001f || bounds.size.z < .001f) return false;
-   float scale = Mathf.Min(1.2f / bounds.size.x, 4f / bounds.size.y, 1.2f / bounds.size.z);
+   float scale = Mathf.Min(1.2f / bounds.size.x, LandmarkArchitecture.StreetLampHeight / bounds.size.y, 1.2f / bounds.size.z);
    var rotation = Quaternion.Euler(0, (seed & 3) * 90, 0);
    var offset = rotation * new Vector3(-bounds.center.x * scale, -bounds.min.y * scale, -bounds.center.z * scale);
    ImportedWorldBatch.Add(parent, source, position + offset, rotation, Vector3.one * scale);

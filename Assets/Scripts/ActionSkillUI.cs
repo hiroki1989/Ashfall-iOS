@@ -13,6 +13,9 @@ namespace NeonVault
         Vector2 actionTreeScroll, actionTreeDescriptionScroll;
         string actionTreeLastDescription;
         float skillTreeNavCooldown;
+        const float ActionTreeTierPitch = 1100f;
+        const float ActionTreeContentHeight = 58f + 4f * ActionTreeTierPitch + 1030f;
+        const int ActionTreeNodeRows = 14;
 
         static readonly Color[] ActionTreeColors = {
             new Color(.32f,.76f,.86f), new Color(.96f,.52f,.22f), new Color(.38f,.84f,.54f)
@@ -130,6 +133,14 @@ namespace NeonVault
                 return branch==0?11:branch==1?12:13;
             }
             string id = ExtraEffect(kind, branch, tier, slot);
+            switch(id){case "handgun_damage":return 0;case "shotgun_damage":return 8;case "assault_damage":return 0;case "heavy_damage":return 1;case "turret_overclock":return 1;case "grenade_chain":return 8;case "medic_purge":return 11;}
+            switch(id)
+            {
+                case "handgun_damage": return 0;
+                case "shotgun_damage": return 8;
+                case "assault_damage": return 0;
+                case "heavy_damage": return 1;
+            }
             switch(id)
             {
                 case "turret_damage": case "turret_near_damage": return 5;
@@ -143,6 +154,9 @@ namespace NeonVault
                 case "grenade_damage": case "explosive_damage": case "grenade_element": return 8;
                 case "grenade_radius": case "grenade_suppress": case "grenade_slow": return 9;
                 case "grenade_count": return 10;
+                case "turret_overclock":return 1;
+                case "grenade_chain":return 8;
+                case "medic_purge":return 11;
                 case "grenade_heal": case "grenade_hit_heal": case "medic_heal": case "max_health": return 11;
                 case "medic_radius": case "medic_field_damage": return 12;
                 case "medic_guard": case "damage_reduction": case "turret_near_guard": return 13;
@@ -309,13 +323,13 @@ namespace NeonVault
             int curTier = Mathf.Clamp(actionTreeTier, 0, 4);
             int curSlot = actionTreeSlot;
 
-            int subRow = curSlot < 0 ? 0 : curSlot == 0 ? 1 : (curSlot == 1 || curSlot == 2) ? 2 : 3;
+            int subRow = curSlot < 0 ? 0 : Mathf.Clamp(curSlot + 1,1,ActionTreeNodeRows);
 
             if(Mathf.Abs(vy) >= Mathf.Abs(hx))
             {
                 int dir = vy < 0 ? 1 : -1;
                 subRow += dir;
-                if(subRow > 3)
+                if(subRow > ActionTreeNodeRows)
                 {
                     if(curTier < 4) { curTier++; subRow = 0; }
                     else subRow = 3;
@@ -326,18 +340,12 @@ namespace NeonVault
                     else subRow = 0;
                 }
                 actionTreeTier = curTier;
-                actionTreeSlot = subRow == 0 ? -1 : subRow == 1 ? 0 : subRow == 2 ? (curSlot == 2 ? 2 : 1) : 3;
+                actionTreeSlot = subRow == 0 ? -1 : subRow - 1;
             }
             else
             {
-                if(subRow == 2)
-                {
-                    actionTreeSlot = hx > 0 ? 2 : 1;
-                }
-                else
-                {
-                    actionTreeBranch = hx > 0 ? (branch + 1) % 3 : (branch + 2) % 3;
-                }
+                if(curSlot>=0)actionTreeSlot=Mathf.Clamp(curSlot+(hx>0?1:-1),0,13);
+                else actionTreeBranch = hx > 0 ? (branch + 1) % 3 : (branch + 2) % 3;
             }
             EnsureActionNodeScrollVisible(actionTreeTier, actionTreeSlot);
             PlayUserSound("skill", .08f);
@@ -345,11 +353,12 @@ namespace NeonVault
 
         void EnsureActionNodeScrollVisible(int tier, int slot)
         {
-            float subY = slot < 0 ? 0f : slot == 0 ? 82f : (slot == 1 || slot == 2) ? 162f : 242f;
-            float nodeY = 58f + tier * 320f + subY;
+            int[] rows={0,1,2,2,3,4,5,5,6,7,8,8,9,10};
+            float subY = slot < 0 ? 0f : 65f + rows[slot+1]*84f;
+            float nodeY = 58f + tier * ActionTreeTierPitch + subY;
             float viewH = 610f;
             if(nodeY - 80f < actionTreeScroll.y) actionTreeScroll.y = Mathf.Max(0f, nodeY - 80f);
-            else if(nodeY + 95f > actionTreeScroll.y + viewH) actionTreeScroll.y = Mathf.Min(1660f - viewH, nodeY + 95f - viewH);
+            else if(nodeY + 95f > actionTreeScroll.y + viewH) actionTreeScroll.y = Mathf.Min(ActionTreeContentHeight - viewH, nodeY + 95f - viewH);
         }
 
         void DrawActionSkillTree()
@@ -407,8 +416,8 @@ namespace NeonVault
 
             Rect scrollArea = new Rect(treeFrame.x+4, treeFrame.y+36, treeFrame.width-8, treeFrame.height-40);
             const float contentW = 846f;
-            const float contentH = 1660f;
-            const float tierPitch = 320f;
+            const float tierPitch = ActionTreeTierPitch;
+            float contentH = ActionTreeContentHeight;
             float cx = contentW * 0.5f;
 
             if(Event.current.type == EventType.ScrollWheel && scrollArea.Contains(Event.current.mousePosition))
@@ -431,58 +440,37 @@ namespace NeonVault
                     new Color(accent.r, accent.g, accent.b, .85f), 16, TextAnchor.MiddleLeft);
 
                 Vector2 pRoot  = new Vector2(cx, topY);
-                Vector2 pOrig  = new Vector2(cx, topY + 82f);
-                Vector2 pLeft  = new Vector2(cx - 175f, topY + 162f);
-                Vector2 pRight = new Vector2(cx + 175f, topY + 162f);
-                Vector2 pConv  = new Vector2(cx, topY + 242f);
-
                 int rRoot = ActionSkillRank(selected, branch, t);
                 int mRoot = ActionSkillMaxRank(t);
                 bool avRoot = ActionSkillTierAvailable(selected, branch, t);
 
-                int r0 = ActionSkillExtraRank(selected, branch, t, 0);
-                int r1 = ActionSkillExtraRank(selected, branch, t, 1);
-                int r2 = ActionSkillExtraRank(selected, branch, t, 2);
-                int r3 = ActionSkillExtraRank(selected, branch, t, 3);
-
-                bool av0 = ActionSkillExtraAvailable(selected, branch, t, 0);
-                bool av1 = ActionSkillExtraAvailable(selected, branch, t, 1);
-                bool av2 = ActionSkillExtraAvailable(selected, branch, t, 2);
-                bool av3 = ActionSkillExtraAvailable(selected, branch, t, 3);
-
-                if(t < 4)
+                for(int s=0;s<14;s++)
                 {
-                    Vector2 nextRoot = new Vector2(cx, topY + tierPitch);
-                    bool nextUnl = ActionSkillRank(selected, branch, t+1) > 0;
-                    bool nextAv = ActionSkillTierAvailable(selected, branch, t+1);
-                    DrawSkillConnectorPipe(pConv, nextRoot, nextUnl, nextAv, accent);
+                    int[] row={1,2,2,3,4,5,5,6,7,8,8,9,10,10};
+                    int[] lane={0,0,-1,1,0,0,-1,1,0,0,-1,1,0,1};
+                    float y=topY+65f+row[s]*84f;Vector2 p=new Vector2(cx+lane[s]*150f,y);
+                    int nodeRank=ActionSkillExtraRank(selected,branch,t,s);bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
+                    int parentSlot=s==0? -1:s==1||s==2?0:s==3?(ActionSkillExtraRank(selected,branch,t,1)>0?1:2):s==4?3:s==5||s==6?4:s==7?(ActionSkillExtraRank(selected,branch,t,5)>0?5:6):s==8?7:s==9||s==10?8:s==11?(ActionSkillExtraRank(selected,branch,t,9)>0?9:10):11;
+                    Vector2 parent=parentSlot<0?pRoot:new Vector2(cx+lane[parentSlot]*150f,topY+65f+row[parentSlot]*84f);
+                    DrawSkillConnectorPipe(parent,p,nodeRank>0,nodeAvailable,accent);
+                    int icon=GetActionNodeIconIndex(selected,branch,t,s);
+                    if(DrawBorderlandsSkillNode(p,48f,icon,s%4==3?2:1,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,1,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
+                    {actionTreeTier=t;actionTreeSlot=s;PlayUserSound("skill",.08f);}
                 }
-
-                DrawSkillConnectorPipe(pRoot, pOrig, r0 > 0, av0 || rRoot > 0, accent);
-                DrawSkillConnectorPipe(pOrig, pLeft, r1 > 0, av1 || r0 > 0, accent);
-                DrawSkillConnectorPipe(pOrig, pRight, r2 > 0, av2 || r0 > 0, accent);
-                DrawSkillConnectorPipe(pLeft, pConv, r3 > 0 && r1 > 0, av3 && r1 > 0, accent);
-                DrawSkillConnectorPipe(pRight, pConv, r3 > 0 && r2 > 0, av3 && r2 > 0, accent);
 
                 int icRoot = GetActionNodeIconIndex(selected, branch, t, -1);
                 if(DrawBorderlandsSkillNode(pRoot, t==4 ? 68f : 62f, icRoot, t==4 ? 2 : 0, ActionSkillNodeTitle(selected, branch, t), rRoot, mRoot, avRoot, tier==t && actionTreeSlot<0, accent))
                 { actionTreeTier=t; actionTreeSlot=-1; tier=t; PlayUserSound("skill",.08f); }
 
-                int ic0 = GetActionNodeIconIndex(selected, branch, t, 0);
-                if(DrawBorderlandsSkillNode(pOrig, 52f, ic0, 1, "", r0, 1, av0, tier==t && actionTreeSlot==0, accent))
-                { actionTreeTier=t; actionTreeSlot=0; tier=t; PlayUserSound("skill",.08f); }
+                if(t<4)
+                {
+                    bool nextUnl=ActionSkillRank(selected,branch,t+1)>0,nextAv=ActionSkillTierAvailable(selected,branch,t+1);
+                    int[] rows={1,2,2,3,4,5,5,6,7,8,8,9,10,10};int[] lanes={0,0,-1,1,0,0,-1,1,0,0,-1,1,0,1};
+                    Vector2 next=new Vector2(cx,topY+tierPitch);
+                    for(int terminal=12;terminal<=13;terminal++)
+                    {Vector2 end=new Vector2(cx+lanes[terminal]*150f,topY+65f+rows[terminal]*84f);DrawSkillConnectorPipe(end,next,ActionSkillExtraRank(selected,branch,t,terminal)>0,nextAv,accent);}
+                }
 
-                int ic1 = GetActionNodeIconIndex(selected, branch, t, 1);
-                if(DrawBorderlandsSkillNode(pLeft, 54f, ic1, 1, ActionSkillExtraTitle(selected, branch, t, 1), r1, 1, av1, tier==t && actionTreeSlot==1, accent))
-                { actionTreeTier=t; actionTreeSlot=1; tier=t; PlayUserSound("skill",.08f); }
-
-                int ic2 = GetActionNodeIconIndex(selected, branch, t, 2);
-                if(DrawBorderlandsSkillNode(pRight, 54f, ic2, 1, ActionSkillExtraTitle(selected, branch, t, 2), r2, 1, av2, tier==t && actionTreeSlot==2, accent))
-                { actionTreeTier=t; actionTreeSlot=2; tier=t; PlayUserSound("skill",.08f); }
-
-                int ic3 = GetActionNodeIconIndex(selected, branch, t, 3);
-                if(DrawBorderlandsSkillNode(pConv, 58f, ic3, 2, ActionSkillExtraTitle(selected, branch, t, 3), r3, 1, av3, tier==t && actionTreeSlot==3, accent))
-                { actionTreeTier=t; actionTreeSlot=3; tier=t; PlayUserSound("skill",.08f); }
             }
 
             GUI.EndScrollView();
@@ -496,10 +484,10 @@ namespace NeonVault
             bool canUnlock=available&&rank<max&&ActionSkillAvailablePoints>0;
             string title=extra?ActionSkillExtraTitle(selected,branch,tier,chosenSlot):ActionSkillNodeTitle(selected,branch,tier);
             string desc=extra?ActionSkillExtraDescription(selected,branch,tier,chosenSlot):ActionSkillNodeDescription(selected,branch,tier);
-            string nodeId=(tier+1)+"-"+(extra?((char)('A'+chosenSlot)).ToString():"0");
+            string nodeId=(tier+1)+"-"+(extra?(chosenSlot+1).ToString():"0");
 
             int inspectIcon = GetActionNodeIconIndex(selected, branch, tier, chosenSlot);
-            int inspectFrame = extra ? (chosenSlot==3 ? 2 : 1) : (tier==4 ? 2 : 0);
+            int inspectFrame = extra ? (chosenSlot%4==3 ? 2 : 1) : (tier==4 ? 2 : 0);
             Rect inspectIconRect = new Rect(972, 152, 74, 74);
             DrawSkillNodeFrame(inspectIconRect, inspectFrame, rank>0 ? accent : UiPaper);
             DrawSkillAtlasIcon(new Rect(986, 166, 46, 46), inspectIcon, Color.white);
@@ -522,7 +510,7 @@ namespace NeonVault
             if(!canUnlock&&rank<max)
             {
                 string reason=ActionSkillAvailablePoints<=0?T("Not enough points","ポイントが足りません"):
-                    extra?(chosenSlot==0?T("Acquire this tier's base skill","同段階の基礎スキルが必要"):chosenSlot==3?T("Acquire either preceding branch","手前の分岐をいずれか取得"):T("Acquire the branch origin","分岐の起点を取得")):
+                    extra?(chosenSlot==0?T("Acquire this tier's base skill","同段階の基礎スキルが必要"):T("Acquire the previous node","直前のノードを取得")):
                     tier==4?T("Previous tier: rank 6 required","前段階をランク6にする"):T("Previous tier: rank 3 required","前段階をランク3にする");
                 ActionLabel(new Rect(978,708,390,44),reason,new Color(.95f,.52f,.42f),17,TextAnchor.MiddleLeft,true);
             }

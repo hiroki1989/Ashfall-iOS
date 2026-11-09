@@ -7,11 +7,14 @@ namespace NeonVault
     public partial class VaultGame
     {
         // Indices are stable across versions: skill, branch, tier, then branch choice.
-        readonly int[] actionSkillExtraRanks = new int[180];
+        // Preserve all legacy indices 0..179; expanded choices append after them.
+        readonly int[] actionSkillExtraRanks = new int[810];
+        const int LegacyExtraSlots = 4;
+        const int ExpandedExtraSlots = 14;
         readonly Dictionary<string,float> actionSkillExtraValues = new Dictionary<string,float>();
         bool actionSkillExtraValuesDirty = true;
-        static int ExtraIndex(ActionSkillKind k,int b,int t,int s) => (((int)k*3+b)*5+t)*4+s;
-        static bool ValidExtra(ActionSkillKind k,int b,int t,int s) => ValidActionSkill(k,b,t)&&s>=0&&s<4;
+        static int ExtraIndex(ActionSkillKind k,int b,int t,int s) => s<LegacyExtraSlots?(((int)k*3+b)*5+t)*LegacyExtraSlots+s:180+(((int)k*3+b)*5+t)*(ExpandedExtraSlots-LegacyExtraSlots)+(s-LegacyExtraSlots);
+        static bool ValidExtra(ActionSkillKind k,int b,int t,int s) => ValidActionSkill(k,b,t)&&s>=0&&s<ExpandedExtraSlots;
         public int ActionSkillExtraRank(ActionSkillKind k,int b,int t,int s)
         { LoadActionSkills(); return ValidExtra(k,b,t,s)?actionSkillExtraRanks[ExtraIndex(k,b,t,s)]:0; }
         public int ActionSkillExtraTotal(ActionSkillKind k,int b,int s)
@@ -20,7 +23,18 @@ namespace NeonVault
         {
             if(!ValidExtra(k,b,t,s)||ActionSkillExtraRank(k,b,t,s)!=0||ActionSkillAvailablePoints<=0)return false;
             if(ActionSkillRank(k,b,t)<1)return false;
-            return s==0 || (s<3?ActionSkillExtraRank(k,b,t,0)>0:ActionSkillExtraRank(k,b,t,1)>0||ActionSkillExtraRank(k,b,t,2)>0);
+            if(s<LegacyExtraSlots)return s==0 || (s<3?ActionSkillExtraRank(k,b,t,0)>0:ActionSkillExtraRank(k,b,t,1)>0||ActionSkillExtraRank(k,b,t,2)>0);
+            switch(s)
+            {
+                case 4:return ActionSkillExtraRank(k,b,t,0)>0;
+                case 5:case 6:return ActionSkillExtraRank(k,b,t,4)>0;
+                case 7:return ActionSkillExtraRank(k,b,t,5)>0||ActionSkillExtraRank(k,b,t,6)>0;
+                case 8:return ActionSkillExtraRank(k,b,t,7)>0;
+                case 9:case 10:return ActionSkillExtraRank(k,b,t,8)>0;
+                case 11:return ActionSkillExtraRank(k,b,t,9)>0||ActionSkillExtraRank(k,b,t,10)>0;
+                case 12:case 13:return ActionSkillExtraRank(k,b,t,11)>0;
+                default:return false;
+            }
         }
         public bool TryUpgradeActionSkillExtra(ActionSkillKind k,int b,int t,int s)
         {
@@ -37,8 +51,41 @@ namespace NeonVault
             {"shotgun_damage","critical_chance"},{"fire_rate","move_speed"},{"critical_damage","reload_speed"},
             {"max_health","damage_reduction"},{"critical_damage","critical_chance"},{"max_health","action_charge"}
         };
+        static readonly string[,] AddedEffects = {
+            {"reload_speed","accuracy","move_speed","action_charge","critical_chance","critical_damage","damage_reduction","max_health","handgun_damage","shotgun_damage","assault_damage","sniper_damage","heavy_damage","fire_rate"},
+            {"move_speed","reload_speed","critical_chance","critical_damage","action_charge","accuracy","damage_reduction","max_health","handgun_damage","shotgun_damage","assault_damage","sniper_damage","heavy_damage","fire_rate"},
+            {"max_health","damage_reduction","move_speed","action_charge","reload_speed","critical_chance","critical_damage","accuracy","handgun_damage","shotgun_damage","assault_damage","sniper_damage","heavy_damage","fire_rate"}
+        };
+        static readonly string[,,] BranchAddedEffects = {
+            {
+                {"reload_speed","accuracy","move_speed","action_charge","critical_chance","damage_reduction","max_health","fire_rate","turret_damage","turret_rate"},
+                {"move_speed","critical_chance","action_charge","reload_speed","accuracy","damage_reduction","max_health","fire_rate","turret_follow","pet_damage"},
+                {"critical_chance","critical_damage","accuracy","action_charge","move_speed","reload_speed","damage_reduction","max_health","turret_element","turret_double"}
+            },
+            {
+                {"reload_speed","move_speed","action_charge","critical_chance","accuracy","damage_reduction","max_health","fire_rate","grenade_damage","grenade_radius"},
+                {"move_speed","accuracy","critical_chance","action_charge","reload_speed","damage_reduction","max_health","fire_rate","grenade_slow","grenade_radius"},
+                {"critical_damage","critical_chance","accuracy","action_charge","move_speed","reload_speed","damage_reduction","max_health","grenade_element","grenade_count"}
+            },
+            {
+                {"max_health","damage_reduction","move_speed","action_charge","reload_speed","accuracy","critical_chance","fire_rate","medic_heal","medic_radius"},
+                {"damage_reduction","max_health","move_speed","critical_chance","action_charge","reload_speed","accuracy","fire_rate","medic_follow","medic_radius"},
+                {"move_speed","max_health","damage_reduction","action_charge","critical_damage","critical_chance","reload_speed","accuracy","medic_debuff","medic_duration"}
+            }
+        };
         static string ExtraEffect(ActionSkillKind k,int b,int t,int s)
         {
+            if(s>=LegacyExtraSlots)
+            {
+                int choice=s-LegacyExtraSlots;
+                if(choice==9)
+                {
+                    if(k==ActionSkillKind.Mechanic)return "turret_overclock";
+                    if(k==ActionSkillKind.Bomber)return "grenade_chain";
+                    return "medic_purge";
+                }
+                return BranchAddedEffects[(int)k,b,choice];
+            }
             if(k==ActionSkillKind.Mechanic&&b==0&&t==1&&s==2)return "pet_damage";
             if(k==ActionSkillKind.Medic&&b==1&&t==2&&s==2)return "pet_speed";
             if(k==ActionSkillKind.Mechanic&&b==1&&t==4&&s==3)return "turret_double";
@@ -74,6 +121,12 @@ namespace NeonVault
             }
             return ExtraEffects[(int)k,b,s];
         }
+        static string AddedTacticalTitle(string id,bool ja)
+        { switch(id){case "turret_overclock":return ja?"限界解除":"Overclock";case "grenade_chain":return ja?"連鎖起爆":"Chain Reaction";case "medic_purge":return ja?"浄化フィールド":"Purging Field";default:return null;} }
+        static string AddedTacticalDescription(string id,bool ja)
+        { switch(id){case "turret_overclock":return ja?"タレット稼働中、銃の命中で残り時間を0.08秒回復（1秒に1回）。":"Bullet hits restore 0.08s of turret duration, at most once per second.";case "grenade_chain":return ja?"爆発が敵に命中すると追加の小爆発が1回発生し、基礎威力の20%を与える。":"Grenade hits trigger one secondary blast for 20% base damage.";case "medic_purge":return ja?"回復フィールド内で敵を倒すと最大HPの2%を回復。1秒に1回まで。":"Kills inside the healing field restore 2% max HP, at most once per second.";default:return null;} }
+        static float ExtraEffectAmount(string id,int tier)
+        { float tactical=ExtraTacticalAmount(id);if(tactical>0)return tactical;if(id=="turret_overclock"||id=="grenade_chain"||id=="medic_purge"||id=="turret_follow"||id=="medic_follow"||id=="turret_element"||id=="grenade_element"||id=="medic_debuff"||id=="turret_double")return 1f;switch(id){case "turret_focus":case "medic_guard":return .05f;case "medic_damage":return .02f;case "grenade_heal":return .01f;case "grenade_suppress":return .25f;case "turret_range":case "medic_radius":case "grenade_radius":return .25f+.05f*tier;case "turret_duration":case "medic_duration":return .5f+.15f*tier;case "grenade_count":return 1;case "reload_speed":case "accuracy":case "move_speed":case "action_charge":case "critical_chance":case "critical_damage":case "damage_reduction":case "fire_rate":return .018f+.003f*tier;case "max_health":return .012f+.002f*tier;default:return .025f+.005f*tier;} }
         static float ExtraAmount(string id,int tier)
         {
             float tactical=ExtraTacticalAmount(id);
@@ -154,12 +207,12 @@ namespace NeonVault
             if(actionSkillExtraValuesDirty)
             {
                 actionSkillExtraValues.Clear();
-                for(int k=0;k<3;k++)for(int b=0;b<3;b++)for(int t=0;t<5;t++)for(int slot=0;slot<4;slot++)
+                for(int k=0;k<3;k++)for(int b=0;b<3;b++)for(int t=0;t<5;t++)for(int slot=0;slot<ExpandedExtraSlots;slot++)
                 {
                     if(actionSkillExtraRanks[ExtraIndex((ActionSkillKind)k,b,t,slot)]==0)continue;
                     string id=ExtraEffect((ActionSkillKind)k,b,t,slot);
                     actionSkillExtraValues.TryGetValue(id,out float current);
-                    actionSkillExtraValues[id]=current+ExtraAmount(id,t);
+                    actionSkillExtraValues[id]=current+(slot<LegacyExtraSlots?ExtraAmount(id,t):ExtraEffectAmount(id,t));
                 }
                 actionSkillExtraValuesDirty=false;
             }
@@ -169,6 +222,9 @@ namespace NeonVault
         {
             switch(id)
             {
+                case "turret_overclock":return ja?"タレット延長射撃":"Overclock";
+                case "grenade_chain":return ja?"連鎖爆発":"Chain Reaction";
+                case "medic_purge":return ja?"撃破回復":"Purge Field";
                 case "pet_damage":return ja?"犬のかみつき威力":"Companion bite damage";
                 case "pet_speed":return ja?"犬の攻撃速度":"Companion attack speed";
                 case "turret_near_damage":return ja?"砲台援護":"Turret cover";
@@ -214,13 +270,14 @@ namespace NeonVault
         public string ActionSkillExtraTitle(ActionSkillKind k,int b,int t,int s)
         {
             if(!ValidExtra(k,b,t,s))return "";
-            string id=ExtraEffect(k,b,t,s);string[] levels={"I","II","III","IV","V"};
-            return ExtraLabel(id,VaultLanguage.Japanese)+" "+levels[t];
+            string id=ExtraEffect(k,b,t,s), tactical=AddedTacticalTitle(id,VaultLanguage.Japanese);string[] levels={"I","II","III","IV","V"};
+            return (tactical??ExtraLabel(id,VaultLanguage.Japanese))+" "+levels[t];
         }
         public string ActionSkillExtraDescription(ActionSkillKind k,int b,int t,int s)
         {
             if(!ValidExtra(k,b,t,s))return "";
             string id=ExtraEffect(k,b,t,s);bool ja=VaultLanguage.Japanese;
+            string added=AddedTacticalDescription(id,ja);if(added!=null)return added;
             string tacticalDescription=ExtraTacticalDescription(id,ja);
             if(tacticalDescription.Length>0)return tacticalDescription;
             switch(id)
@@ -237,7 +294,7 @@ namespace NeonVault
                 case "grenade_element":return ja?"グレネードに装備中の銃の属性を付与。":"Grenades inherit the equipped gun's element.";
                 case "medic_debuff":return ja?"回復エリア内の敵の攻撃を妨害。":"Suppress enemy attacks inside the healing field.";
             }
-            float amount=ExtraAmount(id,t);
+            float amount=s<LegacyExtraSlots?ExtraAmount(id,t):ExtraEffectAmount(id,t);
             string suffix=id=="grenade_count"?(ja?"個":""):id=="turret_range"||id=="medic_radius"||id=="grenade_radius"?"m":id=="turret_duration"||id=="medic_duration"?(ja?"秒":"s"):"%";
             float displayed=suffix=="%"?amount*100:amount;
             string result=ExtraLabel(id,ja)+" +"+displayed.ToString("0.#")+suffix;

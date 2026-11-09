@@ -532,6 +532,7 @@ namespace NeonVault
         int activeLootLandmarkId=-1;
         public void FoeKilled(Foe f)
         {
+            if(PlayerInActionHealingField&&ActionSkillExtraValue("medic_purge")>0&&actionMedicPurgeGate<=0){HealPlayer(maxHp*.02f);actionMedicPurgeGate=1f;}
             activeLootLandmarkId=IsOverworld&&TryGetLandmarkBossId(f,out int lid)?lid:-1;
             if(IsOverworld)OnOverworldEnemyKilled(f);
             kills++;PetSkillOnEnemyKilled(f.transform.position);ArtifactOnKill(f.transform.position);LegendaryTrigger("kill",f.transform.position);debtChainCount++;debtChainTimer=5;if(DebtHealOnKill>0)HealPlayer(DebtHealOnKill);if(runHarvest>0)HealPlayer(runHarvest);Burst(f.transform.position,Gold,9);

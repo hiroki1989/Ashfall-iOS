@@ -7,34 +7,31 @@ namespace NeonVault
         bool petSkillInventoryOpen;
         int petSkillBranch,petSkillNode;
         Vector2 petSkillScroll;
+        bool petSkillAutoScroll;
         Texture2D petBoneIcon;
         PetSkillPortrait petSkillPortrait;
         static readonly Color[] PetSkillColors={new Color(.34f,.84f,.58f),new Color(.36f,.74f,.92f),new Color(.96f,.62f,.24f)};
 
         string PetBranchName(int branch)=>branch==0?T("RESCUE DOG","レスキュードッグ"):branch==1?T("SUPPLY HOUND","サプライハウンド"):T("TREASURE SCOUT","トレジャースカウト");
-        string PetNodeName(int node)=>node==0?T("PARTNER SKILL","相棒スキル"):node==1?T("STRONG BITE","強いかみつき"):node==2?T("QUICK BITE","すばやいかみつき"):node==3?T("SPECIAL TRAINING","特別訓練"):T("RALLY","奮起");
+        const int PetNodeCount=25;
+        string PetNodeName(int node)
+        {
+            if(node==0)return T("PARTNER CORE","相棒の核");
+            if(node==1)return T("STRONG BITE","強いかみつき"); if(node==2)return T("QUICK BITE","すばやいかみつき");
+            if(node==3)return T("SPECIAL TRAINING","特別訓練"); if(node==4)return T("RALLY","奮起");
+            string[] en={"Scent Trail","Guard Step","Field Medic","Second Wind","Pack Triage","Last Stand","Rapid Fetch","Ammo Satchel","Smart Scavenge","Reserve Cache","Battle Courier","Deep Pockets","Keen Nose","Rare Find","Master Scavenger","Trail Sense","Swift Paws","Steady Nerves","Pack Bond","Veteran Companion"};
+            string[] ja={"追跡の嗅覚","護衛の歩み","野戦救護","再起の合図","救急手当","最後の盾","素早い回収","弾薬袋","弾種選別","予備弾薬","戦場配達","大容量袋","鋭い嗅覚","希少品発見","熟練スカウト","獣道の勘","俊足","冷静な判断","相棒の絆","歴戦の相棒"};
+            return T(en[node-5],ja[node-5]);
+        }
         string PetNodeDescription(int branch,int node)
         {
-            if(node==0)return branch==0?T("On a kill, drop a health pack restoring 20% HP. Cooldown: 60 seconds.","敵撃破時、HPを20%回復するパックを落とす。クールダウン60秒。"):
-                branch==1?T("On a kill, drop ammunition of a random gun type. Cooldown: 30 seconds.","敵撃破時、ランダムな銃種の弾薬を落とす。クールダウン30秒。"):
-                T("Increase enemy equipment drop chance by 5 percentage points.","敵からの装備ドロップ確率を5ポイント上げる。");
-            if(node==1)return T("Increase the dog's bite damage by 15% per rank.","犬のかみつき威力を1ランクごとに15%上げる。");
-            if(node==2)return T("Increase the dog's attack speed by 10% per rank.","犬の攻撃速度を1ランクごとに10%上げる。");
-            if(node==3)return branch==0?T("Per rank: pack healing +3 percentage points; cooldown -5 seconds.","1ランクごとに回復量を3ポイント増加、クールダウンを5秒短縮。"):
-                branch==1?T("Per rank: ammunition +20%, cooldown -3 seconds. At rank 3, choose the least stocked ammo type.","1ランクごとに弾薬量20%増加、クールダウン3秒短縮。ランク3から残量割合が最も少ない銃種を選ぶ。"):
-                T("Per rank: equipment drop chance +1 percentage point and a 5% chance to improve rarity.","1ランクごとに装備ドロップ確率を1ポイント増加し、レア度上昇の抽選を5%追加。");
-            return T("After a kill, increase player damage by 3% per rank for 10 seconds.","敵撃破後10秒間、プレイヤーの威力を1ランクごとに3%上げる。");
+            if(node<5){if(node==0)return branch==0?T("On a kill, drop a health pack restoring 20% HP. Cooldown: 60 seconds.","敵撃破時、HPを20%回復するパックを落とす。再発動60秒。"):branch==1?T("On a kill, drop ammunition for a random gun type. Cooldown: 30 seconds.","敵撃破時、ランダムな銃種の弾薬を落とす。再発動30秒。"):T("Increase enemy equipment drop chance by 1.25 percentage points.","敵の装備ドロップ率を1.25ポイント上げる。");if(node==1)return T("Companion bite damage +15% per rank.","ペットのかみつき威力+15%／ランク。");if(node==2)return T("Companion attack speed +10% per rank.","ペットの攻撃速度+10%／ランク。");if(node==3)return branch==0?T("Pack healing +3 points and cooldown -5s per rank.","回復量+3ポイント、再発動-5秒／ランク。"):branch==1?T("Ammo amount +20% and cooldown -3s per rank; rank 3 picks the least-stocked type.","弾薬量+20%、再発動-3秒／ランク。ランク3で残量最少銃種を選択。"):T("Equipment chance +0.25 points and rarity upgrade chance +5% per rank.","装備率+0.25ポイント、レア度上昇抽選+5%／ランク。");return T("Kill rally: companion bite damage +3% per rank for 10 seconds.","撃破時の奮起：10秒間ペットのかみつき威力+3%／ランク。");}
+            int i=node-5;
+            if(branch==0)return T(new[]{"Rescue pack healing +2% per rank.","Rescue cooldown -2s per rank.","Below 35% HP, rescue healing +8%.","Companion bite damage +4% per rank.","Rescue pack cooldown -3s per rank.","On rescue drop, restore 2% HP immediately.","Rescue healing +3% per rank.","Below 50% HP, rescue cooldown -4s.","Companion attack speed +4% per rank.","Rescue healing +4% per rank.","Below 25% HP, rescue healing +8%.","Companion bite damage +5% per rank.","On kill, rally lasts +2s per rank.","Rescue cooldown -4s per rank.","Rescue healing +5% per rank.","Below 35% HP, companion damage +10%.","On rescue, restore an additional 3% HP.","Rescue healing +6% per rank.","Rescue cooldown -5s per rank.","Final rescue pack heals an additional 12%."}[i],new[]{"救急パック回復量+2%／ランク。","救助再発動-2秒／ランク。","HP35%未満なら救急回復+8%。","ペットかみつき威力+4%／ランク。","救助再発動-3秒／ランク。","救急ドロップ時HPを即時2%回復。","救急回復量+3%／ランク。","HP50%未満なら救助再発動-4秒。","ペット攻撃速度+4%／ランク。","救急回復量+4%／ランク。","HP25%未満なら救急回復+8%。","ペットかみつき威力+5%／ランク。","撃破奮起の持続+2秒／ランク。","救助再発動-4秒／ランク。","救急回復量+5%／ランク。","HP35%未満ならペット威力+10%。","救助発動時さらにHP3%即時回復。","救急回復量+6%／ランク。","救助再発動-5秒／ランク。","最終救急パックの回復量+12%。"}[i]);
+            if(branch==1)return T(new[]{"Ammo supply quantity +8% per rank.","Supply cooldown -2s per rank.","Below 20% reserve, ammo amount +15%.","Companion bite damage +4% per rank.","Supply cooldown -3s per rank.","Favor equipped weapon ammo unless least-stocked training is active.","Ammo quantity +10% per rank.","Ammo supply cooldown -4s per rank.","Companion attack speed +4% per rank.","Ammo quantity +12% per rank.","At empty reserve, supply gives +20%.","Companion bite damage +5% per rank.","Kill rally lasts +2s per rank.","Supply cooldown -4s per rank.","Ammo quantity +15% per rank.","Below 20% reserve, companion damage +10%.","Supply chooses least-stocked ammo type.","Ammo quantity +18% per rank.","Supply cooldown -5s per rank.","Supply drop gives an extra ammo stack."}[i],new[]{"弾薬供給量+8%／ランク。","補給再発動-2秒／ランク。","予備弾薬20%未満なら量+15%。","ペットかみつき威力+4%／ランク。","補給再発動-3秒／ランク。","残量最少訓練がなければ装備中の銃種弾薬を優先。","弾薬量+10%／ランク。","補給再発動-4秒／ランク。","ペット攻撃速度+4%／ランク。","弾薬量+12%／ランク。","弾切れ時の供給量+20%。","ペットかみつき威力+5%／ランク。","撃破奮起の持続+2秒／ランク。","補給再発動-4秒／ランク。","弾薬量+15%／ランク。","予備弾薬20%未満ならペット威力+10%。","最も残量の少ない銃種を選ぶ。","弾薬量+18%／ランク。","補給再発動-5秒／ランク。","弾薬ドロップに追加スタック。"}[i]);
+            return T(new[]{"Equipment chance +0.125 points per rank.","Rarity upgrade chance +2% per rank.","Boss loot rarity chance +3%.","Companion bite damage +4% per rank.","Loot rarity chance +2% per rank.","Rarity upgrade chance +1% per rank.","Equipment chance +0.1875 points per rank.","Rarity upgrade chance +3% per rank.","Companion attack speed +4% per rank.","Final boss equipment chance +0.5 points per rank.","Rarity upgrade chance +2% per rank.","Companion bite damage +5% per rank.","Kill rally lasts +2s per rank.","Rarity upgrade chance +4% per rank.","Equipment chance +0.25 points per rank.","Loot rarity upgrade chance +5% per rank.","Boss loot rarity upgrade chance +5% per rank.","Rarity upgrade chance +5% per rank.","Equipment chance +0.375 points per rank.","Final boss loot rarity chance +8%."}[i],new[]{"装備ドロップ率+0.125ポイント／ランク。","レア度上昇抽選+2%／ランク。","ボス戦のレア度+3%。","ペットかみつき威力+4%／ランク。","戦利品レア度+2%。","レア度上昇抽選+1%／ランク。","装備率+0.1875ポイント／ランク。","レア度上昇抽選+3%／ランク。","ペット攻撃速度+4%／ランク。","最終ボス装備率+0.5ポイント／ランク。","レア度上昇抽選+2%／ランク。","ペットかみつき威力+5%／ランク。","撃破奮起の持続+2秒／ランク。","レア度上昇抽選+4%／ランク。","装備率+0.25ポイント／ランク。","戦利品のレア度上昇抽選+5%。","ボス戦利品のレア度上昇率+5%。","レア度上昇抽選+5%／ランク。","装備率+0.375ポイント／ランク。","最終ボス戦利品レア度+8%。"}[i]);
         }
-
-        int GetPetNodeIconIndex(int branch, int node)
-        {
-            if(node == 0) return branch == 0 ? 20 : branch == 1 ? 21 : 22;
-            if(node == 1) return 19; // Fierce Bite / Paw
-            if(node == 2) return 14; // Quick Speed Chevrons
-            if(node == 3) return branch == 0 ? 11 : branch == 1 ? 2 : 4;
-            return 23; // Rally Flag / Howl
-        }
-
+        int GetPetNodeIconIndex(int branch,int node)=>node<5?(node==0?(branch==0?20:branch==1?21:22):node==1?19:node==2?14:node==3?(branch==0?11:branch==1?2:4):23):new[]{20,11,19,14,11,23,21,2,4,21,2,23,22,4,23}[(node-5)%15];
         Texture2D PetBone()
         {
             if(petBoneIcon)return petBoneIcon;
@@ -77,18 +74,15 @@ namespace NeonVault
                     PlayUserSound("skill", .25f);
                 }
             }
-            // Switch branch via LB / RB
-            if(Input.GetKeyDown(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.Q))
+            // LB/RB and horizontal navigation share one branch selector and never double-step.
+            bool lb=Input.GetKeyDown(KeyCode.JoystickButton4)||Input.GetKeyDown(KeyCode.Q);
+            bool rb=Input.GetKeyDown(KeyCode.JoystickButton5);
+            bool branchSwitched=lb||rb;
+            if(lb!=rb)
             {
-                petSkillBranch = (petSkillBranch + 2) % 3;
-                PlayUserSound("skill", .1f);
+                petSkillBranch=(petSkillBranch+(rb?1:2))%3;petSkillAutoScroll=true;
+                PlayUserSound("skill",.1f);
             }
-            if(Input.GetKeyDown(KeyCode.JoystickButton5))
-            {
-                petSkillBranch = (petSkillBranch + 1) % 3;
-                PlayUserSound("skill", .1f);
-            }
-
             if(now < skillTreeNavCooldown) return;
             float hx = Input.GetAxisRaw("Horizontal");
             float vy = Input.GetAxisRaw("Vertical");
@@ -100,36 +94,9 @@ namespace NeonVault
             if(Mathf.Abs(hx) < 0.45f && Mathf.Abs(vy) < 0.45f) return;
             skillTreeNavCooldown = now + 0.19f;
 
-            if(Mathf.Abs(vy) >= Mathf.Abs(hx))
-            {
-                if(vy < 0)
-                {
-                    // Down in diamond tree: 0 -> 1 -> 2 -> 3 -> 4
-                    if(petSkillNode == 0) petSkillNode = 1;
-                    else if(petSkillNode == 1 || petSkillNode == 2) petSkillNode = 3;
-                    else if(petSkillNode == 3) petSkillNode = 4;
-                }
-                else
-                {
-                    // Up in diamond tree
-                    if(petSkillNode == 4) petSkillNode = 3;
-                    else if(petSkillNode == 3) petSkillNode = 1;
-                    else if(petSkillNode == 1 || petSkillNode == 2) petSkillNode = 0;
-                }
-            }
-            else
-            {
-                if(petSkillNode == 1 || petSkillNode == 2)
-                {
-                    if(hx > 0 && petSkillNode == 1) petSkillNode = 2;
-                    else if(hx < 0 && petSkillNode == 2) petSkillNode = 1;
-                    else petSkillBranch = hx > 0 ? (petSkillBranch + 1) % 3 : (petSkillBranch + 2) % 3;
-                }
-                else
-                {
-                    petSkillBranch = hx > 0 ? (petSkillBranch + 1) % 3 : (petSkillBranch + 2) % 3;
-                }
-            }
+            if(Mathf.Abs(vy)>=Mathf.Abs(hx)) petSkillNode=Mathf.Clamp(petSkillNode+(vy<0?1:-1),0,PetNodeCount-1);
+            else if(!branchSwitched) petSkillBranch=hx>0?(petSkillBranch+1)%3:(petSkillBranch+2)%3;
+            petSkillAutoScroll=true;
             PlayUserSound("skill", .08f);
         }
 
@@ -153,7 +120,7 @@ namespace NeonVault
                 bool isEq = PetEquippedSkill == b + 1;
                 string tabCaption = PetBranchName(b) + (isEq ? T("  [EQUIPPED]","  [装備中]") : "");
                 if(ActionButton(new Rect(42+b*302, 74, 290, 52), tabCaption, petSkillBranch==b, PetSkillColors[b], 18))
-                { petSkillBranch=b; petSkillNode=0; }
+                { petSkillBranch=b; petSkillNode=0; petSkillAutoScroll=true; }
             }
 
             Color accent=PetSkillColors[petSkillBranch];
@@ -163,78 +130,33 @@ namespace NeonVault
             FieldUIArt.Plate(treeFrame, false);
             Box(new Rect(treeFrame.x+2, treeFrame.y+2, treeFrame.width-4, 30), new Color(.055f,.068f,.078f,.95f));
             ActionLabel(new Rect(treeFrame.x+16, treeFrame.y+3, 860, 26),
-                T("COMPANION EVOLUTION TREE  ·  PARTNER CORE  ▼  COMBAT FANGS  ▼  SPECIALIZATION  ▼  APEX RALLY",
-                  "相棒進化ツリー  ·  相棒スキル  ▼  噛みつき・俊敏  ▼  特別訓練  ▼  最終奮起"),
+                T("COMPANION EVOLUTION TREE  ·  FIVE STAGES  ·  CHOOSE YOUR PATH",
+                  "相棒進化ツリー  ·  5段階  ·  進む道を選択"),
                 accent, 14);
 
             Rect scrollViewRect = new Rect(treeFrame.x+4, treeFrame.y+34, treeFrame.width-8, treeFrame.height-38);
             const float contentW = 870f;
-            const float contentH = 660f;
+            const float contentH = 80f + (PetNodeCount-1)*96f + 60f;
+            if(Event.current.type==EventType.ScrollWheel&&scrollViewRect.Contains(Event.current.mousePosition)){petSkillScroll.y=Mathf.Clamp(petSkillScroll.y+Event.current.delta.y*24f,0,contentH-scrollViewRect.height);Event.current.Use();}
+            if(Event.current.type==EventType.Layout&&petSkillAutoScroll){float selectedY=petSkillNode==0?55f:80f+petSkillNode*96f;if(selectedY<petSkillScroll.y+60f)petSkillScroll.y=Mathf.Max(0,selectedY-60f);else if(selectedY>petSkillScroll.y+scrollViewRect.height-60f)petSkillScroll.y=Mathf.Min(contentH-scrollViewRect.height,selectedY-scrollViewRect.height+60f);petSkillAutoScroll=false;}
             petSkillScroll = GUI.BeginScrollView(scrollViewRect, petSkillScroll, new Rect(0, 0, contentW, contentH), false, false);
 
-            // Draw all 3 branches side-by-side in a Borderlands 3-column tree layout!
+            // Each branch is a 25-stage vertical path; connectors and nodes share content coordinates.
             for(int b=0;b<3;b++)
             {
-                Color bCol = PetSkillColors[b];
-                bool activeBranch = (b == petSkillBranch);
-                float colX = 148f + b * 287f;
-
-                Rect colBg = new Rect(colX - 134f, 10f, 268f, contentH - 20f);
-                Box(colBg, activeBranch ? new Color(bCol.r*.12f, bCol.g*.12f, bCol.b*.12f, .65f) : new Color(.03f,.038f,.044f,.5f));
-                Box(new Rect(colBg.x, colBg.y, colBg.width, 3f), activeBranch ? bCol : new Color(bCol.r, bCol.g, bCol.b, .35f));
-
-                bool branchEquipped = PetEquippedSkill == b + 1;
-                ActionLabel(new Rect(colBg.x+8, colBg.y+8, colBg.width-16, 24),
-                    PetBranchName(b) + (branchEquipped ? " ★" : ""),
-                    activeBranch ? bCol : Mist, 15, TextAnchor.MiddleCenter);
-
-                // Top-To-Bottom Diamond Tree Coordinates inside column:
-                // Row 0: Node 0 (Partner Skill Root)
-                // Row 1: Node 1 (Strong Bite - Left) & Node 2 (Quick Bite - Right)
-                // Row 2: Node 3 (Special Training - Center)
-                // Row 3: Node 4 (Rally Capstone - Center)
-                Vector2 p0 = new Vector2(colX, 88f);
-                Vector2 p1 = new Vector2(colX - 66f, 224f);
-                Vector2 p2 = new Vector2(colX + 66f, 224f);
-                Vector2 p3 = new Vector2(colX, 368f);
-                Vector2 p4 = new Vector2(colX, 512f);
-
-                int r0 = PetSkillRank(b, 0), r1 = PetSkillRank(b, 1), r2 = PetSkillRank(b, 2), r3 = PetSkillRank(b, 3), r4 = PetSkillRank(b, 4);
-                bool av0 = true;
-                bool av1 = r0 > 0;
-                bool av2 = r1 > 0;
-                bool av3 = r2 > 0;
-                bool av4 = r3 > 0;
-
-                // Connectors showing prerequisite flow and visual branching
-                DrawSkillConnectorPipe(p0, p1, r1 > 0, av1, bCol);
-                DrawSkillConnectorPipe(p0, p2, r2 > 0, av2, bCol);
-                DrawSkillConnectorPipe(p1, p2, r2 > 0, av2, bCol);
-                DrawSkillConnectorPipe(p1, p3, r3 > 0, av3, bCol);
-                DrawSkillConnectorPipe(p2, p3, r3 > 0, av3, bCol);
-                DrawSkillConnectorPipe(p3, p4, r4 > 0, av4, bCol);
-
-                Vector2[] pts = { p0, p1, p2, p3, p4 };
-                int[] ranks = { r0, r1, r2, r3, r4 };
-                bool[] avs = { av0, av1, av2, av3, av4 };
-
-                for(int n=0;n<5;n++)
+                Color c=PetSkillColors[b];float x=148f+b*287f;
+                Rect col=new Rect(x-134f,8f,268f,contentH-16f);
+                Box(col,b==petSkillBranch?new Color(c.r*.12f,c.g*.12f,c.b*.12f,.65f):new Color(.03f,.038f,.044f,.5f));
+                ActionLabel(new Rect(col.x+8,12,252,24),PetBranchName(b)+(PetEquippedSkill==b+1?" ★":""),b==petSkillBranch?c:Mist,15,TextAnchor.MiddleCenter);
+                for(int n=0;n<PetNodeCount;n++)
                 {
-                    int maxR = n == 0 ? 1 : 5;
-                    int frameKind = n == 0 ? 2 : n == 4 ? 2 : (n == 3 ? 0 : 1);
-                    float nSize = (n == 0 || n == 4) ? 64f : 56f;
-                    int ic = GetPetNodeIconIndex(b, n);
-                    bool sel = (petSkillBranch == b && petSkillNode == n);
-                    if(DrawBorderlandsSkillNode(pts[n], nSize, ic, frameKind, PetNodeName(n), ranks[n], maxR, avs[n], sel, bCol))
-                    {
-                        petSkillBranch = b;
-                        petSkillNode = n;
-                        PlayUserSound("skill", .08f);
-                    }
+                    Vector2 pos=new Vector2(x,n==0?55f:80f+n*96f);
+                    if(n>0){Vector2 parent=new Vector2(x,n==1?55f:80f+(n-1)*96f);DrawSkillConnectorPipe(parent,pos,PetSkillRank(b,n)>0,PetSkillState.IsUnlocked(b,n),c);}
+                    int rank=PetSkillRank(b,n);bool available=PetSkillState.IsUnlocked(b,n);
+                    if(DrawBorderlandsSkillNode(pos,n==0?46f:44f,GetPetNodeIconIndex(b,n),n==0||n>=20?2:0,PetNodeName(n),rank,PetSkillState.MaxRank(n),available,petSkillBranch==b&&petSkillNode==n,c))
+                    {petSkillBranch=b;petSkillNode=n;petSkillAutoScroll=true;PlayUserSound("skill",.08f);}
                 }
-            }
-
-            GUI.EndScrollView();
+            }            GUI.EndScrollView();
 
             // Right Panel: 3D Sitting Companion Preview + Selected Skill Inspector
             Rect rightPanel = new Rect(962, 74, 436, 766);
@@ -253,8 +175,8 @@ namespace NeonVault
             ActionLabel(new Rect(988, 94, 380, 26), T("COMPANION // ROOK","相棒 // ルーク"), accent, 16);
 
             // Selected Skill Inspector in Bottom Half of Right Panel
-            int selectedRank=PetSkillRank(petSkillBranch,petSkillNode),selectedMax=petSkillNode==0?1:5;
-            bool unlocked=petSkillNode==0||PetSkillRank(petSkillBranch,petSkillNode-1)>0;
+            int selectedRank=PetSkillRank(petSkillBranch,petSkillNode),selectedMax=PetSkillState.MaxRank(petSkillNode);
+            bool unlocked=PetSkillState.IsUnlocked(petSkillBranch,petSkillNode);
             bool canUpgrade=unlocked&&selectedRank<selectedMax&&PetPoints>0;
 
             int selIcon = GetPetNodeIconIndex(petSkillBranch, petSkillNode);

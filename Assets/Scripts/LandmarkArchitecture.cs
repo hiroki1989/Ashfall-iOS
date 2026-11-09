@@ -964,7 +964,7 @@ namespace NeonVault
                 if (lamp != null && seat % 2 == 0)
                 {
                     Vector3 lPos = centre + new Vector3(Mathf.Cos(a) * 11.8f, 0, Mathf.Sin(a) * 11.8f);
-                    PlaceNormalizedProp(chunkTransform, lamp, lPos, -a * Mathf.Rad2Deg - 90f, 4.2f);
+                    PlaceNormalizedProp(chunkTransform, lamp, lPos, -a * Mathf.Rad2Deg - 90f, StreetLampHeight);
                 }
             }
             // Decorative rock clusters and fence segments at outer park corners
@@ -995,7 +995,7 @@ namespace NeonVault
                 float a = (i * 90f + 45f) * Mathf.Deg2Rad;
                 Vector3 p = lPos + new Vector3(Mathf.Cos(a) * 12.2f, 0, Mathf.Sin(a) * 12.2f);
                 if (lamp != null)
-                    PlaceNormalizedProp(chunkTransform, lamp, p, -a * Mathf.Rad2Deg - 90f, 4.5f);
+                    PlaceNormalizedProp(chunkTransform, lamp, p, -a * Mathf.Rad2Deg - 90f, StreetLampHeight);
                 if (bench != null)
                     ImportedWorldBatch.Add(chunkTransform, bench, lPos + new Vector3(Mathf.Cos(a) * 10.6f, 0, Mathf.Sin(a) * 10.6f), Quaternion.Euler(0, -a * Mathf.Rad2Deg - 90f, 0), Vector3.one);
             }
@@ -1020,6 +1020,8 @@ namespace NeonVault
                 }
             }
         }
+
+        public const float StreetLampHeight = 3.0f;
 
         public static void PlaceNormalizedProp(Transform chunkTransform, GameObject prefab, Vector3 position, float yaw, float targetHeight)
         {

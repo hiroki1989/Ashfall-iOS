@@ -81,7 +81,7 @@ namespace NeonVault
             if(streetLampPrefab==null)streetLampPrefab=Resources.Load<GameObject>("ImportedWorld/PolyHaven/street_lamp_01");
             if((seed&7)==1&&streetLampPrefab!=null)
             {
-                LandmarkArchitecture.PlaceNormalizedProp(parent,streetLampPrefab,position,((seed>>3)&3)*90f,4.3f);
+                LandmarkArchitecture.PlaceNormalizedProp(parent,streetLampPrefab,position,((seed>>3)&3)*90f,LandmarkArchitecture.StreetLampHeight);
                 return true;
             }
             // Low frequency and shared meshes/materials keep outdoor chunks bounded on mobile.
