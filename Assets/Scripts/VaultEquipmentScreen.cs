@@ -62,9 +62,6 @@ namespace NeonVault
         Texture2D junkBinIcon;
         bool EqButton(Rect r,string caption,bool selected=false,bool enabled=true)
         {
-#if !UNITY_IOS && !UNITY_ANDROID
-            SteamController.RegisterSelectable(r);
-#endif
             bool hover=enabled&&r.Contains(Event.current.mousePosition);
             Box(r,selected?new Color(.29f,.22f,.17f):hover?new Color(.19f,.19f,.18f):EqSurface);
             FieldUIArt.Plate(r,selected);
@@ -77,9 +74,6 @@ namespace NeonVault
         }
         bool EqNavigation(Rect r,string caption,bool selected)
         {
-#if !UNITY_IOS && !UNITY_ANDROID
-            SteamController.RegisterSelectable(r);
-#endif
             bool hover=r.Contains(Event.current.mousePosition);
             if(hover)Box(r,new Color(.16f,.17f,.17f));
             Box(new Rect(r.x,r.yMax-2,r.width,selected?3:1),selected?EqAccent:EqLine);
@@ -218,9 +212,6 @@ namespace NeonVault
             DrawEquippedTotals();
             var cards=EqCards(merchant);var selected=cards.Find(c=>c.key==eqSelectedKey);if(selected==null&&cards.Count>0){selected=cards[0];eqSelectedKey=selected.key;eqDetailScroll=Vector2.zero;}
             if(!merchant&&selected!=null&&(Input.GetKeyDown(KeyCode.X)||Input.GetKeyDown(KeyCode.JoystickButton2)
-#if !UNITY_IOS && !UNITY_ANDROID
-                ||SteamController.InventoryToggleJunk
-#endif
                 )){string jKey=JunkItemKey(selected.item);ToggleJunk(jKey);PlayUserSound("tab",.1f);}
             float gridHeight=766-gridTop;
             const float rowStep=220;

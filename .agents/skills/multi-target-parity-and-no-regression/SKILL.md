@@ -55,13 +55,15 @@ description: >-
 
 1. **変更前**: 対象ファイルが3プロジェクト間で既にどう異なっているか `diff` を確認する（片方の独自修正を潰さない）。
 2. **編集・同期**: 共通変更は `Ashfall-iOS`, `DustDebt-Steam`, `DustDebt-Steam-Demo` すべてに適用する。
-3. **検証スクリプト実行**: 以下の統合チェックスクリプトを実行し、全項目 PASS を確認する：
+3. **検証スクリプト実行（Unity実機エディタ・バッチモード検証必須）**:
+   以下の統合チェックスクリプトに `--unity` を付けて実行し、全項目 PASS（Roslyn全8構成 ＋ 実際の `Unity.exe -batchmode` / 起動中エディタの `Logs/Editor.log` コンパイルエラー0件）を確認する：
    ```powershell
-   python .agents/skills/multi-target-parity-and-no-regression/scripts/verify_parity.py
+   python .agents/skills/multi-target-parity-and-no-regression/scripts/verify_parity.py --unity
    ```
    このスクリプトは以下を自動検証します：
-   - **全6アセンブリのRoslynコンパイルチェック**（iOS target / iOS editor with `UNITY_IOS`, Steam runtime/editor, Demo runtime/editor）
-   - **未保護の `SteamController` 参照スキャン**（`Ashfall-iOS` 内）
+   - **Roslyn全8構成コンパイルチェック**（iOS Windows Editor / iOS `-define:UNITY_IOS` runtime & editor、Steam runtime & editor、Demo runtime & editor）
+   - **Unity上での実コンパイル確認（`--unity`）**: 未起動プロジェクトに対して `Unity.exe -batchmode -quit` を実行して実際のUnityコンパイラエラー0件を確認し、起動中プロジェクトは `Logs/Editor.log` の最新リロード以降のエラー0件を確認する
+   - **`SteamController` 完全隔離チェック**（`Ashfall-iOS` 内に `SteamController` 参照が0件であること）
    - **セーブデータ混同防止スキャン**（3プロジェクトでゲームセーブ系ファイルがすべて `SaveSlotPrefs` エイリアスを使用しているか）
    - **iOS専用ファイル・Steam専用ファイルの越境チェック**
    - **共有スクリプトの予期しない差分レポート**

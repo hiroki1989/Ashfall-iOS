@@ -293,9 +293,6 @@ namespace NeonVault
             }
 
             Rect hitRect = new Rect(r.x-4, r.y-4, r.width+8, r.height+22);
-#if !UNITY_IOS && !UNITY_ANDROID
-            SteamController.RegisterSelectable(hitRect);
-#endif
             if(Event.current!=null && (Event.current.type==EventType.MouseMove || Event.current.type==EventType.MouseDrag) && hitRect.Contains(Event.current.mousePosition))
             {
                 // Hover matches cursor

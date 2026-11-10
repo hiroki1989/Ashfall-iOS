@@ -53,9 +53,6 @@ namespace NeonVault
             Panel(rect,Cyan*(hover?1:.55f));
             if(hover)Box(new Rect(rect.x+2,rect.y+2,rect.width-4,rect.height-4),new Color(.16f,.22f,.10f,.65f));
             GUI.color=hover?Color.white:Mist;
-#if !UNITY_IOS && !UNITY_ANDROID
-            SteamController.RegisterSelectable(rect);
-#endif
             bool clicked=GUI.Button(rect,caption,centered);GUI.color=Color.white;return clicked;
         }
         void EquippedTab(Rect rect)

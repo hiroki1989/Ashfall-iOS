@@ -1,6 +1,8 @@
 import os
+import re
 import glob
 import hashlib
+import argparse
 import subprocess
 import tempfile
 
@@ -8,6 +10,7 @@ IOS_ROOT = "D:/Unity/Ashfall-iOS"
 STEAM_ROOT = "D:/Unity/DustDebt-Steam"
 DEMO_ROOT = "D:/Unity/DustDebt-Steam-Demo"
 
+UNITY_EXE = "D:/Unity/Unity Hub/6000.6.0f1/Editor/Unity.exe"
 DOTNET = "D:/Unity/Unity Hub/6000.6.0f1/Editor/Data/DotNetSdk/dotnet.exe"
 CSC = "D:/Unity/Unity Hub/6000.6.0f1/Editor/Data/DotNetSdk/sdk/8.0.318/Roslyn/bincore/csc.dll"
 
@@ -50,27 +53,22 @@ SHARED_PLAYERPREFS_ALLOWED_RAW = {
     "GameCenterSyncManager.cs",
 }
 
+def normalize_without_steam_controller(text):
+    text = re.sub(r'#if !UNITY_IOS && !UNITY_ANDROID\r?\n([^\n]*SteamController[^\n]*\r?\n)+#endif\r?\n?', '', text)
+    return hashlib.md5(text.replace('\r\n', '\n').encode('utf-8')).hexdigest()
+
 def md5(p):
     with open(p, "rb") as f:
         return hashlib.md5(f.read().replace(b"\r\n", b"\n")).hexdigest()
 
-def check_steam_controller_guards():
+def check_steam_controller_isolation():
     failures = []
     for f in sorted(glob.glob(f"{IOS_ROOT}/Assets/Scripts/**/*.cs", recursive=True)):
         lines = open(f, "rb").read().decode("utf-8", errors="replace").splitlines()
-        in_desktop_if = 0
         for i, l in enumerate(lines):
-            s = l.strip()
-            if s.startswith("#if") and "!UNITY_IOS" in s:
-                in_desktop_if += 1
-            elif s.startswith("#if"):
-                if in_desktop_if > 0:
-                    in_desktop_if += 1
-            elif s.startswith("#endif") and in_desktop_if > 0:
-                in_desktop_if -= 1
-            if "SteamController" in l and in_desktop_if == 0:
-                failures.append(f"{os.path.basename(f)}:{i+1}: {s}")
-    print(f"[1] Unguarded SteamController in Ashfall-iOS: {len(failures)}")
+            if "SteamController" in l:
+                failures.append(f"{os.path.basename(f)}:{i+1}: {l.strip()}")
+    print(f"[1] SteamController references in Ashfall-iOS (must be 0 so Windows & iOS both compile): {len(failures)}")
     for x in failures:
         print("   ERROR:", x)
     return len(failures) == 0
@@ -93,14 +91,12 @@ def check_saveslot_aliases():
 
 def check_platform_exclusives():
     ok = True
-    # Ensure iOS-only files do not leak into Steam/Demo
     for ios_only in ["VaultDailyChest.cs", "VaultRewardedAds.cs"]:
         for name, repo in [("Steam", STEAM_ROOT), ("Demo", DEMO_ROOT)]:
             p = os.path.join(repo, "Assets/Scripts", ios_only)
             if os.path.exists(p):
                 print(f"   ERROR: iOS-only file leaked into {name}: {ios_only}")
                 ok = False
-    # Ensure SteamController.cs is not copied directly into Ashfall-iOS
     for steam_only in ["SteamController.cs", "SteamControllerLiveReview.cs"]:
         p = os.path.join(IOS_ROOT, "Assets/Scripts", steam_only)
         if os.path.exists(p):
@@ -124,7 +120,12 @@ def check_unexpected_script_diffs():
     for k in sorted(set(ios_f) & set(steam_f)):
         if k in EXPECTED_DIFF_FILES:
             continue
-        if md5(ios_f[k]) != md5(steam_f[k]):
+        if k in {"ActionSkillUI.cs", "VaultInventoryUI.cs"}:
+            t1 = open(ios_f[k], "r", encoding="utf-8").read()
+            t2 = open(steam_f[k], "r", encoding="utf-8").read()
+            if normalize_without_steam_controller(t1) != normalize_without_steam_controller(t2):
+                unexpected.append(("iOS vs Steam", k))
+        elif md5(ios_f[k]) != md5(steam_f[k]):
             unexpected.append(("iOS vs Steam", k))
     for k in sorted(set(steam_f) & set(demo_f)):
         if k in {"IosPremiumAccess.cs", "VaultDebtSkills.cs", "VaultRunSave.cs"}:
@@ -139,7 +140,7 @@ def check_unexpected_script_diffs():
 
 def compile_all():
     if not (os.path.exists(DOTNET) and os.path.exists(CSC)):
-        print("[5] Skipping Roslyn compile check (Unity dotnet/csc not found at configured paths).")
+        print("[5] Skipping Roslyn compile check (Unity dotnet/csc not found).")
         return True
     ok = True
     with tempfile.TemporaryDirectory() as tmp:
@@ -165,7 +166,6 @@ def compile_all():
             if extra_defs:
                 for d in extra_defs:
                     new_lines.append(f"-define:{d}")
-            # Include all Assets/Scripts/*.cs even if Unity Editor hasn't regenerated .rsp yet
             if "Editor" not in rsp_rel:
                 for p in glob.glob(os.path.join(repo, "Assets/Scripts/*.cs")):
                     rel = os.path.relpath(p, repo).replace("\\", "/")
@@ -180,23 +180,66 @@ def compile_all():
                 print("     ", e)
             return out_dll, proc.returncode == 0
 
-        print("[5] Roslyn compile verification (all 6 assemblies):")
-        ios_dll, o1 = run_rsp(IOS_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp", "iOS_runtime", ["UNITY_IOS"])
-        _, o2 = run_rsp(IOS_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.rsp", "iOS_editor", ["UNITY_IOS"], ios_dll)
+        print("[5] Roslyn compile verification (all 8 configurations):")
+        ios_win_dll, o0 = run_rsp(IOS_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp", "iOS_win_runtime")
+        _, o0e = run_rsp(IOS_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.rsp", "iOS_win_editor", extra_ref=ios_win_dll)
+        ios_dll, o1 = run_rsp(IOS_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp", "iOS_ios_runtime", ["UNITY_IOS"])
+        _, o2 = run_rsp(IOS_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.rsp", "iOS_ios_editor", ["UNITY_IOS"], ios_dll)
         steam_dll, o3 = run_rsp(STEAM_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp", "Steam_runtime")
         _, o4 = run_rsp(STEAM_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.rsp", "Steam_editor", extra_ref=steam_dll)
         demo_dll, o5 = run_rsp(DEMO_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp", "Demo_runtime")
         _, o6 = run_rsp(DEMO_ROOT, "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.rsp", "Demo_editor", extra_ref=demo_dll)
-        ok = all([o1, o2, o3, o4, o5, o6])
+        ok = all([o0, o0e, o1, o2, o3, o4, o5, o6])
+    return ok
+
+def check_unity_batchmode():
+    if not os.path.exists(UNITY_EXE):
+        print("[6] Unity.exe not found; skipping batchmode verify.")
+        return True
+    ok = True
+    print("[6] Unity Editor live / batchmode compile verification:")
+    for name, repo in [("iOS", IOS_ROOT), ("Steam", STEAM_ROOT), ("Demo", DEMO_ROOT)]:
+        lock = os.path.join(repo, "Temp/UnityLockfile")
+        if os.path.exists(lock):
+            log_path = os.path.join(repo, "Logs/Editor.log")
+            if os.path.exists(log_path):
+                lines = open(log_path, "rb").read().decode("utf-8", errors="replace").splitlines()
+                last_reload = max([i for i, l in enumerate(lines) if "Reloading assemblies" in l or "Begin MonoManager ReloadAssembly" in l] + [0])
+                tail_errs = [l for l in lines[last_reload:] if ": error " in l or "Scripts have compiler errors" in l]
+                print(f"   [{name}] Editor is OPEN (checked Editor.log after last reload): errors={len(tail_errs)}")
+                for e in tail_errs[:10]:
+                    print("     ", e)
+                if tail_errs:
+                    ok = False
+            else:
+                print(f"   [{name}] Editor is OPEN (no Editor.log found)")
+            continue
+
+        log_out = f"D:/Unity/verify_{name.lower()}_unity.log"
+        proc = subprocess.run([UNITY_EXE, "-batchmode", "-quit", "-projectPath", repo, "-logFile", log_out])
+        errs = []
+        if os.path.exists(log_out):
+            lines = open(log_out, "rb").read().decode("utf-8", errors="replace").splitlines()
+            errs = [l for l in lines if ": error " in l or "Scripts have compiler errors" in l or "Compilation failed" in l]
+        print(f"   [{name}] Unity batchmode exit={proc.returncode} errors={len(errs)} (log={log_out})")
+        for e in errs[:15]:
+            print("     ", e)
+        if proc.returncode != 0 or errs:
+            ok = False
     return ok
 
 def main():
-    c1 = check_steam_controller_guards()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--unity", action="store_true", help="Also run Unity.exe -batchmode -quit on closed projects and check open Editor logs")
+    args = parser.parse_args()
+
+    c1 = check_steam_controller_isolation()
     c2 = check_saveslot_aliases()
     c3 = check_platform_exclusives()
     c4 = check_unexpected_script_diffs()
     c5 = compile_all()
-    passed = all([c1, c2, c3, c4, c5])
+    c6 = check_unity_batchmode() if args.unity else True
+    passed = all([c1, c2, c3, c4, c5, c6])
     print("PARITY & NO-REGRESSION VERIFICATION:", "PASS" if passed else "FAIL")
     raise SystemExit(0 if passed else 1)
 
