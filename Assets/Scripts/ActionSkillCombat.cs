@@ -126,6 +126,12 @@ namespace NeonVault
                 var pos=MoveWithinRoom(PlayerPosition,side,.6f);extraTurretObject.position=new Vector3(pos.x,origin.y,pos.z);
                 extraTurretFireTimer=.35f;
             }
+            float shieldBurst = ActionSkillExtraValue("turret_shield_burst");
+            if(shieldBurst > 0)
+            {
+                ArtifactShield = Mathf.Min(60f, ArtifactShield + shieldBurst);
+                UpdateBarrierVisual();
+            }
             CombatVisuals.Burst(origin+Vector3.up*.3f,new Color(.8f,.66f,.35f),9,world);
         }
 

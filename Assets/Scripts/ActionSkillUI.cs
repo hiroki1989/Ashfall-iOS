@@ -160,7 +160,7 @@ namespace NeonVault
                 case "medic_purge":return 11;
                 case "grenade_heal": case "grenade_hit_heal": case "medic_heal": case "max_health": return 11;
                 case "medic_radius": case "medic_field_damage": return 12;
-                case "medic_guard": case "damage_reduction": case "turret_near_guard": return 13;
+                case "medic_guard": case "damage_reduction": case "turret_near_guard": case "turret_shield_burst": return 13;
                 case "medic_damage": case "medic_debuff": case "poison_damage": return 17;
                 case "fire_damage": return 16;
                 case "reload_speed": case "turret_near_reload": case "medic_field_reload": return 2;
@@ -400,8 +400,13 @@ namespace NeonVault
 
         void EnsureActionNodeScrollVisible(int tier, int slot)
         {
-            int[] rows={0, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4};
-            float subY = slot < 0 ? 0f : 65f + rows[slot+1]*92f;
+            int r = 0;
+            if(slot >= 0)
+            {
+                GetTierGeometry(tier, out int[] row, out _, out _);
+                r = row[slot];
+            }
+            float subY = slot < 0 ? 0f : 65f + r * 92f;
             float nodeY = 58f + tier * ActionTreeTierPitch + subY;
             float viewH = 610f;
             if(nodeY - 80f < actionTreeScroll.y) actionTreeScroll.y = Mathf.Max(0f, nodeY - 80f);
@@ -512,9 +517,8 @@ namespace NeonVault
                 // 11: from 5 (row 4, lane -1.0)
                 // 12: from 6 (row 4, lane -0.4)
                 // 13: from 8 (row 4, lane 1.0)
-                int[] row={1,  2, 2, 2,   3, 3, 3, 3, 3, 3,   4, 4, 4, 4};
-                float[] lane={0f, -1.2f, 0f, 1.2f,  -1.8f, -0.9f, -0.3f, 0.3f, 0.9f, 1.8f,  -1.8f, -0.9f, -0.3f, 0.9f};
-                int[] parentSlotMap={-1, 0, 0, 0,  1, 1, 2, 2, 3, 3,  4, 5, 6, 8};
+                // Slot geometry per tier (distinct visual layouts for each tier)
+                GetTierGeometry(t, out int[] row, out float[] lane, out int[] parentSlotMap);
 
                 // PASS 1: DRAW ALL CONNECTING LINES (BEHIND ICONS)
                 // 1a) Detour connecting line from Tier N to Tier N+1 on the far left
@@ -544,9 +548,11 @@ namespace NeonVault
                     float y=topY+65f+row[s]*92f;
                     Vector2 p=new Vector2(cx+lane[s]*125f,y);
                     int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
+                    int nodeMax=ActionSkillExtraMaxRank(selected,branch,t,s);
                     bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
                     int icon=GetActionNodeIconIndex(selected,branch,t,s);
-                    if(DrawBorderlandsSkillNode(p,44f,icon,s>=10?2:s%2==0?1:0,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,1,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
+                    int fKind = nodeMax == 1 ? 2 : (nodeMax == 3 ? 1 : 0);
+                    if(DrawBorderlandsSkillNode(p,44f,icon,fKind,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,nodeMax,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
                     {actionTreeTier=t;actionTreeSlot=s;PlayUserSound("skill",.08f);}
                 }
 
@@ -562,7 +568,7 @@ namespace NeonVault
             int chosenSlot=actionTreeSlot;
             bool extra=chosenSlot>=0;
             int rank=extra?ActionSkillExtraRank(selected,branch,tier,chosenSlot):ActionSkillRank(selected,branch,tier);
-            int max=extra?1:ActionSkillMaxRank(tier);
+            int max=extra?ActionSkillExtraMaxRank(selected,branch,tier,chosenSlot):ActionSkillMaxRank(tier);
             bool available=extra?ActionSkillExtraAvailable(selected,branch,tier,chosenSlot):ActionSkillTierAvailable(selected,branch,tier);
             bool canUnlock=available&&rank<max&&ActionSkillAvailablePoints>0;
             string title=extra?ActionSkillExtraTitle(selected,branch,tier,chosenSlot):ActionSkillNodeTitle(selected,branch,tier);
@@ -570,7 +576,7 @@ namespace NeonVault
             string nodeId=(tier+1)+"-"+(extra?(chosenSlot+1).ToString():"0");
 
             int inspectIcon = GetActionNodeIconIndex(selected, branch, tier, chosenSlot);
-            int inspectFrame = extra ? (chosenSlot%4==3 ? 2 : 1) : (tier==4 ? 2 : 0);
+            int inspectFrame = extra ? (max == 1 ? 2 : max == 3 ? 1 : 0) : (tier==4 ? 2 : 0);
             Rect inspectIconRect = new Rect(972, 152, 74, 74);
             DrawSkillNodeFrame(inspectIconRect, inspectFrame, rank>0 ? accent : UiPaper);
             DrawSkillAtlasIcon(new Rect(986, 166, 46, 46), inspectIcon, Color.white);

@@ -66,7 +66,7 @@ namespace NeonVault
                     return;
                 }
                 if(data.ranks!=null)for(int i=0;i<Mathf.Min(data.ranks.Length,ActionSkillSlots);i++)actionSkillRanks[i]=Mathf.Clamp(data.ranks[i],0,ActionSkillMaxRank(i%5));
-                if(data.extraRanks!=null)for(int i=0;i<Mathf.Min(data.extraRanks.Length,actionSkillExtraRanks.Length);i++)actionSkillExtraRanks[i]=Mathf.Clamp(data.extraRanks[i],0,1);
+                if(data.extraRanks!=null)for(int i=0;i<Mathf.Min(data.extraRanks.Length,actionSkillExtraRanks.Length);i++)actionSkillExtraRanks[i]=Mathf.Clamp(data.extraRanks[i],0,ActionSkillExtraMaxRankByIndex(i));
             }
             catch(Exception e){Debug.LogWarning("Action skill save load: "+e.GetType().Name);}
         }
