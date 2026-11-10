@@ -14,7 +14,7 @@ namespace NeonVault
         Vector2 actionTreeMaxScroll = new Vector2(0f, 5000f), petSkillMaxScroll = new Vector2(0f, 2000f); // set each frame by the tree draw; used by touch drag
         string actionTreeLastDescription;
         float skillTreeNavCooldown;
-        const float ActionTreeTierPitch = 1100f;
+        const float ActionTreeTierPitch = 560f;
         const float ActionTreeContentHeight = 58f + 4f * ActionTreeTierPitch + 1030f;
         const int ActionTreeNodeRows = 14;
 
@@ -234,7 +234,7 @@ namespace NeonVault
         bool DrawBorderlandsSkillNode(Vector2 center, float size, int iconIdx, int frameKind, string title, int rank, int max, bool available, bool selected, Color accent)
         {
             Rect r = new Rect(center.x - size*.5f, center.y - size*.5f, size, size);
-            bool hover = r.Contains(Event.current.mousePosition);
+            bool hover = r.Contains(Event.current.mousePosition) || selected;
             bool unlocked = rank > 0;
             bool maxed = rank >= max;
 
@@ -292,7 +292,13 @@ namespace NeonVault
                 ActionLabel(lbl, title, selected ? Color.white : unlocked ? UiPaper : Mist, 13, TextAnchor.UpperCenter, false);
             }
 
-            return GUI.Button(new Rect(r.x-4, r.y-4, r.width+8, r.height+22), GUIContent.none, GUIStyle.none);
+            Rect hitRect = new Rect(r.x-4, r.y-4, r.width+8, r.height+22);
+            SteamController.RegisterSelectable(hitRect);
+            if(Event.current!=null && (Event.current.type==EventType.MouseMove || Event.current.type==EventType.MouseDrag) && hitRect.Contains(Event.current.mousePosition))
+            {
+                // Hover matches cursor
+            }
+            return GUI.Button(hitRect, GUIContent.none, GUIStyle.none);
         }
 
         void ActionTreeDescription(Rect area,string value,Color color,int size)
@@ -406,7 +412,7 @@ namespace NeonVault
                 GetTierGeometry(tier, out int[] row, out _, out _);
                 r = row[slot];
             }
-            float subY = slot < 0 ? 0f : 65f + r * 92f;
+            float subY = slot < 0 ? 0f : 45f + r * 74f;
             float nodeY = 58f + tier * ActionTreeTierPitch + subY;
             float viewH = 610f;
             if(nodeY - 80f < actionTreeScroll.y) actionTreeScroll.y = Mathf.Max(0f, nodeY - 80f);
@@ -533,30 +539,41 @@ namespace NeonVault
                 // 1b) Within-tier connector lines behind nodes
                 for(int s=0;s<14;s++)
                 {
-                    float y=topY+65f+row[s]*92f;
-                    Vector2 p=new Vector2(cx+lane[s]*125f,y);
+                    float y=topY+45f+row[s]*74f;
+                    Vector2 p=new Vector2(cx+lane[s]*135f,y);
                     int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
                     bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
                     int pSlot = parentSlotMap[s];
-                    Vector2 parent = pSlot < 0 ? pRoot : new Vector2(cx+lane[pSlot]*125f, topY+65f+row[pSlot]*92f);
+                    Vector2 parent = pSlot < 0 ? pRoot : new Vector2(cx+lane[pSlot]*135f, topY+45f+row[pSlot]*74f);
                     DrawSkillConnectorPipe(parent, p, nodeRank>0, nodeAvailable, accent);
                 }
 
                 // PASS 2: DRAW ALL SKILL NODES (IN FRONT OF LINES)
                 for(int s=0;s<14;s++)
                 {
-                    float y=topY+65f+row[s]*92f;
-                    Vector2 p=new Vector2(cx+lane[s]*125f,y);
+                    float y=topY+45f+row[s]*74f;
+                    Vector2 p=new Vector2(cx+lane[s]*135f,y);
                     int nodeRank=ActionSkillExtraRank(selected,branch,t,s);
                     int nodeMax=ActionSkillExtraMaxRank(selected,branch,t,s);
                     bool nodeAvailable=ActionSkillExtraAvailable(selected,branch,t,s);
                     int icon=GetActionNodeIconIndex(selected,branch,t,s);
                     int fKind = nodeMax == 1 ? 2 : (nodeMax == 3 ? 1 : 0);
+                    Rect hitS = new Rect(p.x - 26f, p.y - 26f, 52f, 66f);
+                    if(Event.current!=null && hitS.Contains(Event.current.mousePosition))
+                    {
+                        if(actionTreeTier!=t || actionTreeSlot!=s){actionTreeTier=t;actionTreeSlot=s;tier=t;}
+                    }
                     if(DrawBorderlandsSkillNode(p,44f,icon,fKind,ActionSkillExtraTitle(selected,branch,t,s),nodeRank,nodeMax,nodeAvailable,tier==t&&actionTreeSlot==s,accent))
                     {actionTreeTier=t;actionTreeSlot=s;PlayUserSound("skill",.08f);}
                 }
 
                 int icRoot = GetActionNodeIconIndex(selected, branch, t, -1);
+                float rSz = t==4 ? 68f : 62f;
+                Rect hitRoot = new Rect(pRoot.x - rSz*.5f - 4f, pRoot.y - rSz*.5f - 4f, rSz + 8f, rSz + 22f);
+                if(Event.current!=null && hitRoot.Contains(Event.current.mousePosition))
+                {
+                    if(actionTreeTier!=t || actionTreeSlot>=0){actionTreeTier=t;actionTreeSlot=-1;tier=t;}
+                }
                 if(DrawBorderlandsSkillNode(pRoot, t==4 ? 68f : 62f, icRoot, t==4 ? 2 : 0, ActionSkillNodeTitle(selected, branch, t), rRoot, mRoot, avRoot, tier==t && actionTreeSlot<0, accent))
                 { actionTreeTier=t; actionTreeSlot=-1; tier=t; PlayUserSound("skill",.08f); }
 

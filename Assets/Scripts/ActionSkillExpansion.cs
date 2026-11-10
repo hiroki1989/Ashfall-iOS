@@ -42,31 +42,31 @@ namespace NeonVault
                 case 0:
                     // Tier 1: 2-Wing Bifurcated Tree (Roots & Dual Flanks)
                     row       = new int[]   { 1,    2,     2,    2,     3,     3,    3,    3,    3,    3,     4,     4,    4,    4 };
-                    lane      = new float[] { 0.0f, -1.2f, 1.2f, 0.0f, -1.8f, -0.6f, 0.6f, 1.8f, -0.5f, 0.5f, -1.8f, -0.6f, 0.6f, 1.8f };
+                    lane      = new float[] { 0.0f, -1.8f, 1.8f, 0.0f, -2.4f, -1.2f, 1.2f, 2.4f, -0.5f, 0.5f, -2.4f, -1.2f, 1.2f, 2.4f };
                     parentMap = new int[]   { -1,   0,     0,    0,     1,     1,    2,    2,    3,    3,     4,     5,    6,    7 };
                     break;
                 case 1:
                     // Tier 2: Triple Fan-Out Tree (3 specialized pillars)
                     row       = new int[]   { 1,    2,     2,    2,     3,     3,     3,    3,    3,    3,     4,     4,    4,    4 };
-                    lane      = new float[] { 0.0f, -1.4f, 0.0f, 1.4f, -1.8f, -1.0f, -0.4f, 0.4f, 1.0f, 1.8f, -1.8f, -0.4f, 0.4f, 1.8f };
+                    lane      = new float[] { 0.0f, -2.0f, 0.0f, 2.0f, -2.5f, -1.5f, -0.6f, 0.6f, 1.5f, 2.5f, -2.5f, -0.6f, 0.6f, 2.5f };
                     parentMap = new int[]   { -1,   0,     0,    0,     1,     1,     2,    2,    3,    3,     4,     6,    7,    9 };
                     break;
                 case 2:
                     // Tier 3: Rhombus / Diamond Synergy Cluster
                     row       = new int[]   { 1,    2,     2,    2,     3,     3,     3,    3,    3,    3,     4,     4,    4,    4 };
-                    lane      = new float[] { 0.0f, -1.6f, 0.0f, 1.6f, -1.8f, -1.1f, -0.5f, 0.5f, 1.1f, 1.8f, -1.8f, -0.8f, 0.8f, 1.8f };
+                    lane      = new float[] { 0.0f, -2.0f, 0.0f, 2.0f, -2.5f, -1.5f, -0.6f, 0.6f, 1.5f, 2.5f, -2.5f, -0.8f, 0.8f, 2.5f };
                     parentMap = new int[]   { -1,   0,     0,    0,     1,     1,     2,    2,    3,    3,     4,     5,    7,    9 };
                     break;
                 case 3:
                     // Tier 4: Parallel Deep Specialization Columns (Ladder to Keystones)
                     row       = new int[]   { 1,    2,     2,    2,     3,     3,    3,    2,    3,    3,     4,     4,    4,    4 };
-                    lane      = new float[] { 0.0f, -1.5f, -0.5f, 0.5f, -1.5f, -0.5f, 0.5f, 1.5f, 1.5f, 0.0f, -1.5f, -0.5f, 0.5f, 1.5f };
+                    lane      = new float[] { 0.0f, -2.2f, -0.7f, 0.7f, -2.2f, -0.7f, 0.7f, 2.2f, 2.2f, 0.0f, -2.2f, -0.7f, 0.7f, 2.2f };
                     parentMap = new int[]   { -1,   0,     0,    0,     1,     2,    3,    0,    7,    0,     4,     5,    6,    8 };
                     break;
                 default:
                     // Tier 5: Capstone Crown & Apex Constellation
                     row       = new int[]   { 1,    2,     2,    2,     3,     3,     3,    3,    3,    3,     4,     4,    4,    4 };
-                    lane      = new float[] { 0.0f, -1.3f, 0.0f, 1.3f, -1.7f, -0.9f, -0.4f, 0.4f, 0.9f, 1.7f, -1.6f, -0.5f, 0.5f, 1.6f };
+                    lane      = new float[] { 0.0f, -2.0f, 0.0f, 2.0f, -2.5f, -1.5f, -0.6f, 0.6f, 1.5f, 2.5f, -2.0f, -0.6f, 0.6f, 2.0f };
                     parentMap = new int[]   { -1,   0,     0,    0,     1,     1,     2,    2,    3,    3,     4,     6,    7,    9 };
                     break;
             }
