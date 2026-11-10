@@ -71,6 +71,9 @@ namespace NeonVault
         }
         bool Button(Rect r,string value,bool primary=false)
         {
+#if !UNITY_IOS && !UNITY_ANDROID
+            SteamController.RegisterSelectable(r);
+#endif
             bool hover=r.Contains(Event.current.mousePosition);
             Color accent=primary?Gold:Cyan;
             FieldUIArt.Plate(r,primary||hover);

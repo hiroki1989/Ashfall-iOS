@@ -66,9 +66,7 @@ namespace NeonVault
         void DrawManufacturerRegistry()
         {
             Box(new Rect(0,0,1440,900),PanelInk);
-            Text(44,29,T("THE SIX / FIELD MANUFACTURERS","荒野の6社 / 装備メーカー"),heading,Gold,1160);
-            int armorCount=0,legendaryCount=LegendaryCatalog.GunCount;foreach(var product in ArmorProductCatalog.All)if(Armory.IsActiveSlot(product.slot)){armorCount++;if(DistinctEquipmentDesigns.Find(product.id).legendary)legendaryCount++;}
-            Text(46,88,T(Arsenal.CatalogCount+" FIREARMS · "+armorCount+" ARMOR · "+ModuleProductCatalog.Count+" MODULES / INCLUDING "+legendaryCount+" NAMED LEGENDARIES", "銃"+Arsenal.CatalogCount+"・防具"+armorCount+"・モジュール"+ModuleProductCatalog.Count+" / 固有伝説"+legendaryCount+"種を含む"),small,Mist,1250);
+            Text(44,45,T("EQUIPMENT CATALOG","装備図鑑"),heading,Gold,1160);
             if(Button(new Rect(1230,848,165,42),T("BACK","戻る")))manufacturerRegistry=false;
             for(int maker=0;maker<6;maker++)
             {

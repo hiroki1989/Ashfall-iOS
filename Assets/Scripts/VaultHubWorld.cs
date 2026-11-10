@@ -137,7 +137,7 @@ namespace NeonVault
                 else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)OpenCollector();
             }
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
-            if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);screen=Screen.Menu;hubDialogue="";}
+            if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){screen=Screen.Pause;Time.timeScale=0;hubDialogue="";}
             UpdateCamera(false);
         }
         void DrawHubWorldLabels()

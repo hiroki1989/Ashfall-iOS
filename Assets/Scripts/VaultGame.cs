@@ -396,8 +396,8 @@ namespace NeonVault
             if(screen==Screen.Shop&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){screen=Screen.Hub;return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))
             {
-                if(screen==Screen.Playing) { screen=Screen.Pause; Time.timeScale=0; }
-                else if(screen==Screen.Pause) { screen=Screen.Playing; Time.timeScale=1; }
+                if(screen==Screen.Playing || screen==Screen.Hub) { screen=Screen.Pause; Time.timeScale=0; }
+                else if(screen==Screen.Pause) { screen=world!=null&&!IsOverworld&&CurrentDungeon!=null?Screen.Playing:(player!=null&&IsOverworld?Screen.Playing:Screen.Hub); Time.timeScale=1; }
             }
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
             if(worldTransitionPending||!Active)return;

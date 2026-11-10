@@ -62,6 +62,9 @@ namespace NeonVault
         Texture2D junkBinIcon;
         bool EqButton(Rect r,string caption,bool selected=false,bool enabled=true)
         {
+#if !UNITY_IOS && !UNITY_ANDROID
+            SteamController.RegisterSelectable(r);
+#endif
             bool hover=enabled&&r.Contains(Event.current.mousePosition);
             Box(r,selected?new Color(.29f,.22f,.17f):hover?new Color(.19f,.19f,.18f):EqSurface);
             FieldUIArt.Plate(r,selected);
@@ -74,6 +77,9 @@ namespace NeonVault
         }
         bool EqNavigation(Rect r,string caption,bool selected)
         {
+#if !UNITY_IOS && !UNITY_ANDROID
+            SteamController.RegisterSelectable(r);
+#endif
             bool hover=r.Contains(Event.current.mousePosition);
             if(hover)Box(r,new Color(.16f,.17f,.17f));
             Box(new Rect(r.x,r.yMax-2,r.width,selected?3:1),selected?EqAccent:EqLine);
