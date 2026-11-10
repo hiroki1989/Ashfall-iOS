@@ -115,6 +115,9 @@ namespace NeonVault
             // changing the hub's established interior layout.
             art.Ring("Hub exit / yellow floor marker",new Vector3(0,.035f,10.9f),1.45f,.11f,VaultArt.Gold,true);
             BuildDailyChest();
+            EnsureProgressionAndInventoryLoaded();
+            if(Weapons.Count==0)LoadInventory();
+            if(gun==null)gun=WeaponInSlot(ActiveWeaponSlot)??(Weapons.Count>0?Weapons[0]:Arsenal.Starter());
             player=art.Character(new Vector3(0,.65f,-3),true);barrel=art.Weapon(player,gun.color);VaultArt.ConfigureWeapon(barrel,gun.effect,gun.color,VaultLanguage.DisplayModel(gun));PlayerAppearance.ApplyArmor(EquippedArmor);
             foreach(var animation in world.GetComponentsInChildren<Animation>(true)){animation.Stop();animation.enabled=false;}foreach(var animator in world.GetComponentsInChildren<Animator>(true))if(!animator.GetComponentInParent<ImportedEnemyVisual>()){animator.Rebind();animator.Update(0);animator.enabled=false;}
             hp=maxHp;aim=Vector3.right;PlayerWeapon.Aim(aim);hubDialogue="";cam.orthographicSize=11/CameraZoom;UpdateCamera(true);

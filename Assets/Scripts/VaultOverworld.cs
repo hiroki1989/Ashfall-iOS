@@ -51,6 +51,7 @@ namespace NeonVault
 
         public void ContinueOverworldGame()
         {
+            EnsureProgressionAndInventoryLoaded();
             RestorePetOverworldCooldown();
             EnsureOverworldState();
             if(!WorldStorySeen){EnterHub();return;}
@@ -125,6 +126,7 @@ namespace NeonVault
         public void BuildOverworld(Vector3 position) {if(QueueWorldTransition(()=>BuildOverworldImmediate(position)))return;BuildOverworldImmediate(position);}
         void BuildOverworldImmediate(Vector3 position)
         {
+            EnsureProgressionAndInventoryLoaded();
             EnsureOverworldState();SaveInventory();ResetGameplayOverlays();ClearRunCheckpoint();ClearWorldScene();
             IsOverworld=true;SetOverworldReturnStage(-1);SelectedStageId=-1;room=0;kills=0;shake=0;cleared=false;missionCompleted=false;missionKills=0;
             runDamage=runFire=runVitality=runDash=runChain=runHarvest=0;damageBonus=fireBonus=0;
@@ -136,8 +138,10 @@ namespace NeonVault
             rng=new System.Random(unchecked(Environment.TickCount^OverworldMissionClears));
             art=new VaultArt(world,materials,new System.Random(OverworldGeography.Seed));
             OverworldScenery.Build(world,materials,WorldGeography);OverworldScenery.UpdateFocus(world,position);
-            if(Blocked(position,.65f))position=WorldGeography.Camps[LastVisitedCamp];position.y=.65f;
-            gun=WeaponInSlot(ActiveWeaponSlot)??Weapons[0];ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Clamp(loaded,0,EffectiveMagazine):EffectiveMagazine;
+            int safeCamp = Mathf.Clamp(LastVisitedCamp, 0, WorldGeography.Camps.Length - 1);
+            if(Blocked(position,.65f))position=WorldGeography.Camps[safeCamp];position.y=.65f;
+            if(Weapons.Count==0)LoadInventory();
+            gun=WeaponInSlot(ActiveWeaponSlot)??(Weapons.Count>0?Weapons[0]:Arsenal.Starter());ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Clamp(loaded,0,EffectiveMagazine):EffectiveMagazine;
             player=art.Character(position,true);barrel=art.Weapon(player,gun.color);RefreshWeaponAppearance();PlayerAppearance?.ApplyArmor(EquippedArmor);
             aim=Vector3.right;hasAimedPoint=false;PlayerWeapon.Aim(aim);CreateSatellites();
             CreateWorldSites();CreateWorldChests();GenerateOverworldEnemies();CreateFactionCamps();StreamOverworldEnemies();RefreshOverworldActivities();

@@ -9,6 +9,20 @@ namespace NeonVault
         int confirmDeleteSlot = -1;
         static int saveSlotStartAfterReload; // 1 = start, 2 = resume
 
+        public void EnsureProgressionAndInventoryLoaded()
+        {
+            if(!saveSlotInitialized)
+            {
+                ProgressionInitialize();
+                LoadInventory();
+                saveSlotInitialized=true;
+            }
+            if(Weapons.Count==0)
+            {
+                LoadInventory();
+            }
+        }
+
         bool HandleSaveSlotMenu()
         {
             if (saveSlotStartAfterReload != 0)

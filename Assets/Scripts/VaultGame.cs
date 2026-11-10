@@ -144,7 +144,9 @@ namespace NeonVault
             chestRoomForRun=-1; // Chests now roll once per non-final area; extraction always has one.
             PrepareAmmoCratesForRun();
             ResetArtifactCombat();runDamage=0;runFire=0;runVitality=0;runDash=0;runChain=0;runHarvest=0;debtChainCount=0;debtChainTimer=0;
-            gun=WeaponInSlot(ActiveWeaponSlot);if(gun==null)gun=Weapons[SelectedWeapon];ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Min(EffectiveMagazine,loaded):EffectiveMagazine;StopReloadSound();reload=0;reloadPending=0;dodgeCooldown=0;invincible=2.5f;dodgeTimer=0;fireTimer=0;meleeAttack?.ResetCooldown();lastHurt=-10;screen=Screen.Playing;
+            EnsureProgressionAndInventoryLoaded();
+            if(Weapons.Count==0)LoadInventory();
+            gun=WeaponInSlot(ActiveWeaponSlot);if(gun==null)gun=Weapons.Count>SelectedWeapon&&SelectedWeapon>=0?Weapons[SelectedWeapon]:Weapons.Count>0?Weapons[0]:Arsenal.Starter();ammo=magazineAmmo.TryGetValue(gun.id,out int loaded)?Mathf.Min(EffectiveMagazine,loaded):EffectiveMagazine;StopReloadSound();reload=0;reloadPending=0;dodgeCooldown=0;invincible=2.5f;dodgeTimer=0;fireTimer=0;meleeAttack?.ResetCooldown();lastHurt=-10;screen=Screen.Playing;
             BuildRoom(true); Notify("ZONE 01 / Scavenge. Watch the infected.","区域01 / 感染者を警戒し、物資を回収せよ");
         }
         Material Mat(Color color,bool glow=false,bool trail=false)
