@@ -1,3 +1,11 @@
+## 2026-11-10 / Cloud Buildエラー（CS1040 プリプロセッサディレクティブ行頭位置）修正
+- 変更ファイル:
+  - Assets/Scripts/VaultUI.cs:
+    - #if UNITY_IOS || UNITY_ANDROID プリプロセッサディレクティブが同一行末尾（...DrawCollectorDialog();#if...）に含まれていたため Roslyn コンパイラで発生していた「CS1040: Preprocessor directives must appear as the first non-whitespace character on a line」を修正（改行を入れて行頭に配置）。
+- 結果: Unity Cloud Build（iOS）におけるコンパイルエラーが解消。
+- 検証: Git diff 確認完了。
+- 未解決: なし。
+
 ## 2026-11-10 / iOSバージョンおよびビルド番号を61へ更新
 - 変更ファイル:
   - ProjectSettings/ProjectSettings.asset:
