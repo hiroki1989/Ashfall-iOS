@@ -245,10 +245,10 @@ namespace NeonVault
             if(entrance>=0)
             {
                 var stage=ExpeditionMap.Get(entrance,DebtLevel);
-                bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);
-                string status=hqUnlocked?ExpeditionRewardDescription(stage.id):FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese);
-                string briefing=stage.Name+" / Lv."+stage.level+"\n"+ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese)+"\n"+status;
-                if(WorldButton(mobile?new Rect(440,285,570,150):new Rect(940,550,475,160),briefing+"\n"+(hqUnlocked?T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E"):T("LOCKED","未解放")),hqUnlocked))EnterNearbyWorldDungeon(entrance);
+                bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);bool levelAllowed=smoke||stage.level<=DebtLevel;bool canEnter=hqUnlocked&&levelAllowed;
+                string status=!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):!levelAllowed?T("REQUIRES LEVEL ","必要レベル ")+stage.level:HasActiveBriggsMission&&activeBriggsMissionStage==stage.id?T("BRIGGS CONTRACT ACTIVE","受注中のミッション"):ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese);
+                string briefing=stage.Name+" / Lv."+stage.level+"\n"+status;
+                if(WorldButton(mobile?new Rect(440,285,570,150):new Rect(940,550,475,160),briefing+"\n"+(canEnter?T(mobile?"ENTER":"ENTER / E",mobile?"入る":"入る / E"):!hqUnlocked?T("LOCKED","未解放"):T("LEVEL TOO LOW","レベル不足")),canEnter))EnterNearbyWorldDungeon(entrance);
             }
             else if(camp>=0)
             {
@@ -860,18 +860,19 @@ namespace NeonVault
             WorldLabel(new Rect(975,186,410,54),discovered?stage.Location+" / "+stage.Biome:"?",Mist,20);
             WorldLabel(new Rect(975,242,410,34),T("LEVEL ","レベル ")+stage.level+"   /   "+T("BOSS: ","ボス: ")+(bossFought?stage.Target:"？？？"),Cyan,20);
             WorldLabel(new Rect(975,278,410,58),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",!hqUnlocked?UiDanger:UiPaper,20);
-            WorldLabel(new Rect(975,338,410,44),discovered?ExpeditionRewardDescription(stage.id):"?",Gold,18);
+            bool levelAllowed=smoke||stage.level<=DebtLevel;bool siteAllowed=hqUnlocked&&levelAllowed;bool isContract=HasActiveBriggsMission&&activeBriggsMissionStage==stage.id;
+            WorldLabel(new Rect(975,338,410,44),!discovered?"?":isContract?T("ACTIVE CONTRACT / RETURN TO BRIGGS ON CLEAR","受注中の仕事 / クリア後に拠点で報告"):!levelAllowed?T("REQUIRES LV ","必要レベル ")+stage.level+T(" (YOUR LV ","（現在 ")+DebtLevel+T(")","）"):clearedExpeditionStages.Contains(stage.id)?T("CONQUERED / NO REWARD WITHOUT CONTRACT","制圧済み / 報酬には受注が必要"):T("FREE ENTRY / NO REWARD WITHOUT CONTRACT","自由出撃可 / 報酬はブリッグス依頼のみ"),isContract?Gold:!levelAllowed?UiDanger:Cyan,17);
             DrawWorldExclusiveItems(stage.id,new Rect(975,384,410,158));
             WorldLabel(new Rect(975,546,410,30),T("DISTANCE ","入口まで ")+WorldDistanceLabel(WorldGeography.Entrances[stage.id]),Mist,20);
             bool tracking=OverworldWaypointKind==2&&OverworldWaypointId==stage.id;
             if(WorldButton(new Rect(975,580,410,46),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:2,stage.id);
-            bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id&&hqUnlocked;
+            bool nearby=IsOverworld&&NearbyWorldEntrance==stage.id&&siteAllowed;
             bool canFastTravel=CanWorldFastTravel&&IsDungeonFastTravelUnlocked(stage.id)&&hqUnlocked;
             if(canFastTravel)
             {
                 if(WorldButton(new Rect(975,632,410,46),T("FAST TRAVEL TO ENTRANCE","ダンジョン前へ移動"),true))FastTravelToDungeon(stage.id);
             }
-            if(WorldButton(new Rect(975,684,410,48),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):nearby?T("ENTER DUNGEON","ダンジョンに入る"):canFastTravel?T("ALREADY VISITED","訪問済み"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
+            if(WorldButton(new Rect(975,684,410,48),!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):!levelAllowed?T("LEVEL TOO LOW (REQ LV ","レベル不足（必要 Lv ")+stage.level+")":nearby?T("ENTER DUNGEON","ダンジョンに入る"):canFastTravel?T("ALREADY VISITED","訪問済み"):T("WALK TO THIS ENTRANCE","この入口まで歩いて移動"),nearby))EnterNearbyWorldDungeon(stage.id);
         }
         public void DrawWorldBossConversation()
         {

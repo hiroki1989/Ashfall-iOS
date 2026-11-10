@@ -432,6 +432,8 @@ namespace NeonVault
             Rect ptsBox = new Rect(610, 18, 298, 44);
             FieldUIArt.Plate(ptsBox, true);
             ActionLabel(ptsBox, T("SKILL POINTS: ","残りポイント: ")+ActionSkillAvailablePoints, classAccent, 21, TextAnchor.MiddleCenter);
+            bool canTreeRespec=ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost;
+            if(ActionButton(new Rect(922,18,258,44),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0"),canTreeRespec,Gold,16,canTreeRespec))TryRespecActionSkills();
 
             if(ActionButton(new Rect(1195,16,200,56),T("BACK","戻る"),false,classAccent))
             {
@@ -656,6 +658,8 @@ namespace NeonVault
                 ActionLabel(new Rect(card.x+36,card.y+356,360,32),equipped?T("EQUIPPED","装備中"):T("AVAILABLE","選択可能"),equipped?accent:Mist,19);
                 if(ActionButton(new Rect(card.x+28,card.y+400,378,78),equipped?T("EQUIPPED","装備中"):T("VIEW SKILL TREE","スキルツリーを見る"),equipped,accent,20,true)){actionTreeKind=i;actionTreeBranch=0;actionTreeTier=0;actionTreeSlot=-1;actionSkillInventoryTree=true;}
             }
+            bool canInvRespec=ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost;
+            if(ActionButton(new Rect(52,748,520,66),T("RESET SKILLS / ","スキル振り直し / ")+ActionSkillRespecCost.ToString("N0")+T(" SCRAP"," スクラップ"),canInvRespec,Gold,20,canInvRespec))TryRespecActionSkills();
         }
 
         void DrawMobileActionSkill()

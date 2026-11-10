@@ -29,7 +29,7 @@ namespace NeonVault
             Text(42,84,T("LEVEL ","レベル ")+DebtLevel+T("  SCRAP ","  スクラップ ")+Credits.ToString("N0"),new GUIStyle(label){fontSize=25},Cyan,595);
             if(!blockHubButtons&&MobileButton(new Rect(690,30,220,72),T("CITY MAP","都市マップ"),28))OpenOverworldMap();
             if(!blockHubButtons&&MobileButton(new Rect(930,30,220,72),T("MAKERS","製品図鑑"),28)){manufacturerRegistry=true;manufacturerKind=-1;}
-            string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONA / COLLECTOR","調べる：イオナ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
+            string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + JOBS","調べる：ブリッグス / 返済・仕事"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONA / COLLECTOR","調べる：イオナ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
             Text(380,740,string.IsNullOrEmpty(hubDialogue)?hint:hubDialogue,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,680);
             if(toastTimer>0){Panel(new Rect(30,170,620,145),Gold);Text(50,185,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,580);}
             GUI.enabled=prevGui;
@@ -94,8 +94,9 @@ namespace NeonVault
             }
             MobileCopyAt(260,220,screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失"),Gold);
             if(screen==Screen.Victory&&SelectedExpeditionStage!=null)MobileCopyAt(260,295,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),Mist,940);
-            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(200,355,1040,250));else MobileCopyAt(260,380,Toast,Mist,940);
-            if(screen==Screen.Victory)MobileCopyAt(260,625,CompletedPayoutLabel(),Gold,940);
+            bool pendingTurnIn=screen==Screen.Victory&&SelectedStageId>=0&&HasActiveBriggsMission&&activeBriggsMissionStage==SelectedStageId&&activeBriggsMissionReadyToTurnIn;bool incompleteActiveJob=screen==Screen.Victory&&SelectedStageId>=0&&HasActiveBriggsMission&&activeBriggsMissionStage==SelectedStageId&&!activeBriggsMissionReadyToTurnIn;string victoryNote=pendingTurnIn?T("CONTRACT COMPLETE / REPORT TO BRIGGS AT ","ミッション達成 / ")+OverworldCampName(activeBriggsMissionCamp,VaultLanguage.Japanese)+T(" FOR REWARD"," のブリッグスへ報告"):incompleteActiveJob?Toast:SelectedStageId>=0?T("DUNGEON CONQUERED / NO CONTRACT REWARD","ダンジョン制圧完了 / ミッション未受注のため報酬なし"):Toast;
+            if(screen==Screen.Victory&&(completedRewardGun!=null||completedRewardArmor!=null))DrawCompletedGearReward(new Rect(200,355,1040,250));else MobileCopyAt(260,380,screen==Screen.Victory?victoryNote:Toast,Mist,940);
+            if(screen==Screen.Victory)MobileCopyAt(260,625,(completedScrapReward>0||completedSkillPointReward>0||completedRewardGun!=null||completedRewardArmor!=null)?CompletedPayoutLabel():T("CONQUEST UPDATED","制圧状況を更新しました"),Gold,940);
             if(MobileButton(new Rect(260,700,920,120),screen==Screen.Victory?T("CONFIRM","確認"):T("RETURN TO SAFEHOUSE","拠点へ帰還"))){if(screen==Screen.Victory&&PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}
         }    }
 }

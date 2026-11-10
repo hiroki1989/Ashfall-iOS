@@ -235,7 +235,7 @@ namespace NeonVault
         {
             EnsureOverworldState();
             if (id < 0 || id >= OverworldCampCount) return;
-            if(FirstStepsStage==8 && OverworldWaypointKind==1 && OverworldWaypointId==id){SetFirstStepsStage(5);SetOverworldWaypoint(0,-1);Notify("FIRST STEPS COMPLETE / Repay the billion","チュートリアル完了 / 10億スクラップの返済を目指そう");}
+            // Stage 8 now completes via 30% faction conquest rather than visiting another camp.
             bool changed = !visitedOverworldCamps[id] || LastVisitedCamp != id;
             visitedOverworldCamps[id] = true;
             LastVisitedCamp = id;

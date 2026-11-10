@@ -206,7 +206,7 @@ namespace NeonVault
             Panel(new Rect(205,150,1030,600),new Color(1,.27f,.19f));
             Text(250,190,T("COLLAR DEBT // 1,000,000,000 SCRAP","首輪の負債 // 10億スクラップ"),heading,new Color(1,.39f,.28f),930);
             Text(255,280,T("You wake to a live explosive collar and a contract stamped with one billion scrap. Malcolm Vale owns the detonator; his collector, Briggs, owns your earnings. Conquer the rival faction strongholds across Ashfall, bring back anything valuable, and pay until the collar comes off. Then settle the score with the boss.","目を覚ますと、首には作動中の爆弾首輪。契約書には10億スクラップの借金。起爆装置を握るのはマルコム・ヴェイル、稼ぎを取り立てるのはブリッグスだ。アッシュフォール各地の勢力拠点を制圧しながら戦利品を持ち帰り、首輪が外れるまで返済しろ。最後にボスへ借りを返す。"),new GUIStyle(label){fontSize=23,wordWrap=true},Mist,920);
-            Text(255,490,T("Repayment grants levels and skill points. The first level costs 1,000,000 scrap. Visit Briggs to repay and upgrade action skills.","返済でレベルとスキルポイントを獲得。最初のレベルは100万スクラップ。拠点のブリッグスに話しかけて返済と強化を進めよう。"),small,Cyan,900);
+            Text(255,490,T("Repayment grants levels and skill points. Visit Briggs to take contracts, earn scrap, and pay down your debt.","返済でレベルとスキルポイントを獲得。ブリッグスから仕事を受けて稼ぎ、返済を進めよう。"),small,Cyan,900);
             if(MobileTouchControls.Enabled?MobileButton(new Rect(350,620,740,115),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃")):Button(new Rect(505,640,430,64),T("I UNDERSTAND / BEGIN","契約を受け入れて出撃"),true))MarkDebtIntroSeen();
         }
         void DrawMenu()
@@ -249,7 +249,7 @@ namespace NeonVault
             }
             else
             {
-                if(screen==Screen.Victory){if(SelectedExpeditionStage!=null)Text(390,341,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},UiPaper,660);if(completedRewardGun!=null||completedRewardArmor!=null)DrawCompletedGearReward(new Rect(390,390,660,195));else Text(390,382,Toast,new GUIStyle(small){wordWrap=true},Gold,660);Text(390,594,CompletedPayoutLabel(),new GUIStyle(small){wordWrap=false},Gold,660);if(Button(new Rect(390,645,660,68),T("CONFIRM","確認"),true)){if(PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}return;}
+                if(screen==Screen.Victory){if(SelectedExpeditionStage!=null)Text(390,341,ExpeditionMap.MissionLabel(SelectedExpeditionStage,VaultLanguage.Japanese),new GUIStyle(small){wordWrap=true},UiPaper,660);bool pendingTurnIn=SelectedStageId>=0&&HasActiveBriggsMission&&activeBriggsMissionStage==SelectedStageId&&activeBriggsMissionReadyToTurnIn;bool incompleteActiveJob=SelectedStageId>=0&&HasActiveBriggsMission&&activeBriggsMissionStage==SelectedStageId&&!activeBriggsMissionReadyToTurnIn;string victoryNote=pendingTurnIn?T("CONTRACT COMPLETE / REPORT TO BRIGGS AT ","ミッション達成 / ")+OverworldCampName(activeBriggsMissionCamp,VaultLanguage.Japanese)+T(" TO CLAIM REWARD"," のブリッグスから報酬を受取"):incompleteActiveJob?Toast:SelectedStageId>=0?T("DUNGEON CONQUERED / NO CONTRACT REWARD WITHOUT BRIGGS JOB","ダンジョン制圧完了 / ミッション未受注のため報酬なし"):Toast;string payoutLine=(completedScrapReward>0||completedSkillPointReward>0||completedRewardGun!=null||completedRewardArmor!=null)?CompletedPayoutLabel():T("CONQUEST RECORDED ON MAP","地図の制圧状況に記録しました");if(completedRewardGun!=null||completedRewardArmor!=null)DrawCompletedGearReward(new Rect(390,390,660,195));else Text(390,382,victoryNote,new GUIStyle(small){wordWrap=true},Gold,660);Text(390,594,payoutLine,new GUIStyle(small){wordWrap=false},Gold,660);if(Button(new Rect(390,645,660,68),T("CONFIRM","確認"),true)){if(PendingWorldStage>=0)ReturnFromWorldDungeon(true);else EnterHub();}return;}
                 else {Text(390,372,Toast,label,Gold,660);if(Button(new Rect(390,443,660,68),T("RETURN TO LAST LIGHT","灯火基地へ帰還"),true))EnterHub();if(Button(new Rect(390,529,660,62),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();}
             }
         }
@@ -369,7 +369,7 @@ namespace NeonVault
         }
         void DrawExpeditionBriefing()
         {
-            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool unlocked=FactionHeadquartersUnlocked(stage.id);bool cleared=clearedExpeditionStages.Contains(stage.id);
+            ExpeditionStage stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);bool levelAllowed=smoke||stage.level<=DebtLevel;bool unlocked=hqUnlocked&&levelAllowed;bool cleared=clearedExpeditionStages.Contains(stage.id);
             Text(1042,174,T("FIELD DOSSIER / ","現地記録 / ")+stage.Name,label,Gold,330);
             Text(1042,219,stage.Location,new GUIStyle(small){wordWrap=true},stage.regionColor,330);
             Line(new Vector2(1042,270),new Vector2(1374,270),new Color(.55f,.72f,.72f,.38f));
@@ -380,12 +380,12 @@ namespace NeonVault
             Text(1042,445,ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese),label,Gold,330);
             Text(1042,481,T("MARKED TARGET","標的"),tiny,Mist,320);
             Text(1042,503,IsDungeonBossFought(stage.id)?stage.Target:"???",small,new Color(1,.51f,.37f),330);
-            Text(1042,548,cleared?T("REPEAT CLEAR REWARD","再攻略報酬"):T("FIRST CLEAR CACHE","初回クリア報酬"),tiny,Mist,320);
-            Text(1042,572,ExpeditionRewardDescription(stage.id),small,Cyan,330);
-            Text(1042,609,cleared?T("MISSION PAYOUT CLAIMED","任務報酬は受取済み"):T("MISSION PAYOUT / ","任務達成報酬 / ")+MissionRewardDescription(stage.id),tiny,Gold,330);
-            Text(1042,640,cleared?T("SITE CLEARED","制圧済み"):unlocked?T("CONTRACT AVAILABLE","出撃可能"):FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese),tiny,cleared?Cyan:unlocked?Gold:new Color(1,.40f,.31f),330);
-            if(Button(new Rect(1040,680,335,62),unlocked?T("DEPLOY TO SITE","地点へ出撃"):FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese),unlocked)&&unlocked)EnterExpeditionStage(stage.id);
-            Text(1042,757,T("SKILL POINTS: FIRST CLEAR ONLY. REPLAYS GIVE GEAR OR SCRAP.","スキルポイントは初回のみ。再攻略は装備かスクラップ。"),tiny,Mist,330);
+            Text(1042,548,T("CONTRACT STATUS","依頼状況"),tiny,Mist,320);
+            Text(1042,572,HasActiveBriggsMission&&activeBriggsMissionStage==stage.id?T("ACTIVE BRIGGS JOB","ブリッグスから受注中"):T("REWARDS VIA BRIGGS ONLY","報酬はブリッグス依頼のみ"),small,Cyan,330);
+            Text(1042,609,!levelAllowed?T("REQUIRES LEVEL ","必要レベル ")+stage.level:cleared?T("CONQUERED","制圧済み"):T("ELIGIBLE FOR ENTRY","進入可能レベル"),tiny,Gold,330);
+            Text(1042,640,cleared?T("SITE CLEARED","制圧済み"):unlocked?T("CONTRACT AVAILABLE","出撃可能"):!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):T("LEVEL TOO LOW","レベル不足"),tiny,cleared?Cyan:unlocked?Gold:new Color(1,.40f,.31f),330);
+            if(Button(new Rect(1040,680,335,62),unlocked?T("DEPLOY TO SITE","地点へ出撃"):!hqUnlocked?FactionBossUnlockRequirementLabel(stage.id,VaultLanguage.Japanese):T("LEVEL TOO LOW","レベル不足"),unlocked)&&unlocked)EnterExpeditionStage(stage.id);
+            Text(1042,757,T("TAKE CONTRACTS AT CAMP FROM BRIGGS TO EARN PAYOUTS.","報酬を得るには拠点のブリッグスから仕事を受けてください。"),tiny,Mist,330);
         }
         void DrawMap()
         {

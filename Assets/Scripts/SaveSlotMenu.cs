@@ -105,7 +105,7 @@ namespace NeonVault
             ClearArray(visitedOverworldCamps);
             ClearArray(discoveredOverworldDungeons);
             collectorIntroSeen=false; collectorClaims=0; ModuleCapacityTier=0; junkKeys=null; confirmJunkSale=false;
-            npcConversation=0; npcBeat=0;
+            ResetMissionRuntimeState();npcConversation=0; npcBeat=0;
             DungeonIndex=0; HighestUnlocked=0; Credits=0; ExpeditionTokens=0;
             SelectedStageId=-1;
         }

@@ -127,6 +127,126 @@ public static class RegressionSuiteReview
             if (vp.x < 0.05f || vp.x > 0.95f || vp.y < 0.05f || vp.y > 0.95f)
                 throw new Exception("Reticle left safe viewport bounds: " + vp);
 
+            // 8. Nearest-camp assignment & camp mission filtering (max 3, camp-owned, level <= DebtLevel)
+            var geo = game.WorldGeography;
+            for (int s = 0; s < ExpeditionMap.StageCount; s++)
+            {
+                int assigned = game.AssignedCampForDungeon(s);
+                float bestSq = (new Vector2(geo.Entrances[s].x - geo.Camps[assigned].x, geo.Entrances[s].z - geo.Camps[assigned].z)).sqrMagnitude;
+                for (int c = 0; c < geo.Camps.Length; c++)
+                {
+                    float dSq = (new Vector2(geo.Entrances[s].x - geo.Camps[c].x, geo.Entrances[s].z - geo.Camps[c].z)).sqrMagnitude;
+                    if (dSq + 0.01f < bestSq)
+                        throw new Exception("Stage " + s + " assigned to camp " + assigned + " but camp " + c + " is closer");
+                }
+            }
+            Invoke("ResetMissionRuntimeState");
+            int[] camp0Offers = game.GetCampMissionOffers(0, true);
+            if (camp0Offers == null || camp0Offers.Length == 0 || camp0Offers.Length > 3)
+                throw new Exception("Expected 1..3 offers at Camp 0, got " + (camp0Offers == null ? -1 : camp0Offers.Length));
+            foreach (int offer in camp0Offers)
+            {
+                if (game.AssignedCampForDungeon(offer) != 0)
+                    throw new Exception("Camp 0 offered dungeon belonging to camp " + game.AssignedCampForDungeon(offer));
+                if (ExpeditionMap.Get(offer, game.DebtLevel).level > game.DebtLevel)
+                    throw new Exception("Camp 0 offered dungeon above DebtLevel: " + offer);
+            }
+
+            // 9. Level gating blocks entering higher-level dungeons when smoke == false
+            int highLevelStage = -1;
+            for (int s = 0; s < ExpeditionMap.RegularStageCount; s++)
+            {
+                if (ExpeditionMap.Get(s, game.DebtLevel).level > game.DebtLevel) { highLevelStage = s; break; }
+            }
+            if (highLevelStage < 0) throw new Exception("No high-level stage found for level gate test");
+            Set("smoke", false);
+            if (game.EnterExpeditionStage(highLevelStage))
+                throw new Exception("EnterExpeditionStage must reject dungeon above player DebtLevel");
+            Set("smoke", true);
+
+            // 10. Clearing dungeon WITHOUT an active Briggs mission records conquest but grants ZERO rewards
+            var clearedList = Get<List<int>>("clearedExpeditionStages");
+            clearedList.Clear();
+            int credBeforeNoJob = game.Credits;
+            int tokBeforeNoJob = game.ExpeditionTokens;
+            typeof(VaultGame).GetProperty("SelectedStageId", flags).SetValue(game, 0);
+            Set("missionCompleted", true);
+            game.OnDungeonFinished(true);
+            if (game.Credits != credBeforeNoJob || game.ExpeditionTokens != tokBeforeNoJob)
+                throw new Exception("Clearing dungeon without active contract must grant ZERO rewards");
+            if (!clearedList.Contains(0))
+                throw new Exception("Clearing dungeon without active contract must still update conquest clears");
+
+            // 11. Full Briggs Mission flow: accept -> dungeon waypoint -> 1-active limit -> clear gives 0 payout & sets camp waypoint -> turn in pays out
+            int jobStage = camp0Offers[0];
+            int secondStage = camp0Offers.Length > 1 ? camp0Offers[1] : -1;
+            game.VisitOverworldCamp(0);
+            if (!game.AcceptBriggsMission(jobStage))
+                throw new Exception("AcceptBriggsMission failed for eligible camp 0 stage " + jobStage);
+            if (!game.HasActiveBriggsMission || game.ActiveBriggsMissionStage != jobStage || game.OverworldWaypointKind != 2 || game.OverworldWaypointId != jobStage)
+                throw new Exception("Accepted mission must set OverworldWaypoint(2, jobStage)");
+            if (secondStage >= 0 && game.AcceptBriggsMission(secondStage))
+                throw new Exception("Must not accept a second mission while one is active");
+            int credBeforeJob = game.Credits;
+            int tokBeforeJob = game.ExpeditionTokens;
+            int gunsBeforeJob = game.Weapons.Count;
+            int armorBeforeJob = game.ArmorInventory.Count;
+            typeof(VaultGame).GetProperty("SelectedStageId", flags).SetValue(game, jobStage);
+            Set("missionCompleted", true);
+            game.OnDungeonFinished(true);
+            if (game.Credits != credBeforeJob || game.ExpeditionTokens != tokBeforeJob || game.Weapons.Count != gunsBeforeJob || game.ArmorInventory.Count != armorBeforeJob)
+                throw new Exception("Finishing dungeon must NOT pay out before talking to Briggs");
+            if (!game.ActiveBriggsMissionReadyToTurnIn || game.OverworldWaypointKind != 1 || game.OverworldWaypointId != 0)
+                throw new Exception("Completing active mission must mark ReadyToTurnIn and set OverworldWaypoint(1, camp 0)");
+            if (!game.ClaimCompletedBriggsMissionReward())
+                throw new Exception("ClaimCompletedBriggsMissionReward failed");
+            if (game.HasActiveBriggsMission || game.ActiveBriggsMissionReadyToTurnIn)
+                throw new Exception("Turn-in must clear active mission state");
+            if (game.Credits <= credBeforeJob && game.ExpeditionTokens <= tokBeforeJob)
+                throw new Exception("Briggs turn-in did not grant contract payout");
+            if (game.OverworldWaypointKind == 1 && game.OverworldWaypointId == 0)
+                throw new Exception("Turn-in should clear return-to-camp waypoint");
+
+            // 12. FirstSteps Stage 7 -> Stage 8 (30% conquest, NO waypoint)
+            Set("smoke", false);
+            SaveSlotPrefs.Select(3);
+            SaveSlotPrefs.DeleteSlot(3);
+            SaveSlotPrefs.SetInt("Vault.FirstSteps.v1", 7);
+            game.SetOverworldWaypoint(1, 2);
+            Invoke("FirstStepsSkillUpgraded");
+            if (SaveSlotPrefs.GetInt("Vault.FirstSteps.v1", 0) != 8)
+                throw new Exception("FirstStepsSkillUpgraded should move stage 7 -> 8");
+            if (game.OverworldWaypointKind == 1)
+                throw new Exception("FirstSteps stage 8 must NOT set a camp waypoint");
+            clearedList.Clear();
+            for (int s = 0, added = 0; s < ExpeditionMap.RegularStageCount && added < 15; s++)
+            {
+                if (ExpeditionMap.FactionForStage(s) == DungeonFaction.Raiders) { clearedList.Add(s); added++; }
+            }
+            Invoke("CheckFirstStepsConquestMilestone");
+            if (SaveSlotPrefs.GetInt("Vault.FirstSteps.v1", 0) != 5)
+                throw new Exception("FirstSteps stage 8 should complete upon reaching 30% faction conquest");
+            SaveSlotPrefs.DeleteSlot(3);
+            SaveSlotPrefs.Select(1);
+            Set("smoke", true);
+
+            // 13. Solo-clearing a dungeon without a mission before talking to Briggs must NOT forfeit first-clear reward
+            SaveSlotPrefs.Select(3);
+            SaveSlotPrefs.DeleteSlot(3);
+            Set("smoke", false);
+            Invoke("ResetRuntimeStateForSlot");
+            Invoke("ProgressionInitialize");
+            typeof(VaultGame).GetProperty("SelectedStageId", flags).SetValue(game, 100);
+            Set("missionCompleted", true);
+            game.OnDungeonFinished(true);
+            if (!Get<List<int>>("clearedExpeditionStages").Contains(100))
+                throw new Exception("Solo clear on stage 100 should update conquest");
+            if (game.HasFirstClearRewardPaid(100))
+                throw new Exception("Solo clear before talking to Briggs must NOT consume first-clear contract reward");
+            SaveSlotPrefs.DeleteSlot(3);
+            SaveSlotPrefs.Select(1);
+            Set("smoke", true);
+
             Debug.Log("REGRESSION_SUITE_REVIEW PASS");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }

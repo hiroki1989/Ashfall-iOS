@@ -20,7 +20,7 @@ namespace NeonVault
             MobileCopyAt(42,640,(discovered?stage.Name:"?")+" / Lv "+(discovered?stage.level.ToString():"?"),Cyan);
             MobileCopyAt(42,684,discovered?ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese):"?",Mist,1350);
             bool done=clearedExpeditionStages.Contains(stage.id);
-            MobileCopyAt(42,727,discovered?(done?T("CLEARED · REPLAY ","クリア済 · 再攻略 "):T("FIRST CLEAR ","初回 "))+ExpeditionRewardDescription(stage.id)+(done?"":" / "+T("MISSION ","任務 ")+MissionRewardDescription(stage.id)):"?",Cyan,1350);
+            MobileCopyAt(42,727,discovered?(HasActiveBriggsMission&&activeBriggsMissionStage==stage.id?T("ACTIVE CONTRACT","受注中のミッション"):done?T("CONQUERED","制圧済み"):stage.level>DebtLevel&&!smoke?T("REQUIRES LV ","必要レベル ")+stage.level:T("ENTER AT SITE","現地入口から突入可能")):"?",Cyan,1350);
             if(MobileButton(new Rect(40,780,270,110),T("BACK","拠点へ"))){mobileMapEntered=false;screen=Screen.Hub;}
             if(MobileButton(new Rect(330,780,125,110),"−"))SetCityZoom(expeditionCityZoom/1.2f,view.size*.5f);
             if(MobileButton(new Rect(475,780,125,110),"+"))SetCityZoom(expeditionCityZoom*1.2f,view.size*.5f);
@@ -166,6 +166,7 @@ namespace NeonVault
         }
         void DrawMobileDebt()
         {
+            if(briggsMissionPage){DrawMobileBriggsMissions();return;}
             if(mobilePremiumPage&&IosPremiumAccess.IsUnlocked)mobilePremiumPage=false;
             Box(new Rect(0,0,1440,900),PanelInk);MobileCopyAt(40,25,T("DEBT ","残債 ")+DebtRemaining.ToString("N0")+" / Lv "+DebtLevel,Gold,1050);
             if(MobileButton(new Rect(1110,10,290,110),T("BACK","戻る"))){if(mobilePremiumPage){mobilePremiumPage=false;return;}debtSkillTreePage=false;screen=Screen.Hub;return;}
@@ -181,8 +182,6 @@ namespace NeonVault
                     if(MobileButton(new Rect(40,405,655,110),purchaseCaption,30))IosPremiumAccess.Purchase();
                     if(MobileButton(new Rect(720,405,680,110),T("RESTORE PURCHASE","購入を復元")))IosPremiumAccess.Restore();
                     if(!string.IsNullOrEmpty(IosPremiumAccess.StatusMessage))MobileCopyAt(40,540,IosPremiumAccess.StatusMessage,Cyan,1360);
-                    if(MobileButton(new Rect(40,700,650,110),T("SKILLS","スキルを確認"))){mobilePremiumPage=false;debtSkillTreePage=true;}
-                    if(MobileButton(new Rect(720,700,680,110),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0")))TryRespecActionSkills();
                     return;
                 }
                 int levelCost=DebtNextLevelRequirement;int remainingToNext=DebtNextLevelRemaining;
@@ -193,9 +192,8 @@ namespace NeonVault
                 if(limit>0)SetDebtPaymentFraction(DrawDebtPaymentSlider(new Rect(55,398,1330,82),debtPaymentAmount/(float)limit));
                 if(MobileButton(new Rect(40,485,655,110),T("MAX AMOUNT","全額を選択")))debtPaymentAmount=limit;
                 if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
-                if(MobileButton(new Rect(40,650,650,110),T("SKILLS","スキルを確認")))debtSkillTreePage=true;
-                if(MobileButton(new Rect(720,650,680,110),T("RESET / ","振り直し / ")+ActionSkillRespecCost.ToString("N0")))TryRespecActionSkills();
-                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&DebtLevel<3&&MobileButton(new Rect(400,780,640,90),T("FULL GAME / RESTORE","製品版の購入・復元"),32))mobilePremiumPage=true;
+                if(MobileButton(new Rect(40,650,655,110),T("TAKE A JOB","仕事を探す"))){GetCampMissionOffers(LastVisitedCamp);briggsMissionPage=true;}
+                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&DebtLevel<3&&MobileButton(new Rect(720,650,680,110),T("FULL GAME / RESTORE","製品版の購入・復元"),30))mobilePremiumPage=true;
                 if(DebtRemaining==0&&PlayerPrefs.GetInt(DebtBossDefeatedKey,0)!=0&&MobileButton(new Rect(400,780,640,90),T("VALE REMATCH","ヴェイル再戦")))StartValeRematch();
                 return;
             }

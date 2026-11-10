@@ -424,7 +424,7 @@ namespace NeonVault
             if(screen==Screen.DungeonSelect&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)
                 )){CloseOverworldMap();return;}
             if(screen==Screen.Shop&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)
-                )){if(!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null){pendingSaleKey=null;eqPendingDiscard=null;}else if(confirmJunkSale){confirmJunkSale=false;}else if(debtSkillTreePage){debtSkillTreePage=false;}else{screen=Screen.Hub;}return;}
+                )){if(!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null){pendingSaleKey=null;eqPendingDiscard=null;}else if(confirmJunkSale){confirmJunkSale=false;}else if(debtSkillTreePage){debtSkillTreePage=false;}else{briggsMissionPage=false;screen=Screen.Hub;}return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))
             {
                 if(screen==Screen.Playing || screen==Screen.Hub) PauseGame();

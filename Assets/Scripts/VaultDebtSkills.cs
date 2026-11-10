@@ -210,7 +210,7 @@ namespace NeonVault
 
         void DrawDebtOffice()
         {
-            Box(new Rect(0,0,1440,900),PanelInk);
+            Box(new Rect(0,0,1440,900),PanelInk);if(briggsMissionPage){DrawBriggsMissions();return;}
             Text(65,54,T("BRIGGS / DEBT OFFICE","ブリッグス / 借金返済窓口"),heading,new Color(1,.39f,.28f),1000);
             Text(68,116,T("COLLAR BALANCE","首輪の残債")+"   "+DebtRemaining.ToString("N0")+" / 1,000,000,000",label,Mist,1100);
             float progress=1-DebtRemaining/(float)InitialDebt;Box(new Rect(68,157,1070,14),new Color(.12f,.16f,.17f));Box(new Rect(68,157,1070*Mathf.Clamp01(progress),14),new Color(1,.34f,.23f));
@@ -234,11 +234,11 @@ namespace NeonVault
                 if(Button(new Rect(850,476,270,50),T("SELECT ALL","全額を指定")))debtPaymentAmount=paymentLimit;
                 Text(68,556,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" SCRAP"," スクラップ"),label,Cyan,850);
                 Text(68,602,T("The collar detonator stays with the Malcolm Vale. Clearing your balance is the only way out.","起爆装置はマルコム・ヴェイルが握っている。首輪から解放されるには、負債を完済するしかない。"),new GUIStyle(small){wordWrap=true},Mist,1060);
-                if(Button(new Rect(68,694,380,54),T("OPEN SKILL TREE  /  ","スキルツリーを開く  /  ")+DebtSkillPoints+T(" POINTS"," ポイント"),true))debtSkillTreePage=true;
-                if(Button(new Rect(480,694,550,54),T("RESET SKILLS / ","スキル振り直し / ")+ActionSkillRespecCost.ToString("N0"),ActionSkillSpentPoints>0&&Credits>=ActionSkillRespecCost))TryRespecActionSkills();
+                // Skill tree moved to Inventory screen; keep Debt Office focused on repayment.
+                if(Button(new Rect(390,790,300,52),T("TAKE A JOB","仕事を探す"))){GetCampMissionOffers(LastVisitedCamp);briggsMissionPage=true;}
                 if(DebtRemaining==0&&PlayerPrefs.GetInt(DebtBossDefeatedKey,0)!=0&&Button(new Rect(1040,694,300,54),T("VALE REMATCH","ヴェイル再戦")))StartValeRematch();
             }
-            if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る")))screen=Screen.Hub;
+            if(Button(new Rect(68,790,300,52),T("RETURN TO SAFEHOUSE","拠点へ戻る"))){briggsMissionPage=false;screen=Screen.Hub;}
         }
 
         float DrawDebtPaymentSlider(Rect bounds,float fraction)

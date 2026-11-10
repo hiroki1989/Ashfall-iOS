@@ -36,7 +36,7 @@ namespace NeonVault
             if(WorldButton(UnifiedDialoguePrimaryButton,npcBeat>=lines.Length-1?T("CONTINUE","続ける"):T("NEXT","次へ")))
             {
                 if(npcBeat<lines.Length-1){npcBeat++;return;}
-                PlayerPrefs.SetInt(PetAdoptedKey,1);PlayerPrefs.Save();npcConversation=0;debtPage=true;debtSkillTreePage=false;screen=Screen.Shop;
+                PlayerPrefs.SetInt(PetAdoptedKey,1);PlayerPrefs.Save();npcConversation=2;npcBeat=PlayerPrefs.GetInt("Vault.BriggsIntro",0)==0?0:activeBriggsMissionReadyToTurnIn?13:12;if(npcBeat==13)ClaimCompletedBriggsMissionReward();
             }
         }
 
