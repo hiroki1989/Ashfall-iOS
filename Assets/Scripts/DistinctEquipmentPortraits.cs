@@ -70,23 +70,20 @@ namespace NeonVault {
    }else{
     int main=kind=="armor"?(revisedArmor?(r.slot==1?0:6)+r.body:r.slot*6+r.body):r.body,extra=(kind=="armor"?30:6)+r.attachment;
     float ratio=Ratio(s,main);var image=area;if(ratio>area.width/area.height){image.height=area.width/ratio;image.y=area.center.y-image.height*.5f;}else{image.width=area.height*ratio;image.x=area.center.x-image.width*.5f;}
-    if(kind=="armor")Part(s,main,image);
-    if(revisedArmor){GUI.color=old;ManufacturerBranding.PortraitBadge(card,ManufacturerCatalog.Id(r.maker));return true;}
-    var accessory=kind=="armor"?Load(r,"armor-accessories",5):s; if(accessory==null)accessory=s; else if(kind=="armor")extra=r.slot*6+r.attachment;
-    float w=image.width*(kind=="armor"?(r.slot==0?.24f:r.slot==1?.48f:.33f):.48f),h=w/Ratio(accessory,extra);h=Mathf.Min(h,image.height*.55f);
-    Vector2 mount=image.center;
     if(kind=="armor"){
-     // Accessories mount on equipment, leaving the helmet visor and gloves readable.
-     float mx=r.slot==0?.80f:r.slot==1?.52f:r.slot==2?.67f:r.slot==3?.50f:.62f;
-     float my=r.slot==0?.59f:r.slot==1?.66f:r.slot==2?.33f:r.slot==3?.13f:.57f;
-     mount=new Vector2(image.x+image.width*mx,image.y+image.height*my);
+     Part(s,main,image);
+     GUI.color=old;
+     ManufacturerBranding.PortraitBadge(card,ManufacturerCatalog.Id(r.maker));
+     return true;
     }
+    float w=image.width*.48f;
+    Vector2 mount=image.center;
     if(kind=="module"){
      // Put the core inside the opening, then the housing rim in front of it.
-     if(r.body==2){w=image.width*.29f;h=Mathf.Min(w/Ratio(s,extra),image.height*.60f);for(int side=-1;side<=1;side+=2)Part(s,extra,new Rect(image.center.x+side*image.width*.23f-w*.5f,image.center.y-h*.5f,w,h));}
-     else Part(s,extra,new Rect(mount.x-w*.5f,mount.y-h*.5f,w,h));
+     if(r.body==2){w=image.width*.29f;float h=Mathf.Min(w/Ratio(s,extra),image.height*.60f);for(int side=-1;side<=1;side+=2)Part(s,extra,new Rect(image.center.x+side*image.width*.23f-w*.5f,image.center.y-h*.5f,w,h));}
+     else {float h=Mathf.Min(w/Ratio(s,extra),image.height*.60f);Part(s,extra,new Rect(mount.x-w*.5f,mount.y-h*.5f,w,h));}
      Part(s,main,image);
-    }else Part(accessory,extra,new Rect(mount.x-w*.5f,mount.y-h*.5f,w,h));
+    }
    }
    ManufacturerBranding.PortraitBadge(card,ManufacturerCatalog.Id(r.maker));GUI.color=old;return true;
   }
