@@ -171,7 +171,7 @@ namespace NeonVault
                         return s < p.Length ? p[s] : "turret_damage";
                     }
                     if (t == 2) {
-                        string[] p = { "turret_damage", "critical_damage", "turret_rate", "heavy_damage", "electric_damage", "assault_damage", "turret_near_damage", "turret_hit_charge", "critical_chance", "turret_near_critical", "turret_overclock", "fire_rate", "turret_focus", "turret_damage" };
+                        string[] p = { "turret_damage", "critical_damage", "turret_rate", "heavy_damage", "electric_damage", "assault_damage", "turret_near_damage", "turret_hit_charge", "critical_chance", "turret_near_critical", "turret_focus", "fire_rate", "critical_damage", "turret_damage" };
                         return s < p.Length ? p[s] : "turret_damage";
                     }
                     if (t == 3) {
@@ -184,69 +184,69 @@ namespace NeonVault
                 if (b == 1)
                 {
                     if (t == 0) {
-                        string[] p = { "move_speed", "turret_range", "handgun_damage", "reload_speed", "shotgun_damage", "turret_duration", "accuracy", "action_charge", "move_speed", "fire_rate", "turret_rate", "damage_reduction", "max_health", "turret_damage" };
+                        string[] p = { "move_speed", "turret_range", "handgun_damage", "reload_speed", "shotgun_damage", "turret_duration", "pet_speed", "action_charge", "move_speed", "pet_damage", "turret_rate", "shotgun_damage", "handgun_damage", "turret_range" };
                         return s < p.Length ? p[s] : "move_speed";
                     }
                     if (t == 1) {
-                        string[] p = { "turret_range", "move_speed", "shotgun_damage", "handgun_damage", "reload_speed", "accuracy", "turret_duration", "action_charge", "fire_rate", "turret_near_reload", "pet_speed", "pet_damage", "max_health", "turret_damage" };
+                        string[] p = { "turret_range", "move_speed", "shotgun_damage", "handgun_damage", "reload_speed", "pet_speed", "turret_duration", "action_charge", "pet_damage", "turret_near_reload", "move_speed", "turret_range", "shotgun_damage", "reload_speed" };
                         return s < p.Length ? p[s] : "turret_range";
                     }
                     if (t == 2) {
-                        string[] p = { "turret_range", "move_speed", "shotgun_damage", "handgun_damage", "pet_speed", "pet_damage", "turret_duration", "reload_speed", "action_charge", "turret_near_reload", "turret_follow", "accuracy", "fire_rate", "turret_range" };
+                        string[] p = { "turret_range", "move_speed", "shotgun_damage", "handgun_damage", "pet_speed", "pet_damage", "turret_duration", "reload_speed", "action_charge", "turret_near_reload", "turret_follow", "pet_speed", "move_speed", "turret_range" };
                         return s < p.Length ? p[s] : "turret_range";
                     }
                     if (t == 3) {
-                        string[] p = { "turret_range", "move_speed", "turret_duration", "shotgun_damage", "handgun_damage", "reload_speed", "accuracy", "action_charge", "pet_speed", "pet_damage", "turret_near_reload", "fire_rate", "turret_duration", "turret_damage" };
+                        string[] p = { "turret_range", "move_speed", "turret_duration", "shotgun_damage", "handgun_damage", "reload_speed", "pet_damage", "action_charge", "pet_speed", "pet_damage", "turret_near_reload", "move_speed", "turret_duration", "turret_range" };
                         return s < p.Length ? p[s] : "turret_range";
                     }
-                    string[] p4 = { "move_speed", "turret_range", "turret_duration", "shotgun_damage", "handgun_damage", "reload_speed", "action_charge", "accuracy", "pet_speed", "pet_damage", "turret_element", "turret_near_reload", "fire_rate", "move_speed" };
+                    string[] p4 = { "move_speed", "turret_range", "turret_duration", "shotgun_damage", "handgun_damage", "reload_speed", "action_charge", "pet_speed", "pet_speed", "pet_damage", "turret_element", "turret_near_reload", "move_speed", "turret_range" };
                     return s < p4.Length ? p4[s] : "move_speed";
                 }
                 // Branch 2: Control / 制圧
                 {
                     if (t == 0) {
-                        string[] p = { "turret_duration", "damage_reduction", "max_health", "accuracy", "sniper_damage", "turret_near_guard", "action_charge", "reload_speed", "turret_range", "turret_near_damage", "turret_shield_burst", "turret_near_reload", "max_health", "damage_reduction" };
+                        string[] p = { "turret_duration", "damage_reduction", "max_health", "sniper_damage", "accuracy", "turret_near_guard", "action_charge", "reload_speed", "turret_duration", "turret_near_damage", "turret_shield_burst", "turret_near_reload", "max_health", "damage_reduction" };
                         return s < p.Length ? p[s] : "turret_duration";
                     }
                     if (t == 1) {
-                        string[] p = { "turret_duration", "sniper_damage", "turret_near_guard", "damage_reduction", "max_health", "accuracy", "turret_hit_charge", "turret_near_element", "action_charge", "reload_speed", "turret_range", "turret_near_guard", "turret_near_damage", "damage_reduction" };
+                        string[] p = { "turret_duration", "sniper_damage", "turret_near_guard", "damage_reduction", "max_health", "accuracy", "turret_hit_charge", "turret_near_element", "action_charge", "sniper_damage", "turret_duration", "turret_near_guard", "turret_near_damage", "damage_reduction" };
                         return s < p.Length ? p[s] : "turret_duration";
                     }
                     if (t == 2) {
-                        string[] p = { "turret_duration", "damage_reduction", "sniper_damage", "turret_near_guard", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "reload_speed", "turret_range", "turret_near_guard", "turret_duration", "max_health" };
+                        string[] p = { "turret_duration", "damage_reduction", "sniper_damage", "turret_near_guard", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "reload_speed", "turret_overclock", "turret_near_guard", "turret_duration", "max_health" };
                         return s < p.Length ? p[s] : "turret_duration";
                     }
                     if (t == 3) {
-                        string[] p = { "turret_duration", "turret_near_guard", "damage_reduction", "sniper_damage", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "reload_speed", "turret_range", "turret_near_guard", "turret_duration", "damage_reduction" };
+                        string[] p = { "turret_duration", "turret_near_guard", "damage_reduction", "sniper_damage", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "sniper_damage", "turret_duration", "turret_near_guard", "turret_duration", "damage_reduction" };
                         return s < p.Length ? p[s] : "turret_duration";
                     }
-                    string[] p4 = { "turret_duration", "damage_reduction", "turret_near_guard", "sniper_damage", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "turret_range", "turret_near_guard", "damage_reduction", "max_health", "turret_duration" };
+                    string[] p4 = { "turret_duration", "damage_reduction", "turret_near_guard", "sniper_damage", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "turret_duration", "turret_near_guard", "damage_reduction", "max_health", "turret_duration" };
                     return s < p4.Length ? p4[s] : "turret_duration";
                 }
             }
 
-            // Bomber (k=1)
+            // Commando / Bomber (k=1)
             if (k == ActionSkillKind.Bomber)
             {
                 if (b == 0)
                 {
                     if (t == 0) {
-                        string[] p = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "reload_speed", "grenade_damage", "move_speed", "accuracy", "action_charge", "handgun_damage", "grenade_hit_charge", "fire_rate", "grenade_count", "critical_chance" };
+                        string[] p = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "reload_speed", "grenade_damage", "move_speed", "accuracy", "action_charge", "handgun_damage", "grenade_hit_charge", "fire_rate", "grenade_damage", "critical_chance" };
                         return s < p.Length ? p[s] : "grenade_count";
                     }
                     if (t == 1) {
-                        string[] p = { "grenade_count", "assault_damage", "fire_rate", "action_charge", "reload_speed", "grenade_damage", "grenade_hit_charge", "accuracy", "move_speed", "handgun_damage", "action_charge", "grenade_count", "fire_rate", "critical_chance" };
+                        string[] p = { "grenade_count", "assault_damage", "fire_rate", "action_charge", "reload_speed", "grenade_damage", "grenade_hit_charge", "critical_chance", "move_speed", "accuracy", "action_charge", "grenade_damage", "fire_rate", "assault_damage" };
                         return s < p.Length ? p[s] : "grenade_count";
                     }
                     if (t == 2) {
-                        string[] p = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "grenade_damage", "grenade_hit_charge", "reload_speed", "move_speed", "accuracy", "critical_chance", "grenade_hit_charge", "grenade_count", "action_charge", "fire_rate" };
+                        string[] p = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "grenade_damage", "grenade_hit_charge", "reload_speed", "critical_chance", "move_speed", "accuracy", "action_charge", "grenade_damage", "fire_rate", "grenade_count" };
                         return s < p.Length ? p[s] : "grenade_count";
                     }
                     if (t == 3) {
-                        string[] p = { "grenade_count", "assault_damage", "fire_rate", "action_charge", "grenade_damage", "grenade_hit_charge", "reload_speed", "move_speed", "critical_chance", "accuracy", "grenade_chain", "grenade_count", "action_charge", "fire_rate" };
+                        string[] p = { "grenade_count", "assault_damage", "fire_rate", "action_charge", "grenade_damage", "grenade_hit_charge", "reload_speed", "critical_chance", "move_speed", "accuracy", "action_charge", "grenade_damage", "fire_rate", "assault_damage" };
                         return s < p.Length ? p[s] : "grenade_count";
                     }
-                    string[] p4 = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "grenade_damage", "grenade_hit_charge", "reload_speed", "critical_chance", "move_speed", "accuracy", "grenade_count", "grenade_damage", "action_charge", "fire_rate" };
+                    string[] p4 = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "grenade_damage", "grenade_hit_charge", "reload_speed", "critical_chance", "move_speed", "accuracy", "grenade_chain", "grenade_damage", "action_charge", "fire_rate" };
                     return s < p4.Length ? p4[s] : "grenade_count";
                 }
                 if (b == 1)
@@ -256,11 +256,11 @@ namespace NeonVault
                         return s < p.Length ? p[s] : "grenade_radius";
                     }
                     if (t == 1) {
-                        string[] p = { "grenade_radius", "fire_damage", "explosive_damage", "shotgun_damage", "grenade_slow", "reload_speed", "move_speed", "damage_reduction", "accuracy", "fire_damage", "grenade_slow", "explosive_damage", "grenade_radius", "shotgun_damage" };
+                        string[] p = { "grenade_radius", "fire_damage", "explosive_damage", "shotgun_damage", "grenade_slow", "reload_speed", "move_speed", "damage_reduction", "accuracy", "fire_damage", "grenade_radius", "explosive_damage", "grenade_radius", "shotgun_damage" };
                         return s < p.Length ? p[s] : "grenade_radius";
                     }
                     if (t == 2) {
-                        string[] p = { "grenade_radius", "explosive_damage", "fire_damage", "shotgun_damage", "grenade_slow", "damage_reduction", "reload_speed", "move_speed", "accuracy", "explosive_damage", "grenade_slow", "grenade_radius", "fire_damage", "damage_reduction" };
+                        string[] p = { "grenade_radius", "explosive_damage", "fire_damage", "shotgun_damage", "grenade_slow", "damage_reduction", "reload_speed", "move_speed", "accuracy", "explosive_damage", "grenade_radius", "grenade_radius", "fire_damage", "damage_reduction" };
                         return s < p.Length ? p[s] : "grenade_radius";
                     }
                     if (t == 3) {
@@ -270,7 +270,7 @@ namespace NeonVault
                     string[] p4 = { "grenade_radius", "explosive_damage", "fire_damage", "shotgun_damage", "grenade_slow", "damage_reduction", "reload_speed", "move_speed", "accuracy", "explosive_damage", "grenade_radius", "grenade_slow", "fire_damage", "explosive_damage" };
                     return s < p4.Length ? p4[s] : "grenade_radius";
                 }
-                // Branch 2: Force / 威力
+                // Branch 2: Force / 重火力
                 {
                     if (t == 0) {
                         string[] p = { "grenade_damage", "critical_damage", "heavy_damage", "sniper_damage", "grenade_suppress", "critical_chance", "grenade_heal", "accuracy", "reload_speed", "damage_reduction", "grenade_hit_heal", "grenade_damage", "critical_damage", "heavy_damage" };
