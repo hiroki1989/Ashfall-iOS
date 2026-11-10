@@ -23,3 +23,8 @@
 
 ## iOS版の保存先（2026-10-25）
 作業は必ず D:/Unity/Ashfall-iOS を基点とし、新規アセット・ログ・画像・ビルド・一時ファイルはDへ保存する。Development/StorageLocations.md参照。C側の旧PCプロジェクトへiOS変更を複写しない。
+
+## ゼロデグレ・3プロジェクト平仄ルール（2026-11-10）
+- 既存機能のデグレ・先祖返り・コンパイル破壊を絶対に出さない。変更時は必ずスキル `.agents/skills/multi-target-parity-and-no-regression/SKILL.md` を参照し、`verify_parity.py` で iOS / Steam / Demo 全6アセンブリの検証を行うこと。
+- iOS版特有の要素（広告・広告デイリーチェスト・iOS IAP課金UI・Game Centerスタブ・タッチ操作専用UI）は Steam版・Demo版へ絶対に混入させない。
+- 上記固有要素以外のゲームシステム・UI・セーブ分離（`SaveSlotPrefs`）・スキルツリー・バランス・不具合修正は、必ず iOS版 / Steam版 / Demo版 間で平仄を完全一致させること。
