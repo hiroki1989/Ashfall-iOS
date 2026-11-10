@@ -139,7 +139,10 @@ namespace NeonVault
             if(manufacturerRegistry)DrawManufacturerRegistry();
             else if(InventoryOpen){if(petSkillInventoryOpen)DrawPetSkillInventory();else if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
             else if(screen==Screen.Menu)DrawMenu();
-            else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,260,42),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}DrawCollectorDialog();DrawDailyChestAdConfirm();DrawDailyChestReward();}
+            else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,260,42),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}DrawCollectorDialog();#if UNITY_IOS || UNITY_ANDROID
+            DrawDailyChestAdConfirm();DrawDailyChestReward();
+#endif
+            }
             else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawShop();}
             else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
             else

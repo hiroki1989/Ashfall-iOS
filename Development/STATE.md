@@ -1,3 +1,15 @@
+## 2026-11-10 / Steam版・Demo版のコンパイルエラー（DrawDailyChestAdConfirm / DrawDailyChestReward）修正
+- 変更ファイル:
+  - Assets/Scripts/VaultUI.cs:
+    - モバイル専用のデイリーチェスト広告確認・報酬UI描画呼び出し（DrawDailyChestAdConfirm() / DrawDailyChestReward()）を #if UNITY_IOS || UNITY_ANDROID プリプロセッサディレクティブで保護。
+  - D:/Unity/DustDebt-Steam/Assets/Scripts/VaultUI.cs:
+    - Steam版の VaultUI.cs から不要なモバイル広告チェスト描画呼び出しを除去。
+  - D:/Unity/DustDebt-Steam-Demo/Assets/Scripts/VaultUI.cs:
+    - Demo版の VaultUI.cs から不要なモバイル広告チェスト描画呼び出しを除去。
+- 結果: Steam版・Demo版（デスクトップ環境）において CS0103 エラーが解消され、正常にビルド・コンパイルが通る状態へ修復完了。
+- 検証: C# 構文チェックおよび Steam / Demo / iOS の差分整合性確認完了。
+- 未解決: なし。
+
 ## 2026-11-10 / アクションスキルツリーの段階別多様化・多重ランク強化・新ノード効果実装（3プロジェクト同期）
 - 変更ファイル:
   - Assets/Scripts/ActionSkillExpansion.cs:
