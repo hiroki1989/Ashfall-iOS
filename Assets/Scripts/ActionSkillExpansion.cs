@@ -151,267 +151,203 @@ namespace NeonVault
             // Mechanic (k=0)
             if (k == ActionSkillKind.Mechanic)
             {
-                if (t == 0)
+                // Branch 0: Power / 威力
+                if (b == 0)
                 {
-                    // Tier 1: Foundation & Deployment
-                    if (s == 0) return "reload_speed";
-                    if (s == 1) return "accuracy";
-                    if (s == 2) return "turret_damage";
-                    if (s == 3) return "max_health";
-                    if (s == 4) return "fire_rate";
-                    if (s == 5) return "handgun_damage";
-                    if (s == 6) return "turret_rate";
-                    if (s == 7) return "turret_range";
-                    if (s == 8) return "move_speed";
-                    if (s == 9) return "action_charge";
-                    if (s == 10) return "turret_shield_burst"; // Option A: Emergency Barrier (+15 flat shield on deploy)
-                    if (s == 11) return "damage_reduction";
-                    if (s == 12) return "turret_duration";
-                    return "critical_chance";
+                    if (t == 0) {
+                        string[] p = { "turret_damage", "assault_damage", "turret_rate", "critical_chance", "heavy_damage", "accuracy", "turret_near_damage", "action_charge", "critical_damage", "fire_rate", "turret_focus", "reload_speed", "turret_damage", "electric_damage" };
+                        return s < p.Length ? p[s] : "turret_damage";
+                    }
+                    if (t == 1) {
+                        string[] p = { "turret_damage", "heavy_damage", "turret_rate", "critical_damage", "assault_damage", "turret_near_damage", "electric_damage", "action_charge", "accuracy", "fire_rate", "turret_focus", "turret_near_critical", "reload_speed", "critical_chance" };
+                        return s < p.Length ? p[s] : "turret_damage";
+                    }
+                    if (t == 2) {
+                        string[] p = { "turret_damage", "critical_damage", "electric_damage", "heavy_damage", "turret_rate", "assault_damage", "turret_near_damage", "action_charge", "critical_chance", "turret_near_critical", "turret_overclock", "fire_rate", "turret_focus", "turret_element" };
+                        return s < p.Length ? p[s] : "turret_damage";
+                    }
+                    if (t == 3) {
+                        string[] p = { "turret_damage", "turret_rate", "critical_damage", "heavy_damage", "assault_damage", "electric_damage", "turret_near_damage", "critical_chance", "turret_near_critical", "action_charge", "turret_double", "turret_overclock", "turret_focus", "turret_element" };
+                        return s < p.Length ? p[s] : "turret_damage";
+                    }
+                    string[] p4 = { "turret_damage", "critical_damage", "turret_rate", "heavy_damage", "electric_damage", "assault_damage", "turret_near_damage", "critical_chance", "turret_near_critical", "action_charge", "turret_double", "turret_overclock", "turret_focus", "turret_element" };
+                    return s < p4.Length ? p4[s] : "turret_damage";
                 }
-                if (t == 1)
+                // Branch 1: Mobility / 機動
+                if (b == 1)
                 {
-                    // Tier 2: Enhanced Field Mechanics
-                    if (s == 0) return "turret_damage";
-                    if (s == 1) return "assault_damage";
-                    if (s == 2) return "turret_rate";
-                    if (s == 3) return "action_charge";
-                    if (s == 4) return "critical_damage";
-                    if (s == 5) return "shotgun_damage";
-                    if (s == 6) return "turret_near_damage";
-                    if (s == 7) return "turret_near_guard";
-                    if (s == 8) return "reload_speed";
-                    if (s == 9) return "sniper_damage";
-                    if (s == 10) return "turret_near_reload";
-                    if (s == 11) return "turret_focus";
-                    if (s == 12) return "turret_hit_charge";
-                    return "turret_range";
+                    if (t == 0) {
+                        string[] p = { "move_speed", "turret_range", "handgun_damage", "reload_speed", "shotgun_damage", "turret_duration", "accuracy", "action_charge", "move_speed", "fire_rate", "turret_follow", "damage_reduction", "max_health", "turret_rate" };
+                        return s < p.Length ? p[s] : "move_speed";
+                    }
+                    if (t == 1) {
+                        string[] p = { "turret_range", "move_speed", "shotgun_damage", "handgun_damage", "reload_speed", "accuracy", "turret_duration", "action_charge", "fire_rate", "move_speed", "turret_follow", "turret_near_reload", "max_health", "turret_damage" };
+                        return s < p.Length ? p[s] : "turret_range";
+                    }
+                    if (t == 2) {
+                        string[] p = { "turret_follow", "turret_range", "move_speed", "shotgun_damage", "pet_speed", "handgun_damage", "turret_duration", "reload_speed", "action_charge", "accuracy", "turret_follow", "turret_near_reload", "fire_rate", "pet_damage" };
+                        return s < p.Length ? p[s] : "turret_follow";
+                    }
+                    if (t == 3) {
+                        string[] p = { "turret_range", "move_speed", "turret_duration", "shotgun_damage", "handgun_damage", "reload_speed", "accuracy", "action_charge", "fire_rate", "pet_speed", "turret_follow", "turret_double", "turret_near_reload", "pet_damage" };
+                        return s < p.Length ? p[s] : "turret_range";
+                    }
+                    string[] p4 = { "turret_follow", "move_speed", "turret_range", "shotgun_damage", "handgun_damage", "turret_duration", "reload_speed", "action_charge", "accuracy", "pet_speed", "turret_follow", "turret_double", "turret_near_reload", "pet_damage" };
+                    return s < p4.Length ? p4[s] : "turret_follow";
                 }
-                if (t == 2)
-                {
-                    // Tier 3: Tactical Synergies & Mobile Drone
-                    if (s == 0) return "turret_duration";
-                    if (s == 1) return "heavy_damage";
-                    if (s == 2) return "turret_damage";
-                    if (s == 3) return "pet_damage";
-                    if (s == 4) return "turret_rate";
-                    if (s == 5) return "electric_damage";
-                    if (s == 6) return "turret_near_critical";
-                    if (s == 7) return "turret_near_element";
-                    if (s == 8) return "pet_speed";
-                    if (s == 9) return "critical_chance";
-                    if (s == 10) return "turret_follow"; // Keystone: Mobile Turret Drone
-                    if (s == 11) return "damage_reduction";
-                    if (s == 12) return "action_charge";
-                    return "turret_element"; // Keystone: Turret Infusion
+                // Branch 2: Control / 制圧
+                if (t == 0) {
+                    string[] p = { "turret_duration", "damage_reduction", "max_health", "accuracy", "sniper_damage", "turret_near_guard", "action_charge", "reload_speed", "turret_range", "damage_reduction", "turret_shield_burst", "turret_near_reload", "max_health", "turret_near_damage" };
+                    return s < p.Length ? p[s] : "turret_duration";
                 }
-                if (t == 3)
-                {
-                    // Tier 4: Heavy Deployment & Overclock
-                    if (s == 0) return "turret_damage";
-                    if (s == 1) return "turret_rate";
-                    if (s == 2) return "turret_duration";
-                    if (s == 3) return "turret_near_damage";
-                    if (s == 4) return "critical_damage";
-                    if (s == 5) return "reload_speed";
-                    if (s == 6) return "fire_rate";
-                    if (s == 7) return "turret_range";
-                    if (s == 8) return "accuracy";
-                    if (s == 9) return "move_speed";
-                    if (s == 10) return "turret_double"; // Keystone: Twin Turrets (2 deployable simultaneously)
-                    if (s == 11) return "turret_overclock"; // Keystone: Overclock Duration Extension
-                    if (s == 12) return "turret_focus";
-                    return "turret_hit_charge";
+                if (t == 1) {
+                    string[] p = { "turret_duration", "sniper_damage", "turret_near_guard", "damage_reduction", "max_health", "accuracy", "turret_hit_charge", "turret_near_element", "action_charge", "reload_speed", "turret_shield_burst", "turret_near_guard", "turret_range", "turret_near_damage" };
+                    return s < p.Length ? p[s] : "turret_duration";
                 }
-                // Tier 5: Apex Capstone
-                if (s == 0) return "turret_damage";
-                if (s == 1) return "turret_rate";
-                if (s == 2) return "critical_damage";
-                if (s == 3) return "action_charge";
-                if (s == 4) return "turret_duration";
-                if (s == 5) return "turret_near_damage";
-                if (s == 6) return "electric_damage";
-                if (s == 7) return "turret_range";
-                if (s == 8) return "damage_reduction";
-                if (s == 9) return "max_health";
-                if (s == 10) return "turret_double";
-                if (s == 11) return "turret_overclock";
-                if (s == 12) return "turret_follow";
-                return "turret_element";
+                if (t == 2) {
+                    string[] p = { "turret_duration", "damage_reduction", "sniper_damage", "turret_near_guard", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "reload_speed", "turret_element", "turret_near_guard", "turret_shield_burst", "turret_overclock" };
+                    return s < p.Length ? p[s] : "turret_duration";
+                }
+                if (t == 3) {
+                    string[] p = { "turret_duration", "turret_near_guard", "damage_reduction", "sniper_damage", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "reload_speed", "turret_double", "turret_shield_burst", "turret_overclock", "turret_element" };
+                    return s < p.Length ? p[s] : "turret_duration";
+                }
+                string[] p4_c = { "turret_duration", "damage_reduction", "turret_near_guard", "sniper_damage", "max_health", "turret_hit_charge", "turret_near_element", "accuracy", "action_charge", "turret_range", "turret_double", "turret_shield_burst", "turret_overclock", "turret_element" };
+                return s < p4_c.Length ? p4_c[s] : "turret_duration";
             }
 
             // Bomber (k=1)
             if (k == ActionSkillKind.Bomber)
             {
-                if (t == 0)
+                // Branch 0: Barrage / 弾数
+                if (b == 0)
                 {
-                    if (s == 0) return "grenade_damage";
-                    if (s == 1) return "grenade_radius";
-                    if (s == 2) return "reload_speed";
-                    if (s == 3) return "max_health";
-                    if (s == 4) return "explosive_damage";
-                    if (s == 5) return "handgun_damage";
-                    if (s == 6) return "shotgun_damage";
-                    if (s == 7) return "move_speed";
-                    if (s == 8) return "action_charge";
-                    if (s == 9) return "accuracy";
-                    if (s == 10) return "grenade_heal";
-                    if (s == 11) return "damage_reduction";
-                    if (s == 12) return "fire_rate";
-                    return "critical_chance";
+                    if (t == 0) {
+                        string[] p = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "reload_speed", "grenade_damage", "move_speed", "accuracy", "action_charge", "handgun_damage", "grenade_chain", "fire_rate", "grenade_count", "critical_chance" };
+                        return s < p.Length ? p[s] : "grenade_count";
+                    }
+                    if (t == 1) {
+                        string[] p = { "grenade_count", "assault_damage", "fire_rate", "action_charge", "reload_speed", "grenade_damage", "grenade_hit_charge", "accuracy", "move_speed", "handgun_damage", "grenade_chain", "grenade_count", "action_charge", "fire_rate" };
+                        return s < p.Length ? p[s] : "grenade_count";
+                    }
+                    if (t == 2) {
+                        string[] p = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "grenade_damage", "grenade_hit_charge", "reload_speed", "move_speed", "accuracy", "critical_chance", "grenade_chain", "grenade_count", "action_charge", "fire_rate" };
+                        return s < p.Length ? p[s] : "grenade_count";
+                    }
+                    if (t == 3) {
+                        string[] p = { "grenade_count", "assault_damage", "fire_rate", "action_charge", "grenade_damage", "grenade_hit_charge", "reload_speed", "move_speed", "critical_chance", "accuracy", "grenade_chain", "grenade_count", "action_charge", "grenade_element" };
+                        return s < p.Length ? p[s] : "grenade_count";
+                    }
+                    string[] p4 = { "grenade_count", "action_charge", "assault_damage", "fire_rate", "grenade_damage", "grenade_hit_charge", "reload_speed", "critical_chance", "move_speed", "accuracy", "grenade_chain", "grenade_count", "action_charge", "grenade_element" };
+                    return s < p4.Length ? p4[s] : "grenade_count";
                 }
-                if (t == 1)
+                // Branch 1: Radius / 範囲
+                if (b == 1)
                 {
-                    if (s == 0) return "grenade_radius";
-                    if (s == 1) return "grenade_damage";
-                    if (s == 2) return "explosive_damage";
-                    if (s == 3) return "critical_damage";
-                    if (s == 4) return "assault_damage";
-                    if (s == 5) return "heavy_damage";
-                    if (s == 6) return "action_charge";
-                    if (s == 7) return "grenade_suppress";
-                    if (s == 8) return "reload_speed";
-                    if (s == 9) return "move_speed";
-                    if (s == 10) return "grenade_hit_heal";
-                    if (s == 11) return "grenade_slow";
-                    if (s == 12) return "grenade_hit_charge";
-                    return "poison_damage";
+                    if (t == 0) {
+                        string[] p = { "grenade_radius", "explosive_damage", "fire_damage", "shotgun_damage", "reload_speed", "move_speed", "grenade_slow", "accuracy", "damage_reduction", "fire_damage", "grenade_element", "grenade_radius", "shotgun_damage", "explosive_damage" };
+                        return s < p.Length ? p[s] : "grenade_radius";
+                    }
+                    if (t == 1) {
+                        string[] p = { "grenade_radius", "fire_damage", "explosive_damage", "shotgun_damage", "grenade_slow", "reload_speed", "move_speed", "damage_reduction", "accuracy", "fire_damage", "grenade_element", "grenade_slow", "explosive_damage", "grenade_radius" };
+                        return s < p.Length ? p[s] : "grenade_radius";
+                    }
+                    if (t == 2) {
+                        string[] p = { "grenade_radius", "explosive_damage", "fire_damage", "shotgun_damage", "grenade_slow", "damage_reduction", "reload_speed", "move_speed", "accuracy", "explosive_damage", "grenade_element", "grenade_slow", "grenade_radius", "fire_damage" };
+                        return s < p.Length ? p[s] : "grenade_radius";
+                    }
+                    if (t == 3) {
+                        string[] p = { "grenade_radius", "fire_damage", "explosive_damage", "shotgun_damage", "grenade_slow", "damage_reduction", "reload_speed", "move_speed", "accuracy", "explosive_damage", "grenade_element", "grenade_slow", "grenade_radius", "grenade_chain" };
+                        return s < p.Length ? p[s] : "grenade_radius";
+                    }
+                    string[] p4 = { "grenade_radius", "explosive_damage", "fire_damage", "shotgun_damage", "grenade_slow", "damage_reduction", "reload_speed", "move_speed", "accuracy", "explosive_damage", "grenade_element", "grenade_slow", "grenade_radius", "grenade_chain" };
+                    return s < p4.Length ? p4[s] : "grenade_radius";
                 }
-                if (t == 2)
-                {
-                    if (s == 0) return "grenade_count";
-                    if (s == 1) return "grenade_damage";
-                    if (s == 2) return "grenade_radius";
-                    if (s == 3) return "fire_damage";
-                    if (s == 4) return "critical_chance";
-                    if (s == 5) return "explosive_damage";
-                    if (s == 6) return "grenade_suppress";
-                    if (s == 7) return "damage_reduction";
-                    if (s == 8) return "sniper_damage";
-                    if (s == 9) return "action_charge";
-                    if (s == 10) return "grenade_element";
-                    if (s == 11) return "grenade_slow";
-                    if (s == 12) return "grenade_hit_charge";
-                    return "grenade_chain";
+                // Branch 2: Force / 威力
+                if (t == 0) {
+                    string[] p = { "grenade_damage", "critical_damage", "heavy_damage", "sniper_damage", "grenade_suppress", "critical_chance", "grenade_heal", "accuracy", "reload_speed", "damage_reduction", "grenade_hit_heal", "grenade_damage", "critical_damage", "heavy_damage" };
+                    return s < p.Length ? p[s] : "grenade_damage";
                 }
-                if (t == 3)
-                {
-                    if (s == 0) return "grenade_damage";
-                    if (s == 1) return "grenade_count";
-                    if (s == 2) return "grenade_radius";
-                    if (s == 3) return "explosive_damage";
-                    if (s == 4) return "critical_damage";
-                    if (s == 5) return "reload_speed";
-                    if (s == 6) return "fire_rate";
-                    if (s == 7) return "grenade_hit_heal";
-                    if (s == 8) return "move_speed";
-                    if (s == 9) return "accuracy";
-                    if (s == 10) return "grenade_chain";
-                    if (s == 11) return "grenade_element";
-                    if (s == 12) return "grenade_count";
-                    return "grenade_suppress";
+                if (t == 1) {
+                    string[] p = { "grenade_damage", "heavy_damage", "critical_damage", "sniper_damage", "grenade_suppress", "grenade_heal", "critical_chance", "damage_reduction", "accuracy", "reload_speed", "grenade_hit_heal", "grenade_suppress", "grenade_damage", "critical_damage" };
+                    return s < p.Length ? p[s] : "grenade_damage";
                 }
-                // Tier 5: Apex Capstone
-                if (s == 0) return "grenade_damage";
-                if (s == 1) return "grenade_radius";
-                if (s == 2) return "grenade_count";
-                if (s == 3) return "explosive_damage";
-                if (s == 4) return "critical_damage";
-                if (s == 5) return "action_charge";
-                if (s == 6) return "grenade_chain";
-                if (s == 7) return "grenade_element";
-                if (s == 8) return "damage_reduction";
-                if (s == 9) return "max_health";
-                if (s == 10) return "grenade_chain";
-                if (s == 11) return "grenade_count";
-                if (s == 12) return "grenade_suppress";
-                return "grenade_hit_charge";
+                if (t == 2) {
+                    string[] p = { "grenade_damage", "critical_damage", "heavy_damage", "sniper_damage", "grenade_suppress", "grenade_heal", "critical_chance", "grenade_hit_heal", "damage_reduction", "accuracy", "grenade_chain", "grenade_suppress", "grenade_hit_heal", "grenade_damage" };
+                    return s < p.Length ? p[s] : "grenade_damage";
+                }
+                if (t == 3) {
+                    string[] p = { "grenade_damage", "heavy_damage", "critical_damage", "sniper_damage", "grenade_suppress", "grenade_heal", "critical_chance", "damage_reduction", "grenade_hit_heal", "accuracy", "grenade_chain", "grenade_suppress", "grenade_hit_heal", "critical_damage" };
+                    return s < p.Length ? p[s] : "grenade_damage";
+                }
+                string[] p4_f = { "grenade_damage", "critical_damage", "heavy_damage", "sniper_damage", "grenade_suppress", "grenade_heal", "critical_chance", "damage_reduction", "grenade_hit_heal", "accuracy", "grenade_chain", "grenade_suppress", "grenade_hit_heal", "grenade_damage" };
+                return s < p4_f.Length ? p4_f[s] : "grenade_damage";
             }
 
             // Medic (k=2)
-            if (t == 0)
+            // Branch 0: Healing / 回復
+            if (b == 0)
             {
-                if (s == 0) return "medic_heal";
-                if (s == 1) return "max_health";
-                if (s == 2) return "medic_radius";
-                if (s == 3) return "damage_reduction";
-                if (s == 4) return "move_speed";
-                if (s == 5) return "reload_speed";
-                if (s == 6) return "handgun_damage";
-                if (s == 7) return "medic_duration";
-                if (s == 8) return "action_charge";
-                if (s == 9) return "accuracy";
-                if (s == 10) return "medic_guard";
-                if (s == 11) return "fire_rate";
-                if (s == 12) return "medic_field_damage";
-                return "critical_chance";
+                if (t == 0) {
+                    string[] p = { "medic_heal", "max_health", "reload_speed", "action_charge", "handgun_damage", "damage_reduction", "medic_purge", "accuracy", "move_speed", "max_health", "medic_purge", "medic_heal", "max_health", "action_charge" };
+                    return s < p.Length ? p[s] : "medic_heal";
+                }
+                if (t == 1) {
+                    string[] p = { "medic_heal", "max_health", "damage_reduction", "action_charge", "reload_speed", "medic_purge", "handgun_damage", "move_speed", "accuracy", "max_health", "medic_purge", "medic_heal", "damage_reduction", "action_charge" };
+                    return s < p.Length ? p[s] : "medic_heal";
+                }
+                if (t == 2) {
+                    string[] p = { "medic_heal", "max_health", "damage_reduction", "action_charge", "medic_purge", "reload_speed", "move_speed", "accuracy", "max_health", "handgun_damage", "medic_purge", "medic_heal", "damage_reduction", "action_charge" };
+                    return s < p.Length ? p[s] : "medic_heal";
+                }
+                if (t == 3) {
+                    string[] p = { "medic_heal", "max_health", "action_charge", "damage_reduction", "medic_purge", "reload_speed", "move_speed", "accuracy", "max_health", "handgun_damage", "medic_purge", "medic_heal", "action_charge", "damage_reduction" };
+                    return s < p.Length ? p[s] : "medic_heal";
+                }
+                string[] p4 = { "medic_heal", "max_health", "damage_reduction", "action_charge", "medic_purge", "reload_speed", "move_speed", "accuracy", "max_health", "handgun_damage", "medic_purge", "medic_heal", "action_charge", "damage_reduction" };
+                return s < p4.Length ? p4[s] : "medic_heal";
             }
-            if (t == 1)
+            // Branch 1: Reach / 範囲
+            if (b == 1)
             {
-                if (s == 0) return "medic_radius";
-                if (s == 1) return "medic_heal";
-                if (s == 2) return "medic_duration";
-                if (s == 3) return "damage_reduction";
-                if (s == 4) return "max_health";
-                if (s == 5) return "medic_field_reload";
-                if (s == 6) return "medic_field_damage";
-                if (s == 7) return "action_charge";
-                if (s == 8) return "move_speed";
-                if (s == 9) return "shotgun_damage";
-                if (s == 10) return "medic_guard";
-                if (s == 11) return "medic_damage";
-                if (s == 12) return "medic_field_charge";
-                return "pet_speed";
+                if (t == 0) {
+                    string[] p = { "medic_radius", "move_speed", "assault_damage", "accuracy", "reload_speed", "pet_speed", "medic_duration", "fire_rate", "move_speed", "action_charge", "medic_follow", "medic_radius", "assault_damage", "move_speed" };
+                    return s < p.Length ? p[s] : "medic_radius";
+                }
+                if (t == 1) {
+                    string[] p = { "medic_radius", "move_speed", "assault_damage", "pet_speed", "reload_speed", "accuracy", "medic_duration", "fire_rate", "action_charge", "move_speed", "medic_follow", "medic_radius", "assault_damage", "fire_rate" };
+                    return s < p.Length ? p[s] : "medic_radius";
+                }
+                if (t == 2) {
+                    string[] p = { "medic_follow", "medic_radius", "move_speed", "assault_damage", "pet_speed", "pet_damage", "medic_duration", "reload_speed", "accuracy", "action_charge", "medic_follow", "medic_radius", "assault_damage", "fire_rate" };
+                    return s < p.Length ? p[s] : "medic_follow";
+                }
+                if (t == 3) {
+                    string[] p = { "medic_radius", "move_speed", "medic_duration", "assault_damage", "pet_speed", "pet_damage", "reload_speed", "accuracy", "fire_rate", "action_charge", "medic_follow", "medic_radius", "assault_damage", "fire_rate" };
+                    return s < p.Length ? p[s] : "medic_radius";
+                }
+                string[] p4 = { "medic_follow", "medic_radius", "move_speed", "assault_damage", "pet_speed", "pet_damage", "medic_duration", "reload_speed", "accuracy", "action_charge", "medic_follow", "medic_radius", "assault_damage", "fire_rate" };
+                return s < p4.Length ? p4[s] : "medic_follow";
             }
-            if (t == 2)
-            {
-                if (s == 0) return "medic_duration";
-                if (s == 1) return "medic_heal";
-                if (s == 2) return "medic_radius";
-                if (s == 3) return "medic_damage";
-                if (s == 4) return "critical_damage";
-                if (s == 5) return "assault_damage";
-                if (s == 6) return "medic_field_damage";
-                if (s == 7) return "medic_field_reload";
-                if (s == 8) return "poison_damage";
-                if (s == 9) return "action_charge";
-                if (s == 10) return "medic_follow"; // Keystone: Mobile Healing Drone
-                if (s == 11) return "medic_debuff";
-                if (s == 12) return "medic_guard";
-                return "medic_purge";
+            // Branch 2: Support / 支援
+            if (t == 0) {
+                string[] p = { "medic_duration", "damage_reduction", "medic_guard", "medic_debuff", "medic_field_damage", "medic_field_reload", "poison_damage", "sniper_damage", "action_charge", "accuracy", "medic_guard", "medic_debuff", "medic_duration", "damage_reduction" };
+                return s < p.Length ? p[s] : "medic_duration";
             }
-            if (t == 3)
-            {
-                if (s == 0) return "medic_heal";
-                if (s == 1) return "medic_duration";
-                if (s == 2) return "medic_radius";
-                if (s == 3) return "damage_reduction";
-                if (s == 4) return "max_health";
-                if (s == 5) return "medic_field_charge";
-                if (s == 6) return "medic_damage";
-                if (s == 7) return "critical_chance";
-                if (s == 8) return "reload_speed";
-                if (s == 9) return "move_speed";
-                if (s == 10) return "medic_purge";
-                if (s == 11) return "medic_follow";
-                if (s == 12) return "medic_debuff";
-                return "medic_guard";
+            if (t == 1) {
+                string[] p = { "medic_duration", "medic_debuff", "damage_reduction", "medic_guard", "medic_field_damage", "medic_field_reload", "medic_field_charge", "poison_damage", "sniper_damage", "action_charge", "medic_guard", "medic_debuff", "medic_duration", "medic_field_damage" };
+                return s < p.Length ? p[s] : "medic_duration";
             }
-            // Tier 5: Apex Capstone
-            if (s == 0) return "medic_heal";
-            if (s == 1) return "medic_duration";
-            if (s == 2) return "medic_radius";
-            if (s == 3) return "max_health";
-            if (s == 4) return "damage_reduction";
-            if (s == 5) return "medic_field_damage";
-            if (s == 6) return "medic_purge";
-            if (s == 7) return "medic_debuff";
-            if (s == 8) return "action_charge";
-            if (s == 9) return "critical_damage";
-            if (s == 10) return "medic_purge";
-            if (s == 11) return "medic_follow";
-            if (s == 12) return "medic_debuff";
-            return "medic_field_charge";
+            if (t == 2) {
+                string[] p = { "medic_duration", "medic_guard", "damage_reduction", "medic_debuff", "medic_field_damage", "medic_field_reload", "medic_field_charge", "poison_damage", "sniper_damage", "action_charge", "medic_debuff", "medic_guard", "medic_duration", "medic_field_damage" };
+                return s < p.Length ? p[s] : "medic_duration";
+            }
+            if (t == 3) {
+                string[] p = { "medic_duration", "medic_debuff", "damage_reduction", "medic_guard", "medic_field_damage", "medic_field_reload", "medic_field_charge", "poison_damage", "sniper_damage", "action_charge", "medic_debuff", "medic_guard", "medic_duration", "medic_field_damage" };
+                return s < p.Length ? p[s] : "medic_duration";
+            }
+            string[] p4_s = { "medic_duration", "medic_guard", "damage_reduction", "medic_debuff", "medic_field_damage", "medic_field_reload", "medic_field_charge", "poison_damage", "sniper_damage", "action_charge", "medic_debuff", "medic_guard", "medic_duration", "medic_field_damage" };
+            return s < p4_s.Length ? p4_s[s] : "medic_duration";
         }
 
         static float ExtraBaseAmount(string id, int tier)
