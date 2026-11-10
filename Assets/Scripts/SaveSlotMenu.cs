@@ -85,20 +85,36 @@ namespace NeonVault
             }
             return true;
         }
+        void ResetRuntimeStateForSlot()
+        {
+            saveSlotInitialized=false;
+            actionSkillLoaded=false;
+            overworldStateLoaded=false;
+            debtPaid=0; debtIntroSeen=true; unlockedDebtSkills.Clear();
+            Weapons.Clear(); ArmorInventory.Clear(); MeleeWeaponInventory.Clear();
+            ArtifactInventory.Clear(); Array.Clear(EquippedArtifacts, 0, EquippedArtifacts.Length);
+            Array.Clear(EquippedArmor, 0, EquippedArmor.Length);
+            clearedExpeditionStages.Clear(); shopPurchased.Clear();
+            npcConversation=0; npcBeat=0;
+            DungeonIndex=0; HighestUnlocked=0; Credits=0; ExpeditionTokens=0;
+            SelectedStageId=-1;
+        }
+
         void StartSelectedSaveSlot(int slot,bool resume)
         {
             if(resume&&!SaveSlotPrefs.SlotHasCheckpoint(slot))return;
-            bool reload=saveSlotInitialized&&slot!=SaveSlotPrefs.Current;
+            bool slotChanged=saveSlotInitialized&&slot!=SaveSlotPrefs.Current;
             SaveSlotPrefs.Select(slot);
             cores=SaveSlotPrefs.GetInt("Vault.Cores",0);rank=SaveSlotPrefs.GetInt("Vault.Rank",0);
-            if(reload)
+            if(slotChanged)
             {
                 saveSlotStartAfterReload=resume?2:1;
                 SceneManager.sceneLoaded+=OnSaveSlotSceneLoaded;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 return;
             }
-            if(!saveSlotInitialized){ProgressionInitialize();LoadInventory();saveSlotInitialized=true;}
+            ResetRuntimeStateForSlot();
+            ProgressionInitialize();LoadInventory();saveSlotInitialized=true;
             saveSlotMenuOpen=false;
             if(resume&&HasSavedRun&&ResumeSavedRun())return;
             ContinueOverworldGame();

@@ -217,6 +217,7 @@ namespace NeonVault
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();
             var cards=EqCards(merchant);var selected=cards.Find(c=>c.key==eqSelectedKey);if(selected==null&&cards.Count>0){selected=cards[0];eqSelectedKey=selected.key;eqDetailScroll=Vector2.zero;}
+            if(!merchant&&selected!=null&&(Input.GetKeyDown(KeyCode.X)||(Input.GetKeyDown(KeyCode.JoystickButton2))||SteamController.InventoryToggleJunk)){string jKey=JunkItemKey(selected.item);ToggleJunk(jKey);PlayUserSound("tab",.1f);}
             float gridHeight=766-gridTop;
             const float rowStep=220;
             eqGridExtent=Mathf.Max(gridHeight,cards.Count*rowStep);

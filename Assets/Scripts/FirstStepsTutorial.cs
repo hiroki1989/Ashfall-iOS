@@ -160,9 +160,12 @@ namespace NeonVault
             string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (screen == Screen.Hub ? "街へ出て、01のダンジョンに再挑戦しよう。" : IsOverworld ? "目的地へ向かい、01のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : stage == 4 ? "拠点に戻り、セラに不要な装備を売ろう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済しよう。" : stage == 8 ? "目的地をたどり、最も近い別の拠点へ向かおう。" : "ブリッグスに話しかけ、スキルポイントでアクションスキルを強化しよう。";
             if (screen == Screen.Hub || screen == Screen.Playing)
             {
-                Box(new Rect(410,76,620,82),new Color(.02f,.03f,.04f,.88f));
-                Text(430,83,T("FIRST STEPS","最初の一歩"),small,Gold,580);
-                Text(430,109,T(en,ja),new GUIStyle(small){fontSize=20,wordWrap=true},Color.white,580);
+                float bx = (screen == Screen.Hub) ? 440f : 16f;
+                float by = (screen == Screen.Hub) ? 18f : (IsOverworld ? 92f : 18f);
+                Box(new Rect(bx,by,560,68),new Color(.02f,.03f,.04f,.92f));
+                Box(new Rect(bx,by,3,68),Gold);
+                Text(bx+16,by+6,T("FIRST STEPS","最初の一歩"),small,Gold,530);
+                Text(bx+16,by+28,T(en,ja),new GUIStyle(small){fontSize=18,wordWrap=true},Color.white,530);
             }
         }
     }

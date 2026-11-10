@@ -28,6 +28,7 @@ namespace NeonVault
                 "Vault.LegendaryWeaponTutorial.v1", "Vault.FirstSteps.v1", "Vault.FirstSteps.target.v1", "Vault.DebtBoss.defeated.v1",
                 "Vault.Cores", "Vault.Rank", "Vault.FirstBossLegendaryD0", "Vault.SeraIntro", "Vault.BriggsIntro",
                 "Vault.Pet.Adopted.v1", "Vault.Pet.IonaIntro.v1", "Vault.PetSkills.v1.OverworldCooldown",
+                "Vault.PetSkills.v1.Points", "Vault.PetSkills.v1.Equipped",
                 "Vault.Junk.v1", "Vault.Stash.v1", "Vault.Stash.Move.v1", "Vault.Stash.Upgrade.v1"
             };
             foreach(var k in knownKeys) UnityEngine.PlayerPrefs.DeleteKey(prefix+k);
@@ -35,12 +36,16 @@ namespace NeonVault
             {
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.FactionBoss.Intro."+i);
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.DungeonVisited."+i);
+                UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.DungeonBossFought."+i);
+                UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.LandmarkBossDefeated."+i);
+                UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.LandmarkBossFought."+i);
             }
             for(int b=0;b<10;b++) UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.BossRelic.Defeated."+b);
             for(int t=0;t<3;t++) for(int s=0;s<10;s++)
             {
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.PetSkills.v1.T"+t+".S"+s+".Unlocked");
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.PetSkills.v1.T"+t+".S"+s+".Rank");
+                UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.PetSkills.v1.Rank."+t+"."+s);
             }
             EquipmentDiscovery.ResetSlotCache();
             UnityEngine.PlayerPrefs.Save();

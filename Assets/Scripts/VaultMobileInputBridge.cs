@@ -14,7 +14,8 @@ namespace NeonVault
         public static Vector3 ToWorldMovement(Vector2 screenInput)
         {
             var value=Vector2.ClampMagnitude(screenInput,1);
-            return new Vector3(value.y,0,-value.x);
+            const float invSqrt2 = 0.7071068f;
+            return new Vector3((value.x + value.y) * invSqrt2, 0, (value.y - value.x) * invSqrt2);
         }
     }
     public partial class VaultGame

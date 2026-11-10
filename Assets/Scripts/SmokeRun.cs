@@ -1521,9 +1521,9 @@ namespace NeonVault
             }
             Check(Mathf.Abs(Mathf.DeltaAngle(game.GameCamera.transform.eulerAngles.y,45))<.1f&&Mathf.Abs(game.GameCamera.transform.eulerAngles.x-35.264f)<.1f,"quarter view camera angles");
             var diagonalForward=game.ScreenMovement(0,1);var diagonalBackward=game.ScreenMovement(0,-1);
-            Check(Vector3.Dot(diagonalForward,game.GameCamera.transform.right)>.5f&&Vector3.Dot(diagonalForward,game.GameCamera.transform.up)>.3f,"forward input follows the upper-right quarter-view ground axis");
-            Check(Vector3.Dot(diagonalBackward,game.GameCamera.transform.right)<-.5f&&Vector3.Dot(diagonalBackward,game.GameCamera.transform.up)<-.3f,"backward input follows the lower-left quarter-view ground axis");
-            Check(Vector3.Distance(game.ScreenMovement(1,0),Vector3.back)<.001f&&Mathf.Abs(game.ScreenMovement(1,1).magnitude-1)<.001f,"lateral input follows the other ground axis and diagonal speed stays normalized");
+            Check(Vector3.Dot(diagonalForward,game.GameCamera.transform.up)>.5f,"forward input moves straight up on screen");
+            Check(Vector3.Dot(diagonalBackward,game.GameCamera.transform.up)<-.5f,"backward input moves straight down on screen");
+            Check(Vector3.Dot(game.ScreenMovement(1,0),game.GameCamera.transform.right)>.9f&&Mathf.Abs(game.ScreenMovement(1,1).magnitude-1)<.001f,"lateral input moves straight right on screen and speed stays normalized");
             Check(game.PlayerAppearance!=null&&(game.PlayerAppearance.GetComponent<LayeredPlayer2D>()!=null?game.PlayerAppearance.GetComponent<LayeredPlayer2D>().Ready:VisibleMeshes(game.PlayerAppearance.transform)>=10),"real equipped survivor art active");
             foreach(var enemy in game.Enemies)
             {

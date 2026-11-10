@@ -15,7 +15,11 @@ namespace NeonVault
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
         public Vector3 ScreenMovement(float horizontal,float vertical)
-        { return new Vector3(vertical,0,-horizontal).normalized; }
+        {
+            if(Mathf.Abs(horizontal)<.001f&&Mathf.Abs(vertical)<.001f)return Vector3.zero;
+            const float invSqrt2 = 0.7071068f;
+            return new Vector3((horizontal + vertical) * invSqrt2, 0, (vertical - horizontal) * invSqrt2).normalized;
+        }
         public readonly List<Foe> Enemies=new List<Foe>();
         public readonly List<Vector2Int> route=new List<Vector2Int>();
         readonly List<Rect> obstacles=new List<Rect>();
@@ -389,11 +393,26 @@ namespace NeonVault
                 return;
             }
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
-            if(InventoryOpen){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){if(petSkillInventoryOpen)petSkillInventoryOpen=false;else ToggleInventory();}return;}
+                        bool menuBack = VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape) || (SteamController.Active && SteamController.BackPressed);
+            if(InventoryOpen)
+            {
+                if(menuBack)
+                {
+                    if(!string.IsNullOrEmpty(pendingSaleKey)){pendingSaleKey=null;eqPendingDiscard=null;}
+                    else if(confirmJunkSale){confirmJunkSale=false;}
+                    else if(actionSkillInventoryTree){actionSkillInventoryTree=false;}
+                    else if(actionSkillInventoryOpen){actionSkillInventoryOpen=false;}
+                    else if(petSkillInventoryOpen){petSkillInventoryOpen=false;}
+                    else if(debtSkillTreePage){debtSkillTreePage=false;}
+                    else if(manufacturerRegistry){manufacturerRegistry=false;}
+                    else {ToggleInventory();}
+                }
+                return;
+            }
             if(MobileTouchControls.Enabled&&manufacturerRegistry)return;
             if(screen==Screen.Hub){UpdateHub();return;}
-            if(screen==Screen.DungeonSelect&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){CloseOverworldMap();return;}
-            if(screen==Screen.Shop&&VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){screen=Screen.Hub;return;}
+            if(screen==Screen.DungeonSelect&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)||(SteamController.Active&&SteamController.BackPressed))){CloseOverworldMap();return;}
+            if(screen==Screen.Shop&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)||(SteamController.Active&&SteamController.BackPressed))){if(!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null){pendingSaleKey=null;eqPendingDiscard=null;}else if(confirmJunkSale){confirmJunkSale=false;}else if(debtSkillTreePage){debtSkillTreePage=false;}else{screen=Screen.Hub;}return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))
             {
                 if(screen==Screen.Playing || screen==Screen.Hub) { screen=Screen.Pause; Time.timeScale=0; }
@@ -402,10 +421,10 @@ namespace NeonVault
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
             if(worldTransitionPending||!Active)return;
             TickArtifacts(Time.deltaTime);TickActionSkill(Time.deltaTime);
-            if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill))TryUseActionSkill();
+            if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill)||(SteamController.Active&&SteamController.Pressed(MobileAction.Skill)))TryUseActionSkill();
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
-            if(VaultMobileInputBridge.Pressed(MobileAction.SwitchActionSkill,KeyCode.V)||(!VaultMobileInputBridge.Enabled&&Input.GetKeyDown(KeyCode.JoystickButton9)))CycleActionSkill();
+            if(VaultMobileInputBridge.Pressed(MobileAction.SwitchActionSkill,KeyCode.C)||(!VaultMobileInputBridge.Enabled&&Input.GetKeyDown(KeyCode.JoystickButton9)))CycleActionSkill();
             if(Time.time-lastHurt>3&&HealthRegen>0)HealPlayer(HealthRegen*Time.deltaTime);
             runTime+=Time.deltaTime; toastTimer-=Time.deltaTime; fireTimer-=Time.deltaTime; invincible-=Time.deltaTime; dodgeCooldown-=Time.deltaTime;debtChainTimer-=Time.deltaTime;if(debtChainTimer<=0)debtChainCount=0;
             Layout.Discover(PlayerPosition,IsOverworld?1.5f:5f);navigationTimer-=Time.deltaTime;if(navigationTimer<=0){if(!IsOverworld||Layout.ToCell(PlayerPosition)!=lastNavigationCell){Layout.BuildDistanceField(PlayerPosition);lastNavigationCell=Layout.ToCell(PlayerPosition); }navigationTimer=IsOverworld?.75f:.25f;}
