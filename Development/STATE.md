@@ -1,3 +1,12 @@
+## 2026-11-10 / iOSバージョンおよびビルド番号を61へ更新
+- 変更ファイル:
+  - ProjectSettings/ProjectSettings.asset:
+    - bundleVersion: 60 -> 61
+    - buildNumber.iPhone: 60 -> 61
+- 結果: App Store Connectへの重複エラーを回避し、次期ビルド（バージョン61 / ビルド61）のビルド・アップロード準備を完了。
+- 検証: Git diff 確認完了。
+- 未解決: なし。
+
 ## 2026-11-10 / Steam版・Demo版のコンパイルエラー（DrawDailyChestAdConfirm / DrawDailyChestReward）修正
 - 変更ファイル:
   - Assets/Scripts/VaultUI.cs:
