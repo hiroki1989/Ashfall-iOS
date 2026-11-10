@@ -191,7 +191,7 @@ namespace NeonVault
                 if (bundledFont != null) textStyle.font = bundledFont;
                 if (combat || hub) Stick(MoveRect, Movement, false);
                 if (combat || hub) Stick(AimRect, aimStick, fingers.ContainsValue(-2));
-                string[] labels = VaultLanguage.Japanese ? new[] { "リロード", "拾う", "回避", "近接", "切替", "調べる", "装備", "停止", "射撃", "", "スキル切替" } : new[] { "RELOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE", "", "SKILL" };
+                string[] labels = VaultLanguage.Japanese ? new[] { "リロード", "拾う", "回避", "近接", "装備切替", "調べる", "装備", "停止", "射撃", "", "スキル切替" } : new[] { "RELOAD", "TAKE", "DODGE", "MELEE", "SWAP", "USE", "GEAR", "PAUSE", "FIRE", "", "SKILL" };
                 for (int i = 0; i < buttons.Length; i++) if (Visible(i))
                 {
                     if (i == (int)MobileAction.Skill) continue; // Drawn by the action skill HUD.

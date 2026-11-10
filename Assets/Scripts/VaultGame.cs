@@ -405,7 +405,7 @@ namespace NeonVault
             if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill))TryUseActionSkill();
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
-            if(VaultMobileInputBridge.Pressed(MobileAction.SwitchActionSkill,KeyCode.X)||(!VaultMobileInputBridge.Enabled&&Input.GetKeyDown(KeyCode.JoystickButton2)))CycleActionSkill();
+            if(VaultMobileInputBridge.Pressed(MobileAction.SwitchActionSkill,KeyCode.V)||(!VaultMobileInputBridge.Enabled&&Input.GetKeyDown(KeyCode.JoystickButton9)))CycleActionSkill();
             if(Time.time-lastHurt>3&&HealthRegen>0)HealPlayer(HealthRegen*Time.deltaTime);
             runTime+=Time.deltaTime; toastTimer-=Time.deltaTime; fireTimer-=Time.deltaTime; invincible-=Time.deltaTime; dodgeCooldown-=Time.deltaTime;debtChainTimer-=Time.deltaTime;if(debtChainTimer<=0)debtChainCount=0;
             Layout.Discover(PlayerPosition,IsOverworld?1.5f:5f);navigationTimer-=Time.deltaTime;if(navigationTimer<=0){if(!IsOverworld||Layout.ToCell(PlayerPosition)!=lastNavigationCell){Layout.BuildDistanceField(PlayerPosition);lastNavigationCell=Layout.ToCell(PlayerPosition); }navigationTimer=IsOverworld?.75f:.25f;}

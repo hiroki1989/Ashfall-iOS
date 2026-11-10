@@ -721,7 +721,7 @@ namespace NeonVault
             // Cycle hint next to plate
             Rect cycleBadge = new Rect(r.xMax+6,r.y+12,88,40);
             FieldUIArt.Plate(cycleBadge,false);
-            ActionLabel(cycleBadge,T("[X / Ⓑ]\nSWITCH","[X / Ⓑ]\n切替"),Mist,11,TextAnchor.MiddleCenter);
+            ActionLabel(cycleBadge,T("[V / Ⓡ]\nSWITCH","[V / Ⓡ]\n切替"),Mist,11,TextAnchor.MiddleCenter);
             bool previous=GUI.enabled;GUI.enabled=previous&&ready;
             if(GUI.Button(r,GUIContent.none,GUIStyle.none))TryUseActionSkill();
             GUI.enabled=previous;
