@@ -393,7 +393,11 @@ namespace NeonVault
                 return;
             }
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
-                        bool menuBack = VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape) || (SteamController.Active && SteamController.BackPressed);
+            bool menuBack = VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)
+#if !UNITY_IOS && !UNITY_ANDROID
+                || (SteamController.Active && SteamController.BackPressed)
+#endif
+                ;
             if(InventoryOpen)
             {
                 if(menuBack)
@@ -411,8 +415,16 @@ namespace NeonVault
             }
             if(MobileTouchControls.Enabled&&manufacturerRegistry)return;
             if(screen==Screen.Hub){UpdateHub();return;}
-            if(screen==Screen.DungeonSelect&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)||(SteamController.Active&&SteamController.BackPressed))){CloseOverworldMap();return;}
-            if(screen==Screen.Shop&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)||(SteamController.Active&&SteamController.BackPressed))){if(!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null){pendingSaleKey=null;eqPendingDiscard=null;}else if(confirmJunkSale){confirmJunkSale=false;}else if(debtSkillTreePage){debtSkillTreePage=false;}else{screen=Screen.Hub;}return;}
+            if(screen==Screen.DungeonSelect&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)
+#if !UNITY_IOS && !UNITY_ANDROID
+                ||(SteamController.Active&&SteamController.BackPressed)
+#endif
+                )){CloseOverworldMap();return;}
+            if(screen==Screen.Shop&&(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)
+#if !UNITY_IOS && !UNITY_ANDROID
+                ||(SteamController.Active&&SteamController.BackPressed)
+#endif
+                )){if(!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null){pendingSaleKey=null;eqPendingDiscard=null;}else if(confirmJunkSale){confirmJunkSale=false;}else if(debtSkillTreePage){debtSkillTreePage=false;}else{screen=Screen.Hub;}return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))
             {
                 if(screen==Screen.Playing || screen==Screen.Hub) { screen=Screen.Pause; Time.timeScale=0; }
@@ -421,7 +433,11 @@ namespace NeonVault
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
             if(worldTransitionPending||!Active)return;
             TickArtifacts(Time.deltaTime);TickActionSkill(Time.deltaTime);
-            if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill)||(SteamController.Active&&SteamController.Pressed(MobileAction.Skill)))TryUseActionSkill();
+            if(Input.GetKeyDown(KeyCode.V)||MobileTouchControls.Consume(MobileAction.Skill)
+#if !UNITY_IOS && !UNITY_ANDROID
+                ||(SteamController.Active&&SteamController.Pressed(MobileAction.Skill))
+#endif
+                )TryUseActionSkill();
             float wheel=VaultMobileInputBridge.Enabled?0:Input.mouseScrollDelta.y;if(Mathf.Abs(wheel)>.01f)CycleWeapon(wheel>0?-1:1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchWeapon,KeyCode.Q))CycleWeapon(-1);
             if(VaultMobileInputBridge.Pressed(MobileAction.SwitchActionSkill,KeyCode.C)||(!VaultMobileInputBridge.Enabled&&Input.GetKeyDown(KeyCode.JoystickButton9)))CycleActionSkill();

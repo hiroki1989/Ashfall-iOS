@@ -37,11 +37,13 @@ namespace NeonVault
             string[] tabs={T("PROFILE","企業概要"),T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
             for(int i=0;i<5;i++)if(MobileButton(new Rect(30+i*278,140,265,110),tabs[i])){manufacturerKind=i-1;mobileCatalogPage=0;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
             if(manufacturerKind<0){DrawCompanyProfile(maker,new Rect(30,270,1370,595),true);return;}
-            int pages=Mathf.Max(1,Mathf.CeilToInt(manufacturerProducts.Count/2f));mobileCatalogPage=Mathf.Clamp(mobileCatalogPage,0,pages-1);
-            for(int row=0;row<2;row++)
+            int pages=Mathf.Max(1,Mathf.CeilToInt(manufacturerProducts.Count/4f));mobileCatalogPage=Mathf.Clamp(mobileCatalogPage,0,pages-1);
+            for(int cell=0;cell<4;cell++)
             {
-                int index=mobileCatalogPage*2+row;if(index>=manufacturerProducts.Count)break;object item=manufacturerProducts[index];float y=275+row*240;Panel(new Rect(30,y,1370,225),ManufacturerCatalog.Color(maker));
-                Rect icon=new Rect(45,y+20,170,170);bool known=EquipmentDiscovery.Known(item);string name="?",detail="?";
+                int index=mobileCatalogPage*4+cell;if(index>=manufacturerProducts.Count)break;object item=manufacturerProducts[index];
+                int col=cell%2,row=cell/2;float x=30+col*695,y=268+row*250;
+                Panel(new Rect(x,y,675,238),ManufacturerCatalog.Color(maker));
+                Rect icon=new Rect(x+16,y+16,136,136);bool known=EquipmentDiscovery.Known(item);string name="?",detail="";
                 if(known)
                 {
                     if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);}
@@ -50,8 +52,14 @@ namespace NeonVault
                     else{var melee=(MeleeWeaponItem)item;ManufacturerPortraits.Melee(icon,melee);name=MeleeWeaponCatalog.Name(melee);}
                     detail=CatalogEffect(item);
                 }
-                else MobileCopyAt(95,y+60,"?",Mist,100);
-                MobileCopyAt(240,y+15,name,Gold,1125);MobileCopyAt(240,y+83,detail,Mist,1125);
+                else MobileCopyAt(x+66,y+56,"?",Mist,100);
+                MobileCopyAt(x+170,y+16,name,Gold,490);
+                if(known&&!string.IsNullOrEmpty(detail))
+                {
+                    GUIStyle effStyle=new GUIStyle(label){fontSize=24,wordWrap=true,clipping=TextClipping.Clip,richText=true};
+                    float effH=Mathf.Min(116,effStyle.CalcHeight(new GUIContent(detail),490)+6);
+                    GUI.color=Mist;GUI.Label(new Rect(x+170,y+106,490,effH),detail,effStyle);GUI.color=Color.white;
+                }
             }
             if(MobileButton(new Rect(30,780,350,110),T("PREVIOUS","前のページ")))mobileCatalogPage=Mathf.Max(0,mobileCatalogPage-1);
             MobileCopyAt(580,810,(mobileCatalogPage+1)+" / "+pages,Cyan,250);

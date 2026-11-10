@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -93,9 +92,17 @@ namespace NeonVault
             overworldStateLoaded=false;
             debtPaid=0; debtIntroSeen=true; unlockedDebtSkills.Clear();
             Weapons.Clear(); ArmorInventory.Clear(); MeleeWeaponInventory.Clear();
-            ArtifactInventory.Clear(); Array.Clear(EquippedArtifacts, 0, EquippedArtifacts.Length);
-            Array.Clear(EquippedArmor, 0, EquippedArmor.Length);
+            ArtifactInventory.Clear(); System.Array.Clear(EquippedArtifacts, 0, EquippedArtifacts.Length);
+            System.Array.Clear(EquippedArmor, 0, EquippedArmor.Length);
             clearedExpeditionStages.Clear(); shopPurchased.Clear();
+            System.Array.Clear(actionSkillRanks, 0, actionSkillRanks.Length);
+            System.Array.Clear(actionSkillExtraRanks, 0, actionSkillExtraRanks.Length);
+            actionSkillExtraValues.Clear(); actionSkillExtraValuesDirty=true;
+            actionSkillSelected=0; ActionSkillPoints=0;
+            LastVisitedCamp=0; OverworldMissionClears=0; PendingWorldStage=-1; WorldStorySeen=false; SavedOutside=false;
+            System.Array.Clear(visitedOverworldCamps, 0, visitedOverworldCamps.Length);
+            System.Array.Clear(discoveredOverworldDungeons, 0, discoveredOverworldDungeons.Length);
+            collectorIntroSeen=false; collectorClaims=0; ModuleCapacityTier=0; junkKeys.Clear();
             npcConversation=0; npcBeat=0;
             DungeonIndex=0; HighestUnlocked=0; Credits=0; ExpeditionTokens=0;
             SelectedStageId=-1;

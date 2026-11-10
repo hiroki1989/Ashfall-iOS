@@ -45,14 +45,14 @@ namespace NeonVault
             if(BossRelicFoundation.Decode(relic,out int rBoss,out _)){string rStage=rBoss==0?T("[Dungeon 201–203 Boss Exclusive] ","【ダンジョン 201〜203 ボス固有ドロップ】"):rBoss==1?T("[Dungeon 204–206 Boss Exclusive] ","【ダンジョン 204〜206 ボス固有ドロップ】"):rBoss==3?T("[Infected Boss Exclusive] ","【感染者ボス固有ドロップ】"):T("[Vale Final Boss Exclusive] ","【ヴェイル固有ドロップ】");return rStage+LegendaryRedOpen+BossRelicFoundation.Description(relic,VaultLanguage.Japanese)+LegendaryRedClose;}
             string exclPrefix=DungeonBossExclusive.TryGetExclusiveStageForItem(item,out int exclStage)?DungeonBossExclusive.DungeonNumberLabel(exclStage,VaultLanguage.Japanese)+" ":DungeonBossExclusive.TryGetExclusiveLandmarkForItem(item,out int exclLandmark)?DungeonBossExclusive.LandmarkBossLabel(exclLandmark,VaultLanguage.Japanese)+" ":"";
             if(item is Gun gun)return string.IsNullOrEmpty(gun.legendaryKey)
-                ?T("A firearm recovered from the ruined city.","廃きょの街で回収された銃器。")
+                ?""
                 :exclPrefix+LegendaryRedOpen+LegendaryCatalog.Description(gun,VaultLanguage.Japanese)+LegendaryRedClose;
             if(item is ArmorItem armor)return string.IsNullOrEmpty(armor.legendaryKey)
-                ?T("Survival gear built for the dust and debris.","粉じんと瓦礫の中を生き抜くための装備。")
+                ?""
                 :exclPrefix+LegendaryRedOpen+LegendaryCatalog.Description(armor,VaultLanguage.Japanese)+LegendaryRedClose;
             if(item is ArtifactItem module)
             {
-                if(!CatalogIsLegendary(module))return T("A portable circuit assembled from salvage.","回収部品から組み上げた携帯回路。");
+                if(!CatalogIsLegendary(module))return "";
                 string description=module.Description;
                 string marker=T("Legendary circuit ","レジェンダリー回路");
                 int start=description.IndexOf(marker,System.StringComparison.Ordinal);
@@ -60,7 +60,7 @@ namespace NeonVault
             }
             if(item is MeleeWeaponItem melee)return melee.uniqueEffect
                 ?exclPrefix+LegendaryRedOpen+MeleeWeaponCatalog.LegendaryDescription(melee)+LegendaryRedClose
-                :T("A hand weapon shaped for close quarters.","接近戦に備えて作られた手持ちの刃物。");
+                :"";
             return "";
         }
         void DrawManufacturerRegistry()
@@ -83,12 +83,12 @@ namespace NeonVault
                 return;
             }
             Text(1050,227,ManufacturerCatalog.Name(selected,VaultLanguage.Japanese)+" / "+manufacturerProducts.Count,small,ManufacturerCatalog.Color(selected),365);
-            manufacturerScroll=GUI.BeginScrollView(new Rect(44,282,1352,560),manufacturerScroll,new Rect(0,0,1327,Mathf.Max(560,Mathf.CeilToInt(manufacturerProducts.Count/3f)*210)));
+            manufacturerScroll=GUI.BeginScrollView(new Rect(44,282,1352,560),manufacturerScroll,new Rect(0,0,1327,Mathf.Max(560,Mathf.CeilToInt(manufacturerProducts.Count/4f)*204)));
             for(int i=0;i<manufacturerProducts.Count;i++)
             {
-                float x=i%3*442,y=i/3*210;if(y+202<manufacturerScroll.y||y>manufacturerScroll.y+560)continue;
-                var item=manufacturerProducts[i];Panel(new Rect(x,y,430,199),ManufacturerCatalog.Color(selected));
-                bool known=EquipmentDiscovery.Known(item);string name="?",detail="?",code="?";
+                float x=i%4*334,y=i/4*204;if(y+194<manufacturerScroll.y||y>manufacturerScroll.y+560)continue;
+                var item=manufacturerProducts[i];Panel(new Rect(x,y,322,194),ManufacturerCatalog.Color(selected));
+                bool known=EquipmentDiscovery.Known(item);string name="?",detail="",code="?";
                 if(known)
                 {
                     if(item is Gun gun)name=VaultLanguage.GunName(gun);
@@ -96,16 +96,16 @@ namespace NeonVault
                     else if(item is ArtifactItem module)name=module.Name;
                     else name=MeleeWeaponCatalog.Name((MeleeWeaponItem)item);
                     detail=CatalogEffect(item);code=EquipmentDiscovery.Key(item);
-                    Rect icon=new Rect(x+9,y+12,118,118);
+                    Rect icon=new Rect(x+10,y+10,96,96);
                     if(item is Gun g)ItemPortraits.Draw(icon,g);
                     else if(item is ArmorItem a)ItemPortraits.Draw(icon,a);
                     else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(icon,m);
                     else ManufacturerPortraits.Melee(icon,(MeleeWeaponItem)item);
                 }
-                else Text(x+42,y+39,"?",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter},Mist,55);
-                Text(x+138,y+13,name,new GUIStyle(small){wordWrap=true},Gold,278);
-                Text(x+10,y+137,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Mist,407);
-                if(known)Text(x+138,y+104,code,tiny,Mist,275);
+                else Text(x+32,y+30,"?",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter},Mist,55);
+                Text(x+114,y+10,name,new GUIStyle(small){fontSize=18,wordWrap=true},Gold,198);
+                if(known&&!string.IsNullOrEmpty(detail))Text(x+10,y+112,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Mist,302);
+                if(known)Text(x+114,y+78,code,tiny,Mist,198);
             }
             GUI.EndScrollView();Text(47,857,T("Product reference / Loot and merchant stock supply these designs. No free equipment is granted here.","製品図鑑 / 各製品は戦利品・商人の在庫から入手できます。"),tiny,Mist,1160);
         }

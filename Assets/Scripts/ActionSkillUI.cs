@@ -697,9 +697,24 @@ namespace NeonVault
                     if(ready)color=Color.Lerp(color,Color.white,.45f*Mathf.Pow(Mathf.Max(0,Mathf.Sin(Time.unscaledTime*2.62f)),10));
                     Line(center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,center+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,color,Mathf.Max(2,r.width*.045f));
                 }
-                int fontSize=Mathf.Max(12,Mathf.RoundToInt(r.width*.15f));
-                ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.28f,r.width*.8f,r.height*.25f),T("SKILL","スキル"),ready?UiPaper:Mist,fontSize,TextAnchor.MiddleCenter);
-                ActionLabel(new Rect(r.x+r.width*.1f,r.y+r.height*.53f,r.width*.8f,r.height*.21f),ready?T("READY","発動可能"):Mathf.FloorToInt(ActionSkillPoints)+" / "+ActionSkillChargeMax,ready?accent:Mist,Mathf.Max(10,Mathf.RoundToInt(r.width*.12f)),TextAnchor.MiddleCenter);
+                Texture2D switchTex = Resources.Load<Texture2D>("Art/UI/action_skill_switch_icons");
+                Rect iconRect = new Rect(r.x + r.width*.20f, r.y + r.height*.11f, r.width*.60f, r.height*.60f);
+                Color prevCol = GUI.color;
+                GUI.color = ready ? Color.white : new Color(.78f, .82f, .84f, .82f);
+                if(switchTex)
+                {
+                    int sIdx = Mathf.Clamp((int)ActionSkillSelected, 0, 2);
+                    Rect uv = new Rect(sIdx / 3f, 0f, 1f / 3f, 1f);
+                    GUI.DrawTextureWithTexCoords(iconRect, switchTex, uv, true);
+                }
+                else
+                {
+                    int currentIcon = ActionSkillSelected==ActionSkillKind.Mechanic?0:ActionSkillSelected==ActionSkillKind.Bomber?8:11;
+                    DrawSkillAtlasIcon(iconRect, currentIcon, GUI.color);
+                }
+                GUI.color = prevCol;
+                Rect statusRect = new Rect(r.x + r.width*.08f, r.y + r.height*.68f, r.width*.84f, r.height*.23f);
+                ActionLabel(statusRect, ready ? T("READY","発動") : Mathf.FloorToInt(ActionSkillPoints)+"/"+ActionSkillChargeMax, ready ? accent : UiPaper, Mathf.Max(11, Mathf.RoundToInt(r.width*.13f)), TextAnchor.MiddleCenter);
 
             }
             finally{GUI.matrix=previousMatrix;GUI.color=Color.white;}
@@ -740,7 +755,7 @@ namespace NeonVault
             // Cycle hint next to plate
             Rect cycleBadge = new Rect(r.xMax+6,r.y+12,88,40);
             FieldUIArt.Plate(cycleBadge,false);
-            ActionLabel(cycleBadge,T("[V / Ⓡ]\nSWITCH","[V / Ⓡ]\n切替"),Mist,11,TextAnchor.MiddleCenter);
+            ActionLabel(cycleBadge,T("[C / ◀▶]\nSWITCH","[C / ◀▶]\n切替"),Mist,11,TextAnchor.MiddleCenter);
             bool previous=GUI.enabled;GUI.enabled=previous&&ready;
             if(GUI.Button(r,GUIContent.none,GUIStyle.none))TryUseActionSkill();
             GUI.enabled=previous;

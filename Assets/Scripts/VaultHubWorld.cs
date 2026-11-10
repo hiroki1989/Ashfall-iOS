@@ -17,6 +17,7 @@ namespace NeonVault
             }
         }
         string hubDialogue="";
+        int dialogueOpenedFrame;
         bool collectorIntroSeen,collectorOpen;int collectorClaims,collectorPage,collectorKnown;
         void OpenCollector()
         {
@@ -130,6 +131,7 @@ namespace NeonVault
             if(!VaultMobileInputBridge.Enabled&&move.sqrMagnitude>.01f){aim=move.normalized;player.rotation=Quaternion.LookRotation(aim);PlayerWeapon.Aim(aim);}
             if(VaultMobileInputBridge.Enabled)ApplyMobileAim(VaultMobileInputBridge.Aim);
             if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)){
+                dialogueOpenedFrame=Time.frameCount;
                 if(DailyChestNearby){InteractDailyChest();}
                 else if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){OpenBriggsDialogue();}
                 else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){OpenMerchantDialogue();}
