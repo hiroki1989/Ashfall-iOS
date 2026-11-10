@@ -11,7 +11,16 @@ namespace NeonVault
         public const KeyCode MeleeAttackKey=KeyCode.Mouse1;
         public enum Screen { Menu, Hub, Shop, DungeonSelect, Playing, Reward, Pause, Dead, Victory }
         public Screen screen;
-        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible;
+        bool pausedFromHub;
+        void PauseGame(){pausedFromHub=screen==Screen.Hub;screen=Screen.Pause;Time.timeScale=0;}
+        void ResumeFromPause()
+        {
+            if(pausedFromHub){screen=Screen.Hub;pausedFromHub=false;}
+            else screen=world!=null&&!IsOverworld&&CurrentDungeon!=null?Screen.Playing:(player!=null&&IsOverworld?Screen.Playing:Screen.Hub);
+            Time.timeScale=1;
+        }
+        bool AnyNpcOrStoryDialogueActive=>FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||collectorOpen||(!smoke&&screen==Screen.Hub&&FirstStepsStage==1);
+        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible&&!legendaryWeaponTutorialVisible;
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
         public Vector3 ScreenMovement(float horizontal,float vertical)
@@ -133,7 +142,7 @@ namespace NeonVault
         void StartRunImmediate(int? fixedSeed=null)
         {
             if(!CanAccessFreeVersionStage(SelectedStageId))return;
-            dungeonLayoutVersion=1;IsOverworld=false;ClearRunCheckpoint();shake=0;
+            pausedFromHub=false;dungeonLayoutVersion=1;IsOverworld=false;ClearRunCheckpoint();shake=0;
             ResetGameplayOverlays(); seed=fixedSeed??(Environment.TickCount&int.MaxValue); rng=new System.Random(seed);
             route.Clear(); var cell=Vector2Int.zero; route.Add(cell);
             for(int i=1;i<CurrentDungeon.AreaCount;i++)
@@ -238,7 +247,7 @@ namespace NeonVault
         }
         void ResetGameplayOverlays()
         {
-            InventoryOpen=false;manufacturerRegistry=false;Time.timeScale=1;
+            InventoryOpen=false;manufacturerRegistry=false;pausedFromHub=false;actionSkillTutorialVisible=false;legendaryWeaponTutorialVisible=false;collectorOpen=false;Time.timeScale=1;
         }
         void SpawnFoe(Vector3 position,int kind)=>SpawnFoeInternal(position,kind,false);
         void SpawnFoeInternal(Vector3 position,int kind,bool forceElite)
@@ -379,7 +388,7 @@ namespace NeonVault
                 return;
             }
             if(worldTransitionPending)return;
-            if(FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||!smoke&&screen==Screen.Hub&&FirstStepsStage==1)return;
+            if(AnyNpcOrStoryDialogueActive||DebtIntroVisible||actionSkillTutorialVisible||legendaryWeaponTutorialVisible)return;
             if(screen==Screen.Playing&&!IsOverworld&&IsFactionHeadquarters(SelectedStageId)&&room==CurrentDungeon.AreaCount-1&&player)
                 foreach(var enemy in Enemies)if(enemy&&!enemy.dead&&enemy.kind==3&&Vector3.Distance(enemy.transform.position,PlayerPosition)<14f){BeginFactionBossConversation();break;}
             if(FactionBossConversationVisible)return;
@@ -418,8 +427,8 @@ namespace NeonVault
                 )){if(!string.IsNullOrEmpty(pendingSaleKey)||eqPendingDiscard!=null){pendingSaleKey=null;eqPendingDiscard=null;}else if(confirmJunkSale){confirmJunkSale=false;}else if(debtSkillTreePage){debtSkillTreePage=false;}else{screen=Screen.Hub;}return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))
             {
-                if(screen==Screen.Playing || screen==Screen.Hub) { screen=Screen.Pause; Time.timeScale=0; }
-                else if(screen==Screen.Pause) { screen=world!=null&&!IsOverworld&&CurrentDungeon!=null?Screen.Playing:(player!=null&&IsOverworld?Screen.Playing:Screen.Hub); Time.timeScale=1; }
+                if(screen==Screen.Playing || screen==Screen.Hub) PauseGame();
+                else if(screen==Screen.Pause) ResumeFromPause();
             }
             player?.GetComponent<LayeredPlayer2D>()?.SetAiming(Active&&VaultMobileInputBridge.Firing&&reload<=0);
             if(worldTransitionPending||!Active)return;

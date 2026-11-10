@@ -71,15 +71,21 @@ namespace NeonVault
         public void OpenOverworldMap()
         {
             if(InventoryOpen||!WorldStorySeen||!(IsOverworld||screen==Screen.Hub||screen==Screen.Playing||screen==Screen.Pause))return;
-            worldAtlasFromDungeon=!IsOverworld&&screen!=Screen.Hub;worldAtlasReturnScreen=screen;
+            bool fromHub=screen==Screen.Hub||(screen==Screen.Pause&&pausedFromHub);
+            worldAtlasFromDungeon=!IsOverworld&&!fromHub;worldAtlasReturnScreen=screen;
             // Recenter on the player's current site every time the atlas opens.
             worldMapInitialized=false;
             if(selectedOverworldActivity!=null)CloseOverworldActivityChoice();
             if(IsOverworld)RememberOverworldPosition(PlayerPosition,true);
-            worldAtlasFromHub=screen==Screen.Hub;screen=Screen.DungeonSelect;Time.timeScale=0;
+            worldAtlasFromHub=fromHub;screen=Screen.DungeonSelect;Time.timeScale=0;
         }
         public void CloseOverworldMap()
-        {screen=worldAtlasFromDungeon?worldAtlasReturnScreen:worldAtlasFromHub?Screen.Hub:Screen.Playing;Time.timeScale=screen==Screen.Pause?0:1;}
+        {
+            if(worldAtlasReturnScreen==Screen.Pause){screen=Screen.Pause;Time.timeScale=0;return;}
+            screen=worldAtlasFromDungeon?worldAtlasReturnScreen:worldAtlasFromHub?Screen.Hub:Screen.Playing;
+            if(screen==Screen.Hub)pausedFromHub=false;
+            Time.timeScale=screen==Screen.Pause?0:1;
+        }
         public void WithdrawFromExploration()
         {
             if(IsOverworld){screen=Screen.Playing;Time.timeScale=1;OpenOverworldMap();return;}
@@ -126,7 +132,7 @@ namespace NeonVault
         public void BuildOverworld(Vector3 position) {if(QueueWorldTransition(()=>BuildOverworldImmediate(position)))return;BuildOverworldImmediate(position);}
         void BuildOverworldImmediate(Vector3 position)
         {
-            EnsureProgressionAndInventoryLoaded();
+            pausedFromHub=false;EnsureProgressionAndInventoryLoaded();
             EnsureOverworldState();SaveInventory();ResetGameplayOverlays();ClearRunCheckpoint();ClearWorldScene();
             IsOverworld=true;SetOverworldReturnStage(-1);SelectedStageId=-1;room=0;kills=0;shake=0;cleared=false;missionCompleted=false;missionKills=0;
             runDamage=runFire=runVitality=runDash=runChain=runHarvest=0;damageBonus=fireBonus=0;

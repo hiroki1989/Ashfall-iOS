@@ -89,6 +89,7 @@ namespace NeonVault
         void ResetRuntimeStateForSlot()
         {
             saveSlotInitialized=false;
+            pausedFromHub=false;actionSkillTutorialVisible=false;legendaryWeaponTutorialVisible=false;
             actionSkillLoaded=false;
             overworldStateLoaded=false;
             debtPaid=0; debtIntroSeen=true; unlockedDebtSkills?.Clear();

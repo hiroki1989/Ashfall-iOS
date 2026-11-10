@@ -88,14 +88,14 @@ namespace NeonVault
             {
                 float x=i%4*334,y=i/4*204;if(y+194<manufacturerScroll.y||y>manufacturerScroll.y+560)continue;
                 var item=manufacturerProducts[i];Panel(new Rect(x,y,322,194),ManufacturerCatalog.Color(selected));
-                bool known=EquipmentDiscovery.Known(item);string name="?",detail="",code="?";
+                bool known=EquipmentDiscovery.Known(item);string name="?",detail="";
                 if(known)
                 {
                     if(item is Gun gun)name=VaultLanguage.GunName(gun);
                     else if(item is ArmorItem armor)name=Armory.Name(armor);
                     else if(item is ArtifactItem module)name=module.Name;
                     else name=MeleeWeaponCatalog.Name((MeleeWeaponItem)item);
-                    detail=CatalogEffect(item);code=EquipmentDiscovery.Key(item);
+                    detail=CatalogEffect(item);
                     Rect icon=new Rect(x+10,y+10,96,96);
                     if(item is Gun g)ItemPortraits.Draw(icon,g);
                     else if(item is ArmorItem a)ItemPortraits.Draw(icon,a);
@@ -105,7 +105,6 @@ namespace NeonVault
                 else Text(x+32,y+30,"?",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter},Mist,55);
                 Text(x+114,y+10,name,new GUIStyle(small){fontSize=18,wordWrap=true},Gold,198);
                 if(known&&!string.IsNullOrEmpty(detail))Text(x+10,y+112,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Mist,302);
-                if(known)Text(x+114,y+78,code,tiny,Mist,198);
             }
             GUI.EndScrollView();Text(47,857,T("Product reference / Loot and merchant stock supply these designs. No free equipment is granted here.","製品図鑑 / 各製品は戦利品・商人の在庫から入手できます。"),tiny,Mist,1160);
         }

@@ -7,6 +7,7 @@ namespace NeonVault
     {
         int eqCategory;
         string eqSelectedKey;
+        int eqJunkHotkeyFrame=-1, eqCategoryHotkeyFrame=-1;
         object eqPendingDiscard;
         string eqPendingDiscardName;
         bool eqLastMerchant,eqLastSelling,eqShowFullDetails,eqUpgradePage;
@@ -211,8 +212,8 @@ namespace NeonVault
             Box(new Rect(518,668,3,92),EqAccent);
             DrawEquippedTotals();
             var cards=EqCards(merchant);var selected=cards.Find(c=>c.key==eqSelectedKey);if(selected==null&&cards.Count>0){selected=cards[0];eqSelectedKey=selected.key;eqDetailScroll=Vector2.zero;}
-            if(!merchant&&selected!=null&&(Input.GetKeyDown(KeyCode.X)||Input.GetKeyDown(KeyCode.JoystickButton2)
-                )){string jKey=JunkItemKey(selected.item);ToggleJunk(jKey);PlayUserSound("tab",.1f);}
+            if(GUI.enabled&&selected!=null&&!eqUpgradePage&&(!merchant||(shopSellingPage&&selected.sale!=null))&&eqJunkHotkeyFrame!=Time.frameCount&&(Input.GetKeyDown(KeyCode.X)||Input.GetKeyDown(KeyCode.JoystickButton2)
+                )){eqJunkHotkeyFrame=Time.frameCount;string jKey=JunkItemKey(selected.item);ToggleJunk(jKey);PlayUserSound("tab",.1f);}
             float gridHeight=766-gridTop;
             const float rowStep=220;
             eqGridExtent=Mathf.Max(gridHeight,cards.Count*rowStep);
@@ -249,6 +250,7 @@ namespace NeonVault
                 EqText(new Rect(952,top+20,440,94),selected.name,EqInk,nameStyle);
                 Box(new Rect(952,top+104,64,3),selected.color);
                 EqPortrait(new Rect(978,top+116,390,124),selected.item,true);
+                if(junkKeys.Contains(JunkItemKey(selected.item))){if(!junkBinIcon)junkBinIcon=Resources.Load<Texture2D>("Art/UI/junk-bin");if(junkBinIcon)GUI.DrawTexture(new Rect(1354,top+120,40,40),junkBinIcon,ScaleMode.ScaleToFit,true);}
                 float detailH=362-top;
                 string eqDetail=selected.summary+"\n"+selected.fullDescription;
                 float textHeight=eqCopy.CalcHeight(new GUIContent(eqDetail),410)+24;
@@ -345,9 +347,10 @@ namespace NeonVault
         }
         void EqActions(EqCard c,bool merchant)
         {
-            if(merchant){if(c.offer>=0){var o=shopStock[c.offer];int cost=ShopOfferPrice(o);if(EqButton(new Rect(950,630,446,76),o.purchased?T("PURCHASED","購入済み"):T("BUY / ","購入 / ")+cost.ToString("N0"),false,!o.purchased&&Credits>=cost))PurchaseShop(c.offer);}else if(c.sale!=null){var s=c.sale;string caption=s.equipped?T("EQUIPPED / CHANGE LOADOUT TO SELL","装備中 / 装備を変更して売却"):s.lastRequired?T("KEEP LAST WEAPON","最後の武器は保持"):T("SELL / ","売却 / ")+s.price.ToString("N0");if(EqButton(new Rect(950,630,446,76),caption,false,!s.equipped&&!s.lastRequired)){saleCategory=eqCategory;pendingSaleKey=SaleKey(s);}if(s.equipped)EqEquipActions(c,712,false);}return;}
             string key=JunkItemKey(c.item);
-            if(EqButton(new Rect(1180,710,216,70),junkKeys.Contains(key)?T("UNMARK","不要解除"):T("JUNK","不要")))ToggleJunk(key);
+            string junkCaption=MobileTouchControls.Enabled?(junkKeys.Contains(key)?T("UNMARK","不要解除"):T("JUNK","不要")):(junkKeys.Contains(key)?T("UNMARK [X]","不要解除 [X]"):T("JUNK [X]","不要 [X]"));
+            if(merchant){if(c.offer>=0){var o=shopStock[c.offer];int cost=ShopOfferPrice(o);if(EqButton(new Rect(950,630,446,76),o.purchased?T("PURCHASED","購入済み"):T("BUY / ","購入 / ")+cost.ToString("N0"),false,!o.purchased&&Credits>=cost))PurchaseShop(c.offer);}else if(c.sale!=null){var s=c.sale;string caption=s.equipped?T("EQUIPPED / CHANGE LOADOUT TO SELL","装備中 / 装備を変更して売却"):s.lastRequired?T("KEEP LAST WEAPON","最後の武器は保持"):T("SELL / ","売却 / ")+s.price.ToString("N0");if(EqButton(new Rect(950,630,446,76),caption,false,!s.equipped&&!s.lastRequired)){saleCategory=eqCategory;pendingSaleKey=SaleKey(s);}if(s.equipped)EqEquipActions(c,712,false);else if(EqButton(new Rect(1180,710,216,70),junkCaption))ToggleJunk(key);}return;}
+            if(EqButton(new Rect(1180,710,216,70),junkCaption))ToggleJunk(key);
             EqEquipActions(c,630,true);
         }
         void EqEquipActions(EqCard c,float y,bool discard)

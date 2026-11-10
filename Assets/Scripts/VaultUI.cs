@@ -115,6 +115,7 @@ namespace NeonVault
             if(DebtFinalConversationVisible){DrawDebtFinalConversation();return;}
             if(FactionBossConversationVisible){DrawFactionBossConversation();return;}
             if(NpcConversationVisible){DrawNpcConversation();return;}
+            if(screen==Screen.Hub&&collectorOpen){DrawCollectorDialog();return;}
             if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(VaultStorageVisible){DrawVaultStorage();return;}
             if(screen==Screen.Menu&&HandleSaveSlotMenu())return;
@@ -129,7 +130,7 @@ namespace NeonVault
                 else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawMobileShop();}
                 else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
                 else if(screen==Screen.Playing){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawActionSkillHUD();DrawPetSkillHUD();}
-                else if(screen==Screen.Pause){if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();DrawMobilePause();}
+                else if(screen==Screen.Pause){bool prevGui=GUI.enabled;GUI.enabled=false;if(pausedFromHub)DrawMobileHub();else if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();GUI.enabled=prevGui;DrawMobilePause();}
                 else DrawMobileOverlay();
                 DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
                 if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
@@ -139,16 +140,26 @@ namespace NeonVault
             if(manufacturerRegistry)DrawManufacturerRegistry();
             else if(InventoryOpen){if(petSkillInventoryOpen)DrawPetSkillInventory();else if(actionSkillInventoryOpen)DrawActionSkillInventory();else DrawEquipmentScreen(false);}
             else if(screen==Screen.Menu)DrawMenu();
-            else if(screen==Screen.Hub){DrawHub();DrawHubWorldLabels();if(Button(new Rect(1060,735,260,42),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}DrawCollectorDialog();
+            else if(screen==Screen.Hub)
+            {
+                bool blockHubButtons=!smoke&&FirstStepsStage==1;
+                if(!blockHubButtons)
+                {
+                    DrawHub();DrawHubWorldLabels();
+                    if(Button(new Rect(1060,735,260,42),T("MANUFACTURERS","メーカー製品図鑑"))){manufacturerRegistry=true;manufacturerKind=-1;}
 #if UNITY_IOS || UNITY_ANDROID
-            DrawDailyChestAdConfirm();DrawDailyChestReward();
+                    DrawDailyChestAdConfirm();DrawDailyChestReward();
 #endif
+                }
+                DrawCollectorDialog();
             }
             else if(screen==Screen.Shop){if(!DrawEquipmentScreen(true))DrawShop();}
             else if(screen==Screen.DungeonSelect)DrawOverworldAtlas();
             else
             {
-                if(IsOverworld)DrawOverworldHUD();else DrawHUD();if(screen==Screen.Playing){DrawActionSkillHUD();DrawPetSkillHUD();}else DrawOverlay();
+                if(screen==Screen.Pause&&pausedFromHub){bool prevGui=GUI.enabled;GUI.enabled=false;DrawHub();GUI.enabled=prevGui;}
+                else if(IsOverworld)DrawOverworldHUD();else DrawHUD();
+                if(screen==Screen.Playing){DrawActionSkillHUD();DrawPetSkillHUD();}else DrawOverlay();
             }
             DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
             if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
@@ -221,19 +232,20 @@ namespace NeonVault
                 }
                 return;
             }
-            string text=screen==Screen.Pause?T("EXPEDITION PAUSED","探索一時停止"):screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失");
-            float panelH = screen==Screen.Victory?660:(screen==Screen.Pause?690:560);
+            string text=screen==Screen.Pause?(pausedFromHub?T("SAFEHOUSE PAUSED","拠点一時停止"):T("EXPEDITION PAUSED","探索一時停止")):screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失");
+            float panelH = screen==Screen.Victory?660:(screen==Screen.Pause?(pausedFromHub?630:690):560);
             Panel(new Rect(350,140,740,panelH),screen==Screen.Victory?Gold:Cyan);
             Diamond(720,172,12,Gold);Text(390,210,text,heading,screen==Screen.Victory?Gold:Color.white,680);
-            Text(390,275,CurrentDungeon.Name+" / "+(room+1)+" / "+CurrentDungeon.AreaCount+T("  ·  Scrap ","  ·  スクラップ ")+Credits,small,Mist,660);
+            Text(390,275,pausedFromHub?(OverworldCampName(LastVisitedCamp,VaultLanguage.Japanese)+T("  ·  Scrap ","  ·  スクラップ ")+Credits):(CurrentDungeon.Name+" / "+(room+1)+" / "+CurrentDungeon.AreaCount+T("  ·  Scrap ","  ·  スクラップ ")+Credits),small,Mist,660);
             if(screen==Screen.Pause)
             {
                 DrawCameraZoom(390,312,310,false);DrawMasterVolume(740,312,310,false);
-                if(Button(new Rect(390,385,660,56),T("RESUME EXPEDITION","探索を再開"),true)){screen=Screen.Playing;Time.timeScale=1;}
-                if(Button(new Rect(390,450,660,50),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
-                if(Button(new Rect(390,510,660,50),T("ARSENAL / EQUIPMENT [I]","インベントリ [I]")))ToggleInventory();
-                if(Button(new Rect(390,570,660,50),T("WORLD MAP","広域地図")))OpenOverworldMap();
-                if(Button(new Rect(390,630,660,50),T("SAVE EXPEDITION & RETURN TO MENU","探索を保存してメニューへ")))SaveRunAndReturnToMenu();
+                if(Button(new Rect(390,385,660,56),pausedFromHub?T("RESUME TO SAFEHOUSE","拠点へ戻る"):T("RESUME EXPEDITION","探索を再開"),true))ResumeFromPause();
+                float y=450;
+                if(!pausedFromHub){if(Button(new Rect(390,y,660,50),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();y+=60;}
+                if(Button(new Rect(390,y,660,50),T("ARSENAL / EQUIPMENT [I]","インベントリ [I]")))ToggleInventory();y+=60;
+                if(Button(new Rect(390,y,660,50),T("WORLD MAP","広域地図")))OpenOverworldMap();y+=60;
+                if(Button(new Rect(390,y,660,50),pausedFromHub?T("SAVE & RETURN TO MENU","保存してメニューへ"):T("SAVE EXPEDITION & RETURN TO MENU","探索を保存してメニューへ")))SaveRunAndReturnToMenu();
             }
             else
             {
@@ -257,8 +269,8 @@ namespace NeonVault
             Panel(new Rect(24,22,338,88),Gold*.7f);
             Text(42,32,T("ZONE","探索区域"),tiny,Mist);Text(42,56,(room+1).ToString("00")+" / "+CurrentDungeon.AreaCount.ToString("00"),label,Gold);
             for(int i=0;i<CurrentDungeon.AreaCount;i++)Box(new Rect(159+i*25,68,18,4),i<=room?Gold:new Color(.2f,.27f,.28f));
-            Text(440,28,room==CurrentDungeon.AreaCount-1?T("WASTELAND COLOSSUS","荒野の巨骸"):SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name,label,Gold,650);
-            Text(440,61,ExpeditionExitOpen?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,ExpeditionExitOpen?Color.Lerp(Gold,Color.white,.5f+.5f*Mathf.Sin(Time.unscaledTime*5)):Mist,720);
+            Text(440,28,room==CurrentDungeon.AreaCount-1?T("WASTELAND COLOSSUS","荒野の巨骸"):SelectedExpeditionStage==null?CurrentDungeon.Name:(SelectedStageId+1).ToString("00")+" / "+SelectedExpeditionStage.Name,label,Gold,540);
+            Text(440,61,ExpeditionExitOpen?T("EXIT UNSEALED / Follow the gold marker","出口が開放 / 金色のマーカーへ"):T("HOSTILES  "+alive+"   /   EXPLORE THE CHAMBERS","残敵 "+alive+"   /   広間を探索せよ"),small,ExpeditionExitOpen?Color.Lerp(Gold,Color.white,.5f+.5f*Mathf.Sin(Time.unscaledTime*5)):Mist,540);
             if(ExpeditionExitOpen)DrawDungeonExitDirection(false);
             if(SelectedExpeditionStage!=null){var stage=SelectedExpeditionStage;string mission=ExpeditionMap.MissionLabel(stage,VaultLanguage.Japanese);if(stage.mission==ExpeditionMission.HuntTarget||stage.mission==ExpeditionMission.DestroyNest)mission+=" / "+stage.Target;mission+="  ·  "+MissionProgress;if(stage.mission==ExpeditionMission.RecoverSupplies||stage.mission==ExpeditionMission.SurveySectors||stage.mission==ExpeditionMission.SalvageSweep)mission+=T(" / floors "," / フロア ")+SurveyedFloorCount;Text(42,117,mission,new GUIStyle(tiny){wordWrap=true},MissionCompleted?Cyan:Gold,350);}else Text(42,121,T("SEED "+seed+"  /  "+Mathf.FloorToInt(runTime)+"s","シード "+seed+"  /  "+Mathf.FloorToInt(runTime)+"秒"),tiny,Mist,350);
             if(toastTimer>0){Panel(new Rect(405,111,720,44),Gold*.6f);Text(421,123,Toast,small,Gold,695);}
@@ -268,7 +280,7 @@ namespace NeonVault
             Text(455,809,T("SPACE / DASH","SPACE / 回避"),tiny,Mist,150);Text(455,836,dodgeCooldown<=0?T("READY","使用可能"):dodgeCooldown.ToString("0.0")+T("s","秒"),small,Cyan,150);
             DrawHeldWeaponHUD(new Rect(1190,812,226,64));
             DrawMap();
-            if(screen!=Screen.Playing || InventoryOpen)return;
+            if(!Active)return;
             float s=Mathf.Min(UnityEngine.Screen.width/1440f,UnityEngine.Screen.height/900f);
             float mx=(Input.mousePosition.x-(UnityEngine.Screen.width-1440*s)/2)/s,my=(UnityEngine.Screen.height-Input.mousePosition.y-(UnityEngine.Screen.height-900*s)/2)/s;if(MobileTouchControls.Enabled||HasAimTarget){Vector3 screenAim=cam.WorldToScreenPoint(AimReticleWorldPosition);if(MobileTouchControls.Enabled){Vector2 canvasAim=MobileCanvasPoint(new Vector2(screenAim.x,screenAim.y));mx=canvasAim.x;my=canvasAim.y;}else{mx=(screenAim.x-(UnityEngine.Screen.width-1440*s)/2)/s;my=(UnityEngine.Screen.height-screenAim.y-(UnityEngine.Screen.height-900*s)/2)/s;}}
             if(smoke&&AimUiReviewPoint.HasValue){mx=AimUiReviewPoint.Value.x;my=AimUiReviewPoint.Value.y;}

@@ -156,16 +156,48 @@ namespace NeonVault
                 if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
                 return;
             }
+            if (AnyNpcOrStoryDialogueActive || DebtIntroVisible || actionSkillTutorialVisible || legendaryWeaponTutorialVisible || screen == Screen.Pause) return;
             string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (screen == Screen.Hub ? "Leave the safehouse and return to dungeon 01." : IsOverworld ? "Follow the marker and clear dungeon 01." : "Complete the mission and leave the dungeon.") : stage == 4 ? "Return to a safehouse and sell spare equipment to Sera." : stage == 6 ? "Talk to Briggs and repay your debt." : stage == 8 ? "Follow the marker to the nearest other camp." : "Talk to Briggs and spend a skill point to improve an action skill.";
             string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (screen == Screen.Hub ? "街へ出て、01のダンジョンに再挑戦しよう。" : IsOverworld ? "目的地へ向かい、01のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : stage == 4 ? "拠点に戻り、セラに不要な装備を売ろう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済しよう。" : stage == 8 ? "目的地をたどり、最も近い別の拠点へ向かおう。" : "ブリッグスに話しかけ、スキルポイントでアクションスキルを強化しよう。";
             if (screen == Screen.Hub || screen == Screen.Playing)
             {
-                float bx = (screen == Screen.Hub) ? 440f : 16f;
-                float by = (screen == Screen.Hub) ? 18f : (IsOverworld ? 92f : 18f);
-                Box(new Rect(bx,by,560,68),new Color(.02f,.03f,.04f,.92f));
-                Box(new Rect(bx,by,3,68),Gold);
-                Text(bx+16,by+6,T("FIRST STEPS","最初の一歩"),small,Gold,530);
-                Text(bx+16,by+28,T(en,ja),new GUIStyle(small){fontSize=18,wordWrap=true},Color.white,530);
+                bool mobile = MobileTouchControls.Enabled;
+                bool leftHanded = mobile && MobileTouchControls.IsLeftHanded;
+                float bx, by, bw;
+                if (screen == Screen.Hub)
+                {
+                    bw = 428f;
+                    bx = 1440f - 16f - bw;
+                    by = !mobile ? 16f : leftHanded ? 114f : 158f;
+                }
+                else if (!IsOverworld)
+                {
+                    if (mobile && !leftHanded) { bw = 385f; bx = 700f; by = 16f; }
+                    else { bw = 420f; bx = 996f; by = 8f; }
+                }
+                else
+                {
+                    if (!mobile) { bw = 262f; bx = 1158f; by = 96f; }
+                    else if (leftHanded) { bw = 380f; bx = 1040f; by = 18f; }
+                    else if (!OverworldRushActive) { bw = 386f; bx = 630f; by = 90f; }
+                    else { bw = 276f; bx = 1140f; by = 354f; }
+                }
+                int fontSize = bw < 320f ? 14 : 16;
+                float bodyOffset = bw < 320f ? 19f : 23f;
+                float maxBh = (!mobile && screen == Screen.Playing && !IsOverworld) ? 68f : (!mobile && IsOverworld) ? 65f : 92f;
+                var bodyStyle = new GUIStyle(small) { fontSize = fontSize, wordWrap = true };
+                float textH = bodyStyle.CalcHeight(new GUIContent(T(en, ja)), bw - 24f);
+                while (fontSize > 11 && bodyOffset + textH + 5f > maxBh)
+                {
+                    fontSize--;
+                    bodyStyle.fontSize = fontSize;
+                    textH = bodyStyle.CalcHeight(new GUIContent(T(en, ja)), bw - 24f);
+                }
+                float bh = Mathf.Max(54f, bodyOffset + textH + 5f);
+                Box(new Rect(bx, by, bw, bh), new Color(.02f, .03f, .04f, .92f));
+                Box(new Rect(bx, by, 3f, bh), Gold);
+                Text(bx + 12f, by + 3f, T("FIRST STEPS", "最初の一歩"), tiny, Gold, bw - 20f);
+                Text(bx + 12f, by + bodyOffset, T(en, ja), bodyStyle, Color.white, bw - 24f);
             }
         }
     }

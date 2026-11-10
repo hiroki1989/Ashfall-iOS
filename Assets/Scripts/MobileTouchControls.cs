@@ -12,6 +12,7 @@ namespace NeonVault
     {
         static MobileTouchControls instance;
         public static bool Enabled => Application.isMobilePlatform || Array.IndexOf(Environment.GetCommandLineArgs(), "--mobile-controls") >= 0;
+        public static bool IsLeftHanded => instance != null && instance.LeftHanded;
         public static Vector2 Movement { get; private set; }
         public static Vector2 Aim { get; private set; } = Vector2.right;
         public static bool Firing { get; private set; }

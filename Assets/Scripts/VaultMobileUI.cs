@@ -3,7 +3,7 @@ namespace NeonVault
 {
     public partial class VaultGame
     {
-        public bool MobileModalVisible=>FactionUnlockDialogVisible||InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||legendaryWeaponTutorialVisible||screen!=Screen.Playing&&screen!=Screen.Hub;
+        public bool MobileModalVisible=>FactionUnlockDialogVisible||InventoryOpen||manufacturerRegistry||collectorOpen||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||legendaryWeaponTutorialVisible||(!smoke&&screen==Screen.Hub&&FirstStepsStage==1)||screen!=Screen.Playing&&screen!=Screen.Hub;
         public static Matrix4x4 MobileCanvasMatrix
         {
             get
@@ -22,14 +22,18 @@ namespace NeonVault
         }
         void DrawMobileHub()
         {
+            if(collectorOpen){DrawCollectorDialog();return;}
+            bool blockHubButtons=!smoke&&FirstStepsStage==1;
+            bool prevGui=GUI.enabled;if(blockHubButtons)GUI.enabled=false;
             Panel(new Rect(24,22,620,116),Gold);Text(42,36,OverworldCampName(LastVisitedCamp,VaultLanguage.Japanese),new GUIStyle(label){fontSize=28},Gold,595);
             Text(42,84,T("LEVEL ","レベル ")+DebtLevel+T("  SCRAP ","  スクラップ ")+Credits.ToString("N0"),new GUIStyle(label){fontSize=25},Cyan,595);
-            if(MobileButton(new Rect(690,30,220,72),T("CITY MAP","都市マップ"),28))OpenOverworldMap();
-            if(MobileButton(new Rect(930,30,220,72),T("MAKERS","製品図鑑"),28)){manufacturerRegistry=true;manufacturerKind=-1;}
+            if(!blockHubButtons&&MobileButton(new Rect(690,30,220,72),T("CITY MAP","都市マップ"),28))OpenOverworldMap();
+            if(!blockHubButtons&&MobileButton(new Rect(930,30,220,72),T("MAKERS","製品図鑑"),28)){manufacturerRegistry=true;manufacturerKind=-1;}
             string hint=Vector3.Distance(PlayerPosition,debtCollectorPosition)<3?T("USE: BRIGGS / DEBT + SKILLS","調べる：ブリッグス / 返済・スキル"):Vector3.Distance(PlayerPosition,merchantPosition)<3?T("USE: SERA / MERCHANT","調べる：セラ / 装備商人"):Vector3.Distance(PlayerPosition,archivistPosition)<3?T("USE: IONA / COLLECTOR","調べる：イオナ / コレクター"):T("Move to an NPC and tap USE","NPCへ近づいて「調べる」");
             Text(380,740,string.IsNullOrEmpty(hubDialogue)?hint:hubDialogue,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,680);
             if(toastTimer>0){Panel(new Rect(30,170,620,145),Gold);Text(50,185,Toast,new GUIStyle(label){fontSize=25,wordWrap=true},Gold,580);}
-            DrawCollectorDialog();DrawDailyChestAdConfirm();DrawDailyChestReward();
+            GUI.enabled=prevGui;
+            if(!blockHubButtons){DrawCollectorDialog();DrawDailyChestAdConfirm();DrawDailyChestReward();}
         }
         void DrawMobileHUD()
         {
@@ -66,16 +70,17 @@ namespace NeonVault
         }
         void DrawMobilePause()
         {
-            Box(new Rect(0,0,1440,900),new Color(.01f,.02f,.025f,.88f));Text(300,190,T("EXPEDITION PAUSED","探索一時停止"),heading,Gold,900);
+            Box(new Rect(0,0,1440,900),new Color(.01f,.02f,.025f,.88f));Text(300,190,pausedFromHub?T("SAFEHOUSE PAUSED","拠点一時停止"):T("EXPEDITION PAUSED","探索一時停止"),heading,Gold,900);
             DrawCameraZoom(300,225,400,true);DrawMasterVolume(740,225,400,true);
 #if UNITY_IOS && !UNITY_EDITOR
             if(VaultRewardedAds.PrivacyOptionsRequired && MobileButton(new Rect(1110,130,260,65),T("AD PRIVACY","広告設定")))VaultRewardedAds.ShowPrivacyOptions();
 #endif
-            if(MobileButton(new Rect(300,320,840,120),T("RESUME","探索を再開"))){screen=Screen.Playing;Time.timeScale=1;}
+            if(MobileButton(new Rect(300,320,840,120),pausedFromHub?T("RESUME","拠点に戻る"):T("RESUME","探索を再開")))ResumeFromPause();
             if(MobileButton(new Rect(300,470,840,120),T("EQUIPMENT","装備")))ToggleInventory();
             if(MobileButton(new Rect(300,755,840,100),T("WORLD MAP","広域地図")))OpenOverworldMap();
-            if(MobileButton(new Rect(300,610,405,120),T("SAVE & MENU","保存してメニューへ")))SaveRunAndReturnToMenu();
-            if(MobileButton(new Rect(735,610,405,120),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
+            if(pausedFromHub){if(MobileButton(new Rect(300,610,840,120),T("SAVE & MENU","保存してメニューへ")))SaveRunAndReturnToMenu();}
+            else if(MobileButton(new Rect(300,610,405,120),T("SAVE & MENU","保存してメニューへ")))SaveRunAndReturnToMenu();
+            if(!pausedFromHub&&MobileButton(new Rect(735,610,405,120),IsOverworld?T("CAMP MAP","拠点マップ"):T("WITHDRAW TO ENTRANCE","入口へ退却")))WithdrawFromExploration();
         }
         void DrawMobileOverlay()
         {
