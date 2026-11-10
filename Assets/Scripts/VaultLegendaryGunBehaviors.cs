@@ -232,7 +232,7 @@ namespace NeonVault
             {
                 case 0: LegendarySpecialFlight(source,forward,power*.72f,color,0);break;
                 case 1: if(first!=null)for(int i=-1;i<=1;i++)LegendaryHomingShot(source+side*i*1.2f,first,power*.55f,color,null);break;
-                case 2: LegendarySpecialFlight(source,forward,power*.7f,color,1);break;
+                case 2: LegendarySpecialFlight(PlayerPosition+Vector3.up*.65f,forward,power*.7f,color,1);break;
                 case 3: for(int i=0;i<3;i++)ScheduleLegendaryPulse(origin+forward*i*2f,power*.65f,.8f,1,maker,.2f*i);break;
                 case 4: for(int i=0;i<Mathf.Min(3,targets.Count);i++)LegendaryHomingShot(source,targets[targets.Count-1-i],power*.65f,color,null);break;
                 case 5: LegendaryGunShot(source,forward,power*1.75f,color,GunEffect.Singularity);break;
@@ -307,7 +307,7 @@ namespace NeonVault
             direction.y=0;if(direction.sqrMagnitude<.01f)return;
             var shot=SpawnBullet(source,direction.normalized,true,damage,20,color,GunEffect.Normal,100);
             shot.life=1.35f;shot.legendaryEffect=true;shot.skillProjectile=true;
-            var flight=shot.gameObject.AddComponent<LegendarySpecialFlight>();flight.shot=shot;flight.mode=mode;
+            var flight=shot.gameObject.AddComponent<LegendarySpecialFlight>();flight.shot=shot;flight.mode=mode;if(mode==1)flight.splitDistance=5f;
         }
         void LegendaryGunPush(Foe foe,Vector3 direction,float distance)
         {if(foe==null||foe.dead)return;direction.y=0;if(direction.sqrMagnitude>.01f)foe.transform.position=MoveWithinRoom(foe.transform.position,direction.normalized*distance,.6f);}
@@ -326,12 +326,12 @@ namespace NeonVault
             string[] triggers=ja?new[]{"3射ごと（クールダウン1秒）：","銃弾命中時（クールダウン2秒）：","撃破時（クールダウン2秒）：","リロード時（クールダウン3秒）：","ダッシュ時（クールダウン3秒）："}:new[]{"Every third shot (1s cooldown): ","On bullet hit (2s cooldown): ","On kill (2s cooldown): ","On reload (3s cooldown): ","On dash (3s cooldown): "};
             if(variant>=5 && maker!=1 && maker!=2){
                 string[,] jaMore={
-                {"飛行中に3発へ分裂する弾を放つ。","3発の誘導弾が1体に集中する。","飛行中に左右へ分裂する弾を放つ。","3回の爆発が前方に進む。","遠い敵を最大3発の誘導弾が追う。","重力渦を作る特異弾を発射。","大きく弧を描いて戻る弾を放つ。","撃破地点から最大3発の誘導弾が別の敵を追う。","敵の周りから4発の誘導弾が集中する。","6方向に弾を放つ。"},
+                {"飛行中に3発へ分裂する弾を放つ。","3発の誘導弾が1体に集中する。","5m飛行後に左右へ分裂する弾を放つ。","3回の爆発が前方に進む。","遠い敵を最大3発の誘導弾が追う。","重力渦を作る特異弾を発射。","大きく弧を描いて戻る弾を放つ。","撃破地点から最大3発の誘導弾が別の敵を追う。","敵の周りから4発の誘導弾が集中する。","6方向に弾を放つ。"},
                 {"横に並んだ3か所に胞子の爆発を残す。","敵の位置に2回脈動する胞子を残す。","前方4か所に胞子の爆発を残す。","飛行中に5方向へ分裂する胞子弾を放つ。","3発の誘導胞子弾が敵に集中する。","重力渦を作る胞子弾を発射。","5発の胞子弾が横に広がる。","撃破地点から最大3発の誘導胞子弾が別の敵を追う。","前方3か所に2回脈動する胞子を残す。","人間の敵に継続ダメージを与える毒弾を放つ。"},
                 {"飛行中に5発へ扇状に分裂する弾を放つ。","3回の爆発が横に並んで発生。","撃破地点に大爆発を起こす。","強力な特異弾で重力渦を作る。","後方4か所に2回脈動する爆発を残す。","横一列に重い弾を3発発射。","3発の誘導弾が敵を追う。","撃破地点から最大3発の誘導弾が別の敵を追う。","5回の爆発が前方に進む。","命中地点の周囲にもダメージを与える爆発弾を放つ。"},
                 {"左右にジグザグに進む弾を放つ。","敵の周りから3発の誘導弾が集中する。","減速しながら進み最大5体へ連鎖する電撃弾を放つ。","横に並んだ3回の爆発が順に発生。","最大4体の敵を誘導弾が追う。","重力渦を作る特異弾を発射。","横一列に3発の弾を放つ。","撃破地点から最大4発の誘導弾が別の敵を追う。","5発の誘導弾が1体に集中する。","4回の爆発が前方に進む。"}};
                 string[,] enMore={
-                {"Fire a round that splits into three in flight.","Three guided rounds converge on one target.","Fire a round that splits left and right in flight.","Three explosions march forward.","Up to three guided rounds chase distant enemies.","Fire a gravity well round.","Fire a round that curves back along a wide arc.","A kill releases up to three guided rounds at other enemies.","Four guided rounds converge from around the target.","Fire in six directions."},
+                {"Fire a round that splits into three in flight.","Three guided rounds converge on one target.","Fire a round that splits left and right after 5m.","Three explosions march forward.","Up to three guided rounds chase distant enemies.","Fire a gravity well round.","Fire a round that curves back along a wide arc.","A kill releases up to three guided rounds at other enemies.","Four guided rounds converge from around the target.","Fire in six directions."},
                 {"Leave three pulsing spore zones in a row.","Plant a two-pulse spore zone at the enemy.","Leave four pulsing spore zones ahead.","Fire a spore round that splits into five directions in flight.","Three guided spore rounds converge on one target.","Fire a gravity well spore round.","Five spore rounds spread in parallel.","A kill releases up to three guided spores at other enemies.","Leave three two-pulse spore zones ahead.","Fire a poison round that applies damage over time to human enemies."},
                 {"Fire a round that splits into a five-round fan in flight.","Three explosions sweep sideways.","The kill erupts in a large explosion.","Fire a powerful gravity well round.","Leave four pulsing explosions behind.","Fire three heavy parallel rounds.","Three guided rounds chase the target.","A kill releases up to three guided rounds at other enemies.","Five explosions march forward.","Fire an explosive round that damages enemies near its target."},
                 {"Fire a round that travels in a zigzag.","Three guided rounds converge around the target.","Fire a slowing electric round that chains to up to five enemies.","Three explosions sweep sideways.","Up to four guided rounds seek enemies.","Fire a gravity well round.","Fire three parallel rounds.","A kill releases up to four guided rounds at other enemies.","Five guided rounds converge on one target.","Four explosions march forward."}};
@@ -431,12 +431,12 @@ namespace NeonVault
     public sealed class LegendarySpecialFlight : MonoBehaviour
     {
         public Shot shot;
-        public int mode;
+        public int mode; public float splitDistance; Vector3 startPosition;
         float elapsed;
         float nextRelease;
         int released;
         Vector3 initialDirection;
-        void Start(){if(shot!=null)initialDirection=shot.velocity.normalized;}
+        void Start(){startPosition=transform.position;if(shot!=null)initialDirection=shot.velocity.normalized;}
         void Update()
         {
             if(shot==null||shot.game==null||!shot.game.Active)return;
@@ -462,8 +462,9 @@ namespace NeonVault
                 }
                 return;
             }
-            float delay=mode==1?.16f:mode==4?.30f:.22f;
-            if(elapsed<delay)return;
+            if(splitDistance>0f){if((transform.position-startPosition).sqrMagnitude<splitDistance*splitDistance)return;}
+            else if(elapsed<(mode==1?.25f:mode==4?.30f:.22f))return;
+
             var game=shot.game;Vector3 direction=shot.velocity.normalized;Vector3 source=transform.position;
             int count=mode==0?3:mode==1?2:5;
             for(int i=0;i<count;i++)

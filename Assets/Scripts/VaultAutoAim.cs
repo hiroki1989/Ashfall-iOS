@@ -10,8 +10,31 @@ namespace NeonVault
         Foe aimTarget;
         public Vector3 AimReticleWorldPosition => aimTarget != null && !aimTarget.dead
             ? new Vector3(aimTarget.transform.position.x, PlayerWeapon.MuzzlePosition.y, aimTarget.transform.position.z)
-            : PlayerPosition + aim * 6 + Vector3.up * .9f;
+            : PlayerPosition + aim * AimReticleRadius(aim) + Vector3.up * .9f;
         public bool HasAimTarget => aimTarget != null && !aimTarget.dead;
+        float AimReticleRadius(Vector3 direction)
+        {
+            if (gun == null) return 6f;
+            float t = Mathf.Clamp01((EffectiveAccuracy - 35f) / 65f);
+            float desired = Mathf.Lerp(4.2f, IsOverworld ? 11.2f : 9.6f, t * t * .55f + t * .45f);
+            Vector3 flat = new Vector3(direction.x, 0f, direction.z);
+            if (flat.sqrMagnitude < .0001f) flat = Vector3.right;
+            flat.Normalize();
+            if (cam != null)
+            {
+                Vector3 anchor = PlayerPosition + Vector3.up * .9f;
+                Vector3 v0 = cam.WorldToViewportPoint(anchor);
+                Vector3 v1 = cam.WorldToViewportPoint(anchor + flat);
+                Vector2 dv = new Vector2(v1.x - v0.x, v1.y - v0.y);
+                float maxR = desired;
+                if (dv.x > .0001f) maxR = Mathf.Min(maxR, (.93f - v0.x) / dv.x);
+                else if (dv.x < -.0001f) maxR = Mathf.Min(maxR, (v0.x - .07f) / -dv.x);
+                if (dv.y > .0001f) maxR = Mathf.Min(maxR, (.90f - v0.y) / dv.y);
+                else if (dv.y < -.0001f) maxR = Mathf.Min(maxR, (v0.y - .10f) / -dv.y);
+                desired = Mathf.Clamp(maxR, 2.5f, desired);
+            }
+            return desired;
+        }
 
         Vector3 AutoAimDirection(Vector3 origin,Vector3 intended,float accuracy)
         {

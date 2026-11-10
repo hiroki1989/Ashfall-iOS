@@ -101,6 +101,32 @@ public static class RegressionSuiteReview
                 for (int kind = -1; kind <= 3; kind++)
                     game.SetManufacturerReview(maker, kind);
 
+            // 6. Cross Examination (gun-0-7) splits 5m from player position
+            game.StartRun(12345);
+            game.gun = LegendaryCatalog.CreateGun(LegendaryCatalog.Index("gun-0-7"), new System.Random(1), 1);
+            Invoke("ResolveDistinctLegendaryGun", 0, 7, game.PlayerPosition + Vector3.forward * 9f, null);
+            var flights = UnityEngine.Object.FindObjectsByType<LegendarySpecialFlight>(FindObjectsSortMode.None);
+            bool found5m = false;
+            foreach (var f in flights)
+            {
+                if (f.mode == 1 && Mathf.Abs(f.splitDistance - 5f) < .01f && Vector3.Distance(f.transform.position, game.PlayerPosition + Vector3.up * .65f) < 1f)
+                    found5m = true;
+            }
+            if (!found5m)
+                throw new Exception("Cross Examination flight must start at player and have splitDistance == 5f");
+
+            // 7. Accuracy-scaled constant reticle radius (Sniper > Shotgun) stays inside camera viewport
+            Set("aimTarget", null);
+            game.gun = Arsenal.Model(3, Rarity.Common); // Shotgun (~48 accuracy)
+            float shotgunR = (float)Invoke("AimReticleRadius", Vector3.forward);
+            game.gun = Arsenal.Model(2, Rarity.Common); // Sniper (~97 accuracy)
+            float sniperR = (float)Invoke("AimReticleRadius", Vector3.forward);
+            if (!(sniperR > shotgunR + 2f))
+                throw new Exception("Expected Sniper reticle radius (" + sniperR + ") > Shotgun (" + shotgunR + ")");
+            Vector3 vp = game.GameCamera.WorldToViewportPoint(game.AimReticleWorldPosition);
+            if (vp.x < 0.05f || vp.x > 0.95f || vp.y < 0.05f || vp.y > 0.95f)
+                throw new Exception("Reticle left safe viewport bounds: " + vp);
+
             Debug.Log("REGRESSION_SUITE_REVIEW PASS");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }
