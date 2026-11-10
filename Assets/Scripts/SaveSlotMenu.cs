@@ -85,24 +85,25 @@ namespace NeonVault
             }
             return true;
         }
+        static void ClearArray<T>(T[] array) { if (array != null) System.Array.Clear(array, 0, array.Length); }
         void ResetRuntimeStateForSlot()
         {
             saveSlotInitialized=false;
             actionSkillLoaded=false;
             overworldStateLoaded=false;
-            debtPaid=0; debtIntroSeen=true; unlockedDebtSkills.Clear();
-            Weapons.Clear(); ArmorInventory.Clear(); MeleeWeaponInventory.Clear();
-            ArtifactInventory.Clear(); System.Array.Clear(EquippedArtifacts, 0, EquippedArtifacts.Length);
-            System.Array.Clear(EquippedArmor, 0, EquippedArmor.Length);
-            clearedExpeditionStages.Clear(); shopPurchased.Clear();
-            System.Array.Clear(actionSkillRanks, 0, actionSkillRanks.Length);
-            System.Array.Clear(actionSkillExtraRanks, 0, actionSkillExtraRanks.Length);
-            actionSkillExtraValues.Clear(); actionSkillExtraValuesDirty=true;
+            debtPaid=0; debtIntroSeen=true; unlockedDebtSkills?.Clear();
+            Weapons?.Clear(); ArmorInventory?.Clear(); MeleeWeaponInventory?.Clear();
+            ArtifactInventory?.Clear(); ClearArray(EquippedArtifacts);
+            ClearArray(EquippedArmor);
+            clearedExpeditionStages?.Clear(); shopPurchased?.Clear();
+            ClearArray(actionSkillRanks);
+            ClearArray(actionSkillExtraRanks);
+            actionSkillExtraValues?.Clear(); actionSkillExtraValuesDirty=true;
             actionSkillSelected=0; ActionSkillPoints=0;
             LastVisitedCamp=0; OverworldMissionClears=0; PendingWorldStage=-1; WorldStorySeen=false; SavedOutside=false;
-            System.Array.Clear(visitedOverworldCamps, 0, visitedOverworldCamps.Length);
-            System.Array.Clear(discoveredOverworldDungeons, 0, discoveredOverworldDungeons.Length);
-            collectorIntroSeen=false; collectorClaims=0; ModuleCapacityTier=0; junkKeys.Clear();
+            ClearArray(visitedOverworldCamps);
+            ClearArray(discoveredOverworldDungeons);
+            collectorIntroSeen=false; collectorClaims=0; ModuleCapacityTier=0; junkKeys=null; confirmJunkSale=false;
             npcConversation=0; npcBeat=0;
             DungeonIndex=0; HighestUnlocked=0; Credits=0; ExpeditionTokens=0;
             SelectedStageId=-1;
