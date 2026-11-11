@@ -368,6 +368,35 @@ public static class RegressionSuiteReview
             if (game.runDamage != 0f || game.runFire != 0f || game.runVitality != 0f || game.runDash != 0f || game.runChain != 0f || game.runHarvest != 0f)
                 throw new Exception("Per-floor run upgrades must remain disabled (all 0)");
 
+            // 20. FantasticCreature1 (Wasteland Colossus quadruped) faces forward (+Z) with head ahead of rear legs
+            var colossusObj = new GameObject("FantasticFacingTest");
+            colossusObj.transform.position = Vector3.zero;
+            colossusObj.transform.rotation = Quaternion.identity;
+            var testFoe = colossusObj.AddComponent<Foe>();
+            testFoe.kind = 3;
+            try
+            {
+                if (!FantasticCreatureVisual.TryAttach(colossusObj))
+                    throw new Exception("FantasticCreatureVisual.TryAttach returned false");
+                var anim = colossusObj.GetComponentInChildren<Animator>(true);
+                anim.Play("thc4_arma|st_run", 0, 0.25f);
+                anim.Update(0.05f);
+                Transform headBone = null, rearBone = null;
+                foreach (var tr in colossusObj.GetComponentsInChildren<Transform>(true))
+                {
+                    if (tr.name == "head") headBone = tr;
+                    else if (tr.name == "rear_leg4.L") rearBone = tr;
+                }
+                if (headBone == null || rearBone == null)
+                    throw new Exception("Missing FantasticCreature1 head or rear_leg4.L bone");
+                if (headBone.position.z <= rearBone.position.z)
+                    throw new Exception($"FantasticCreature1 still reversed! head.z={headBone.position.z:F3} <= rear.z={rearBone.position.z:F3}");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(colossusObj);
+            }
+
             Debug.Log("REGRESSION_SUITE_REVIEW PASS");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }

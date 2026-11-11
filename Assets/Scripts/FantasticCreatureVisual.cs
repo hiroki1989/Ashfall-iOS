@@ -19,15 +19,18 @@ namespace NeonVault
             var foe = actor.GetComponent<Foe>();
             var prefab = Resources.Load<GameObject>("ImportedEnemies/FantasticCreature1");
             if (!foe || !prefab) return false;
-            var instance = Instantiate(prefab, actor.transform, false);
-            instance.name = "Fantastic Creature 1";
+            var holder = new GameObject("Fantastic Creature 1");
+            holder.transform.SetParent(actor.transform, false);
+            holder.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            var instance = Instantiate(prefab, holder.transform, false);
+            instance.name = "Fantastic Creature 1 Mesh";
             foreach (var c in instance.GetComponentsInChildren<Collider>(true)) c.enabled = false;
             foreach (var component in instance.GetComponentsInChildren<MonoBehaviour>(true))
                 if (component.GetType().Name == "THC6_ctrl") component.enabled = false;
             var animator = instance.GetComponentInChildren<Animator>(true);
             var renderers = instance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
             if (!animator || !animator.runtimeAnimatorController || renderers.Length == 0)
-            { Destroy(instance); return false; }
+            { Destroy(holder); return false; }
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             animator.enabled = true;
@@ -42,19 +45,19 @@ namespace NeonVault
             if (bounds.size.y > .001f)
             {
                 float scale = Mathf.Clamp(2.7f / bounds.size.y, .02f, 8f);
-                instance.transform.localScale *= scale;
+                holder.transform.localScale *= scale;
                 bounds = renderers[0].bounds;
                 foreach (var r in renderers) bounds.Encapsulate(r.bounds);
                 Vector3 offset = actor.transform.position - bounds.center;
                 offset.y = actor.transform.position.y - .09f - bounds.min.y;
-                instance.transform.position += offset;
+                holder.transform.position += offset;
             }
-            var driver = instance.AddComponent<FantasticCreatureVisual>();
+            var driver = holder.AddComponent<FantasticCreatureVisual>();
             driver.owner = foe;
             driver.animator = animator;
             driver.previous = actor.transform.position;
             foreach (var renderer in actor.GetComponentsInChildren<Renderer>(true))
-                if (!renderer.transform.IsChildOf(instance.transform)) renderer.enabled = false;
+                if (!renderer.transform.IsChildOf(holder.transform)) renderer.enabled = false;
             return true;
         }
 
