@@ -107,6 +107,10 @@ namespace NeonVault
                         owner.owned.Add(dst);
                         int idx = src.name.IndexOf('_');
                         string suffix = idx >= 0 && idx + 1 < src.name.Length ? src.name.Substring(idx + 1) : src.name;
+                        int dot = suffix.IndexOf('.');
+                        if (dot >= 0) suffix = suffix.Substring(0, dot);
+                        int spIdx = suffix.IndexOf(" (Instance)");
+                        if (spIdx >= 0) suffix = suffix.Substring(0, spIdx);
                         if (table.TryGetValue(suffix, out var sp))
                             ApplyTexSpec(dst, texDir, sp, resolveTexName);
                         cloned[src] = dst;
@@ -381,11 +385,94 @@ namespace NeonVault
                     fingers[i].localRotation *= Quaternion.Euler(deg * signX, 0f, 0f);
         }
 
+        static readonly Dictionary<string, TexSpec> ValeBossTexTable = new Dictionary<string, TexSpec>
+        {
+            { "body",      new TexSpec { tex = "vale_body_a",      normal = "vale_body_n",      metallicGloss = "vale_body_m",      ao = "vale_body_ao",      bump = 0.90f, aoStrength = 0.88f, tint = Color.white } },
+            { "waistcoat", new TexSpec { tex = "vale_waistcoat_a", normal = "vale_waistcoat_n", metallicGloss = "vale_waistcoat_m", ao = "vale_waistcoat_ao", bump = 0.95f, aoStrength = 0.90f, tint = Color.white } },
+            { "pants",     new TexSpec { tex = "vale_pants_a",     normal = "vale_pants_n",     metallicGloss = "vale_pants_m",     ao = "vale_pants_ao",     bump = 0.90f, aoStrength = 0.88f, tint = Color.white } },
+        };
+
+        /// <summary>
+        /// Customizes the imported bald/skinhead RaiderBossNPC / Enemy_11 model for Malcolm Vale:
+        /// removes sunglasses, applies 4-view painted veteran PBR maps, and mounts only the lower-face bronze respirator.
+        /// </summary>
+        public static void CustomizeImportedVale(Transform root, Transform model, Transform actor, float targetHeight)
+        {
+            if (!root || !model || !actor) return;
+            var owner = root.GetComponent<ResourceOwner>() ?? root.gameObject.AddComponent<ResourceOwner>();
+            const string texDir = "Characters/ValeBoss/Textures/";
+
+            var cloned = new Dictionary<Material, Material>();
+            foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.name == "polySurface45" || r.name.IndexOf("glass", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    r.enabled = false; // Expose Malcolm Vale's eyes & scarred right brow!
+                    continue;
+                }
+                var mats = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    var src = mats[i];
+                    if (!src) continue;
+                    string lower = src.name.ToLowerInvariant();
+                    string key = lower.Contains("body") ? "body" : lower.Contains("waistcoat") ? "waistcoat" : lower.Contains("pants") ? "pants" : null;
+                    if (key == null) continue;
+                    if (!cloned.TryGetValue(src, out var dst))
+                    {
+                        dst = new Material(src) { name = src.name + " (ValeHQ)" };
+                        owner.owned.Add(dst);
+                        ApplyTexSpec(dst, texDir, ValeBossTexTable[key], s => s);
+                        cloned[src] = dst;
+                    }
+                    mats[i] = dst;
+                    changed = true;
+                }
+                if (changed) r.sharedMaterials = mats;
+            }
+
+            // Attach ONLY the bronze dual-canister half-respirator (leaves scarred brow & eyes clear)
+            Transform head = null;
+            foreach (var bone in model.GetComponentsInChildren<Transform>(true))
+                if (bone.name == "Head_M" || bone.name == "head") { head = bone; break; }
+            var propsPrefab = Resources.Load<GameObject>("Characters/ValeProps/ValeProps");
+            if (head && propsPrefab)
+            {
+                var propsRoot = Object.Instantiate(propsPrefab);
+                propsRoot.name = "ValeHalfMaskTemp";
+                ApplyValeTextures(propsRoot, owner);
+                Transform maskObj = null;
+                foreach (var t in propsRoot.GetComponentsInChildren<Transform>(true))
+                    if (t.name == "Vale_HeadProps") { maskObj = t; break; }
+                if (maskObj)
+                {
+                    var socket = new GameObject("Vale half respirator socket").transform;
+                    socket.SetParent(head, true);
+                    // Skin_1 head/jaw protrudes farther forward than CommonBody; place mask cleanly on nose/mouth bridge
+                    socket.position = head.position + actor.up * (targetHeight * -0.014f) + actor.forward * (targetHeight * 0.022f);
+                    socket.rotation = actor.rotation;
+                    Vector3 ls = head.lossyScale;
+                    float scaleFactor = (targetHeight / 1.80f);
+                    socket.localScale = new Vector3(
+                        scaleFactor / Mathf.Max(0.0001f, Mathf.Abs(ls.x)),
+                        scaleFactor / Mathf.Max(0.0001f, Mathf.Abs(ls.y)),
+                        scaleFactor / Mathf.Max(0.0001f, Mathf.Abs(ls.z)));
+                    maskObj.SetParent(socket, false);
+                    maskObj.localPosition = Vector3.zero;
+                    maskObj.localRotation = Quaternion.identity;
+                    maskObj.localScale = Vector3.one;
+                }
+                if (Application.isPlaying) Object.Destroy(propsRoot);
+                else Object.DestroyImmediate(propsRoot);
+            }
+        }
+
         // ---------------- Malcolm Vale: Keeps Existing DetailedHero3D + CommonBody Skeleton + Attaches PS3 ValeProps ----------------
         public static void BuildValeLook(DetailedHero3D body, SkinnedMeshRenderer[] armorParts, SkinnedMeshRenderer common, GameObject root)
         {
             if (!body) return;
-            var owner = root.GetComponent<ResourceOwner>() ?? root.AddComponent<ResourceOwner>();
+            var owner = root.GetComponent<ResourceOwner>() ?? root.gameObject.AddComponent<ResourceOwner>();
 
             // 1) Recolor existing Warden articulated armor slots to matte weathered trench/trouser tones + veteran face
             if (armorParts != null)

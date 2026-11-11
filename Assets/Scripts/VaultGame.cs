@@ -257,7 +257,7 @@ namespace NeonVault
             var faction=IsOverworld?DungeonFaction.None:ExpeditionMap.FactionForStage(SelectedStageId);
             bool infectedMajorBoss=kind==3&&!IsOverworld&&IsInfectedBossStage(SelectedStageId);
             bool raiderBoss=kind==3&&(finalDebtBossFight||IsFactionHeadquarters(SelectedStageId));
-            bool factionHuman=kind==10&&faction!=DungeonFaction.None||raiderBoss&&!infectedMajorBoss;
+            bool factionHuman=kind==10&&faction!=DungeonFaction.None||raiderBoss&&!infectedMajorBoss&&!finalDebtBossFight;
             // Faction humans use the articulated survivor mesh. The old path first
             // constructed a complete FaithfulEnemy3D for every human, then hid it.
             // On a crowded iOS floor that doubled mesh/material memory at entry.
@@ -278,7 +278,7 @@ namespace NeonVault
             if(factionHuman)
             {
                 int visualFaction=finalDebtBossFight?0:faction==DungeonFaction.Raiders?1:2;
-                var human=finalDebtBossFight?HumanFactionVisual.CreateVale(f.transform):raiderBoss&&visualFaction>0?HumanFactionVisual.CreateFactionBoss(f.transform,visualFaction):HumanFactionVisual.Create(f.transform,visualFaction,raiderBoss?0:f.UseAssaultRifle?0:1);
+                var human=raiderBoss&&visualFaction>0?HumanFactionVisual.CreateFactionBoss(f.transform,visualFaction):HumanFactionVisual.Create(f.transform,visualFaction,raiderBoss?0:f.UseAssaultRifle?0:1);
                 human.transform.localScale=Vector3.one*(raiderBoss?1.20f:1.12f);
             // Keep the existing actor origin and faction model floor alignment.
                 human.transform.localPosition=Vector3.down*.03f;

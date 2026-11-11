@@ -415,12 +415,14 @@ public static class RegressionSuiteReview
             var valeActor = new GameObject("ValeCheck");
             try
             {
-                var vv = HumanFactionVisual.CreateVale(valeActor.transform);
-                if (!vv || !vv.Muzzle || !vv.Body)
-                    throw new Exception("CreateVale missing visual, Body, or Muzzle");
+                var vv = ImportedEnemyVisual.TryCreateBossNPC(valeActor.transform, Vector3.zero);
+                if (!vv)
+                    throw new Exception("TryCreateBossNPC returned null for Malcolm Vale");
+                bool hasMask = false;
                 foreach (var tr in valeActor.GetComponentsInChildren<Transform>(true))
-                    if (tr.name == "Human faction / helmet")
-                        throw new Exception("Malcolm Vale must not wear a faction helmet");
+                    if (tr.name == "Vale half respirator socket") hasMask = true;
+                if (!hasMask)
+                    throw new Exception("Malcolm Vale missing Vale half respirator socket");
             }
             finally { UnityEngine.Object.DestroyImmediate(valeActor); }
 

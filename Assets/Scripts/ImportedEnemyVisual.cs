@@ -96,7 +96,12 @@ namespace NeonVault
             }
             Animate(0,0);
             NormalizeVisibleModel(targetHeight);
-            if(!suppressMask&&((owner&&(owner.kind==10||owner.RaiderBoss))||(!owner&&name.Contains("RaiderBossNPC")))) AttachRaiderMask();
+            bool isVale = name.Contains("RaiderBossNPC") || (owner && owner.RaiderBoss && name.Contains("Enemy_11"));
+            if (isVale)
+            {
+                FactionBossVisuals.CustomizeImportedVale(transform, model, actor, targetHeight);
+            }
+            else if(!suppressMask&&((owner&&(owner.kind==10||owner.RaiderBoss))||(!owner&&name.Contains("RaiderBossNPC")))) AttachRaiderMask();
             // Normalization becomes the persistent scale, including during sampled animation.
             for(int i=0;i<scaleTransforms.Length;i++)authoredScales[i]=scaleTransforms[i].localScale;
         }

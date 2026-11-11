@@ -119,7 +119,7 @@ namespace NeonVault
             for(int n=0;n<4;n++)art.Part("Merchant stock",PrimitiveType.Cube,merchantPosition+new Vector3(-1.1f+n*.72f,1.45f,1.15f),new Vector3(.48f,.45f,.48f),new Color(.38f,.35f,.27f),world);
             art.Part("Debt office counter",PrimitiveType.Cube,debtCollectorPosition+new Vector3(0,.25f,-1.4f),new Vector3(2.8f,1.25f,.8f),new Color(.22f,.23f,.22f),world);
             art.Part("Archivist counter",PrimitiveType.Cube,archivistPosition+new Vector3(0,.25f,-1.4f),new Vector3(2.8f,1.25f,.8f),new Color(.26f,.25f,.21f),world);
-            if(LastVisitedCamp==0&&!WorldStorySeen){var valeRoot=new GameObject("Malcolm Vale / explosive collar contract").transform;valeRoot.SetParent(world,false);valeRoot.position=new Vector3(1,0,7);valeRoot.rotation=Quaternion.Euler(0,180,0);var valeVisual=HumanFactionVisual.CreateVale(valeRoot);valeVisual.enabled=false;valeRoot.localScale=Vector3.one*1.12f;departingRaiderBoss=valeRoot;}
+            if(LastVisitedCamp==0&&!WorldStorySeen){var boss=ImportedEnemyVisual.TryCreateBossNPC(world,new Vector3(1,0,7))??art.Character(new Vector3(1,.65f,7),true,8);boss.rotation=Quaternion.Euler(0,180,0);boss.name="Malcolm Vale / explosive collar contract";departingRaiderBoss=boss;}
             ImportedWorldAssets.DressInterior(world,Layout,true);
             art.Part("Exit wall left",PrimitiveType.Cube,new Vector3(-7,2,12),new Vector3(10,4,.45f),new Color(.25f,.25f,.23f),world);
             art.Part("Exit wall right",PrimitiveType.Cube,new Vector3(7,2,12),new Vector3(10,4,.45f),new Color(.25f,.25f,.23f),world);

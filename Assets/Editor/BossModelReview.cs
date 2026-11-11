@@ -23,7 +23,7 @@ namespace NeonVault
 
         static void ConfigureTextureAssets()
         {
-            foreach (string charName in new[] { "Raven", "Vex", "ValeProps" })
+            foreach (string charName in new[] { "Raven", "Vex", "ValeProps", "ValeBoss" })
             {
                 string fbx = "Assets/Resources/Characters/" + charName + "/" + charName + ".fbx";
                 var model = AssetImporter.GetAtPath(fbx) as ModelImporter;
@@ -140,13 +140,14 @@ namespace NeonVault
                 return (p, v);
             });
 
-            SpawnBoss(root.transform, "Vale", new Vector3(spacing, 0f, 0f), actorRot, combatPose, -1f, false, false, -1f, () =>
+            var valeNpc = ImportedEnemyVisual.TryCreateBossNPC(root.transform, new Vector3(spacing, 0f, 0f));
+            if (valeNpc)
             {
-                var p = new GameObject("ValeActor").transform;
-                var v = HumanFactionVisual.CreateVale(p);
-                v.transform.localScale = Vector3.one * 1.20f;
-                return (p, v);
-            });
+                valeNpc.localRotation = actorRot;
+                valeNpc.localScale = Vector3.one * 0.94f;
+                var drv = valeNpc.GetComponent<ImportedEnemyVisual>();
+                if (drv) drv.enabled = false;
+            }
 
             RenderShot(root, fileName, camPos, lookAt, orthoSize);
             Object.DestroyImmediate(floorMat);
