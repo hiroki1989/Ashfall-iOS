@@ -19,6 +19,18 @@ namespace NeonVault
         string hubDialogue="";
         int dialogueOpenedFrame;
         bool collectorIntroSeen,collectorOpen;int collectorClaims,collectorPage,collectorKnown;
+        public int CollectorAvailablePoints => Mathf.Max(0, collectorKnown / 50 - collectorClaims);
+        public int ClaimCollectorCatalogPoints()
+        {
+            int available = CollectorAvailablePoints;
+            if(available <= 0) return 0;
+            collectorClaims += available;
+            ExpeditionTokens += available;
+            SaveProgression();
+            PlayUserSound("skill", .35f);
+            Notify("COLLECTION / SKILL POINTS +" + available, "収集報告 / スキルポイント +" + available);
+            return available;
+        }
         void OpenCollector()
         {
             if(!smoke)EquipmentDiscovery.RecordCurrent(Weapons,ArmorInventory,ArtifactInventory,MeleeWeaponInventory);
@@ -74,13 +86,13 @@ namespace NeonVault
             }
             else
             {
-                int available=Mathf.Max(0,collectorKnown/50-collectorClaims);
+                int available=CollectorAvailablePoints;
                 DrawUnifiedDialogueScene("iona",false,T("IONA / COLLECTOR","イオナ / コレクター"),
                     T("Back in one piece, eh? My registry stands at "+collectorKnown+" documented specimens. Did you drag anything interesting out of the ash?",
                       "おかえり、無事でよかった。図鑑の記録は"+collectorKnown+"種類よ。今日は何か面白いもの、見つけた？"),
                     Gold,T("UNCLAIMED POINTS: ","受け取れるポイント：")+available);
-                if(available>0&&WorldButton(UnifiedDialogueSecondaryButton,T("REPORT / CLAIM","報告して受け取る"))){collectorClaims+=available;ExpeditionTokens+=available;SaveProgression();PlayUserSound("skill",.35f);Notify("COLLECTION / SKILL POINTS +"+available,"収集報告 / スキルポイント +"+available);collectorPage=13;}
-                if(PetAdopted&&WorldButton(new Rect(120,725,370,65),T("PET RESEARCH","ペットの研究"))){petExchangeCategory=0;petExchangeSelection=null;collectorPage=17;}
+                if(available>0&&WorldButton(UnifiedDialogueSecondaryButton,T("REPORT / CLAIM","報告して受け取る"))){ClaimCollectorCatalogPoints();collectorPage=13;}
+                if(PetAdopted&&WorldButton(new Rect(110,725,390,65),T("GIVE LEGENDARY GEAR","レジェンダリー装備を渡す"))){petExchangeCategory=0;petExchangeSelection=null;collectorPage=17;}
                 if(WorldButton(UnifiedDialoguePrimaryButton,T("CLOSE","閉じる")))collectorOpen=false;
             }
         }
@@ -165,13 +177,5 @@ namespace NeonVault
             next.Hit(damage*runChain, next.transform.position+Vector3.up*.8f,Color.cyan);CombatVisuals.Burst(position,Color.cyan,4,world);
         }
         public void RunDashPulse(){if(runDash<=0)return;foreach(var foe in Enemies.ToArray())if(foe!=null&&!foe.dead&&Vector3.Distance(PlayerPosition,foe.transform.position)<3)foe.Hit(EffectiveDamage*.5f);}
-        void DrawRunBonuses()
-        {
-            Panel(new Rect(24,155,338,152),Cyan*.6f);Text(42,165,T("FIELD UPGRADES / RESET ON RETURN","現地改造 / 帰還でリセット"),tiny,Cyan,310);
-            Text(42,191,T("Damage +","威力 +")+(runDamage*100).ToString("0")+T("%   Fire +","%   連射 +")+(runFire*100).ToString("0")+"%",small,Mist,310);
-            Text(42,218,T("Health +","HP +")+runVitality+T("   Dash +","   回避 +")+(runDash*100).ToString("0")+"%",small,Mist,310);
-            Text(42,245,T("Chain ","連鎖 ")+(runChain*100).ToString("0")+T("% / Kill heal ","% / 撃破回復 ")+runHarvest,tiny,Mist,310);
-            Text(42,272,T("Module barrier ","モジュールシールド ")+ArtifactShield.ToString("0")+T(" / Conditional ×"," / 条件火力 ×")+ArtifactDamageMultiplier.ToString("0.00"),tiny,Cyan,310);
-        }
     }
 }

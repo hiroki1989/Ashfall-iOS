@@ -612,8 +612,8 @@ namespace NeonVault
             Vector3 old=transform.position;
             if(parabolic){verticalVelocity-=gravity*dt;transform.position+=new Vector3(velocity.x,verticalVelocity,velocity.z)*dt;}else transform.position+=velocity*dt;
             life-=dt;
-            bool blocked=!game.Layout.ClearLine(old,transform.position,.12f);
-            if(blocked){Vector3 end=transform.position;float clear=0,wall=1;for(int i=0;i<12;i++){float mid=(clear+wall)*.5f;if(game.Layout.ClearLine(old,Vector3.Lerp(old,end,mid),.12f))clear=mid;else wall=mid;}transform.position=Vector3.Lerp(old,end,clear);}
+            bool blocked=!game.LineOfSight(old,transform.position,.12f);
+            if(blocked){Vector3 end=transform.position;float clear=0,wall=1;for(int i=0;i<12;i++){float mid=(clear+wall)*.5f;if(game.LineOfSight(old,Vector3.Lerp(old,end,mid),.12f))clear=mid;else wall=mid;}transform.position=Vector3.Lerp(old,end,clear);}
             if(friendly)
             {
                 Foe target=null;float nearestContact=float.MaxValue;

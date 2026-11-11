@@ -92,7 +92,7 @@ namespace NeonVault
             }
 
             Box(new Rect(0, 0, 1440, 900), PanelInk);
-            Text(60, 35, T("IONA / PET RESEARCH", "イオナ / ペットの研究"), heading, Gold, 1040);
+            Text(60, 35, T("IONA / GIVE LEGENDARY GEAR", "イオナ / レジェンダリー装備を渡す"), heading, Gold, 1040);
             Text(64, 100, T("Trade one legendary item for one pet point. Equipped items cannot be traded.", "レジェンダリー装備1つでペットポイント1。装備中の品は渡せません。"), small, UiPaper, 1200);
             if (WorldButton(new Rect(1160, 35, 220, 60), T("BACK", "戻る"))) { collectorPage = 12; petExchangeSelection = null; return true; }
             string[] enTabs = { "GUNS", "ARMOR", "MODULES", "MELEE" }, jaTabs = { "銃", "防具", "モジュール", "近接武器" };

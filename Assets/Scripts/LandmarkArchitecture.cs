@@ -1021,6 +1021,133 @@ namespace NeonVault
             }
         }
 
+        static bool CircleBlocked(Vector3 p, float radius, Vector3 center, float solidRadius)
+        {
+            float dx = p.x - center.x, dz = p.z - center.z;
+            float limit = solidRadius + radius;
+            return dx * dx + dz * dz < limit * limit;
+        }
+
+        static bool BoxBlocked(Vector3 p, float radius, Vector3 center, float halfX, float halfZ)
+        {
+            return Mathf.Abs(p.x - center.x) < halfX + radius && Mathf.Abs(p.z - center.z) < halfZ + radius;
+        }
+
+        static bool RotatedBoxBlocked(Vector3 p, float radius, Vector3 center, float halfX, float halfZ, float yawDeg)
+        {
+            float rad = -yawDeg * Mathf.Deg2Rad;
+            float cos = Mathf.Cos(rad), sin = Mathf.Sin(rad);
+            float dx = p.x - center.x, dz = p.z - center.z;
+            float lx = dx * cos - dz * sin;
+            float lz = dx * sin + dz * cos;
+            return Mathf.Abs(lx) < halfX + radius && Mathf.Abs(lz) < halfZ + radius;
+        }
+
+        public static bool PocketParkBlocked(Vector3 p, float radius, Vector3 center, int variant)
+        {
+            if (Mathf.Abs(p.x - center.x) > 5.0f + radius || Mathf.Abs(p.z - center.z) > 5.0f + radius) return false;
+            switch (Mathf.Abs(variant) % 4)
+            {
+                case 0: return CircleBlocked(p, radius, center, 3.7f);
+                case 1: return CircleBlocked(p, radius, center, 3.9f);
+                case 2: return BoxBlocked(p, radius, center, 2.1f, 2.1f);
+                default: return CircleBlocked(p, radius, center, 3.5f);
+            }
+        }
+
+        public static bool LandmarkBlocked(Vector3 p, float radius, Vector3 center, int kind)
+        {
+            if (Mathf.Abs(p.x - center.x) > 9.0f + radius || Mathf.Abs(p.z - center.z) > 9.0f + radius) return false;
+            switch (kind)
+            {
+                case 0: // Clock Tower
+                    return BoxBlocked(p, radius, center, 3.1f, 3.1f);
+                case 1: // Memorial Arch (two solid stone piers; center archway remains passable)
+                    return BoxBlocked(p, radius, center + new Vector3(-4.4f, 0, 0), 1.9f, 2.3f) ||
+                           BoxBlocked(p, radius, center + new Vector3(4.4f, 0, 0), 1.9f, 2.3f);
+                case 2: // Fountain Plaza
+                    return CircleBlocked(p, radius, center, 6.2f);
+                case 3: // Civic Rotunda
+                    return CircleBlocked(p, radius, center, 5.6f);
+                case 4: // Water Tower (center standpipe + 6 steel support legs)
+                    if (CircleBlocked(p, radius, center, 0.7f)) return true;
+                    for (int leg = 0; leg < 6; leg++)
+                    {
+                        float a = leg * Mathf.PI / 3f;
+                        if (CircleBlocked(p, radius, center + new Vector3(Mathf.Cos(a) * 4.4f, 0, Mathf.Sin(a) * 4.4f), 0.65f))
+                            return true;
+                    }
+                    return false;
+                case 5: // North Obelisk + 6 pylons
+                    if (BoxBlocked(p, radius, center, 2.8f, 2.8f)) return true;
+                    for (int pylon = 0; pylon < 6; pylon++)
+                    {
+                        float a = pylon * Mathf.PI / 3f;
+                        if (CircleBlocked(p, radius, center + new Vector3(Mathf.Cos(a) * 6.4f, 0, Mathf.Sin(a) * 6.4f), 0.62f))
+                            return true;
+                    }
+                    return false;
+                case 6: // Radio Spire
+                    return BoxBlocked(p, radius, center, 3.4f, 3.4f);
+                case 7: // Silo Plaza
+                    return CircleBlocked(p, radius, center + new Vector3(-3.8f, 0, 0), 2.75f) ||
+                           CircleBlocked(p, radius, center + new Vector3(3.8f, 0, 0), 2.75f) ||
+                           BoxBlocked(p, radius, center + new Vector3(-6.7f, 0, 0), 0.45f, 0.45f);
+                case 8: // Deepwood Shrine + Torii gate columns
+                    return CircleBlocked(p, radius, center, 4.7f) ||
+                           CircleBlocked(p, radius, center + new Vector3(-2.4f, 0, -6.5f), 0.35f) ||
+                           CircleBlocked(p, radius, center + new Vector3(2.4f, 0, -6.5f), 0.35f);
+                case 9: // Botanical Dome
+                    return CircleBlocked(p, radius, center, 6.7f);
+                case 10: // Observatory Dome
+                    return CircleBlocked(p, radius, center, 5.45f);
+                case 11: // War Cenotaph
+                    if (BoxBlocked(p, radius, center, 3.8f, 2.6f)) return true;
+                    for (int b = 0; b < 4; b++)
+                    {
+                        float sx = (b & 1) == 0 ? -4.8f : 4.8f, sz = (b & 2) == 0 ? -3.6f : 3.6f;
+                        if (CircleBlocked(p, radius, center + new Vector3(sx, 0, sz), 0.65f)) return true;
+                    }
+                    return false;
+                case 12: // Rail Turntable / Armored Locomotive
+                    return RotatedBoxBlocked(p, radius, center, 5.65f, 1.65f, 22f);
+                case 13: // Goliath Crane (4 portal legs)
+                    for (int side = -1; side <= 1; side += 2)
+                        for (int fb = -1; fb <= 1; fb += 2)
+                            if (CircleBlocked(p, radius, center + new Vector3(side * 5.2f, 0, fb * 2.6f), 0.65f))
+                                return true;
+                    return false;
+                case 14: // Cooling Towers + turbine hall
+                    return CircleBlocked(p, radius, center + new Vector3(-4.2f, 0, 1.2f), 3.15f) ||
+                           CircleBlocked(p, radius, center + new Vector3(4.2f, 0, 1.2f), 2.70f) ||
+                           BoxBlocked(p, radius, center + new Vector3(0, 0, -4.2f), 4.3f, 2.1f);
+                case 15: // Blast Furnace + 3 Cowper stoves
+                    if (CircleBlocked(p, radius, center + new Vector3(-1.8f, 0, 0), 2.85f)) return true;
+                    for (int s = 0; s < 3; s++)
+                        if (CircleBlocked(p, radius, center + new Vector3(3.8f, 0, -3.2f + s * 3.2f), 1.22f))
+                            return true;
+                    return false;
+                case 16: // Amphitheater rear shell
+                    return BoxBlocked(p, radius, center + new Vector3(0, 0, 3.0f), 5.1f, 3.2f);
+                case 17: // Radar Array pedestal
+                    return CircleBlocked(p, radius, center, 3.6f);
+                case 18: // Oil Derrick + pumpjack
+                    return BoxBlocked(p, radius, center, 2.2f, 2.2f) ||
+                           BoxBlocked(p, radius, center + new Vector3(4.6f, 0, 0), 0.7f, 0.7f) ||
+                           BoxBlocked(p, radius, center + new Vector3(4.6f, 0, -2.6f), 0.5f, 0.5f);
+                case 19: // Cathedral Spire
+                    return BoxBlocked(p, radius, center, 4.3f, 2.9f) ||
+                           BoxBlocked(p, radius, center + new Vector3(-3.8f, 0, -0.4f), 1.3f, 2.1f) ||
+                           BoxBlocked(p, radius, center + new Vector3(3.8f, 0, -0.4f), 1.3f, 2.1f);
+                case 20: // Wind Turbine pedestal
+                    return CircleBlocked(p, radius, center, 2.25f);
+                case 21: // Command Bunker
+                    return CircleBlocked(p, radius, center, 7.2f);
+                default: // Launch Gantry pad & rocket
+                    return BoxBlocked(p, radius, center, 5.8f, 5.8f);
+            }
+        }
+
         public const float StreetLampHeight = 3.0f;
 
         public static void PlaceNormalizedProp(Transform chunkTransform, GameObject prefab, Vector3 position, float yaw, float targetHeight)

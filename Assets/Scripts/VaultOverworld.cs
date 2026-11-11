@@ -195,7 +195,8 @@ namespace NeonVault
         void TickOverworld()
         {
             TickOverworldRush();
-            if(OverworldWaypointKind!=0)
+            bool keepActiveMissionWaypoint=OverworldWaypointKind==2&&HasActiveBriggsMission&&!ActiveBriggsMissionReadyToTurnIn&&OverworldWaypointId==ActiveBriggsMissionStage;
+            if(OverworldWaypointKind!=0&&!keepActiveMissionWaypoint)
             {
                 float reachDist=OverworldWaypointKind==1?6.5f:OverworldWaypointKind==2?5.0f:18f;
                 Vector3 wp=OverworldWaypointPosition;wp.y=PlayerPosition.y;

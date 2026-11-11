@@ -32,10 +32,17 @@ namespace NeonVault
         }
         readonly Dictionary<Vector2Int,ChunkData> cache=new Dictionary<Vector2Int,ChunkData>();
         readonly Queue<Vector2Int> cacheOrder=new Queue<Vector2Int>();
+        readonly int[] fixedLandmarkKinds=new int[LandmarkCount];
+        readonly bool[] fixedLandmarkActive=new bool[LandmarkCount];
+        public bool IsFixedLandmarkActive(int i)=>i>=0&&i<LandmarkCount&&fixedLandmarkActive[i];
         public sealed class ChunkData
         {
             public readonly List<Rect> Buildings=new List<Rect>();
             public readonly List<Vector3> Trees=new List<Vector3>(),Cars=new List<Vector3>();
+            public bool HasLandmark;
+            public int LandmarkKindId;
+            public Vector3 LandmarkPos;
+            public readonly List<(Vector3 pos,int variant)> PocketParks=new List<(Vector3,int)>();
         }
         public const int StreetSearchRadius=3;
         public const float BridgeHalfLength=32;
@@ -411,6 +418,12 @@ namespace NeonVault
                 Landmarks[i]=p;
             }
             cachedLandmarkPositions=Landmarks;
+            for(int i=0;i<LandmarkCount;i++)
+            {
+                fixedLandmarkKinds[i]=FixedLandmarks[i].kind;
+                Vector3 lp=Landmarks[i];
+                fixedLandmarkActive[i]=!River(lp)&&RoadClearance(lp)>4f&&!SiteProtected(lp,12);
+            }
             var levels=new int[Entrances.Length];
             for(int i=0;i<levels.Length;i++)
             {
@@ -515,6 +528,22 @@ namespace NeonVault
                 bool near=false;foreach(var tree in data.Trees)if((tree-p).sqrMagnitude<minSpacingSq){near=true;break;}
                 if(!near)data.Trees.Add(p);
             }
+            if(LandmarkIndexAtChunk(key,out _,out _)<0)
+            {
+                int lmKind=LandmarkKind(key,out Vector3 lmPos);
+                if(lmKind>=0&&!River(lmPos)&&RoadClearance(lmPos)>4f&&!SiteProtected(lmPos,12))
+                {
+                    data.HasLandmark=true;data.LandmarkKindId=lmKind;data.LandmarkPos=lmPos;
+                }
+            }
+            for(int parkX=Mathf.FloorToInt(left/250f)-1;parkX<=Mathf.FloorToInt((left+ChunkSize)/250f);parkX++)
+            for(int parkZ=Mathf.FloorToInt(bottom/250f)-1;parkZ<=Mathf.FloorToInt((bottom+ChunkSize)/250f);parkZ++)
+            {
+                var centre=new Vector3(parkX*250+150,0,parkZ*250+150);
+                if(centre.x<left||centre.x>=left+ChunkSize||centre.z<bottom||centre.z>=bottom+ChunkSize||!PocketPark(centre)||SiteProtected(centre,10))continue;
+                if(LandmarkKind(key,out Vector3 nearLm)>=0&&(centre-nearLm).sqrMagnitude<32f*32f)continue;
+                data.PocketParks.Add((centre,parkX*31+parkZ*17));
+            }
             while(cache.Count>=49){var oldest=cacheOrder.Dequeue();cache.Remove(oldest);}cache.Add(key,data);cacheOrder.Enqueue(key);return data;
         }
         public int CachedChunkCount=>cache.Count;
@@ -522,12 +551,13 @@ namespace NeonVault
         {
             if(Mathf.Abs(p.x)+radius>=HalfExtent||Mathf.Abs(p.z)+radius>=HalfExtent)return true;
             if(Mathf.Abs(p.x-RiverX(p.z))<RiverWidth(p.z)*.5f+radius&&!Bridge(p.z))return true;
-            int cx=Mathf.FloorToInt(p.x/100),cz=Mathf.FloorToInt(p.z/100);
-            for(int x=Mathf.FloorToInt((p.x-radius-2)/100);x<=Mathf.FloorToInt((p.x+radius+2)/100);x++)for(int z=Mathf.FloorToInt((p.z-radius-3)/100);z<=Mathf.FloorToInt((p.z+radius+3)/100);z++)
+            if(Landmarks!=null)for(int i=0;i<LandmarkCount;i++)if(fixedLandmarkActive[i]&&LandmarkArchitecture.LandmarkBlocked(p,radius,Landmarks[i],fixedLandmarkKinds[i]))return true;
+            for(int x=Mathf.FloorToInt((p.x-radius-10)/100);x<=Mathf.FloorToInt((p.x+radius+10)/100);x++)for(int z=Mathf.FloorToInt((p.z-radius-10)/100);z<=Mathf.FloorToInt((p.z+radius+10)/100);z++)
             {
                 var chunk=GetChunk(x,z);foreach(var b in chunk.Buildings)if(p.x+radius>b.xMin&&p.x-radius<b.xMax&&p.z+radius>b.yMin&&p.z-radius<b.yMax)return true;
-                foreach(var tree in chunk.Trees){float dx=p.x-tree.x,dz=p.z-tree.z;if(dx*dx+dz*dz<(radius+.32f)*(radius+.32f))return true;}
                 foreach(var car in chunk.Cars)if(Mathf.Abs(p.x-car.x)<radius+1&&Mathf.Abs(p.z-car.z)<radius+2.5f)return true;
+                if(chunk.HasLandmark&&LandmarkArchitecture.LandmarkBlocked(p,radius,chunk.LandmarkPos,chunk.LandmarkKindId))return true;
+                foreach(var park in chunk.PocketParks)if(LandmarkArchitecture.PocketParkBlocked(p,radius,park.pos,park.variant))return true;
             }
             return false;
         }

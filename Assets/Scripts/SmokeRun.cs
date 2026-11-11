@@ -1636,9 +1636,7 @@ namespace NeonVault
                 if(sector<game.CurrentDungeon.AreaCount-1)
                 {
                     Check(game.LootCount>0,"clear reward loot sector "+sector);
-                    game.Advance();Check(game.screen==VaultGame.Screen.Reward,"augment screen sector "+sector);
-                    if(sector==0){VaultLanguage.Set(true,false);yield return Capture("reward-ja.png");VaultLanguage.Set(false,false);}
-                    game.ChooseReward(0);game.invincible=999;
+                    game.Advance();game.invincible=999;
                     Check(game.room==sector+1&&game.Active,"next sector starts "+sector);
                 }
             }
@@ -1650,7 +1648,7 @@ namespace NeonVault
                 game.EnterHub();Check(game.EnterDungeon(dungeon),"cleared progression allows dungeon "+dungeon);game.invincible=999;
                 foreach(var enemy in game.Enemies)Check(game.Layout.SpawnSafe(enemy.transform.position),"new dungeon enemy starts outside entry safe area / "+dungeon);
                 VaultLanguage.Set(true,false);yield return Capture("dungeon-"+dungeon+"-ja.png");VaultLanguage.Set(false,false);
-                for(int area=0;area<game.CurrentDungeon.AreaCount;area++){foreach(var enemy in game.Enemies.ToArray())if(enemy!=null&&!enemy.dead)enemy.Hit(100000);yield return null;game.Advance();if(area<game.CurrentDungeon.AreaCount-1){float baseDamage=game.gun.damage;int choice=0;while(choice<3&&game.RewardChoices[choice]==3)choice++;game.ChooseReward(Mathf.Min(2,choice));game.invincible=999;Check(game.gun.damage==baseDamage,"temporary boons never rewrite item base damage / "+dungeon+" / "+area);}}
+                for(int area=0;area<game.CurrentDungeon.AreaCount;area++){foreach(var enemy in game.Enemies.ToArray())if(enemy!=null&&!enemy.dead)enemy.Hit(100000);yield return null;game.Advance();game.invincible=999;}
                 Check(game.screen==VaultGame.Screen.Victory,"themed dungeon boss and return gate finish / "+dungeon);
             }
             yield return new WaitForSeconds(.3f);

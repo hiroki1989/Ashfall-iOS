@@ -217,21 +217,6 @@ namespace NeonVault
         void DrawOverlay()
         {
             Box(new Rect(0,0,1440,900),new Color(.008f,.015f,.022f,.88f));
-            if(screen==Screen.Reward)
-            {
-                Text(162,195,T("CHOOSE YOUR AUGMENT","強化を選択"),heading,Gold);
-                Text(165,260,T("Take one field upgrade into zone "+(room+2)+".","現地改造をひとつ選び、区域 "+(room+2)+" へ。"),label,Mist);
-                string[] names={T("OVERCHARGE","オーバーチャージ"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復プロトコル"),T("SHOCK BOOSTER","衝撃ブースター"),T("TESLA BRIDGE","テスラ導線"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
-                string[] desc={T("Run damage +25%","周回の威力 +25%"),T("Run max HP +30 / heal 35","周回HP +30 / HP35回復"),T("Run fire rate +22%","周回の連射 +22%"),T("Restore all HP","HPを全回復"),T("Dash cooldown bonus +35% / dash pulse","回避クールダウン短縮 +35% / ダッシュ波動"),T("Hits chain 30% damage to a nearby target","命中で近くの敵へ威力30%の連鎖"),T("Heal 3 HP per kill this run","撃破ごとにHP3回復"),T("Damage +12% / fire rate +10%","威力 +12% / 連射 +10%"),T("Max HP +20 / heal 45","最大HP +20 / HP45回復"),T("Dash cooldown +20% / heal 1 per kill","回避短縮 +20% / 撃破時HP1回復"),T("Chain damage +20% / fire rate +10%","連鎖 +20% / 連射 +10%"),T("Damage +15% / dash cooldown +15%","威力 +15% / 回避短縮 +15%"),T("Heal 50% and replenish ammunition","HP50%回復 / 全弾薬を補給")};
-                for(int i=0;i<3;i++)
-                {
-                    int c=choices[i];Rect r=new Rect(165+i*375,345,350,306);Panel(r,c==1?Cyan:Gold);
-                    Diamond(r.center.x,r.y+70,30,c==1?Cyan:Gold);Text(r.x+22,r.y+128,"0"+(i+1)+" / "+names[c],label,Color.white,315);
-                    Text(r.x+22,r.y+174,desc[c],small,Mist,315);
-                    if(Button(new Rect(r.x+20,r.y+224,310,57),T("ACCEPT AUGMENT","この強化を選ぶ"),true)){RecordRunUpgrade(c);ChooseReward(i);}
-                }
-                return;
-            }
             string text=screen==Screen.Pause?(pausedFromHub?T("SAFEHOUSE PAUSED","拠点一時停止"):T("EXPEDITION PAUSED","探索一時停止")):screen==Screen.Victory?T("DUNGEON CLEARED","ダンジョンクリア"):T("SIGNAL LOST","生存信号を喪失");
             float panelH = screen==Screen.Victory?660:(screen==Screen.Pause?(pausedFromHub?630:690):560);
             Panel(new Rect(350,140,740,panelH),screen==Screen.Victory?Gold:Cyan);

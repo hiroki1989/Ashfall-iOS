@@ -14,6 +14,9 @@ namespace NeonVault
         Vector2 actionTreeMaxScroll = new Vector2(0f, 5000f), petSkillMaxScroll = new Vector2(0f, 2000f); // set each frame by the tree draw; used by touch drag
         string actionTreeLastDescription;
         float skillTreeNavCooldown;
+        int actionTreeBranchHotkeyFrame = -1;
+        Vector2 actionTreeHoverMousePos = new Vector2(-999f, -999f);
+        bool actionTreeHoverFrameMoved;
         const float ActionTreeTierPitch = 560f;
         const float ActionTreeContentHeight = 58f + 4f * ActionTreeTierPitch + 1030f;
         const int ActionTreeNodeRows = 14;
@@ -323,10 +326,64 @@ namespace NeonVault
             GUI.EndScrollView();
         }
 
+        public Vector2 ActionTreeNodeLocalPos(int t, int s)
+        {
+            const float cx = 846f * 0.5f;
+            float topY = 58f + t * ActionTreeTierPitch;
+            if(s < 0) return new Vector2(cx, topY);
+            GetTierGeometry(t, out int[] row, out float[] lane, out _);
+            return new Vector2(cx + lane[s] * 135f, topY + 45f + row[s] * 74f);
+        }
+
+        public bool JumpActionSkillNode(int dx, int dy)
+        {
+            if(dx == 0 && dy == 0) return false;
+            int curTier = Mathf.Clamp(actionTreeTier, 0, 4);
+            int curSlot = Mathf.Clamp(actionTreeSlot, -1, 13);
+            Vector2 cur = ActionTreeNodeLocalPos(curTier, curSlot);
+            Vector2 dir = new Vector2(dx, dy).normalized;
+
+            int bestTier = curTier, bestSlot = curSlot;
+            float bestScore = float.PositiveInfinity;
+            bool found = false;
+
+            for(int t = 0; t < 5; t++)
+            {
+                for(int s = -1; s < 14; s++)
+                {
+                    if(t == curTier && s == curSlot) continue;
+                    Vector2 p = ActionTreeNodeLocalPos(t, s);
+                    Vector2 d = p - cur;
+                    if(dx != 0 && Mathf.Abs(d.y) > 130f) continue;
+                    float along = d.x * dir.x + d.y * dir.y;
+                    if(along < 8f) continue;
+                    float side = Mathf.Abs(d.x * dir.y - d.y * dir.x);
+                    float score = along + side * 2.6f + (side * side) / (along + 24f);
+                    if(score < bestScore)
+                    {
+                        bestScore = score;
+                        bestTier = t;
+                        bestSlot = s;
+                        found = true;
+                    }
+                }
+            }
+
+            if(!found) return false;
+            actionTreeTier = bestTier;
+            actionTreeSlot = bestSlot;
+            EnsureActionNodeScrollVisible(actionTreeTier, actionTreeSlot);
+            Vector2 localPos = ActionTreeNodeLocalPos(actionTreeTier, actionTreeSlot);
+            Vector2 canvasPos = new Vector2(50f + localPos.x - actionTreeScroll.x, 226f + localPos.y - actionTreeScroll.y);
+            actionTreeHoverMousePos = canvasPos;
+            actionTreeHoverFrameMoved = false;
+            PlayUserSound("skill", .08f);
+            return true;
+        }
+
         void HandleActionTreeControllerInput(ActionSkillKind selected, int kind, int branch)
         {
             if(Event.current.type != EventType.Layout) return;
-            float now = Time.unscaledTime;
 
             // Cancel / Back
             if(Input.GetKeyDown(KeyCode.JoystickButton1))
@@ -336,71 +393,53 @@ namespace NeonVault
                 PlayUserSound("skill", .12f);
                 return;
             }
-            // Upgrade selected node (A / Cross / Return / Space)
-            if(Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
+            // Upgrade selected node when cursor is inside the tree (or keyboard confirm)
+            bool treeCursorInside = true;
+            if((treeCursorInside && Input.GetKeyDown(KeyCode.JoystickButton0)) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
             {
                 int t = Mathf.Clamp(actionTreeTier, 0, 4);
                 if(actionTreeSlot >= 0) TryUpgradeActionSkillExtra(selected, branch, t, actionTreeSlot);
                 else TryUpgradeActionSkill(selected, branch, t);
             }
-            // Switch Branch (LB / RB or Q / E)
-            if(Input.GetKeyDown(KeyCode.JoystickButton4) || Input.GetKeyDown(KeyCode.Q))
+            // Switch Branch (Triggers LT / RT or Q / E, never Left Stick)
+            if(actionTreeBranchHotkeyFrame != Time.frameCount)
             {
-                actionTreeBranch = (branch + 2) % 3;
-                PlayUserSound("skill", .1f);
-            }
-            if(Input.GetKeyDown(KeyCode.JoystickButton5) || Input.GetKeyDown(KeyCode.E))
-            {
-                actionTreeBranch = (branch + 1) % 3;
-                PlayUserSound("skill", .1f);
+                bool prevBranch = Input.GetKeyDown(KeyCode.Q);
+                bool nextBranch = Input.GetKeyDown(KeyCode.E);
+                if(prevBranch && !nextBranch)
+                {
+                    actionTreeBranchHotkeyFrame = Time.frameCount;
+                    actionTreeBranch = (branch + 2) % 3;
+                    actionTreeTier = 0; actionTreeSlot = -1; actionTreeScroll = Vector2.zero;
+                    PlayUserSound("skill", .1f);
+                }
+                else if(nextBranch && !prevBranch)
+                {
+                    actionTreeBranchHotkeyFrame = Time.frameCount;
+                    actionTreeBranch = (branch + 1) % 3;
+                    actionTreeTier = 0; actionTreeSlot = -1; actionTreeScroll = Vector2.zero;
+                    PlayUserSound("skill", .1f);
+                }
             }
             // Switch Class (Y / Triangle or Tab)
             if(Input.GetKeyDown(KeyCode.JoystickButton3) || Input.GetKeyDown(KeyCode.Tab))
             {
                 actionTreeKind = (kind + 1) % 3;
+                actionTreeBranch = 0; actionTreeTier = 0; actionTreeSlot = -1; actionTreeScroll = Vector2.zero;
                 PlayUserSound("skill", .12f);
             }
 
-            if(now < skillTreeNavCooldown) return;
-            float hx = Input.GetAxisRaw("Horizontal");
-            float vy = Input.GetAxisRaw("Vertical");
-            if(Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) hx = -1f;
-            if(Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) hx = 1f;
-            if(Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) vy = 1f;
-            if(Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) vy = -1f;
-
-            if(Mathf.Abs(hx) < 0.45f && Mathf.Abs(vy) < 0.45f) return;
-            skillTreeNavCooldown = now + 0.19f;
-
-            int curTier = Mathf.Clamp(actionTreeTier, 0, 4);
-            int curSlot = actionTreeSlot;
-
-            int subRow = curSlot < 0 ? 0 : Mathf.Clamp(curSlot + 1,1,ActionTreeNodeRows);
-
-            if(Mathf.Abs(vy) >= Mathf.Abs(hx))
+            // D-Pad (plus keyboard arrow keys) jumps spatially node-to-node; Left Stick does NOT switch branches or jump nodes
+            int dx = 0, dy = 0;
+            if(dx == 0 && dy == 0)
             {
-                int dir = vy < 0 ? 1 : -1;
-                subRow += dir;
-                if(subRow > ActionTreeNodeRows)
-                {
-                    if(curTier < 4) { curTier++; subRow = 0; }
-                    else subRow = 3;
-                }
-                else if(subRow < 0)
-                {
-                    if(curTier > 0) { curTier--; subRow = 3; }
-                    else subRow = 0;
-                }
-                actionTreeTier = curTier;
-                actionTreeSlot = subRow == 0 ? -1 : subRow - 1;
+                if(Input.GetKeyDown(KeyCode.LeftArrow)) dx = -1;
+                else if(Input.GetKeyDown(KeyCode.RightArrow)) dx = 1;
+                else if(Input.GetKeyDown(KeyCode.UpArrow)) dy = -1;
+                else if(Input.GetKeyDown(KeyCode.DownArrow)) dy = 1;
             }
-            else
-            {
-                if(curSlot>=0)actionTreeSlot=Mathf.Clamp(curSlot+(hx>0?1:-1),0,13);
-                else actionTreeBranch = hx > 0 ? (branch + 1) % 3 : (branch + 2) % 3;
-            }
-            EnsureActionNodeScrollVisible(actionTreeTier, actionTreeSlot);
-            PlayUserSound("skill", .08f);
+            if(dx != 0 || dy != 0)
+                JumpActionSkillNode(dx, dy);
         }
 
         void EnsureActionNodeScrollVisible(int tier, int slot)
@@ -485,6 +524,12 @@ namespace NeonVault
                 Event.current.Use();
             }
 
+            if(Event.current.type == EventType.Layout)
+            {
+                actionTreeHoverFrameMoved = scrollArea.Contains(Event.current.mousePosition) &&
+                    (Event.current.mousePosition - actionTreeHoverMousePos).sqrMagnitude > 16f;
+                if(actionTreeHoverFrameMoved) actionTreeHoverMousePos = Event.current.mousePosition;
+            }
             actionTreeMaxScroll = new Vector2(Mathf.Max(0f, contentW - scrollArea.width), Mathf.Max(0f, contentH - scrollArea.height));
             actionTreeScroll = GUI.BeginScrollView(scrollArea, actionTreeScroll, new Rect(0, 0, contentW, contentH), false, true);
 
@@ -560,7 +605,7 @@ namespace NeonVault
                     int icon=GetActionNodeIconIndex(selected,branch,t,s);
                     int fKind = nodeMax == 1 ? 2 : (nodeMax == 3 ? 1 : 0);
                     Rect hitS = new Rect(p.x - 26f, p.y - 26f, 52f, 66f);
-                    if(Event.current!=null && hitS.Contains(Event.current.mousePosition))
+                    if(actionTreeHoverFrameMoved && Event.current!=null && hitS.Contains(Event.current.mousePosition))
                     {
                         if(actionTreeTier!=t || actionTreeSlot!=s){actionTreeTier=t;actionTreeSlot=s;tier=t;}
                     }
@@ -571,7 +616,7 @@ namespace NeonVault
                 int icRoot = GetActionNodeIconIndex(selected, branch, t, -1);
                 float rSz = t==4 ? 68f : 62f;
                 Rect hitRoot = new Rect(pRoot.x - rSz*.5f - 4f, pRoot.y - rSz*.5f - 4f, rSz + 8f, rSz + 22f);
-                if(Event.current!=null && hitRoot.Contains(Event.current.mousePosition))
+                if(actionTreeHoverFrameMoved && Event.current!=null && hitRoot.Contains(Event.current.mousePosition))
                 {
                     if(actionTreeTier!=t || actionTreeSlot>=0){actionTreeTier=t;actionTreeSlot=-1;tier=t;}
                 }
@@ -623,8 +668,8 @@ namespace NeonVault
             }
 
             ActionLabel(new Rect(46, 848, 1348, 36),
-                T("[D-Pad / Stick] Select Node   ·   [A / Enter] Upgrade   ·   [LB / RB] Switch Branch   ·   [Y / Tab] Switch Class   ·   [B / Esc] Back",
-                  "[十字キー / スティック] ノード選択   ·   [A / Enter] スキル強化   ·   [LB / RB] 分岐切替   ·   [Y / Tab] クラス切替   ·   [B / Esc] 戻る"),
+                T("[D-Pad] Select Node   ·   [A / Enter] Upgrade   ·   [LT / RT] Switch Branch   ·   [Y / Tab] Switch Class   ·   [B / Esc] Back",
+                  "[十字キー] ノード選択   ·   [A / Enter] スキル強化   ·   [LT / RT] ツリー切替   ·   [Y / Tab] クラス切替   ·   [B / Esc] 戻る"),
                 Mist, 16, TextAnchor.MiddleCenter);
         }
 

@@ -121,7 +121,6 @@ namespace NeonVault
             }
             GUI.EndScrollView();
             for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);MobileItemText(new Rect(40+i*340,787,325,48),AmmoLabel(type)+" "+AmmoReserve(type)+" / "+AmmoCapacity(type),Mist);}
-            MobileItemText(new Rect(40,833,1360,65),RunBuffSummary(),Cyan);
         }
     }
 }

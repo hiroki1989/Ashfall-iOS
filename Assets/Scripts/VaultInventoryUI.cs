@@ -66,7 +66,6 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.027f,.028f,.023f,.97f));
             Text(48,32,T("FIELD MODULES / TWO SLOTS","拡張モジュール / 2枠"),heading,Gold,1050);
             Text(50,95,T("Permanent equipment. Trigger conditions and cooldowns reset each run.","恒久装備。発動条件とクールダウンは周回開始でリセット。"),small,Mist,1100);
-            DrawRunBuffLine(118);
             if(Button(new Rect(1190,80,225,48),T("CLOSE [I / ESC]","閉じる [I / ESC]")))ToggleInventory();
             if(Button(new Rect(48,145,340,45),T("WEAPONS / ARMOR","銃 / 防具"))){artifactPage=false;meleeInventoryPage=false;}
             if(Button(new Rect(405,145,225,45),T("MELEE KIT","近接武器"))){artifactPage=false;meleeInventoryPage=true;}
@@ -99,7 +98,6 @@ namespace NeonVault
             if(Button(new Rect(710,80,225,48),T("MELEE KIT","近接武器"))){artifactPage=false;meleeInventoryPage=true;}
             Text(48,32,T("ARSENAL / EQUIPMENT","インベントリ"),heading,Gold,1050);
             Text(50,90,T("Own up to 10 guns; equip 2. Choose a slot below. Q / wheel switches equipped guns only.","銃は10本所持・2本装備。下の枠を選んで装備。Q / ホイールは装備銃だけ切替。"),small,Mist,1100);
-            DrawRunBuffLine(118);
             if(Button(new Rect(1190,80,225,48),T("CLOSE [I / ESC]","閉じる [I / ESC]")))ToggleInventory();
             Panel(new Rect(40,144,664,638),Gold);Panel(new Rect(726,144,674,638),Cyan);
             Text(60,158,T("WEAPONS  ","所持銃  ")+Weapons.Count+" / 10",label,Gold,620);
@@ -174,28 +172,6 @@ namespace NeonVault
                 T("  DAMAGE REDUCTION ","  被ダメ軽減 ")+(DamageReduction*100).ToString("0")+T("%  REGEN ","%  HP回復 ")+HealthRegen.ToString("0.0")+T("/s","/秒"),small,Cyan,1300);
             if(gun!=null)Text(60,841,T("EQUIPPED BASE / ","装備銃の基礎値 / ")+GunNumbers(gun,true),small,Cyan,1300);
         }
-        string RunBuffSummary()
-        {
-            if(screen!=Screen.Playing&&screen!=Screen.Pause&&screen!=Screen.Reward)return T("UPGRADES: none active","強化: 有効な効果なし");
-            var parts=new List<string>();
-            if(runDamage>.001f)parts.Add(T("DMG ","威力 ")+"+"+(runDamage*100).ToString("0")+"%");
-            if(runFire>.001f)parts.Add(T("FIRE ","連射 ")+"+"+(runFire*100).ToString("0")+"%");
-            if(runVitality>.01f)parts.Add(T("HP ","HP ")+"+"+runVitality.ToString("0"));
-            if(runDash>.001f)parts.Add(T("DASH ","回避 ")+"+"+(runDash*100).ToString("0")+"%");
-            if(runChain>.001f)parts.Add(T("CHAIN ","連鎖 ")+"+"+(runChain*100).ToString("0")+"%");
-            if(runHarvest>.01f)parts.Add(T("KILL HEAL ","撃破回復 ")+"+"+runHarvest.ToString("0.#"));
-            if(ArtifactShield>.01f)parts.Add(T("BARRIER ","シールド ")+ArtifactShield.ToString("0.#"));
-            if(ArtifactDamageMultiplier>1.001f)parts.Add(T("MOD DMG ","モジュール威力 ")+"×"+ArtifactDamageMultiplier.ToString("0.00"));
-            if(reloadSurge>0)parts.Add(T("RELOAD ","リロード強化 ")+reloadSurge.ToString("0.0")+T("s","秒"));
-            string[] augments={T("OVERCHARGE","過負荷"),T("REINFORCED SHELL","強化装甲"),T("RAPID CYCLER","高速機構"),T("REPAIR PROTOCOL","修復手順"),T("SHOCK BOOSTER","衝撃増幅"),T("TESLA BRIDGE","電弧連鎖"),T("BIO RECOVERY","生体回収"),T("BALANCED FORCE","均衡火力"),T("FIELD MEDIC","野戦手当"),T("MOBILE RECOVERY","機動回復"),T("ARC CYCLER","連鎖機構"),T("STRIKE RUNNER","突撃機動"),T("FIELD RESUPPLY","現地補給")};
-            foreach(var kv in runUpgradeCounts)if(kv.Key>=0&&kv.Key<augments.Length)parts.Add(augments[kv.Key]+(kv.Value>1?" ×"+kv.Value:""));
-            return T("UPGRADES: ","強化: ")+(parts.Count==0?T("none active","有効な効果なし"):string.Join("  ·  ",parts));
-        }
-        void DrawRunBuffLine(float y)
-        {
-            string summary=RunBuffSummary();var style=new GUIStyle(tiny){fontSize=11,wordWrap=true};style.normal.textColor=Cyan;
-            GUI.Label(new Rect(50,y-5,1330,30),summary,style);
-        }
         string MeleeArtifactState(ArtifactItem item)
         {
             if(item.effect==ArtifactEffect.KillShield)return ArtifactShield>0?T("barrier active","シールド発動中"):T("on kill","敵撃破で発動");
@@ -220,7 +196,6 @@ namespace NeonVault
             Box(new Rect(0,0,1440,900),new Color(.027f,.028f,.023f,.97f));
             Text(48,32,T("MELEE KIT / FIELD BLADES","近接装備 / フィールドブレード"),heading,Gold,1050);
             Text(50,90,T("Carry a quiet backup for close quarters. Knives, shivs, cleavers, machetes and hatchets are tracked separately from firearms.","近距離用の予備武器。ナイフ、シヴ、クリーバー、マチェット、手斧を銃器とは別に管理。"),small,Mist,1100);
-            DrawRunBuffLine(118);
             if(Button(new Rect(710,80,225,48),T("WEAPONS / ARMOR","銃 / 防具"))){meleeInventoryPage=false;artifactPage=false;}
             if(Button(new Rect(950,80,225,48),T("FIELD MODULES","拡張モジュール"))){artifactPage=true;meleeInventoryPage=false;}
             if(Button(new Rect(1190,80,225,48),T("CLOSE [I / ESC]","閉じる [I / ESC]")))ToggleInventory();

@@ -257,6 +257,117 @@ public static class RegressionSuiteReview
                 throw new Exception("Non-smoke dungeon finish must skip Victory panel, got " + game.screen);
             Set("smoke", true);
 
+            // 15. Skill tree node jump moves spatially without flipping branch
+            Set("actionTreeKind", 0);
+            Set("actionTreeBranch", 1);
+            Set("actionTreeTier", 0);
+            Set("actionTreeSlot", -1);
+            game.JumpActionSkillNode(1, 0);
+            game.JumpActionSkillNode(-1, 0);
+            if (Get<int>("actionTreeBranch") != 1)
+                throw new Exception("Horizontal node navigation must never change actionTreeBranch");
+            Set("actionTreeTier", 0);
+            Set("actionTreeSlot", -1);
+            if (!game.JumpActionSkillNode(0, 1))
+                throw new Exception("JumpActionSkillNode(0, 1) from root failed");
+            if (Get<int>("actionTreeTier") != 0 || Get<int>("actionTreeSlot") != 0)
+                throw new Exception($"Expected (tier=0, slot=0) after Down from root, got ({Get<int>("actionTreeTier")}, {Get<int>("actionTreeSlot")})");
+            if (!game.JumpActionSkillNode(0, 1) || Get<int>("actionTreeSlot") < 0)
+                throw new Exception("Second JumpActionSkillNode(0, 1) should move to lower slot inside tier");
+
+            // 16. Iona catalog claim grants ExpeditionTokens and ActionSkillAvailablePoints
+            int availBefore = game.ActionSkillAvailablePoints;
+            int tokBeforeIona = game.ExpeditionTokens;
+            Set("collectorKnown", 100);
+            Set("collectorClaims", 1);
+            if (game.CollectorAvailablePoints != 1)
+                throw new Exception("Expected CollectorAvailablePoints == 1 for known=100, claims=1");
+            int claimed = game.ClaimCollectorCatalogPoints();
+            if (claimed != 1 || game.ExpeditionTokens != tokBeforeIona + 1 || game.ActionSkillAvailablePoints != availBefore + 1)
+                throw new Exception($"Iona claim failed to grant skill point: claimed={claimed}, tok={game.ExpeditionTokens}, avail={game.ActionSkillAvailablePoints}");
+
+            // 17. Overworld Landmark buildings have collision (players/enemies/bullets); Trees have NO collision
+            var owGeo = game.WorldGeography;
+            Vector3 clockTower = owGeo.Landmarks[0];
+            if (!owGeo.Blocked(clockTower, .45f))
+                throw new Exception("Clock Tower center must be blocked for actors");
+            if (!owGeo.Blocked(clockTower + new Vector3(2.8f, 0, 2.8f), .45f))
+                throw new Exception("Clock Tower stone base plinth must be blocked");
+            if (owGeo.Blocked(clockTower + new Vector3(0, 0, -10.5f), .65f))
+                throw new Exception("Landmark Boss spawn at z=-10.5 must stay clear of Clock Tower solid");
+            if (owGeo.Layout.ClearLine(clockTower + new Vector3(-6f, 0, 0), clockTower + new Vector3(6f, 0, 0), .12f))
+                throw new Exception("Bullets must not pass through Clock Tower");
+            Vector3 memorialArch = owGeo.Landmarks[1];
+            bool archActive = owGeo.IsFixedLandmarkActive(1);
+            bool archPierBlocked = owGeo.Blocked(memorialArch + new Vector3(-4.4f, 0, 0), .45f);
+            bool archCenterBlocked = owGeo.Blocked(memorialArch, .45f);
+            if (archActive && (!archPierBlocked || archCenterBlocked))
+                throw new Exception($"Memorial Arch piers must block while center arch stays open (pier={archPierBlocked}, center={archCenterBlocked})");
+            if (!LandmarkArchitecture.LandmarkBlocked(memorialArch + new Vector3(-4.4f, 0, 0), .45f, memorialArch, 1) ||
+                LandmarkArchitecture.LandmarkBlocked(memorialArch, .45f, memorialArch, 1))
+                throw new Exception("LandmarkBlocked(Memorial Arch) geometry check failed");
+            if (!owGeo.Blocked(owGeo.Landmarks[9], .45f) || !owGeo.Blocked(owGeo.Landmarks[27], .45f))
+                throw new Exception("Botanical Dome and Command Bunker must be blocked");
+            bool checkedTree = false;
+            for (int cx = -2; cx <= 2 && !checkedTree; cx++)
+            {
+                for (int cz = -2; cz <= 2 && !checkedTree; cz++)
+                {
+                    var chunk = owGeo.GetChunk(cx, cz);
+                    foreach (var tree in chunk.Trees)
+                    {
+                        if (owGeo.Blocked(tree, .45f))
+                            throw new Exception("Overworld trees must NOT have collision at " + tree);
+                        if (!owGeo.Layout.ClearLine(tree - Vector3.right * .35f, tree + Vector3.right * .35f, .12f))
+                            throw new Exception("Bullets must pass freely through overworld trees at " + tree);
+                        checkedTree = true;
+                        break;
+                    }
+                }
+            }
+            if (!checkedTree)
+                throw new Exception("No overworld tree found to verify no-collision");
+
+            // 18. Active Briggs mission dungeon waypoint stays locked even upon arriving at dungeon entrance until mission completion (or manual clear)
+            Set("smoke", false);
+            SaveSlotPrefs.Select(3);
+            SaveSlotPrefs.DeleteSlot(3);
+            Invoke("ResetRuntimeStateForSlot");
+            Invoke("ProgressionInitialize");
+            var wpJobs = game.GetCampMissionOffers(0, true);
+            if (wpJobs == null || wpJobs.Length == 0 || !game.AcceptBriggsMission(wpJobs[0]))
+                throw new Exception("Failed to accept Briggs mission for waypoint test");
+            int wpStage = wpJobs[0];
+            game.BuildOverworld(owGeo.Entrances[wpStage]);
+            var pTr = Get<Transform>("player");
+            if (pTr != null) pTr.position = new Vector3(owGeo.Entrances[wpStage].x, .65f, owGeo.Entrances[wpStage].z);
+            Invoke("TickOverworld");
+            if (game.OverworldWaypointKind != 2 || game.OverworldWaypointId != wpStage)
+                throw new Exception($"Mission dungeon waypoint must NOT auto-clear upon reaching dungeon (got kind={game.OverworldWaypointKind}, id={game.OverworldWaypointId})");
+            game.SetOverworldWaypoint(0, -1);
+            if (game.OverworldWaypointKind != 0)
+                throw new Exception("Manual waypoint clear must still work");
+            game.SetOverworldWaypoint(2, wpStage);
+            typeof(VaultGame).GetProperty("SelectedStageId", flags).SetValue(game, wpStage);
+            Set("missionCompleted", true);
+            game.OnDungeonFinished(true);
+            if (game.OverworldWaypointKind != 1 || game.OverworldWaypointId != 0)
+                throw new Exception("Mission completion must redirect waypoint back to camp 0");
+            SaveSlotPrefs.DeleteSlot(3);
+            SaveSlotPrefs.Select(1);
+            Set("smoke", true);
+
+            // 19. Dungeon floor advance goes directly to next zone without Screen.Reward or per-floor run upgrades
+            game.EnterHub();
+            game.EnterDungeon(0);
+            Set("cleared", true);
+            int roomBeforeAdv = game.room;
+            game.Advance();
+            if (game.screen != VaultGame.Screen.Playing || game.room != roomBeforeAdv + 1)
+                throw new Exception($"Advance() must move directly to next zone (screen={game.screen}, room={game.room})");
+            if (game.runDamage != 0f || game.runFire != 0f || game.runVitality != 0f || game.runDash != 0f || game.runChain != 0f || game.runHarvest != 0f)
+                throw new Exception("Per-floor run upgrades must remain disabled (all 0)");
+
             Debug.Log("REGRESSION_SUITE_REVIEW PASS");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }

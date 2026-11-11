@@ -334,10 +334,10 @@ namespace NeonVault
             return Layout==null||Layout.Blocked(p,radius)||(IsOverworld&&WorldEntranceBuildings.Blocked(p,radius,WorldGeography));
         }
         public Vector3 ChaseDirection(Vector3 from)=>Layout.Chase(from,PlayerPosition);
-        public bool LineOfSight(Vector3 from,Vector3 to)
+        public bool LineOfSight(Vector3 from,Vector3 to,float radius=.15f)
         {
-            if(!Layout.ClearLine(from,to))return false;
-            if(IsOverworld){int steps=Mathf.CeilToInt(Vector3.Distance(from,to));for(int i=1;i<=steps;i++)if(WorldEntranceBuildings.Blocked(Vector3.Lerp(from,to,(float)i/steps),.15f,WorldGeography))return false;}
+            if(!Layout.ClearLine(from,to,radius))return false;
+            if(IsOverworld){int steps=Mathf.CeilToInt(Vector3.Distance(from,to));for(int i=1;i<=steps;i++)if(WorldEntranceBuildings.Blocked(Vector3.Lerp(from,to,(float)i/steps),radius,WorldGeography))return false;}
             return true;
         }
         public Vector3 MoveWithinRoom(Vector3 p,Vector3 delta,float radius)
@@ -711,21 +711,16 @@ namespace NeonVault
         {
             if(IsOverworld||screen!=Screen.Playing||!ExpeditionExitOpen)return;
             if(room>=CurrentDungeon.AreaCount-1){if(finalDebtBossFight){CompleteDebtBossFight();return;}Finish(true);return;}
-            choices=new[]{0,1,2,3,4,5,6,7,8,9,10,11,12};
-            for(int i=choices.Length-1;i>0;i--) { int j=rng.Next(i+1); int a=choices[i];choices[i]=choices[j];choices[j]=a; }
-            screen=Screen.Reward;
+            AdvanceToNextZone();
+        }
+        void AdvanceToNextZone()
+        {
+            room++; ResetGameplayOverlays();StopReloadSound();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
         }
         public void ChooseReward(int index)
         {
-            if(screen!=Screen.Reward||index<0||index>=choices.Length)return;
-            switch(choices[index]) { case 0:damageBonus+=.25f;runDamage+=.25f;break;case 1:baseMaxHp+=30;runVitality+=30;RecalculateArmor();HealPlayer(35,true);break;case 2:fireBonus+=.22f;runFire+=.22f;break;case 3:HealPlayer(maxHp-hp,true);break;case 4:runDash+=.35f;break;case 5:runChain+=.30f;break;case 6:runHarvest+=3;break;
-            case 7:damageBonus+=.12f;runDamage+=.12f;fireBonus+=.10f;runFire+=.10f;break;
-            case 8:baseMaxHp+=20;runVitality+=20;RecalculateArmor();HealPlayer(45,true);break;
-            case 9:runDash+=.20f;runHarvest+=1;break;
-            case 10:runChain+=.20f;fireBonus+=.10f;runFire+=.10f;break;
-            case 11:damageBonus+=.15f;runDamage+=.15f;runDash+=.15f;break;
-            case 12:HealPlayer(maxHp*.5f,true);foreach(var type in new[]{AmmoType.Handgun,AmmoType.Shotgun,AmmoType.AssaultRifle,AmmoType.SniperRifle,AmmoType.LightMachineGun})AddAmmo(type,AmmoPackSize(type));break; }
-            room++; ResetGameplayOverlays();StopReloadSound();reload=0;reloadPending=0;dodgeTimer=0;fireTimer=0; invincible=2.5f; dodgeCooldown=0; screen=Screen.Playing; BuildRoom(true);Notify(room==CurrentDungeon.AreaCount-1?"COLOSSUS / Final encounter":"ZONE "+(room+1).ToString("00"),room==CurrentDungeon.AreaCount-1?"巨骸 / 最終決戦":"区域 "+(room+1).ToString("00"));
+            if(screen!=Screen.Reward)return;
+            AdvanceToNextZone();
         }
         void Finish(bool victory)
         {

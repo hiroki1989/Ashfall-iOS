@@ -114,7 +114,7 @@ namespace NeonVault
                     // Exercise the real kill completion, reward and construction path.
                     var foes=new List<Foe>(game.Enemies);foreach(var enemy in foes){enemy.Hit(float.MaxValue,null,null,1000);}
                     Check((bool)Field("cleared").GetValue(game),"last kill opens exit");game.Advance();
-                    if(floor<floors-1){Check(game.screen==VaultGame.Screen.Reward,"advance opens reward");game.ChooseReward(0);int advanced=game.room;game.ChooseReward(0);Check(game.room==advanced,"duplicate reward cannot skip floor");}
+                    if(floor<floors-1){Check(game.screen==VaultGame.Screen.Playing&&game.room==floor+1,"advance moves directly to next floor");}
                     else Check(game.screen==VaultGame.Screen.Victory,"final floor extracts");
                     yield return null;yield return null;
                 }
