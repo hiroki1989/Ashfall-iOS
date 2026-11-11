@@ -247,6 +247,16 @@ public static class RegressionSuiteReview
             SaveSlotPrefs.Select(1);
             Set("smoke", true);
 
+            // 14. Non-smoke dungeon clear skips Victory panel and returns without stopping at Screen.Victory
+            Set("smoke", false);
+            game.SetOverworldReturnStage(-1);
+            typeof(VaultGame).GetProperty("SelectedStageId", flags).SetValue(game, 100);
+            Set("missionCompleted", true);
+            Invoke("Finish", true);
+            if (game.screen == VaultGame.Screen.Victory || game.screen != VaultGame.Screen.Hub)
+                throw new Exception("Non-smoke dungeon finish must skip Victory panel, got " + game.screen);
+            Set("smoke", true);
+
             Debug.Log("REGRESSION_SUITE_REVIEW PASS");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }

@@ -729,10 +729,11 @@ namespace NeonVault
         }
         void Finish(bool victory)
         {
-            screen=victory?Screen.Victory:Screen.Dead;
             ClearRunCheckpoint();shake=0;
             SaveInventory();
             if(!IsOverworld){if(SelectedStageId>=0)MarkDungeonFastTravelUnlocked(SelectedStageId);OnDungeonFinished(victory);}
+            if(victory){if(PendingWorldStage>=0){ReturnFromWorldDungeon(true);return;}if(!smoke){EnterHub();return;}screen=Screen.Victory;return;}
+            screen=Screen.Dead;
             if(!victory)
             {
                 var deathCue=Resources.Load<AudioClip>("UserSFX/death-dramatic");
