@@ -36,28 +36,16 @@ namespace NeonVault
 
         struct TexSpec
         {
-            public string tex, normal;
-            public float metallic, smoothness, bump, emissiveGreen;
+            public string tex, normal, metallicGloss, ao;
+            public float metallic, smoothness, bump, aoStrength;
             public Color tint;
         }
 
         static readonly Dictionary<string, TexSpec> BossTexTable = new Dictionary<string, TexSpec>
         {
-            { "Skin", new TexSpec { tex = "{k}_body", normal = null, metallic = 0f, smoothness = 0.22f, tint = Color.white } },
-            { "Leather", new TexSpec { tex = "iona_leather", normal = "iona_leather_n", metallic = 0.04f, smoothness = 0.30f, bump = 0.35f, tint = Color.white } },
-            { "Brass", new TexSpec { tex = "iona_brass", normal = "iona_brass_n", metallic = 0.85f, smoothness = 0.64f, bump = 0.55f, tint = Color.white } },
-            { "Pants", new TexSpec { tex = "iona_pants", normal = "iona_pants_n", metallic = 0f, smoothness = 0.06f, bump = 0.40f, tint = Color.white } },
-            { "Hair", new TexSpec { tex = "iona_hair", normal = null, metallic = 0f, smoothness = 0.10f, tint = Color.white } },
-            { "Coat", new TexSpec { tex = "{k}_coat", normal = "{k}_coat_n", metallic = 0f, smoothness = 0.06f, bump = 0.45f, tint = Color.white } },
-            { "Scarf", new TexSpec { tex = "{k}_scarf", normal = "{k}_scarf_n", metallic = 0f, smoothness = 0.05f, bump = 0.45f, tint = Color.white } },
-            { "Armor", new TexSpec { tex = "{k}_armor", normal = "{k}_armor_n", metallic = 0.56f, smoothness = 0.50f, bump = 0.55f, tint = Color.white } },
-            { "Emblem", new TexSpec { tex = "{k}_emblem", normal = "{k}_emblem_n", metallic = 0.46f, smoothness = 0.48f, bump = 0.55f, tint = Color.white } },
-            { "Claw", new TexSpec { tex = "raven_claw", normal = "raven_claw_n", metallic = 0.88f, smoothness = 0.68f, bump = 0.55f, tint = Color.white } },
-            { "Medallion", new TexSpec { tex = "vex_medallion", normal = null, metallic = 0.82f, smoothness = 0.66f, tint = Color.white } },
-            { "Bone", new TexSpec { tex = "vex_bone", normal = "vex_bone_n", metallic = 0.04f, smoothness = 0.44f, bump = 1.10f, tint = Color.white } },
-            { "Lens", new TexSpec { tex = "{k}_lens", normal = null, metallic = 0.35f, smoothness = 0.90f, emissiveGreen = 0.24f, tint = Color.white } },
-            { "Canister", new TexSpec { tex = "{k}_canister_cap", normal = null, metallic = 0.84f, smoothness = 0.62f, tint = Color.white } },
-            { "Vent", new TexSpec { tex = "{k}_vent", normal = null, metallic = 0.70f, smoothness = 0.56f, tint = Color.white } },
+            { "Skin", new TexSpec { tex = "{k}_body", normal = "{k}_skin_n", ao = "{k}_skin_ao", metallic = 0f, smoothness = 0.24f, bump = 0.65f, aoStrength = 0.85f, tint = Color.white } },
+            { "HeadPBR", new TexSpec { tex = "{k}_head_pbr_a", normal = "{k}_head_pbr_n", metallicGloss = "{k}_head_pbr_m", ao = "{k}_head_pbr_ao", bump = 0.95f, aoStrength = 0.90f, tint = Color.white } },
+            { "OutfitPBR", new TexSpec { tex = "{k}_outfit_pbr_a", normal = "{k}_outfit_pbr_n", metallicGloss = "{k}_outfit_pbr_m", ao = "{k}_outfit_pbr_ao", bump = 0.95f, aoStrength = 0.90f, tint = Color.white } },
         };
 
         public static CustomRigPose AttachBossModel(GameObject root, int faction, out DetailedHeroEquipment3D.WeaponSockets gun)
@@ -149,28 +137,39 @@ namespace NeonVault
                     if (mat.HasProperty("_BumpScale")) mat.SetFloat("_BumpScale", sp.bump);
                 }
             }
-            if (mat.HasProperty("_Color")) mat.SetColor("_Color", sp.tint);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", sp.metallic);
-            if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", sp.smoothness);
-            if (sp.emissiveGreen > 0f && mat.HasProperty("_EmissionColor"))
+            string mgName = resolveTexName(sp.metallicGloss);
+            if (!string.IsNullOrEmpty(mgName))
             {
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", new Color(0.10f, sp.emissiveGreen, 0.08f));
+                var mg = Resources.Load<Texture2D>(texDir + mgName);
+                if (mg && mat.HasProperty("_MetallicGlossMap"))
+                {
+                    mat.SetTexture("_MetallicGlossMap", mg);
+                    mat.EnableKeyword("_METALLICGLOSSMAP");
+                    if (mat.HasProperty("_GlossMapScale")) mat.SetFloat("_GlossMapScale", 1.0f);
+                }
+            }
+            string aoName = resolveTexName(sp.ao);
+            if (!string.IsNullOrEmpty(aoName))
+            {
+                var ao = Resources.Load<Texture2D>(texDir + aoName);
+                if (ao && mat.HasProperty("_OcclusionMap"))
+                {
+                    mat.SetTexture("_OcclusionMap", ao);
+                    if (mat.HasProperty("_OcclusionStrength")) mat.SetFloat("_OcclusionStrength", sp.aoStrength > 0f ? sp.aoStrength : 0.90f);
+                }
+            }
+            if (mat.HasProperty("_Color")) mat.SetColor("_Color", sp.tint);
+            if (string.IsNullOrEmpty(mgName))
+            {
+                if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", sp.metallic);
+                if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", sp.smoothness);
             }
         }
 
         static void ApplyBossTextures(GameObject model, string key, string lower, GameObject ownerGo)
         {
             var owner = ownerGo.GetComponent<ResourceOwner>() ?? ownerGo.AddComponent<ResourceOwner>();
-            string Resolve(string pattern)
-            {
-                if (string.IsNullOrEmpty(pattern)) return null;
-                if (lower == "raven" && pattern == "{k}_emblem") return "raven_slashes";
-                if (lower == "raven" && pattern == "{k}_scarf") return "raven_crimson";
-                if (lower == "vex" && pattern == "{k}_armor") return "vex_metal";
-                return pattern.Replace("{k}", lower);
-            }
-            ApplyTextureSet(model, "Characters/" + key + "/Textures/", BossTexTable, Resolve, owner);
+            ApplyTextureSet(model, "Characters/" + key + "/Textures/", BossTexTable, p => string.IsNullOrEmpty(p) ? null : p.Replace("{k}", lower), owner);
         }
 
         static CustomRigPose CaptureRigPose(Transform modelRoot)
@@ -388,14 +387,15 @@ namespace NeonVault
             if (!body) return;
             var owner = root.GetComponent<ResourceOwner>() ?? root.AddComponent<ResourceOwner>();
 
-            // 1) Recolor existing Warden articulated armor slots to weathered brown-charcoal trenchcoat & dark trousers
+            // 1) Recolor existing Warden articulated armor slots to matte weathered trench/trouser tones + veteran face
             if (armorParts != null)
             {
-                TintSlot(armorParts.Length > 1 ? armorParts[1] : null, new Color(0.46f, 0.35f, 0.26f), owner);
-                TintSlot(armorParts.Length > 2 ? armorParts[2] : null, new Color(0.44f, 0.34f, 0.25f), owner);
-                TintSlot(armorParts.Length > 3 ? armorParts[3] : null, new Color(0.30f, 0.27f, 0.24f), owner);
-                TintSlot(armorParts.Length > 4 ? armorParts[4] : null, new Color(0.24f, 0.19f, 0.15f), owner);
+                TintSlot(armorParts.Length > 1 ? armorParts[1] : null, new Color(0.28f, 0.21f, 0.17f), owner);
+                TintSlot(armorParts.Length > 2 ? armorParts[2] : null, new Color(0.26f, 0.20f, 0.16f), owner);
+                TintSlot(armorParts.Length > 3 ? armorParts[3] : null, new Color(0.22f, 0.19f, 0.17f), owner);
+                TintSlot(armorParts.Length > 4 ? armorParts[4] : null, new Color(0.18f, 0.14f, 0.11f), owner);
             }
+            ApplyValeVeteranFace(common, owner);
 
             // 2) Instantiate Blender-sculpted & PBR-textured ValeProps and attach each group onto live DetailedHero3D bones
             var propsPrefab = Resources.Load<GameObject>("Characters/ValeProps/ValeProps");
@@ -429,17 +429,44 @@ namespace NeonVault
 
         static readonly Dictionary<string, TexSpec> ValeTexTable = new Dictionary<string, TexSpec>
         {
-            { "Coat", new TexSpec { tex = "vale_coat", normal = "vale_coat_n", metallic = 0f, smoothness = 0.07f, bump = 0.65f, tint = Color.white } },
-            { "Scarf", new TexSpec { tex = "vale_scarf", normal = "vale_scarf_n", metallic = 0f, smoothness = 0.06f, bump = 0.65f, tint = Color.white } },
-            { "Leather", new TexSpec { tex = "vale_leather", normal = "vale_leather_n", metallic = 0.04f, smoothness = 0.28f, bump = 0.65f, tint = Color.white } },
-            { "Bronze", new TexSpec { tex = "vale_bronze", normal = "vale_bronze_n", metallic = 0.84f, smoothness = 0.62f, bump = 0.80f, tint = Color.white } },
-            { "Scar", new TexSpec { tex = "vale_scar", normal = "vale_scar_n", metallic = 0f, smoothness = 0.20f, bump = 0.60f, tint = Color.white } },
-            { "Canister", new TexSpec { tex = "vale_canister", normal = null, metallic = 0.82f, smoothness = 0.60f, tint = Color.white } },
-            { "Vent", new TexSpec { tex = "vale_vent", normal = null, metallic = 0.72f, smoothness = 0.56f, tint = Color.white } },
+            { "AtlasPBR", new TexSpec { tex = "vale_props_pbr_a", normal = "vale_props_pbr_n", metallicGloss = "vale_props_pbr_m", ao = "vale_props_pbr_ao", bump = 0.95f, aoStrength = 0.90f, tint = Color.white } },
         };
 
         static void ApplyValeTextures(GameObject propsRoot, ResourceOwner owner) =>
             ApplyTextureSet(propsRoot, "Characters/ValeProps/Textures/", ValeTexTable, s => s, owner);
+
+        static void ApplyValeVeteranFace(SkinnedMeshRenderer common, ResourceOwner owner)
+        {
+            if (!common) return;
+            var faceTex = Resources.Load<Texture2D>("Characters/ValeProps/Textures/vale_face");
+            var faceNorm = Resources.Load<Texture2D>("Characters/ValeProps/Textures/vale_face_n");
+            if (!faceTex) return;
+            foreach (var smr in common.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (smr.name != "Common body / approved shared head") continue;
+                var mats = smr.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    if (!mats[i]) continue;
+                    var m = new Material(mats[i]) { name = mats[i].name + " (ValeFace)" };
+                    owner.owned.Add(m);
+                    if (m.HasProperty("_MainTex")) m.SetTexture("_MainTex", faceTex);
+                    if (faceNorm && m.HasProperty("_BumpMap"))
+                    {
+                        m.SetTexture("_BumpMap", faceNorm);
+                        m.EnableKeyword("_NORMALMAP");
+                        if (m.HasProperty("_BumpScale")) m.SetFloat("_BumpScale", 0.55f);
+                    }
+                    if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", 0f);
+                    if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.14f);
+                    mats[i] = m;
+                    changed = true;
+                }
+                if (changed) smr.sharedMaterials = mats;
+                break;
+            }
+        }
 
         static void TintSlot(SkinnedMeshRenderer renderer, Color tint, ResourceOwner owner)
         {
@@ -452,6 +479,8 @@ namespace NeonVault
                 var m = new Material(mats[i]) { name = mats[i].name + " (Vale)" };
                 owner.owned.Add(m);
                 if (m.HasProperty("_Color")) m.SetColor("_Color", tint);
+                if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", 0.04f);
+                if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.16f);
                 mats[i] = m;
                 changed = true;
             }

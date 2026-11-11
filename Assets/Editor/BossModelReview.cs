@@ -39,15 +39,25 @@ namespace NeonVault
 
                 string texDir = "Assets/Resources/Characters/" + charName + "/Textures";
                 if (!Directory.Exists(texDir)) continue;
-                foreach (string file in Directory.GetFiles(texDir, "*_n.png"))
+                foreach (string file in Directory.GetFiles(texDir, "*.png"))
                 {
                     string assetPath = file.Replace('\\', '/');
                     var imp = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-                    if (imp != null && imp.textureType != TextureImporterType.NormalMap)
+                    if (imp == null) continue;
+                    bool dirty = false;
+                    if (assetPath.EndsWith("_n.png"))
                     {
-                        imp.textureType = TextureImporterType.NormalMap;
-                        imp.SaveAndReimport();
+                        if (imp.textureType != TextureImporterType.NormalMap) { imp.textureType = TextureImporterType.NormalMap; dirty = true; }
                     }
+                    else if (assetPath.EndsWith("_m.png") || assetPath.EndsWith("_ao.png"))
+                    {
+                        if (imp.sRGBTexture) { imp.sRGBTexture = false; dirty = true; }
+                    }
+                    if (imp.maxTextureSize < 2048) { imp.maxTextureSize = 2048; dirty = true; }
+                    if (imp.filterMode != FilterMode.Trilinear) { imp.filterMode = FilterMode.Trilinear; dirty = true; }
+                    if (imp.anisoLevel < 8) { imp.anisoLevel = 8; dirty = true; }
+                    if (imp.textureCompression != TextureImporterCompression.CompressedHQ) { imp.textureCompression = TextureImporterCompression.CompressedHQ; dirty = true; }
+                    if (dirty) imp.SaveAndReimport();
                 }
             }
             AssetDatabase.Refresh();
