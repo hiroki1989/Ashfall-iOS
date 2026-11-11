@@ -67,15 +67,27 @@ namespace NeonVault
             visual.deathTime = -1;
             return visual;
         }
-        public void PreviewPose(bool firing)
+        public void PreviewPose(bool firing) => PreviewMotion(firing, -1f, false, false, -1f);
+        public void PreviewMotion(bool firing, float phaseVal, bool crouch, bool reload, float customDeathTime)
         {
             if (customBossRig != null)
             {
-                FactionBossVisuals.PoseCustomRig(customBossRig, gun, transform.forward, firing, -1f, false, false, false, -1f, 0f, Faction);
+                FactionBossVisuals.PoseCustomRig(customBossRig, gun, transform.forward, firing, phaseVal, crouch, false, reload, customDeathTime, 0f, Faction);
                 return;
             }
             if (Body)
-                DetailedHeroPlayer3D.Pose(Body, gun, handgun, firing, transform.forward, -1f, Vector3.zero, 0f);
+            {
+                DetailedHeroPlayer3D.Pose(Body, gun, handgun, firing, transform.forward, phaseVal, Vector3.zero, phaseVal >= 0f ? 0.8f : 0f);
+                if (crouch)
+                {
+                    Body.transform.localPosition = new Vector3(0, -.18f, 0);
+                    Body.transform.localRotation = Quaternion.Euler(18f, 0, 0);
+                    Body.leftThigh.localRotation *= Quaternion.Euler(-38f, 0, 0);
+                    Body.rightThigh.localRotation *= Quaternion.Euler(-34f, 0, 0);
+                    Body.leftShin.localRotation *= Quaternion.Euler(46f, 0, 0);
+                    Body.rightShin.localRotation *= Quaternion.Euler(42f, 0, 0);
+                }
+            }
         }
         public static HumanFactionVisual CreateVale(Transform parent) => Build(parent, 0, 0, true);
         public static HumanFactionVisual Create(Transform parent, int faction, int variant)
