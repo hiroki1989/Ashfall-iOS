@@ -278,7 +278,7 @@ namespace NeonVault
             if(factionHuman)
             {
                 int visualFaction=finalDebtBossFight?0:faction==DungeonFaction.Raiders?1:2;
-                var human=HumanFactionVisual.Create(f.transform,visualFaction,raiderBoss?0:f.UseAssaultRifle?0:1);
+                var human=finalDebtBossFight?HumanFactionVisual.CreateVale(f.transform):raiderBoss&&visualFaction>0?HumanFactionVisual.CreateFactionBoss(f.transform,visualFaction):HumanFactionVisual.Create(f.transform,visualFaction,raiderBoss?0:f.UseAssaultRifle?0:1);
                 human.transform.localScale=Vector3.one*(raiderBoss?1.20f:1.12f);
             // Keep the existing actor origin and faction model floor alignment.
                 human.transform.localPosition=Vector3.down*.03f;

@@ -13,7 +13,8 @@ namespace NeonVault
         float phase, deathTime=-1;
         Foe owner;
         [SerializeField] DetailedHeroEquipment3D.WeaponSockets gun;
-        [SerializeField] bool handgun;
+                [SerializeField] bool handgun;
+                FactionBossVisuals.CustomRigPose customBossRig;
         // Templates own their meshes, materials and textures for the lifetime of
         // the process; instances share those resources and only clone the hierarchy.
         static readonly HumanFactionVisual[,] templates=new HumanFactionVisual[3,2];
@@ -46,6 +47,37 @@ namespace NeonVault
 
         // faction: 0 military, 1 raiders, 2 gang. variant: 0 or 1.
         // Parent origin is the ground contact point; caller owns actor positioning.
+        public static HumanFactionVisual CreateFactionBoss(Transform parent, int faction)
+        {
+            if (faction != 1 && faction != 2) return Create(parent, faction, 0);
+            var root = new GameObject("Faction boss " + faction);
+            root.transform.SetParent(parent, false);
+            var visual = root.AddComponent<HumanFactionVisual>();
+            visual.Faction = faction;
+            visual.customBossRig = FactionBossVisuals.AttachBossModel(root, faction, out visual.gun);
+            if (visual.customBossRig == null)
+            {
+                DestroyImmediate(root);
+                return Create(parent, faction, 0);
+            }
+            visual.Muzzle = visual.gun != null ? visual.gun.muzzle : null;
+            visual.owner = parent ? parent.GetComponentInParent<Foe>() : null;
+            visual.previous = root.transform.position;
+            visual.phase = 0;
+            visual.deathTime = -1;
+            return visual;
+        }
+        public void PreviewPose(bool firing)
+        {
+            if (customBossRig != null)
+            {
+                FactionBossVisuals.PoseCustomRig(customBossRig, gun, transform.forward, firing, -1f, false, false, false, -1f, 0f, Faction);
+                return;
+            }
+            if (Body)
+                DetailedHeroPlayer3D.Pose(Body, gun, handgun, firing, transform.forward, -1f, Vector3.zero, 0f);
+        }
+        public static HumanFactionVisual CreateVale(Transform parent) => Build(parent, 0, 0, true);
         public static HumanFactionVisual Create(Transform parent, int faction, int variant)
         {
             faction=Mathf.Clamp(faction,0,2); variant=Mathf.Clamp(variant,0,1);
@@ -108,7 +140,7 @@ namespace NeonVault
             instance.gameObject.SetActive(true);
             return instance;
         }
-        static HumanFactionVisual Build(Transform parent, int faction, int variant)
+        static HumanFactionVisual Build(Transform parent, int faction, int variant, bool isVale = false)
         {
             var root=new GameObject("Human faction " + faction + " / " + variant);
             root.transform.SetParent(parent,false);
@@ -116,9 +148,10 @@ namespace NeonVault
             visual.Faction=faction;
             visual.Body=DetailedHero3D.Create(root.transform,key=>Palette(faction,variant,key));
             var legacy=visual.Body.GetComponentsInChildren<Renderer>(true);
-            bool sharedBodyReady=sharedTrimmedHeadMesh && sharedHeadMaterials!=null && sharedArmorMeshes[1] && sharedArmorMeshes[2] && sharedArmorMeshes[3] && sharedArmorMeshes[4];
+            bool sharedBodyReady=!isVale && sharedTrimmedHeadMesh && sharedHeadMaterials!=null && sharedArmorMeshes[1] && sharedArmorMeshes[2] && sharedArmorMeshes[3] && sharedArmorMeshes[4];
             var common=sharedBodyReady?CreateSharedHead(visual.Body):GeneratedCommonBodyRig.Create(visual.Body);
-            var items=visual.BuildKit(faction,variant);
+            var items=visual.BuildKit(faction,variant,isVale);
+            SkinnedMeshRenderer[] armorParts=null;
             if(common)
             {
 
@@ -139,8 +172,10 @@ namespace NeonVault
                     parts=GeneratedWardenRig.SplitArmorBySlot(scan,visual.Body.transform);
                     if(scan){scan.enabled=false;sharedArmorMaterials=scan.sharedMaterials;sharedArmorBounds=scan.localBounds;}
                     else if(armor)armor.SetActive(false);
-                    for(int slot=1;slot<parts.Length;slot++)if(parts[slot])sharedArmorMeshes[slot]=parts[slot].sharedMesh;
+                    armorParts=parts;
+                for(int slot=1;slot<parts.Length;slot++)if(parts[slot])sharedArmorMeshes[slot]=parts[slot].sharedMesh;
                 }
+                armorParts=parts;
                 for(int slot=1;slot<parts.Length;slot++)
                 {
                     if(parts[slot])parts[slot].enabled=true;
@@ -164,7 +199,7 @@ namespace NeonVault
                 DetailedHeroArsenal3D.ApplyArmor(visual.Body,items);
                 ManufacturerEquipment3D.ApplyArmor(visual.Body,items);
             }
-            if(common&&!sharedBodyReady)visual.TrimHeadUnderHelmet(common);
+            if(!isVale && common&&!sharedBodyReady)visual.TrimHeadUnderHelmet(common);
             // ApplyArmor re-enables legacy hair when the head slot is empty,
             // even when the common body replaced the legacy head. Hide it after
             // both armor passes for both common and fallback body paths.
@@ -172,8 +207,8 @@ namespace NeonVault
                 if(renderer.name.IndexOf("hair",System.StringComparison.OrdinalIgnoreCase)>=0 ||
                    renderer.name.IndexOf("scalp",System.StringComparison.OrdinalIgnoreCase)>=0)
                     renderer.enabled=false;
-            visual.AddHelmet(faction);
-            GeneratedWardenPreviewAssets.CreateFittedMask(visual.Body.head);
+            if(isVale) FactionBossVisuals.BuildValeLook(visual.Body,armorParts,common,root); else { visual.AddHelmet(faction);
+            GeneratedWardenPreviewAssets.CreateFittedMask(visual.Body.head); }
             // The same articulated character and outfit are used on iOS. Limit
             // per-vertex skinning work and avoid animating offscreen renderers.
             if(Application.isMobilePlatform)
@@ -315,7 +350,7 @@ namespace NeonVault
             if(key=="ClothDark") return DetailedHeroMaterials3D.Get(faction==0?"NavyCanvas":faction==1?"LeatherDark":"Dark");
             return DetailedHeroMaterials3D.Get(key);
         }
-        ArmorItem[] BuildKit(int faction,int variant)
+        ArmorItem[] BuildKit(int faction,int variant,bool isVale=false)
         {
             // Existing player equipment supplies tailored garments, armor, pouches and
             // boots. Distinct styles cover the shared body's clothing by slot.
@@ -327,7 +362,7 @@ namespace NeonVault
             if(true)
             {
                 // Riveted irregular scrap plates make the raiders asymmetric.
-                DetailedHeroArsenal3D.Shell("Raider salvaged chest",Body.chest,steel,new Vector3(variant==0?-.08f:.08f,.015f,.16f),new Vector2(.20f,.25f),.045f);
+                if(!isVale)DetailedHeroArsenal3D.Shell("Raider salvaged chest",Body.chest,steel,new Vector3(variant==0?-.08f:.08f,.015f,.16f),new Vector2(.20f,.25f),.045f);
             }
             else if(faction==2)
             {
@@ -344,13 +379,13 @@ namespace NeonVault
         float nextPoseAt;
         void LateUpdate()
         {
-            if(!Body)return;if(owner&&owner.game&&!owner.game.Active){previous=transform.position;return;}
+            if(!Body && customBossRig==null)return;if(owner&&owner.game&&!owner.game.Active){previous=transform.position;return;}
             float dt=Time.deltaTime;Vector3 delta=transform.position-previous;delta.y=0;previous=transform.position;
             float speed=dt>0?delta.magnitude/dt:0;
             if(speed>.05f)phase+=dt*Mathf.Clamp(speed*.55f,.5f,2.5f);
             if(owner&&owner.dead&&!owner.Escaping&&deathTime<0)deathTime=0;
             if(deathTime>=0){deathTime+=dt;if(deathTime>1.1f)return;}else if(owner&&owner.game){float distSq=(transform.position-owner.game.PlayerPosition).sqrMagnitude;if(distSq>32f*32f)return;if((Application.isMobilePlatform||distSq>16f*16f)&&Time.time<nextPoseAt)return;if(Application.isMobilePlatform||distSq>16f*16f)nextPoseAt=Time.time+(distSq>16f*16f?.08f:speed<=.05f?.12f:.033f);}
-            Vector3 direction=transform.forward;bool firing=owner==null||!owner.IsHumanReloading;Vector3 vel=dt>0?delta/dt:Vector3.zero;DetailedHeroPlayer3D.Pose(Body,gun,handgun,firing,direction,speed>.05f?phase:-1,vel,Mathf.Clamp01(speed/2));if(owner!=null&&deathTime<0){float sideVel=Vector3.Dot(vel,transform.right);float lean=Mathf.Clamp(-sideVel*5.5f,-18f,18f)+(owner.IsHumanRolling?Mathf.Sin(Time.time*24f)*16f:0f);if(owner.IsHumanCrouching||owner.IsHumanRolling){float crouch=owner.IsHumanCrouching?1f:.65f;Body.transform.localPosition=new Vector3(0,-.18f*crouch,0);Body.transform.localRotation=Quaternion.Euler(18f*crouch,0,lean);Body.leftThigh.localRotation*=Quaternion.Euler(-38f*crouch,0,0);Body.rightThigh.localRotation*=Quaternion.Euler(-34f*crouch,0,0);Body.leftShin.localRotation*=Quaternion.Euler(46f*crouch,0,0);Body.rightShin.localRotation*=Quaternion.Euler(42f*crouch,0,0);}else{Body.transform.localPosition=Vector3.zero;Body.transform.localRotation=Quaternion.Euler(0,0,lean);}if(owner.IsHumanReloading){float r=Mathf.Sin(Time.time*14f);Body.leftForearm.localRotation*=Quaternion.Euler(-22f+r*18f,12f,0);Body.head.localRotation*=Quaternion.Euler(14f,r*6f,0);}}
+            Vector3 direction=transform.forward;bool firing=owner==null||!owner.IsHumanReloading;Vector3 vel=dt>0?delta/dt:Vector3.zero;if(customBossRig!=null){float latVel=Vector3.Dot(vel,transform.right);FactionBossVisuals.PoseCustomRig(customBossRig,gun,direction,firing,speed>.05f?phase:-1,owner!=null&&owner.IsHumanCrouching,owner!=null&&owner.IsHumanRolling,owner!=null&&owner.IsHumanReloading,deathTime,latVel,Faction);return;}DetailedHeroPlayer3D.Pose(Body,gun,handgun,firing,direction,speed>.05f?phase:-1,vel,Mathf.Clamp01(speed/2));if(owner!=null&&deathTime<0){float sideVel=Vector3.Dot(vel,transform.right);float lean=Mathf.Clamp(-sideVel*5.5f,-18f,18f)+(owner.IsHumanRolling?Mathf.Sin(Time.time*24f)*16f:0f);if(owner.IsHumanCrouching||owner.IsHumanRolling){float crouch=owner.IsHumanCrouching?1f:.65f;Body.transform.localPosition=new Vector3(0,-.18f*crouch,0);Body.transform.localRotation=Quaternion.Euler(18f*crouch,0,lean);Body.leftThigh.localRotation*=Quaternion.Euler(-38f*crouch,0,0);Body.rightThigh.localRotation*=Quaternion.Euler(-34f*crouch,0,0);Body.leftShin.localRotation*=Quaternion.Euler(46f*crouch,0,0);Body.rightShin.localRotation*=Quaternion.Euler(42f*crouch,0,0);}else{Body.transform.localPosition=Vector3.zero;Body.transform.localRotation=Quaternion.Euler(0,0,lean);}if(owner.IsHumanReloading){float r=Mathf.Sin(Time.time*14f);Body.leftForearm.localRotation*=Quaternion.Euler(-22f+r*18f,12f,0);Body.head.localRotation*=Quaternion.Euler(14f,r*6f,0);}}
             if(false)DetailedHeroPlayer3D.Pose(Body,gun,handgun,true,direction,speed>.05f?phase:-1,
                 dt>0?delta/dt:Vector3.zero,Mathf.Clamp01(speed/2));
             if(deathTime>=0)

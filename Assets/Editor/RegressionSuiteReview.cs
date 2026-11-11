@@ -397,6 +397,33 @@ public static class RegressionSuiteReview
                 UnityEngine.Object.DestroyImmediate(colossusObj);
             }
 
+            // 21. Custom Faction Bosses (Raven=1, Vex=2) & Malcolm Vale (CreateVale) attach with Muzzle and enabled renderers
+            foreach (int bf in new[] { 1, 2 })
+            {
+                var bActor = new GameObject("FactionBossCheck_" + bf);
+                try
+                {
+                    var bv = HumanFactionVisual.CreateFactionBoss(bActor.transform, bf);
+                    if (!bv || !bv.Muzzle)
+                        throw new Exception("CreateFactionBoss(" + bf + ") missing visual or Muzzle");
+                    var smr = bActor.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                    if (!smr || !smr.enabled)
+                        throw new Exception("CreateFactionBoss(" + bf + ") missing enabled SkinnedMeshRenderer");
+                }
+                finally { UnityEngine.Object.DestroyImmediate(bActor); }
+            }
+            var valeActor = new GameObject("ValeCheck");
+            try
+            {
+                var vv = HumanFactionVisual.CreateVale(valeActor.transform);
+                if (!vv || !vv.Muzzle || !vv.Body)
+                    throw new Exception("CreateVale missing visual, Body, or Muzzle");
+                foreach (var tr in valeActor.GetComponentsInChildren<Transform>(true))
+                    if (tr.name == "Human faction / helmet")
+                        throw new Exception("Malcolm Vale must not wear a faction helmet");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(valeActor); }
+
             Debug.Log("REGRESSION_SUITE_REVIEW PASS");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }
