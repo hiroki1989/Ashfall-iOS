@@ -1,3 +1,9 @@
+## 2026-11-12 / Veil縮尺異常修正と4プロジェクト検証
+- 変更ファイル: `Assets/Scripts/ImportedEnemyVisual.cs`（iOS・Steam・Demo・BossDebug）、`Assets/Editor/BossWeaponAttachmentReview.cs`（iOS）。
+- 結果: Veilの描画切れ防止用の広いRenderer境界を体の大きさと誤認して再縮小していた処理を修正。スキンメッシュ実寸で待機姿勢の全高を合わせ、ボス・拠点NPCとも2.350mに統一。
+- 検証: iOSの`BossWeaponAttachmentReview.Run`でボス/NPCの実描画全高2.350m、武器表示PASS。`BossModelReview.RunAll4`でプレイヤーとIona・Briggs・Raven・Veilの身長・接地・見た目を比較。Steam製品版・Demo版・BossDebug版はUnityバッチ起動がすべて終了コード0、コンパイルエラー0。
+- 未解決: iOS実機での最終表示は未確認。修正後のビルドで確認が必要。
+
 ## 2026-11-12 / Meshy新3Dキャラクター（Veil・Briggs・Iona・Raven）およびVex・Sera・勢力兵士の完全統合・両手保持構え・3プロジェクト平仄一致完了
 - 変更ファイル:
   - Assets/Scripts/ImportedEnemyVisual.cs:

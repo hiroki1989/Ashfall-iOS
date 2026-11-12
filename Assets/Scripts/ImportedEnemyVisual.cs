@@ -119,7 +119,7 @@ namespace NeonVault
                 if (smr && smr.sharedMesh)
                 {
                     var baked = new Mesh();
-                    smr.BakeMesh(baked);
+                    smr.BakeMesh(baked, false);
                     var verts = baked.vertices;
                     float minY = float.PositiveInfinity, maxY = float.NegativeInfinity;
                     for (int i = 0; i < verts.Length; i++)
@@ -128,8 +128,14 @@ namespace NeonVault
                         if (wy < minY) minY = wy;
                         if (wy > maxY) maxY = wy;
                     }
-                    DestroyImmediate(baked);
+                    if(Application.isPlaying)Destroy(baked);else DestroyImmediate(baked);
+                    // BakeMesh already includes the skinned root scale. TransformPoint
+                    // applies it again; remove that second scale from the measurement.
+                    float bakedScale=Mathf.Max(.001f,Mathf.Abs(smr.transform.lossyScale.y));
+                    minY=smr.transform.position.y+(minY-smr.transform.position.y)/bakedScale;
+                    maxY=smr.transform.position.y+(maxY-smr.transform.position.y)/bakedScale;
                     float curH = maxY - minY;
+                    float fittedHeight = curH;
                     if (curH > 0.05f)
                     {
                         float sFix = targetHeight / curH;
@@ -138,22 +144,15 @@ namespace NeonVault
                         float newMinY = pivot.y + (minY - pivot.y) * sFix;
                         model.position += Vector3.up * (transform.position.y - newMinY);
                         modelPosition = model.localPosition;
+                        fittedHeight = curH * sFix;
                     }
-                    // BakeMesh can report an inflated bind-pose span for this imported
-                    // Mixamo skin. Fit once more against the renderer's actual visible
-                    // world bounds, which is what the camera and player see.
-                    var visible = smr.bounds;
-                    if (visible.size.y > 0.05f && Mathf.Abs(visible.size.y - targetHeight) > 0.035f)
-                    {
-                        float fit = targetHeight / visible.size.y;
-                        model.localScale *= fit;
-                    }
-                    // Ground against the updated skinned bounds rather than a
-                    // pivot estimate; the imported bind pose is offset.
-                    model.position += Vector3.up * (transform.position.y - smr.bounds.min.y);
+                    // The renderer has an intentionally oversized localBounds for mobile
+                    // animation culling. Its world bounds are not the visible body size.
+                    // Fit and ground from the baked vertices measured above only.
                     modelPosition = model.localPosition;
-                    Debug.Log("VALE_BIND_SIZE height=" + smr.bounds.size.y.ToString("F3")
-                        + " target=" + targetHeight.ToString("F3"));
+                    Debug.Log("VALE_BIND_SIZE height=" + fittedHeight.ToString("F3")
+                        + " target=" + targetHeight.ToString("F3")
+                        + " modelScale=" + model.localScale.ToString("F3"));
                 }
             }
             // Normalization becomes the persistent scale, including during sampled animation.
@@ -163,6 +162,39 @@ namespace NeonVault
                 playerRig=FactionBossVisuals.CaptureRigPose(model,false);
                 if(playerRig!=null&&(!playerRig.pelvis||!playerRig.upperArmL||!playerRig.upperArmR||!playerRig.thighL||!playerRig.thighR))playerRig=null;
                 Animate(0,0);
+            }
+            if(isVale && suppressMask && model && playerRig!=null)
+            {
+                // The player pose bends Veil's imported bind skeleton substantially.
+                // Measure the settled visible pose, not the oversized culling bounds
+                // or the unposed bind mesh, before fixing the final world height.
+                Animate(0,0);
+                var skin=model.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                if(skin)
+                {
+                    var posed=new Mesh(); skin.BakeMesh(posed, false);
+                    float bottom=float.PositiveInfinity, top=float.NegativeInfinity;
+                    foreach(var vertex in posed.vertices)
+                    {
+                        float y=skin.transform.TransformPoint(vertex).y;
+                        bottom=Mathf.Min(bottom,y); top=Mathf.Max(top,y);
+                    }
+                    if(Application.isPlaying)Destroy(posed);else DestroyImmediate(posed);
+                    float bakedScale=Mathf.Max(.001f,Mathf.Abs(skin.transform.lossyScale.y));
+                    bottom=skin.transform.position.y+(bottom-skin.transform.position.y)/bakedScale;
+                    top=skin.transform.position.y+(top-skin.transform.position.y)/bakedScale;
+                    float span=top-bottom;
+                    if(span>.05f)
+                    {
+                        float fit=targetHeight/span;
+                        float pivot=model.position.y;
+                        model.localScale*=fit;
+                        model.position+=Vector3.up*(transform.position.y-(pivot+(bottom-pivot)*fit));
+                        modelPosition=model.localPosition;
+                        for(int i=0;i<scaleTransforms.Length;i++)authoredScales[i]=scaleTransforms[i].localScale;
+                        Debug.Log("VEIL_VISIBLE_FIT height="+targetHeight.ToString("F3")+" scale="+model.localScale.ToString("F3"));
+                    }
+                }
             }
         }
         void AttachRaiderMask()

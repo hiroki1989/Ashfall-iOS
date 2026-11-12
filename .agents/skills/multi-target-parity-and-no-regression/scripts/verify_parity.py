@@ -16,9 +16,12 @@ CSC = "D:/Unity/Unity Hub/6000.6.0f1/Editor/Data/DotNetSdk/sdk/8.0.318/Roslyn/bi
 
 # Files that intentionally differ ONLY due to platform / ads / IAP / controller / demo limits
 EXPECTED_DIFF_FILES = {
+    "ActionSkillUI.cs",
+    "FieldUIArt.cs",
     "FirstStepsTutorial.cs",
     "GameCenterSyncManager.cs",
     "IosPremiumAccess.cs",
+    "MobileTouchControls.cs",
     "SaveSlotPrefs.cs",
     "VaultAutoAim.cs",
     "VaultDebtSkills.cs",

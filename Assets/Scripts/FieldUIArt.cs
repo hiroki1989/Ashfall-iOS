@@ -1,12 +1,14 @@
 using UnityEngine;
 namespace NeonVault {
  public static class FieldUIArt {
-  static Texture2D atlas,panel,selectedPanel,map;
+  static Texture2D atlas,panel,selectedPanel,map,mobileSkillAtlas;
   public static void MapSurface(Rect bounds){if(!map)map=Resources.Load<Texture2D>("Art/UI/FieldKit/premium-map-surface-v1");if(!map)return;var old=GUI.color;GUI.color=new Color(1,1,1,.12f);GUI.DrawTexture(bounds,map);GUI.color=old;}
   static Texture2D Atlas=>atlas?atlas:atlas=Resources.Load<Texture2D>("Art/UI/FieldKit/premium-icons-v1");
+  static Texture2D MobileSkillAtlas=>mobileSkillAtlas?mobileSkillAtlas:mobileSkillAtlas=Resources.Load<Texture2D>("Art/UI/FieldKit/mobile-skill-flat-icons-v1");
   static Texture2D Panel=>panel?panel:panel=Resources.Load<Texture2D>("Art/UI/FieldKit/premium-panel-v3");
   static Texture2D SelectedPanel=>selectedPanel?selectedPanel:selectedPanel=Resources.Load<Texture2D>("Art/UI/FieldKit/premium-panel-selected-v3");
   public static bool Icon(Rect bounds,int index,Color tint){if(index<0||index>=16||!Atlas)return false;float side=Mathf.Min(bounds.width,bounds.height);var target=new Rect(bounds.center.x-side*.5f,bounds.center.y-side*.5f,side,side);var old=GUI.color;GUI.color=tint;GUI.DrawTextureWithTexCoords(target,Atlas,new Rect(index%4*.25f,1-(index/4+1)*.25f,.25f,.25f));GUI.color=old;return true;}
+  public static bool MobileSkillIcon(Rect bounds,int index,Color tint){if(index<0||index>=4||!MobileSkillAtlas)return false;float side=Mathf.Min(bounds.width,bounds.height);var target=new Rect(bounds.center.x-side*.5f,bounds.center.y-side*.5f,side,side);var old=GUI.color;GUI.color=tint;GUI.DrawTextureWithTexCoords(target,MobileSkillAtlas,new Rect((index%2)*.5f,1-(index/2+1)*.5f,.5f,.5f));GUI.color=old;return true;}
   static Texture2D gunClasses;
   public static void GunClassIcon(Rect bounds,Gun gun,Color tint){
    if(!gunClasses)gunClasses=Resources.Load<Texture2D>("Art/UI/FieldKit/gun-class-icons-v1");if(!gunClasses||gun==null)return;

@@ -237,18 +237,8 @@ namespace NeonVault
         {
             if(action == MobileAction.SwitchActionSkill)
             {
-                if(!actionSkillSwitchAtlas) actionSkillSwitchAtlas = Resources.Load<Texture2D>("Art/UI/action_skill_switch_icons");
-                if(actionSkillSwitchAtlas)
-                {
-                    int skillIndex = game != null ? (int)game.ActionSkillSelected : 0;
-                    skillIndex = Mathf.Clamp(skillIndex, 0, 2);
-                    Rect uv = new Rect(skillIndex / 3f, 0f, 1f / 3f, 1f);
-                    Color oldCol = GUI.color;
-                    GUI.color = Color.white;
-                    GUI.DrawTextureWithTexCoords(r, actionSkillSwitchAtlas, uv, true);
-                    GUI.color = oldCol;
-                    return;
-                }
+                int skillIndex = game != null ? Mathf.Clamp((int)game.ActionSkillSelected, 0, 2) : 0;
+                if(FieldUIArt.MobileSkillIcon(r, skillIndex, new Color(1f, 1f, 1f, c.a))) return;
             }
             int artIndex=action==MobileAction.Fire?0:action==MobileAction.Reload?1:action==MobileAction.Interact?2:action==MobileAction.Melee?3:action==MobileAction.Inventory?4:action==MobileAction.Pause?12:-1;
             if(artIndex>=0&&FieldUIArt.Icon(r,artIndex,Color.white))return;

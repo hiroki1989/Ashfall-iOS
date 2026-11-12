@@ -743,22 +743,13 @@ namespace NeonVault
                     if(ready)color=Color.Lerp(color,Color.white,.45f*Mathf.Pow(Mathf.Max(0,Mathf.Sin(Time.unscaledTime*2.62f)),10));
                     Line(center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,center+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,color,Mathf.Max(2,r.width*.045f));
                 }
-                Texture2D switchTex = Resources.Load<Texture2D>("Art/UI/action_skill_switch_icons");
-                Rect iconRect = new Rect(r.x + r.width*.20f, r.y + r.height*.11f, r.width*.60f, r.height*.60f);
-                Color prevCol = GUI.color;
-                GUI.color = ready ? Color.white : new Color(.78f, .82f, .84f, .82f);
-                if(switchTex)
-                {
-                    int sIdx = Mathf.Clamp((int)ActionSkillSelected, 0, 2);
-                    Rect uv = new Rect(sIdx / 3f, 0f, 1f / 3f, 1f);
-                    GUI.DrawTextureWithTexCoords(iconRect, switchTex, uv, true);
-                }
-                else
+                Rect iconRect = new Rect(r.x + r.width*.24f, r.y + r.height*.17f, r.width*.52f, r.height*.47f);
+                Color iconTint = ready ? Color.white : new Color(1f, 1f, 1f, .72f);
+                if(!FieldUIArt.MobileSkillIcon(iconRect, 3, iconTint))
                 {
                     int currentIcon = ActionSkillSelected==ActionSkillKind.Mechanic?0:ActionSkillSelected==ActionSkillKind.Bomber?8:11;
-                    DrawSkillAtlasIcon(iconRect, currentIcon, GUI.color);
+                    DrawSkillAtlasIcon(iconRect, currentIcon, iconTint);
                 }
-                GUI.color = prevCol;
                 Rect statusRect = new Rect(r.x + r.width*.08f, r.y + r.height*.68f, r.width*.84f, r.height*.23f);
                 ActionLabel(statusRect, ready ? T("READY","発動") : Mathf.FloorToInt(ActionSkillPoints)+"/"+ActionSkillChargeMax, ready ? accent : UiPaper, Mathf.Max(11, Mathf.RoundToInt(r.width*.13f)), TextAnchor.MiddleCenter);
 
