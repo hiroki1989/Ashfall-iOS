@@ -1533,6 +1533,10 @@ Added a one-time queued modal at each 30/60/100 percent faction unlock. It names
 ## 2026-11-03 / Dungeon interior variety
 Added three interior surface styles, smaller room layouts on selected floors, and imported table/rack/bench cover variants. New checkpoint layoutVersion preserves the original layout for old saves; Unity compile/import succeeded (dungeon-interiors-compile.log), diff check passed. Multiple-seed traversal, game visuals, and iOS performance not yet verified. Suggested free Asset Store packs are not imported.
 
+## 2026-11-12 / Version & Build increment to 63
+- App Store Connect build 62 is already VALID/existing. Incremented bundleVersion to 63 and iPhone buildNumber to 63 in `D:/Unity/Ashfall-iOS/ProjectSettings/ProjectSettings.asset`.
+- Ready for new IPA build (Build 63) generation and subsequent App Store Connect upload.
+
 ## 2026-11-03 / Added environment assets (in progress)
 Integrated selected office props via Resources and weathered materials, plus editor importers and streaming placement for ten street props and six city building variants. Source prefab paths verified and git diff --check passed. Unity Editor currently holds the project; generated street/building prefabs, compilation, screenshots, navigation and iOS performance remain unverified. User asked to save and close Editor to continue validation. Buildings are darkened with weathered textures; structural ruin quality is not verified.
 
