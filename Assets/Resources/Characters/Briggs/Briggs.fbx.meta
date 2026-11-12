@@ -3,12 +3,17 @@ guid: c9612fbbe90a8fb428a43ac9d9b9cffb
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Briggs_MeshyPBR
+    second: {fileID: 2100000, guid: 2ca0a223b9e4cea48a7f8da12ab029b9, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
-    materialLocation: 1
+    materialLocation: 0
     searchTexturesGlobally: 0
   animations:
     legacyGenerateAnimations: 4
@@ -31,7 +36,7 @@ ModelImporter:
     extraExposedTransformPaths: []
     extraUserProperties: []
     clipAnimations: []
-    isReadable: 0
+    isReadable: 1
   meshes:
     lODScreenPercentages: []
     globalScale: 1

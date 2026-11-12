@@ -96,11 +96,17 @@ namespace NeonVault
                 if(WorldButton(UnifiedDialoguePrimaryButton,T("CLOSE","閉じる")))collectorOpen=false;
             }
         }
-        Transform departingRaiderBoss; bool bossDeparting;
+        Transform departingRaiderBoss, hubIona, hubBriggs, hubSera; bool bossDeparting;
+        void FaceHubNpc(Transform npc)
+        {
+            if (!npc || !player) return;
+            var direction=player.position-npc.position; direction.y=0;
+            if(direction.sqrMagnitude>.0001f) npc.rotation=Quaternion.LookRotation(direction);
+        }
         public void BuildHub() {if(QueueWorldTransition(()=>BuildHubImmediate()))return;BuildHubImmediate();}
         void BuildHubImmediate()
         {
-            IsOverworld=false;EnsureOverworldState();departingRaiderBoss=null;bossDeparting=false;
+            IsOverworld=false;EnsureOverworldState();departingRaiderBoss=null;hubIona=null;hubBriggs=null;hubSera=null;bossDeparting=false;
             if(world!=null){world.gameObject.SetActive(false);Destroy(world.gameObject);}
             foreach(var material in materials)if(material!=null)Destroy(material);materials.Clear();Enemies.Clear();drops.Clear();meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();ClearArtifactDrops();satellites.Clear();
             world=new GameObject("LAST LIGHT / survivor safehouse").transform;
@@ -111,9 +117,9 @@ namespace NeonVault
             for(int i=0;i<8;i++){float a=i*Mathf.PI/4;art.Column(new Vector3(Mathf.Sin(a)*12.5f,0,Mathf.Cos(a)*12.5f),2.5f);}
             art.Cover(merchantPosition+Vector3.back*2);art.Brazier(merchantPosition+Vector3.left*2);art.Cover(archivistPosition+Vector3.back*2);
             Transform HubNpc(Vector3 p,int variant,string name){var root=new GameObject(name).transform;root.SetParent(world,false);root.position=new Vector3(p.x,0,p.z);root.rotation=Quaternion.LookRotation(Vector3.back);var key=name.StartsWith("Iona")?"Iona":name.StartsWith("Sera")?"Sera":name.StartsWith("Briggs")?"Briggs":null;var model=key!=null?Resources.Load<GameObject>("Characters/"+key+"/"+key):null;if(model){var npc=Instantiate(model,root,false);npc.name=key+" Blender Model";npc.transform.localPosition=Vector3.zero;npc.transform.localRotation=Quaternion.identity;npc.transform.localScale=Vector3.one*(key=="Iona"?1.20f:1.09f);return root;}var visual=HumanFactionVisual.Create(root,0,variant);visual.enabled=false;return root;}
-            HubNpc(merchantPosition,0,"Sera / Salvage Merchant");
-            HubNpc(archivistPosition,1,"Iona / Archivist");
-            HubNpc(debtCollectorPosition,0,"Briggs / Debt Collector");
+            hubSera=HubNpc(merchantPosition,0,"Sera / Salvage Merchant");
+            hubIona=HubNpc(archivistPosition,1,"Iona / Archivist");
+            hubBriggs=HubNpc(debtCollectorPosition,0,"Briggs / Debt Collector");
             art.Part("Merchant counter",PrimitiveType.Cube,merchantPosition+new Vector3(0,.25f,-1.4f),new Vector3(3,1.25f,.9f),new Color(.27f,.23f,.18f),world);
             art.Part("Merchant shelf",PrimitiveType.Cube,merchantPosition+new Vector3(0,1.2f,1.2f),new Vector3(3.4f,.18f,.7f),new Color(.25f,.23f,.19f),world);
             for(int n=0;n<4;n++)art.Part("Merchant stock",PrimitiveType.Cube,merchantPosition+new Vector3(-1.1f+n*.72f,1.45f,1.15f),new Vector3(.48f,.45f,.48f),new Color(.38f,.35f,.27f),world);
@@ -145,10 +151,10 @@ namespace NeonVault
             if(VaultMobileInputBridge.Pressed(MobileAction.Interact,KeyCode.E)){
                 dialogueOpenedFrame=Time.frameCount;
                 if(DailyChestNearby){InteractDailyChest();}
-                else if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){OpenBriggsDialogue();}
-                else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){OpenMerchantDialogue();}
+                else if(Vector3.Distance(PlayerPosition,debtCollectorPosition)<3){FaceHubNpc(hubBriggs);OpenBriggsDialogue();}
+                else if(Vector3.Distance(PlayerPosition,merchantPosition)<3){FaceHubNpc(hubSera);OpenMerchantDialogue();}
                 else if(Vector3.Distance(PlayerPosition,portalPosition)<3){ExitCampToOverworld();return;}
-                else if(Vector3.Distance(PlayerPosition,archivistPosition)<3)OpenCollector();
+                else if(Vector3.Distance(PlayerPosition,archivistPosition)<3){FaceHubNpc(hubIona);OpenCollector();}
             }
             if(Input.GetKeyDown(KeyCode.M)){OpenOverworldMap();return;}
             if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)){PauseGame();hubDialogue="";}

@@ -1,3 +1,30 @@
+## 2026-11-12 / Meshy新3Dキャラクター（Veil・Briggs・Iona・Raven）およびVex・Sera・勢力兵士の完全統合・両手保持構え・3プロジェクト平仄一致完了
+- 変更ファイル:
+  - Assets/Scripts/ImportedEnemyVisual.cs:
+    - Veil（Malcolm Vale）のライフル両手保持（トリガー・サポートソケットのIK追随、右手のピストルグリップ保持・左手のハンドガード支持）を実装。
+    - プレイヤー移動・戦闘モーション（DetailedHero3D）を参照スケルトンで評価し、歩行・待機・射撃時の足接地とライフル保持の平仄を統一。
+  - Assets/Scripts/FactionBossVisuals.cs:
+    - 共通の人型ボスポーズドライバーを実装。Raven、Vex、兵士のカスタムリグにおいてプレイヤーの骨格・歩行ストライド・銃器構えを共通化。
+  - Assets/Scripts/HumanFactionVisual.cs:
+    - 射撃通知 NotifyFire() による即時マズル追随・構え同期と、移動速度に応じた歩行サイクルを連動。
+  - Assets/Scripts/WorldActors.cs:
+    - 射撃時のマズル算出前に NotifyFire() を呼び出すよう更新。
+  - Assets/Scripts/VaultGame.cs / Assets/Scripts/VaultHubWorld.cs:
+    - Raven/Coyoteボスの接地高さ・スケール補正（1.13倍、y=+0.10f）、拠点NPC（Iona, Briggs, Sera）のプレイヤー追従振り向き処理を追加。
+  - D:/Unity/DustDebt-Steam および D:/Unity/DustDebt-Steam-Demo:
+    - 全スクリプト・モデル・PBRマテリアル・テクスチャ・プレハブを完全同期。
+- 結果:
+  - 新キャラクター4名（Veil, Briggs, Iona, Raven）および Vex, Sera, Coyote兵士, Redclaw兵士がプレイヤー同等スケール（全高約2.35m・足元接地 Y=0）で正常に動作。
+  - VeilおよびRavenのライフル両手持ちが自然に解決（腕の背中残留・手の浮き・位置ずれ解消）。
+  - いつでも旧モデルへ戻せるよう `Assets/ArtSource/LegacyCharactersBackup/` および `Tools/RestoreLegacyCharacters.ps1` を整備。
+- 検証:
+  - `BossWeaponAttachmentReview.Run` PASS（`actual_boss_weapons.png` で両手保持確認）
+  - `BossModelReview.Run` / `RunAll4` PASS（全4ボス + プレイヤーの全高 `2.32〜2.36m`, `minY=0.000` 確認）
+  - `NewCharacterCombatReview.Run` PASS（待機・射撃・歩行・死亡の全ステート描画確認）
+  - `RegressionSuiteReview.Run` PASS（全ゲーム進行・安全基地・ダンジョン遷移でデグレ0件）
+  - `verify_parity.py` PASS（Roslyn 8構成エラー0件、Unity実機バッチモード検証エラー0件、3プロジェクト平仄一致）
+- 未解決: なし。
+
 ## 2026-11-10 / Cloud Buildエラー（CS1040 プリプロセッサディレクティブ行頭位置）修正
 - 変更ファイル:
   - Assets/Scripts/VaultUI.cs:

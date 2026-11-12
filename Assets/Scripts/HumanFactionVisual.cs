@@ -11,6 +11,16 @@ namespace NeonVault
         [field: SerializeField] public int Faction { get; private set; }
         Vector3 previous;
         float phase, deathTime=-1;
+        Vector3 smoothedVelocity;
+        float moveBlend;
+        float firingUntil;
+        public void NotifyFire()
+        {
+            firingUntil=Time.time+.18f;
+            // Update the muzzle before the projectile asks for its start point.
+            if(customBossRig!=null)
+                FactionBossVisuals.PoseCustomRig(customBossRig,gun,transform.forward,true,moveBlend>.001f?phase:-1f,false,false,false,deathTime,0f,Faction,handgun,smoothedVelocity,moveBlend);
+        }
         Foe owner;
         [SerializeField] DetailedHeroEquipment3D.WeaponSockets gun;
                 [SerializeField] bool handgun;
@@ -18,6 +28,7 @@ namespace NeonVault
         // Templates own their meshes, materials and textures for the lifetime of
         // the process; instances share those resources and only clone the hierarchy.
         static readonly HumanFactionVisual[,] templates=new HumanFactionVisual[3,2];
+        static readonly HumanFactionVisual[,] soldierTemplates=new HumanFactionVisual[3,2];
         static Mesh sharedHelmetMesh, sharedHelmetRimMesh, sharedTrimmedHeadMesh;
         static Material[] sharedHeadMaterials;
         static Bounds sharedHeadBounds;
@@ -72,7 +83,7 @@ namespace NeonVault
         {
             if (customBossRig != null)
             {
-                FactionBossVisuals.PoseCustomRig(customBossRig, gun, transform.forward, firing, phaseVal, crouch, false, reload, customDeathTime, 0f, Faction);
+                FactionBossVisuals.PoseCustomRig(customBossRig, gun, transform.forward, firing, phaseVal, crouch, false, reload, customDeathTime, 0f, Faction, handgun, phaseVal>=0f?transform.forward*3f:Vector3.zero, phaseVal>=0f?1f:0f);
                 return;
             }
             if (Body)
@@ -93,6 +104,11 @@ namespace NeonVault
         public static HumanFactionVisual Create(Transform parent, int faction, int variant)
         {
             faction=Mathf.Clamp(faction,0,2); variant=Mathf.Clamp(variant,0,1);
+            if (faction > 0)
+            {
+                var soldier = CreateImportedSoldier(parent, faction, variant);
+                if (soldier) return soldier;
+            }
             if(!Application.isPlaying) return Build(parent,faction,variant);
             var baked=FactionPresetBakeSettings.Enabled ? null : Resources.Load<HumanFactionVisual>("FactionPresets/faction_"+faction+"_"+variant);
             if(baked)
@@ -151,6 +167,42 @@ namespace NeonVault
             instance.deathTime=-1;
             instance.gameObject.SetActive(true);
             return instance;
+        }
+        static HumanFactionVisual CreateImportedSoldier(Transform parent, int faction, int variant)
+        {
+            HumanFactionVisual source = Application.isPlaying ? soldierTemplates[faction,variant] : null;
+            if (!source)
+            {
+                var root = new GameObject("Faction soldier template " + faction + " / " + variant);
+                source = root.AddComponent<HumanFactionVisual>();
+                source.Faction = faction;
+                source.handgun = variant == 1;
+                source.customBossRig = FactionBossVisuals.AttachSoldierModel(root, faction, variant, out source.gun);
+                if (source.customBossRig == null)
+                {
+                    if (Application.isPlaying) Destroy(root); else DestroyImmediate(root);
+                    return null;
+                }
+                source.Muzzle = source.gun.muzzle;
+                if (!Application.isPlaying)
+                {
+                    root.transform.SetParent(parent, false);
+                    source.owner = parent ? parent.GetComponentInParent<Foe>() : null;
+                    return source;
+                }
+                root.SetActive(false);
+                DontDestroyOnLoad(root);
+                soldierTemplates[faction,variant] = source;
+            }
+            var result = Instantiate(source, parent, false);
+            result.name = "Human faction " + faction + " / " + variant;
+            result.customBossRig = FactionBossVisuals.CaptureSoldierPose(result.transform);
+            result.owner = parent ? parent.GetComponentInParent<Foe>() : null;
+            result.previous = result.transform.position;
+            result.phase = 0; result.deathTime = -1;
+            DetailedHeroEquipment3D.DisownSharedMeshes(result.transform);
+            result.gameObject.SetActive(true);
+            return result;
         }
         static HumanFactionVisual Build(Transform parent, int faction, int variant, bool isVale = false)
         {
@@ -394,10 +446,13 @@ namespace NeonVault
             if(!Body && customBossRig==null)return;if(owner&&owner.game&&!owner.game.Active){previous=transform.position;return;}
             float dt=Time.deltaTime;Vector3 delta=transform.position-previous;delta.y=0;previous=transform.position;
             float speed=dt>0?delta.magnitude/dt:0;
-            if(speed>.05f)phase+=dt*Mathf.Clamp(speed*.55f,.5f,2.5f);
+            Vector3 actual=dt>0?delta/dt:Vector3.zero;
+            smoothedVelocity=Vector3.Lerp(smoothedVelocity,actual,1-Mathf.Exp(-dt*14f));
+            moveBlend=Mathf.MoveTowards(moveBlend,speed>.12f?1f:0f,dt*7f);
+            if(moveBlend>.001f){bool aiming=owner==null||((owner.IsTelegraphing||Time.time<firingUntil)&&!owner.IsHumanReloading);float duty=speed>3f?(aiming?.38f:.32f):.57f;float reach=Mathf.Lerp(.18f,.38f,Mathf.Clamp01(smoothedVelocity.magnitude/4.5f));float distance=2f*reach*transform.lossyScale.y/duty;phase+=delta.magnitude/Mathf.Max(.5f,distance);}
             if(owner&&owner.dead&&!owner.Escaping&&deathTime<0)deathTime=0;
             if(deathTime>=0){deathTime+=dt;if(deathTime>1.1f)return;}else if(owner&&owner.game){float distSq=(transform.position-owner.game.PlayerPosition).sqrMagnitude;if(distSq>32f*32f)return;if((Application.isMobilePlatform||distSq>16f*16f)&&Time.time<nextPoseAt)return;if(Application.isMobilePlatform||distSq>16f*16f)nextPoseAt=Time.time+(distSq>16f*16f?.08f:speed<=.05f?.12f:.033f);}
-            Vector3 direction=transform.forward;bool firing=owner==null||!owner.IsHumanReloading;Vector3 vel=dt>0?delta/dt:Vector3.zero;if(customBossRig!=null){float latVel=Vector3.Dot(vel,transform.right);FactionBossVisuals.PoseCustomRig(customBossRig,gun,direction,firing,speed>.05f?phase:-1,owner!=null&&owner.IsHumanCrouching,owner!=null&&owner.IsHumanRolling,owner!=null&&owner.IsHumanReloading,deathTime,latVel,Faction);return;}DetailedHeroPlayer3D.Pose(Body,gun,handgun,firing,direction,speed>.05f?phase:-1,vel,Mathf.Clamp01(speed/2));if(owner!=null&&deathTime<0){float sideVel=Vector3.Dot(vel,transform.right);float lean=Mathf.Clamp(-sideVel*5.5f,-18f,18f)+(owner.IsHumanRolling?Mathf.Sin(Time.time*24f)*16f:0f);if(owner.IsHumanCrouching||owner.IsHumanRolling){float crouch=owner.IsHumanCrouching?1f:.65f;Body.transform.localPosition=new Vector3(0,-.18f*crouch,0);Body.transform.localRotation=Quaternion.Euler(18f*crouch,0,lean);Body.leftThigh.localRotation*=Quaternion.Euler(-38f*crouch,0,0);Body.rightThigh.localRotation*=Quaternion.Euler(-34f*crouch,0,0);Body.leftShin.localRotation*=Quaternion.Euler(46f*crouch,0,0);Body.rightShin.localRotation*=Quaternion.Euler(42f*crouch,0,0);}else{Body.transform.localPosition=Vector3.zero;Body.transform.localRotation=Quaternion.Euler(0,0,lean);}if(owner.IsHumanReloading){float r=Mathf.Sin(Time.time*14f);Body.leftForearm.localRotation*=Quaternion.Euler(-22f+r*18f,12f,0);Body.head.localRotation*=Quaternion.Euler(14f,r*6f,0);}}
+            Vector3 direction=transform.forward;bool firing=owner==null||((owner.IsTelegraphing||Time.time<firingUntil)&&!owner.IsHumanReloading);Vector3 vel=dt>0?delta/dt:Vector3.zero;if(customBossRig!=null){float latVel=Vector3.Dot(vel,transform.right);FactionBossVisuals.PoseCustomRig(customBossRig,gun,direction,firing,speed>.05f?phase:-1,owner!=null&&owner.IsHumanCrouching,owner!=null&&owner.IsHumanRolling,owner!=null&&owner.IsHumanReloading,deathTime,latVel,Faction,handgun,smoothedVelocity,moveBlend);return;}DetailedHeroPlayer3D.Pose(Body,gun,handgun,firing,direction,speed>.05f?phase:-1,vel,Mathf.Clamp01(speed/2));if(owner!=null&&deathTime<0){float sideVel=Vector3.Dot(vel,transform.right);float lean=Mathf.Clamp(-sideVel*5.5f,-18f,18f)+(owner.IsHumanRolling?Mathf.Sin(Time.time*24f)*16f:0f);if(owner.IsHumanCrouching||owner.IsHumanRolling){float crouch=owner.IsHumanCrouching?1f:.65f;Body.transform.localPosition=new Vector3(0,-.18f*crouch,0);Body.transform.localRotation=Quaternion.Euler(18f*crouch,0,lean);Body.leftThigh.localRotation*=Quaternion.Euler(-38f*crouch,0,0);Body.rightThigh.localRotation*=Quaternion.Euler(-34f*crouch,0,0);Body.leftShin.localRotation*=Quaternion.Euler(46f*crouch,0,0);Body.rightShin.localRotation*=Quaternion.Euler(42f*crouch,0,0);}else{Body.transform.localPosition=Vector3.zero;Body.transform.localRotation=Quaternion.Euler(0,0,lean);}if(owner.IsHumanReloading){float r=Mathf.Sin(Time.time*14f);Body.leftForearm.localRotation*=Quaternion.Euler(-22f+r*18f,12f,0);Body.head.localRotation*=Quaternion.Euler(14f,r*6f,0);}}
             if(false)DetailedHeroPlayer3D.Pose(Body,gun,handgun,true,direction,speed>.05f?phase:-1,
                 dt>0?delta/dt:Vector3.zero,Mathf.Clamp01(speed/2));
             if(deathTime>=0)

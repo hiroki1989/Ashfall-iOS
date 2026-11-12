@@ -128,7 +128,7 @@ namespace NeonVault
             if(IsInfectedBossStage(SelectedStageId))
             {
                 Box(new Rect(0,0,1440,900),new Color(0,0,0,.8f));
-                DrawUnifiedDialogueScene("",false,T("THE RENEGADE","レネゲード"),"・・・",Gold);
+                DrawUnifiedDialogueScene("renegade",false,T("THE RENEGADE","レネゲード"),"・・・",Gold);
                 if(WorldButton(UnifiedDialoguePrimaryButton,T("FIGHT","戦う"))){factionBossConversation=false;Time.timeScale=1;PlayerPrefs.SetInt("Vault.FactionBoss.Intro."+SelectedStageId,1);PlayerPrefs.Save();}
                 return;
             }

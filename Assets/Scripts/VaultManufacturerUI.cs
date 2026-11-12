@@ -73,7 +73,7 @@ namespace NeonVault
                 string id=ManufacturerCatalog.Id(maker);float x=44+maker*226;
                 Panel(new Rect(x,130,218,76),maker==makerSelection?Gold:ManufacturerCatalog.Color(id));
                 ManufacturerBranding.Badge(new Rect(x+6,140,54,54),id);
-                if(GUI.Button(new Rect(x+64,140,149,54),ManufacturerCatalog.Name(id,VaultLanguage.Japanese),new GUIStyle(centered){fontSize=14,wordWrap=true})){makerSelection=maker;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
+                if(ClickableButton(new Rect(x+64,140,149,54),ManufacturerCatalog.Name(id,VaultLanguage.Japanese),new GUIStyle(centered){fontSize=14,wordWrap=true})){makerSelection=maker;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}
             }
             string selected=ManufacturerCatalog.Id(makerSelection);
             for(int tab=-1;tab<4;tab++)if(Button(new Rect(44+(tab+1)*195,220,188,42),tab==-1?T("COMPANY PROFILE","企業概要"):tab==0?T("FIREARMS","銃製品"):tab==1?T("ARMOR","防具製品"):tab==2?T("MODULES","モジュール製品"):T("MELEE","近接製品"))){manufacturerKind=tab;manufacturerScroll=Vector2.zero;BuildManufacturerProducts();}

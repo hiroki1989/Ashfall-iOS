@@ -40,8 +40,26 @@ namespace NeonVault {
    var offset=rotation*new Vector3(-bounds.center.x*scale,-bounds.min.y*scale,-bounds.center.z*scale);
    ImportedWorldBatch.Add(parent,source,position+offset,rotation,Vector3.one*scale);return true;
   }
+  static GameObject[] steamDebrisProps;
+  static bool PlaceSteamProp(string category,Transform parent,Vector3 position,int seed){
+   if(!parent.name.StartsWith("Stream /")||(category!="debris"&&category!="street"))return false;
+   if((seed&3)!=1)return false;
+   if(steamDebrisProps==null)steamDebrisProps=Resources.LoadAll<GameObject>("ImportedWorld/SteamStreetProps");
+   if(steamDebrisProps==null||steamDebrisProps.Length==0)return false;
+   var source=steamDebrisProps[((seed&int.MaxValue)/4)%steamDebrisProps.Length];
+   if(!source)return false;
+   var bounds=ImportedWorldBatch.SourceBounds(source);
+   if(bounds.size.x<.001f||bounds.size.y<.001f||bounds.size.z<.001f)return false;
+   bool large=source.name.Contains("container")||source.name.Contains("tank");
+   float maxW=large?2.4f:1.4f,maxH=large?1.9f:1.25f,maxD=large?2.4f:1.4f;
+   float scale=Mathf.Min(maxW/bounds.size.x,maxH/bounds.size.y,maxD/bounds.size.z);
+   var rotation=Quaternion.Euler(0,((seed>>2)&3)*90,0);
+   var offset=rotation*new Vector3(-bounds.center.x*scale,-bounds.min.y*scale,-bounds.center.z*scale);
+   ImportedWorldBatch.Add(parent,source,position+offset,rotation,Vector3.one*scale);return true;
+  }
   public static bool Place(string category,Transform parent,Vector3 position,int seed){
    if(PlaceRustyVehicle(category,parent,position,seed))return true;
+   if(PlaceSteamProp(category,parent,position,seed))return true;
    if(PlacePolyHaven(category,parent,position,seed))return true;
    if(!groups.TryGetValue(category,out var prefabs)){prefabs=Array.FindAll(Resources.LoadAll<GameObject>("ImportedWorld/"+category),p=>!EquipmentChestVisual.IsReserved(p)&&(category!="tree"||p.name.IndexOf("bare",StringComparison.OrdinalIgnoreCase)<0));groups[category]=prefabs;}
    if(prefabs.Length==0)return false;

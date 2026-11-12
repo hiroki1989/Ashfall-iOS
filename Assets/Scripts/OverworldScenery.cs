@@ -34,6 +34,33 @@ namespace NeonVault
         static GameObject[] newCityBuildingSources;
         static GameObject[] ruinedCityBuildingSources;
         static GameObject[] cc0StructureSources;
+        static GameObject[] steamCityBuildingSources;
+        static GameObject[] steamStreetPropSources;
+        static bool PlaceSteamCityBuilding(Transform parent,Rect footprint,int district,int seed)
+        {
+            int roll=Mathf.Abs(seed)%10;
+            if(roll>=5)return false;
+            if(steamCityBuildingSources==null)steamCityBuildingSources=Resources.LoadAll<GameObject>("ImportedWorld/SteamCityBuildings");
+            if(steamCityBuildingSources==null||steamCityBuildingSources.Length==0)return false;
+            var source=steamCityBuildingSources[((seed&int.MaxValue)/5)%steamCityBuildingSources.Length];
+            if(source==null)return false;
+            var bounds=ImportedWorldBatch.SourceBounds(source);
+            if(bounds.size.x<.01f||bounds.size.y<.01f||bounds.size.z<.01f)return false;
+            bool lotWide=footprint.width>=footprint.height;
+            bool meshWide=bounds.size.x>=bounds.size.z;
+            bool turn90=lotWide!=meshWide;
+            float yaw=(turn90?90f:0f)+(((seed>>4)&1)*180f);
+            float bw=turn90?bounds.size.z:bounds.size.x;
+            float bd=turn90?bounds.size.x:bounds.size.z;
+            float maxH=source.name.Contains("arabic")||source.name.Contains("old-building")?22f:16f;
+            float scale=Mathf.Min((footprint.width-.4f)/bw,(footprint.height-.4f)/bd,maxH/bounds.size.y);
+            if(scale<=0||float.IsInfinity(scale))return false;
+            Quaternion rot=Quaternion.Euler(0,yaw,0);
+            Vector3 offset=rot*new Vector3(-bounds.center.x*scale,-bounds.min.y*scale,-bounds.center.z*scale);
+            var position=new Vector3(footprint.center.x,0,footprint.center.y)+offset;
+            ImportedWorldBatch.Add(parent,source,position,rot,Vector3.one*scale,true);
+            return true;
+        }
         static bool PlaceAddedCityBuilding(Transform parent,Rect footprint,int seed)
         {
             // The site occupies the same geography footprint as its replacement;
@@ -83,6 +110,20 @@ namespace NeonVault
             {
                 LandmarkArchitecture.PlaceNormalizedProp(parent,streetLampPrefab,position,((seed>>3)&3)*90f,LandmarkArchitecture.StreetLampHeight);
                 return true;
+            }
+            if((seed&7)==2)
+            {
+                if(steamStreetPropSources==null)steamStreetPropSources=Resources.LoadAll<GameObject>("ImportedWorld/SteamStreetProps");
+                if(steamStreetPropSources!=null&&steamStreetPropSources.Length>0)
+                {
+                    var prop=steamStreetPropSources[((seed&int.MaxValue)/8)%steamStreetPropSources.Length];
+                    if(prop!=null)
+                    {
+                        float h=prop.name.Contains("container")||prop.name.Contains("tank")?1.85f:prop.name.Contains("dumpster")||prop.name.Contains("generator")?1.35f:1.05f;
+                        LandmarkArchitecture.PlaceNormalizedProp(parent,prop,position,((seed>>3)&3)*90f,h);
+                        return true;
+                    }
+                }
             }
             // Low frequency and shared meshes/materials keep outdoor chunks bounded on mobile.
             if((seed&3)!=0)return false;
@@ -148,6 +189,7 @@ namespace NeonVault
             {
                 Vector3 p=new Vector3(rect.center.x,0,rect.center.y);int seed=unchecked(x*1973+z*9277+index++*101);float h=4.5f+Mathf.Abs(seed%4)*1.7f;
                 int district=geography.District(p);
+                if(PlaceSteamCityBuilding(obj.transform,rect,district,seed))continue;
                 if((district==0||district==1||district==2)&&PlaceAddedCityBuilding(obj.transform,rect,seed))continue;
                 if((district==0||district==1||district==2)&&PlaceCC0Building(obj.transform,rect,seed))continue;
                 if(district==0||district==1||district==2){RuinedCityArchitecture.Place(obj.transform,rect,district==1?7:district==2?6:Mathf.Abs(seed%6));continue;}

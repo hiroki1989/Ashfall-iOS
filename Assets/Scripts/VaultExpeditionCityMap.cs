@@ -47,14 +47,16 @@ namespace NeonVault
             expeditionMapScroll.x = Mathf.Clamp(expeditionMapScroll.x, 0, Mathf.Max(0, size.x - view.width + 18));
             expeditionMapScroll.y = Mathf.Clamp(expeditionMapScroll.y, 0, Mathf.Max(0, size.y - view.height + 18));
             expeditionMapScroll = GUI.BeginScrollView(view, expeditionMapScroll, new Rect(0, 0, size.x, size.y));
+            PushControllerViewport(view, expeditionMapScroll);
             DrawCityAtlas();
+            PopControllerViewport();
             GUI.EndScrollView();
             DrawExpeditionBriefing();
             if (Button(new Rect(42, 835, 300, 47), T("RETURN TO LAST LIGHT", "灯火基地へ戻る"))) screen = Screen.Hub;
-            if (GUI.Button(new Rect(359, 835, 46, 38), "−", centered)) SetCityZoom(expeditionCityZoom / 1.2f, view.size * .5f);
+            if (ClickableButton(new Rect(359, 835, 46, 38), "−", centered)) SetCityZoom(expeditionCityZoom / 1.2f, view.size * .5f);
             Text(415, 845, Mathf.RoundToInt(expeditionCityZoom * 100) + "%", tiny, Mist, 65);
-            if (GUI.Button(new Rect(478, 835, 46, 38), "+", centered)) SetCityZoom(expeditionCityZoom * 1.2f, view.size * .5f);
-            if (GUI.Button(new Rect(534, 835, 104, 38), T("CITY FIT", "全域表示"), centered)) { expeditionCityZoom = .65f; expeditionMapScroll = Vector2.zero; }
+            if (ClickableButton(new Rect(478, 835, 46, 38), "+", centered)) SetCityZoom(expeditionCityZoom * 1.2f, view.size * .5f);
+            if (ClickableButton(new Rect(534, 835, 104, 38), T("CITY FIT", "全域表示"), centered)) { expeditionCityZoom = .65f; expeditionMapScroll = Vector2.zero; }
             Text(650, 837, T("WHEEL: ZOOM / RIGHT DRAG: PAN", "ホイール: 拡縮 / 右ドラッグ: 移動"), tiny, Mist, 355);
             Text(650, 858, T("GOLD: SELECTED / CYAN: CLEARED / GREY: LOCKED", "金: 選択 / 青緑: 制圧済 / 灰: 許可不足"), tiny, Mist, 355);
         }
@@ -166,7 +168,7 @@ namespace NeonVault
             expeditionCitySiteStyle.fontSize=MobileTouchControls.Enabled?18:12;
             GUI.Label(new Rect(r.x,r.yMax-(MobileTouchControls.Enabled?22:16),w,MobileTouchControls.Enabled?22:16),"L"+stage.level,expeditionCitySiteStyle);
             GUI.color=Color.white;
-            if(GUI.Button(r,GUIContent.none,GUIStyle.none))expeditionMapSelection=id;
+            if(ClickableButton(r,GUIContent.none,GUIStyle.none))expeditionMapSelection=id;
             if(done)
             {
                 float badge=MobileTouchControls.Enabled?26:13;

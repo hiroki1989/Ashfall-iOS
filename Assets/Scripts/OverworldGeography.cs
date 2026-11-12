@@ -299,16 +299,6 @@ namespace NeonVault
         public int LandmarkKind(Vector2Int chunkKey,out Vector3 position)
         {
             if(LandmarkIndexAtChunk(chunkKey,out int fixedKind,out position)>=0)return fixedKind;
-            int h=Mathf.Abs(unchecked(chunkKey.x*49999^chunkKey.y*81919));
-            if(h%10==0)
-            {
-                var candidate=new Vector3(chunkKey.x*100+52,0,chunkKey.y*100+52);
-                if(!River(candidate)&&RoadClearance(candidate)>6f&&!SiteProtected(candidate,18))
-                {
-                    position=candidate;
-                    return h%16;
-                }
-            }
             position=default;return -1;
         }
         bool CityPark(Vector3 p,float x,float z,float rx,float rz,float phase)
@@ -492,13 +482,15 @@ namespace NeonVault
             float left=x*ChunkSize,bottom=z*ChunkSize;
             // Rejection packing makes buildings independent of the 100m streaming grid.
             // A two metre margin at chunk borders prevents neighbouring cache overlap.
-            for(int attempt=0;attempt<1800&&data.Buildings.Count<48;attempt++)
+            for(int attempt=0;attempt<2000&&data.Buildings.Count<52;attempt++)
             {
                 var p=new Vector3(left+8+(float)rng.NextDouble()*84,0,bottom+8+(float)rng.NextDouble()*84);
                 int district=District(p);if(district==4)continue;
-                bool warehouse=district==2&&rng.NextDouble()<.09;
-                float w=warehouse?24+(float)rng.NextDouble()*15:8+(float)rng.NextDouble()*14;
-                float h=warehouse?19+(float)rng.NextDouble()*17:8+(float)rng.NextDouble()*14;
+                double roll=rng.NextDouble();
+                bool warehouse=(district==2||district==3)&&roll<.14;
+                bool grandBlock=(district==0||district==1)&&roll>=.14&&roll<.28;
+                float w=warehouse?22+(float)rng.NextDouble()*16:grandBlock?14+(float)rng.NextDouble()*12:8+(float)rng.NextDouble()*14;
+                float h=warehouse?18+(float)rng.NextDouble()*16:grandBlock?13+(float)rng.NextDouble()*12:8+(float)rng.NextDouble()*14;
                 var rect=new Rect(p.x-w*.5f,p.z-h*.5f,w,h);
                 if(rect.xMin<left+2||rect.xMax>left+98||rect.yMin<bottom+2||rect.yMax>bottom+98||Mathf.Abs(p.x)>4960||Mathf.Abs(p.z)>4960)continue;
                 // Keep coarse navigation cell centres free for the shared 50m graph.

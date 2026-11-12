@@ -82,6 +82,10 @@ namespace NeonVault
             Text(r.xMax-31,r.center.y-15,"›",new GUIStyle(label){fontSize=25},primary?Ink:accent,26);
             return clicked;
         }
+        void PushControllerViewport(Rect r,Vector2 scroll){}
+        void PopControllerViewport(){}
+        bool ClickableButton(Rect r,string value,GUIStyle style)=>GUI.Button(r,value,style);
+        bool ClickableButton(Rect r,GUIContent content,GUIStyle style)=>GUI.Button(r,content,style);
         void LanguageSelector()
         {
             Panel(new Rect(1190,838,226,40),Gold*.6f);

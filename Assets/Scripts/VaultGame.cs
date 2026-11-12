@@ -182,9 +182,7 @@ namespace NeonVault
             foreach(var m in materials) Destroy(m); materials.Clear(); Enemies.Clear(); obstacles.Clear(); drops.Clear();foreach(var d in meleeDrops)if(d.visual!=null)Destroy(d.visual);meleeDrops.Clear();armorDrops.Clear();chests.Clear();supplyDrops.Clear();fieldAmmoCrates.Clear();
             world=new GameObject("Generated sector "+room).transform; satellites.Clear();
             ClearArtifactDrops();
-            bool isBossFloor = (CurrentDungeon != null && room >= CurrentDungeon.AreaCount - 1);
-            bool useOpenArena = isBossFloor && (((seed + room * 7919) & 1) == 0);
-            Layout = new SectorLayout(new System.Random(seed + room * 7919), DungeonIndex, true, useOpenArena);
+            Layout = new SectorLayout(new System.Random(seed + room * 7919), DungeonIndex, true, false);
             halfWidth=Layout.Columns*SectorLayout.Cell/2;halfDepth=Layout.Rows*SectorLayout.Cell/2;cleared=false;
             int dungeonInteriorStyle=SelectedStageId>=0?SelectedStageId:DungeonIndex;
             art=new VaultArt(world,materials,new System.Random(seed+room*7919));art.Floor(halfWidth,halfDepth,dungeonInteriorStyle);
@@ -279,9 +277,9 @@ namespace NeonVault
             {
                 int visualFaction=finalDebtBossFight?0:faction==DungeonFaction.Raiders?1:2;
                 var human=raiderBoss&&visualFaction>0?HumanFactionVisual.CreateFactionBoss(f.transform,visualFaction):HumanFactionVisual.Create(f.transform,visualFaction,raiderBoss?0:f.UseAssaultRifle?0:1);
-                human.transform.localScale=Vector3.one*(raiderBoss?1.20f:1.12f);
+                human.transform.localScale=Vector3.one*(raiderBoss?(visualFaction==1?1.13f:1.20f):1.12f);
             // Keep the existing actor origin and faction model floor alignment.
-                human.transform.localPosition=Vector3.down*.03f;
+                human.transform.localPosition=raiderBoss&&visualFaction==1?Vector3.up*.10f:Vector3.down*.03f;
             }
             else if(infectedMajorBoss)
                 InfectedRenegadeVisual.TryAttach(f.gameObject);

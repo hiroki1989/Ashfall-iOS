@@ -286,9 +286,6 @@ namespace NeonVault
         {
             Prepare();
             int v = Mathf.Abs(variant) % 4;
-            var proto = GetParkPrototype(v);
-            if (proto != null)
-                ImportedWorldBatch.Add(chunkTransform, proto, centre, Quaternion.identity, Vector3.one, false);
             DressParkSurroundings(chunkTransform, centre, v);
         }
 
@@ -949,33 +946,71 @@ namespace NeonVault
 
         static void DressParkSurroundings(Transform chunkTransform, Vector3 centre, int variant)
         {
-            var bench = Resources.Load<GameObject>("ImportedWorld/props/bench");
-            var lamp = Resources.Load<GameObject>("ImportedWorld/PolyHaven/street_lamp_01");
+            var bench = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-bench") ?? Resources.Load<GameObject>("ImportedWorld/props/bench");
+            var lamp = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-lamp") ?? Resources.Load<GameObject>("ImportedWorld/PolyHaven/street_lamp_01");
             var rock1 = Resources.Load<GameObject>("ImportedWorld/rock/rock_set_01");
             var rock2 = Resources.Load<GameObject>("ImportedWorld/rock/rock_set_02");
             var fence = Resources.Load<GameObject>("ImportedWorld/props/SM_fence_stand_small");
 
-            for (int seat = 0; seat < 8; seat++)
+            // Weathered playground & survivor rest props instead of a primitive geometric monument
+            var playset = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-playset");
+            var swingset = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-swingset");
+            var slide = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-slide");
+            var roundabout = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-roundabout");
+            var seesaw = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-seesaw");
+            var sandbox = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-sandbox");
+            var oldTable = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-old-table");
+            var oldChair = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-old-chair");
+            var oldStool = Resources.Load<GameObject>("ImportedWorld/SteamParkProps/park-old-stool");
+
+            if (variant == 0)
             {
-                float a = seat * Mathf.PI * .25f;
-                Vector3 bPos = centre + new Vector3(Mathf.Cos(a) * 10.2f, 0, Mathf.Sin(a) * 10.2f);
+                PlaceNormalizedProp(chunkTransform, playset, centre + new Vector3(-3.4f, 0, 2.2f), 25f, 3.1f);
+                PlaceNormalizedProp(chunkTransform, swingset, centre + new Vector3(3.8f, 0, 1.8f), -18f, 2.7f);
+                PlaceNormalizedProp(chunkTransform, sandbox, centre + new Vector3(0.4f, 0, -3.2f), 12f, 0.42f);
+            }
+            else if (variant == 1)
+            {
+                PlaceNormalizedProp(chunkTransform, roundabout, centre + new Vector3(-3.0f, 0, 1.6f), 40f, 1.35f);
+                PlaceNormalizedProp(chunkTransform, slide, centre + new Vector3(3.2f, 0, 2.2f), -35f, 2.35f);
+                PlaceNormalizedProp(chunkTransform, seesaw, centre + new Vector3(-0.6f, 0, -3.0f), 15f, 0.92f);
+            }
+            else if (variant == 2)
+            {
+                PlaceNormalizedProp(chunkTransform, oldTable, centre + new Vector3(-2.4f, 0, 1.4f), 20f, 0.85f);
+                PlaceNormalizedProp(chunkTransform, oldChair, centre + new Vector3(-3.4f, 0, 1.6f), 105f, 0.90f);
+                PlaceNormalizedProp(chunkTransform, oldStool, centre + new Vector3(-1.5f, 0, 2.2f), -45f, 0.58f);
+                PlaceNormalizedProp(chunkTransform, swingset, centre + new Vector3(3.4f, 0, -1.8f), 140f, 2.7f);
+                PlaceNormalizedProp(chunkTransform, seesaw, centre + new Vector3(-1.8f, 0, -3.2f), -25f, 0.92f);
+            }
+            else
+            {
+                PlaceNormalizedProp(chunkTransform, slide, centre + new Vector3(-3.2f, 0, -1.6f), 65f, 2.35f);
+                PlaceNormalizedProp(chunkTransform, roundabout, centre + new Vector3(2.8f, 0, 2.0f), 0f, 1.35f);
+                PlaceNormalizedProp(chunkTransform, oldTable, centre + new Vector3(0.2f, 0, 3.4f), -12f, 0.85f);
+                PlaceNormalizedProp(chunkTransform, oldChair, centre + new Vector3(1.2f, 0, 3.5f), -95f, 0.90f);
+            }
+
+            for (int seat = 0; seat < 6; seat++)
+            {
+                float a = seat * Mathf.PI / 3f;
+                Vector3 bPos = centre + new Vector3(Mathf.Cos(a) * 9.6f, 0, Mathf.Sin(a) * 9.6f);
                 if (bench != null)
-                    ImportedWorldBatch.Add(chunkTransform, bench, bPos, Quaternion.Euler(0, -a * Mathf.Rad2Deg - 90f, 0), Vector3.one);
+                    PlaceNormalizedProp(chunkTransform, bench, bPos, -a * Mathf.Rad2Deg - 90f, 0.95f);
                 if (lamp != null && seat % 2 == 0)
                 {
-                    Vector3 lPos = centre + new Vector3(Mathf.Cos(a) * 11.8f, 0, Mathf.Sin(a) * 11.8f);
+                    Vector3 lPos = centre + new Vector3(Mathf.Cos(a) * 11.4f, 0, Mathf.Sin(a) * 11.4f);
                     PlaceNormalizedProp(chunkTransform, lamp, lPos, -a * Mathf.Rad2Deg - 90f, StreetLampHeight);
                 }
             }
-            // Decorative rock clusters and fence segments at outer park corners
             for (int c = 0; c < 4; c++)
             {
                 float a = c * Mathf.PI * .5f + Mathf.PI * .25f;
                 var rock = (c + variant) % 2 == 0 ? rock1 : rock2;
                 if (rock != null)
-                    PlaceNormalizedProp(chunkTransform, rock, centre + new Vector3(Mathf.Cos(a) * 13.5f, 0, Mathf.Sin(a) * 13.5f), c * 90f, 1.4f);
-                if (fence != null)
-                    PlaceNormalizedProp(chunkTransform, fence, centre + new Vector3(Mathf.Cos(a) * 15.2f, 0, Mathf.Sin(a) * 15.2f), -a * Mathf.Rad2Deg + 90f, 1.8f);
+                    PlaceNormalizedProp(chunkTransform, rock, centre + new Vector3(Mathf.Cos(a) * 12.8f, 0, Mathf.Sin(a) * 12.8f), c * 90f, 1.35f);
+                if (fence != null && c % 2 == 0)
+                    PlaceNormalizedProp(chunkTransform, fence, centre + new Vector3(Mathf.Cos(a) * 14.5f, 0, Mathf.Sin(a) * 14.5f), -a * Mathf.Rad2Deg + 90f, 1.75f);
             }
         }
 
@@ -1045,14 +1080,7 @@ namespace NeonVault
 
         public static bool PocketParkBlocked(Vector3 p, float radius, Vector3 center, int variant)
         {
-            if (Mathf.Abs(p.x - center.x) > 5.0f + radius || Mathf.Abs(p.z - center.z) > 5.0f + radius) return false;
-            switch (Mathf.Abs(variant) % 4)
-            {
-                case 0: return CircleBlocked(p, radius, center, 3.7f);
-                case 1: return CircleBlocked(p, radius, center, 3.9f);
-                case 2: return BoxBlocked(p, radius, center, 2.1f, 2.1f);
-                default: return CircleBlocked(p, radius, center, 3.5f);
-            }
+            return false;
         }
 
         public static bool LandmarkBlocked(Vector3 p, float radius, Vector3 center, int kind)

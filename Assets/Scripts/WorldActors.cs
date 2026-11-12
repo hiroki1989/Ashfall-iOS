@@ -480,6 +480,7 @@ namespace NeonVault
             var painted=GetComponent<EnemyPainted2D>();
             var faithful=GetComponent<FaithfulEnemy3D>();
             var human=GetComponentInChildren<HumanFactionVisual>();
+            if(human)human.NotifyFire();
             Vector3 muzzle=human&&human.Muzzle?human.Muzzle.position:(kind==10||RaiderBoss)&&imported!=null?imported.MuzzlePosition:faithful!=null&&faithful.Ready?faithful.MuzzlePosition:painted!=null&&painted.Ready?painted.MuzzlePosition:weapon!=null?weapon.MuzzlePosition:transform.position+Vector3.up*1.05f;
             if(weapon!=null)weapon.Kick();
             Color flare=kind==1?new Color(.48f,.8f,.12f):(kind==5||kind==10||RaiderBoss)?new Color(.6f,.82f,1):kind==6?new Color(.65f,.85f,.18f):new Color(1,.48f,.12f);

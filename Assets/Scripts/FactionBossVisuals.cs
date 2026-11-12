@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -10,6 +11,46 @@ namespace NeonVault
     /// </summary>
     internal static class FactionBossVisuals
     {
+        // A single geometry-free copy of the player's joints supplies the same
+        // gait and weapon pose to every imported human, evaluated one at a time.
+        static DetailedHero3D playerPoseDriver;
+        static Transform PlayerJoint(string name, Transform parent, Vector3 position)
+        {
+            var joint = new GameObject(name).transform; joint.SetParent(parent, false); joint.localPosition = position; return joint;
+        }
+        static DetailedHero3D PlayerPoseDriver()
+        {
+            if (playerPoseDriver) return playerPoseDriver;
+            var root = new GameObject("Shared human pose driver");
+            root.hideFlags = HideFlags.HideAndDontSave;
+            if (Application.isPlaying) Object.DontDestroyOnLoad(root);
+            var h = root.AddComponent<DetailedHero3D>();
+            var rig = PlayerJoint("rig", root.transform, Vector3.zero);
+            typeof(DetailedHero3D).GetField("rig", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(h, rig);
+            h.pelvis = PlayerJoint("pelvis", rig, new Vector3(0,.98f,0));
+            h.chest = PlayerJoint("chest", rig, new Vector3(0,1.25f,0));
+            h.head = PlayerJoint("head", h.chest, new Vector3(0,.30f,0));
+            for (int side=-1;side<=1;side+=2)
+            {
+                var upper=PlayerJoint("upper arm",h.chest,new Vector3(side*.18f,.177f,0));
+                var fore=PlayerJoint("forearm",upper,new Vector3(0,-DetailedHero3D.UpperArmLength,0));
+                var hand=PlayerJoint("hand",fore,new Vector3(0,-DetailedHero3D.ForearmLength,0));
+                var thigh=PlayerJoint("thigh",h.pelvis,new Vector3(side*.105f,-.025f,0));
+                var shin=PlayerJoint("shin",thigh,new Vector3(0,-.438f,0));
+                var foot=PlayerJoint("foot",shin,new Vector3(0,-.416f,0));
+                var toe=PlayerJoint("toe",foot,new Vector3(0,-.089f,.12f));
+                if(side<0){h.leftUpperArm=upper;h.leftForearm=fore;h.leftHand=hand;h.leftThigh=thigh;h.leftShin=shin;h.leftFoot=foot;h.leftToe=toe;}
+                else{h.rightUpperArm=upper;h.rightForearm=fore;h.rightHand=hand;h.rightThigh=thigh;h.rightShin=shin;h.rightFoot=foot;h.rightToe=toe;}
+            }
+            playerPoseDriver=h; return h;
+        }
+        static void MatchDirection(Transform bone, Transform child, Transform reference, Transform referenceChild)
+        {
+            if(!bone||!child||!reference||!referenceChild)return;
+            Vector3 from=child.position-bone.position, to=referenceChild.position-reference.position;
+            if(from.sqrMagnitude>1e-8f&&to.sqrMagnitude>1e-8f)
+                bone.rotation=Quaternion.FromToRotation(from,to)*bone.rotation;
+        }
         sealed class ResourceOwner : MonoBehaviour
         {
             public readonly List<Object> owned = new List<Object>();
@@ -32,6 +73,12 @@ namespace NeonVault
             public readonly List<Transform> fingersR = new List<Transform>();
             public Vector3 pelvisRestPos;
             public readonly Dictionary<Transform, Quaternion> restLocalRot = new Dictionary<Transform, Quaternion>();
+            // Player-motion retarget data, captured once in the authored bind pose.
+            public Transform handTipL, handTipR;
+            public Vector3 modelRestLocalPos;
+            public Quaternion modelRestLocalRot = Quaternion.identity;
+            public Vector3 restFootLocalL, restFootLocalR;
+            public readonly Dictionary<Transform, Quaternion> retarget = new Dictionary<Transform, Quaternion>();
         }
 
         struct TexSpec
@@ -46,6 +93,7 @@ namespace NeonVault
             { "Skin", new TexSpec { tex = "{k}_body", normal = "{k}_skin_n", ao = "{k}_skin_ao", metallic = 0f, smoothness = 0.24f, bump = 0.65f, aoStrength = 0.85f, tint = Color.white } },
             { "HeadPBR", new TexSpec { tex = "{k}_head_pbr_a", normal = "{k}_head_pbr_n", metallicGloss = "{k}_head_pbr_m", ao = "{k}_head_pbr_ao", bump = 0.95f, aoStrength = 0.90f, tint = Color.white } },
             { "OutfitPBR", new TexSpec { tex = "{k}_outfit_pbr_a", normal = "{k}_outfit_pbr_n", metallicGloss = "{k}_outfit_pbr_m", ao = "{k}_outfit_pbr_ao", bump = 0.95f, aoStrength = 0.90f, tint = Color.white } },
+            { "MeshyPBR", new TexSpec { tex = "{k}_meshy_a", normal = "{k}_meshy_n", metallicGloss = "{k}_meshy_m", bump = 0.95f, tint = Color.white } },
         };
 
         public static CustomRigPose AttachBossModel(GameObject root, int faction, out DetailedHeroEquipment3D.WeaponSockets gun)
@@ -68,6 +116,34 @@ namespace NeonVault
             gun = DetailedHeroEquipment3D.BuildRifle(root.transform, DetailedHeroMaterials3D.Get);
             PoseCustomRig(pose, gun, Vector3.forward, true, -1f, false, false, false, -1f, 0f, faction);
             return pose;
+        }
+
+        // Ordinary faction enemies use their own authored mesh and the same
+        // articulated rig and poses as the existing human combatants.
+        public static CustomRigPose AttachSoldierModel(GameObject root, int faction, int variant, out DetailedHeroEquipment3D.WeaponSockets gun)
+        {
+            string key = faction == 1 ? "Redcrow" : "Coyote";
+            var prefab = Resources.Load<GameObject>("Characters/" + key + "/" + key);
+            if (!prefab) { gun = null; return null; }
+            var model = Object.Instantiate(prefab, root.transform, false);
+            model.name = "Faction soldier model";
+            model.transform.localPosition = new Vector3(0f, 0.03f, 0f);
+            ApplyBossTextures(model, key, key.ToLowerInvariant(), root);
+            ConfigureSkinnedRenderers(model);
+            var pose = CaptureRigPose(model.transform);
+            if (!pose.pelvis || !pose.upperArmL || !pose.upperArmR || !pose.thighL || !pose.thighR)
+            {
+                Object.Destroy(model); gun = null; return null;
+            }
+            gun = variant == 1 ? DetailedHeroEquipment3D.BuildPistol(root.transform, DetailedHeroMaterials3D.Get)
+                               : DetailedHeroEquipment3D.BuildRifle(root.transform, DetailedHeroMaterials3D.Get);
+            return pose;
+        }
+
+        public static CustomRigPose CaptureSoldierPose(Transform root)
+        {
+            var model = root.Find("Faction soldier model");
+            return model ? CaptureRigPose(model) : null;
         }
 
         static void ConfigureSkinnedRenderers(GameObject model)
@@ -176,7 +252,7 @@ namespace NeonVault
             ApplyTextureSet(model, "Characters/" + key + "/Textures/", BossTexTable, p => string.IsNullOrEmpty(p) ? null : p.Replace("{k}", lower), owner);
         }
 
-        static CustomRigPose CaptureRigPose(Transform modelRoot)
+        internal static CustomRigPose CaptureRigPose(Transform modelRoot, bool includeFingers = true)
         {
             var byName = new Dictionary<string, Transform>();
             foreach (var smr in modelRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true))
@@ -202,32 +278,38 @@ namespace NeonVault
             var pose = new CustomRigPose
             {
                 modelRoot = modelRoot,
-                pelvis = FindBone("pelvis"),
-                spine02 = FindBone("spine_02"),
-                spine03 = FindBone("spine_03"),
+                // Unreal-style names (Raven, Vex, soldiers) with Mixamo fallbacks (Veil).
+                pelvis = FindBone("pelvis") ?? FindBone("hips"),
+                spine02 = FindBone("spine_02") ?? FindBone("spine1"),
+                spine03 = FindBone("spine_03") ?? FindBone("spine2"),
                 head = FindBone("head"),
-                upperArmL = FindBone("upperarm_l"),
-                lowerArmL = FindBone("lowerarm_l"),
-                handL = FindBone("hand_l"),
-                upperArmR = FindBone("upperarm_r"),
-                lowerArmR = FindBone("lowerarm_r"),
-                handR = FindBone("hand_r"),
-                thighL = FindBone("thigh_l"),
-                calfL = FindBone("calf_l"),
-                footL = FindBone("foot_l"),
-                thighR = FindBone("thigh_r"),
-                calfR = FindBone("calf_r"),
-                footR = FindBone("foot_r"),
+                upperArmL = FindBone("upperarm_l") ?? FindBone("leftarm"),
+                lowerArmL = FindBone("lowerarm_l") ?? FindBone("leftforearm"),
+                handL = FindBone("hand_l") ?? FindBone("lefthand"),
+                upperArmR = FindBone("upperarm_r") ?? FindBone("rightarm"),
+                lowerArmR = FindBone("lowerarm_r") ?? FindBone("rightforearm"),
+                handR = FindBone("hand_r") ?? FindBone("righthand"),
+                thighL = FindBone("thigh_l") ?? FindBone("leftupleg"),
+                calfL = FindBone("calf_l") ?? FindBone("leftleg"),
+                footL = FindBone("foot_l") ?? FindBone("leftfoot"),
+                thighR = FindBone("thigh_r") ?? FindBone("rightupleg"),
+                calfR = FindBone("calf_r") ?? FindBone("rightleg"),
+                footR = FindBone("foot_r") ?? FindBone("rightfoot"),
+                handTipL = FindBone("middle_01_l") ?? FindBone("lefthandmiddle1"),
+                handTipR = FindBone("middle_01_r") ?? FindBone("righthandmiddle1"),
             };
 
-            string[] fingerPrefixes = { "index_01", "index_02", "middle_01", "middle_02", "ring_01", "ring_02", "pinky_01", "pinky_02" };
-            foreach (string p in fingerPrefixes)
+            if (includeFingers)
             {
-                var fl = FindBone(p + "_l"); if (fl) pose.fingersL.Add(fl);
-                var fr = FindBone(p + "_r"); if (fr) pose.fingersR.Add(fr);
+                string[] fingerPrefixes = { "index_01", "index_02", "middle_01", "middle_02", "ring_01", "ring_02", "pinky_01", "pinky_02" };
+                foreach (string p in fingerPrefixes)
+                {
+                    var fl = FindBone(p + "_l"); if (fl) pose.fingersL.Add(fl);
+                    var fr = FindBone(p + "_r"); if (fr) pose.fingersR.Add(fr);
+                }
+                var tl = FindBone("thumb_01_l"); if (tl) pose.fingersL.Add(tl);
+                var tr = FindBone("thumb_01_r"); if (tr) pose.fingersR.Add(tr);
             }
-            var tl = FindBone("thumb_01_l"); if (tl) pose.fingersL.Add(tl);
-            var tr = FindBone("thumb_01_r"); if (tr) pose.fingersR.Add(tr);
 
             if (pose.pelvis) pose.pelvisRestPos = pose.pelvis.localPosition;
             Transform[] tracked = {
@@ -241,13 +323,53 @@ namespace NeonVault
                 if (b) pose.restLocalRot[b] = b.localRotation;
             foreach (var f in pose.fingersL) pose.restLocalRot[f] = f.localRotation;
             foreach (var f in pose.fingersR) pose.restLocalRot[f] = f.localRotation;
+            CaptureRetargetRest(pose);
             return pose;
+        }
+
+        // The player's reference skeleton has identity joint rotations in its rest pose:
+        // limbs point straight down, spine/neck straight up, facing +Z.
+        static void CaptureRetargetRest(CustomRigPose pose)
+        {
+            var m = pose.modelRoot;
+            pose.modelRestLocalPos = m.localPosition;
+            pose.modelRestLocalRot = m.localRotation;
+            Quaternion frame = m.rotation * Quaternion.Inverse(m.localRotation);
+            Quaternion inv = Quaternion.Inverse(frame);
+            void Add(Transform bone, Transform child, Vector3 playerDir)
+            {
+                if (!bone) return;
+                Quaternion rel = inv * bone.rotation;
+                Quaternion align = Quaternion.identity;
+                if (child)
+                {
+                    Vector3 d = inv * (child.position - bone.position);
+                    if (d.sqrMagnitude > 1e-8f) align = Quaternion.FromToRotation(d.normalized, playerDir);
+                }
+                pose.retarget[bone] = align * rel;
+            }
+            Add(pose.pelvis, pose.spine03, Vector3.up);
+            Add(pose.spine03, pose.head, Vector3.up);
+            Add(pose.head, null, Vector3.up);
+            Add(pose.upperArmL, pose.lowerArmL, Vector3.down); Add(pose.lowerArmL, pose.handL, Vector3.down); Add(pose.handL, pose.handTipL, Vector3.down);
+            Add(pose.upperArmR, pose.lowerArmR, Vector3.down); Add(pose.lowerArmR, pose.handR, Vector3.down); Add(pose.handR, pose.handTipR, Vector3.down);
+            Add(pose.thighL, pose.calfL, Vector3.down); Add(pose.calfL, pose.footL, Vector3.down); Add(pose.footL, null, Vector3.forward);
+            Add(pose.thighR, pose.calfR, Vector3.down); Add(pose.calfR, pose.footR, Vector3.down); Add(pose.footR, null, Vector3.forward);
+            if (pose.footL) pose.restFootLocalL = m.InverseTransformPoint(pose.footL.position);
+            if (pose.footR) pose.restFootLocalR = m.InverseTransformPoint(pose.footR.position);
+        }
+
+        static void CopyPlayerJoint(CustomRigPose pose, Transform bone, Transform reference)
+        {
+            if (bone && reference && pose.retarget.TryGetValue(bone, out var r))
+                bone.rotation = reference.rotation * r;
         }
 
         public static void PoseCustomRig(
             CustomRigPose pose, DetailedHeroEquipment3D.WeaponSockets gun,
             Vector3 forwardDir, bool firing, float phase,
-            bool crouch, bool roll, bool reloading, float deathTime, float lateralVel = 0f, int faction = 1)
+            bool crouch, bool roll, bool reloading, float deathTime, float lateralVel = 0f, int faction = 1, bool handgun = false,
+            Vector3 velocity = default, float moveBlend = 0f)
         {
             if (pose == null || !pose.modelRoot) return;
             foreach (var kv in pose.restLocalRot)
@@ -282,6 +404,11 @@ namespace NeonVault
             }
 
             if (gun != null && gun.root && !gun.root.gameObject.activeSelf) gun.root.gameObject.SetActive(true);
+            if (!crouch && !roll && !reloading && gun != null && gun.root && gun.trigger && gun.support)
+            {
+                PoseLikePlayer(pose, gun, forwardDir, firing, phase, handgun, velocity, moveBlend);
+                return;
+            }
             pose.modelRoot.localRotation = Quaternion.Euler(14f * crouchT, 0f, leanZ);
             pose.modelRoot.localPosition = new Vector3(0f, 0.03f - 0.20f * crouchT, 0f);
 
@@ -323,10 +450,12 @@ namespace NeonVault
             gun.root.rotation = rootRot * Quaternion.Euler(pitch, yaw, reloading ? 14f : 0f);
 
             Vector3 torsoAnchor = pose.spine03 ? pose.spine03.position : (pose.modelRoot.position + rootUp * (1.28f * scale));
-            Vector3 desiredAnchor = firing && gun.stock
+            Vector3 desiredAnchor = handgun
+                ? torsoAnchor + (forwardDir * 0.48f + rootRight * 0.12f - rootUp * 0.10f) * scale
+                : firing && gun.stock
                 ? (pose.upperArmR ? pose.upperArmR.position : torsoAnchor + rootRight * (0.16f * scale)) + forwardDir * (0.04f * scale) - rootUp * (0.05f * scale)
                 : torsoAnchor + (forwardDir * 0.16f + rootRight * 0.10f - rootUp * 0.09f) * scale;
-            Vector3 socketPos = (firing && gun.stock) ? gun.stock.position : gun.trigger.position;
+            Vector3 socketPos = (!handgun && firing && gun.stock) ? gun.stock.position : gun.trigger.position;
             gun.root.position += desiredAnchor - socketPos;
 
             // Two-bone analytical pole-vector IK so elbows always bend naturally down/outward without twisting
@@ -344,6 +473,136 @@ namespace NeonVault
             if (pose.handL) pose.handL.rotation = Quaternion.AngleAxis(-58f, gun.root.forward) * pose.handL.rotation;
             CurlFingers(pose.fingersR, -1f, 54f);
             CurlFingers(pose.fingersL, 1f, 54f);
+        }
+
+        // Drives an authored human rig with exactly the player's motion. The player's own
+        // pose solver (DetailedHeroPlayer3D.Pose) runs on a geometry-free copy of the player
+        // skeleton scaled to this character; every joint (pelvis, chest, head, arms, hands,
+        // legs, feet) is copied, then the wrists are solved onto the same weapon sockets.
+        internal static void PoseLikePlayer(CustomRigPose pose, DetailedHeroEquipment3D.WeaponSockets gun, Vector3 forward,
+            bool firing, float phase, bool handgun, Vector3 velocity, float blend, bool curlFingers = true)
+        {
+            var h=PlayerPoseDriver();
+            var m=pose.modelRoot;
+            foreach (var kv in pose.restLocalRot) if (kv.Key) kv.Key.localRotation = kv.Value;
+            m.localPosition=pose.modelRestLocalPos; m.localRotation=pose.modelRestLocalRot;
+            if (pose.pelvis) pose.pelvis.localPosition = pose.pelvisRestPos;
+            Vector3 ground=m.parent ? m.parent.position : m.position;
+            float shoulder=(pose.upperArmL.position.y+pose.upperArmR.position.y)*.5f-ground.y;
+            float hs=Mathf.Clamp(shoulder/1.427f,.4f,3f);
+            h.transform.SetPositionAndRotation(ground, Quaternion.identity);
+            h.transform.localScale=Vector3.one*hs;
+            DetailedHeroPlayer3D.Pose(h,gun,handgun,firing,forward,phase,velocity,blend);
+
+            // Body: copy every joint rotation in parent-first order.
+            CopyPlayerJoint(pose,pose.pelvis,h.pelvis);
+            if (pose.pelvis) pose.pelvis.position += Vector3.up*(h.pelvis.position.y-ground.y-.98f*hs);
+            CopyPlayerJoint(pose,pose.spine03,h.chest);
+            CopyPlayerJoint(pose,pose.head,h.head);
+            CopyPlayerJoint(pose,pose.upperArmL,h.leftUpperArm); CopyPlayerJoint(pose,pose.lowerArmL,h.leftForearm);
+            CopyPlayerJoint(pose,pose.upperArmR,h.rightUpperArm); CopyPlayerJoint(pose,pose.lowerArmR,h.rightForearm);
+            CopyPlayerJoint(pose,pose.thighL,h.leftThigh); CopyPlayerJoint(pose,pose.calfL,h.leftShin); CopyPlayerJoint(pose,pose.footL,h.leftFoot);
+            CopyPlayerJoint(pose,pose.thighR,h.rightThigh); CopyPlayerJoint(pose,pose.calfR,h.rightShin); CopyPlayerJoint(pose,pose.footR,h.rightFoot);
+
+            // Keep the planted foot on the floor (limb proportions differ from the player).
+            if (pose.footL && pose.footR)
+            {
+                float dl=pose.footL.position.y-m.TransformPoint(pose.restFootLocalL).y;
+                float dr=pose.footR.position.y-m.TransformPoint(pose.restFootLocalR).y;
+                m.position-=Vector3.up*Mathf.Min(dl,dr);
+            }
+
+            // Weapon: player's world size, and the same placement relative to the shoulders.
+            if (gun==null || !gun.root) return;
+            Transform anchor=!handgun&&firing&&gun.stock?gun.stock:gun.trigger;
+            Vector3 before=anchor.position;
+            float parentScale=gun.root.parent?Mathf.Max(.001f,gun.root.parent.lossyScale.y):1f;
+            gun.root.localScale=Vector3.one*(.78f*hs/parentScale);
+            gun.root.position+=before-anchor.position;
+            Vector3 shoulders=(pose.upperArmL.position+pose.upperArmR.position)*.5f;
+            Vector3 playerShoulders=(h.leftUpperArm.position+h.rightUpperArm.position)*.5f;
+            gun.root.position+=shoulders-playerShoulders;
+
+            // Hands on the weapon with the player's elbow direction and grip orientation.
+            Vector3 wrist=gun.trigger.position+gun.root.up*(.065f*hs)-gun.root.forward*(.01f*hs);
+            Vector3 support=handgun?wrist-gun.root.right*(.045f*hs):gun.support.position-gun.root.forward*(.065f*hs)-gun.root.up*(.01f*hs);
+            SolveTwoBoneIK(pose.upperArmR,pose.lowerArmR,pose.handR,wrist,pose.upperArmR.position+(h.rightForearm.position-h.rightUpperArm.position));
+            SolveTwoBoneIK(pose.upperArmL,pose.lowerArmL,pose.handL,support,pose.upperArmL.position+(h.leftForearm.position-h.leftUpperArm.position));
+            CopyPlayerJoint(pose,pose.handR,h.rightHand);
+            CopyPlayerJoint(pose,pose.handL,h.leftHand);
+            if (curlFingers) { CurlFingers(pose.fingersR,-1f,54f); CurlFingers(pose.fingersL,1f,54f); }
+        }
+
+        /// <summary>
+        /// Poses Malcolm Vale during the opening hub conversation (portrait stance: left forearm bent across
+        /// waist/belt, right arm relaxed at side) and blends smoothly into an unarmed walking gait on departure.
+        /// </summary>
+        internal static void PoseValeOpeningAndWalk(CustomRigPose pose, Vector3 forward, float phase, float moveBlend)
+        {
+            if (pose == null || !pose.modelRoot) return;
+            var h = PlayerPoseDriver();
+            var m = pose.modelRoot;
+            foreach (var kv in pose.restLocalRot) if (kv.Key) kv.Key.localRotation = kv.Value;
+            m.localPosition = pose.modelRestLocalPos;
+            m.localRotation = pose.modelRestLocalRot;
+            if (pose.pelvis) pose.pelvis.localPosition = pose.pelvisRestPos;
+
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.0001f) forward = Vector3.forward;
+            forward.Normalize();
+
+            Vector3 ground = m.parent ? m.parent.position : m.position;
+            float shoulder = (pose.upperArmL.position.y + pose.upperArmR.position.y) * 0.5f - ground.y;
+            float hs = Mathf.Clamp(shoulder / 1.427f, 0.4f, 3f);
+            h.transform.SetPositionAndRotation(ground, Quaternion.identity);
+            h.transform.localScale = Vector3.one * hs;
+
+            float blend = Mathf.Clamp01(moveBlend);
+            h.SetPose("lowrifle", forward, phase);
+            h.SetLocomotion(forward * (blend * 2.5f), blend, false, phase);
+            h.head.localRotation = Quaternion.Lerp(Quaternion.Euler(3f, -4f, 0f), Quaternion.Euler(2f, 0f, 0f), blend);
+
+            CopyPlayerJoint(pose, pose.pelvis, h.pelvis);
+            if (pose.pelvis) pose.pelvis.position += Vector3.up * (h.pelvis.position.y - ground.y - 0.98f * hs);
+            CopyPlayerJoint(pose, pose.spine03, h.chest);
+            CopyPlayerJoint(pose, pose.head, h.head);
+            CopyPlayerJoint(pose, pose.thighL, h.leftThigh);
+            CopyPlayerJoint(pose, pose.calfL, h.leftShin);
+            CopyPlayerJoint(pose, pose.footL, h.leftFoot);
+            CopyPlayerJoint(pose, pose.thighR, h.rightThigh);
+            CopyPlayerJoint(pose, pose.calfR, h.rightShin);
+            CopyPlayerJoint(pose, pose.footR, h.rightFoot);
+
+            if (pose.footL && pose.footR)
+            {
+                float dl = pose.footL.position.y - m.TransformPoint(pose.restFootLocalL).y;
+                float dr = pose.footR.position.y - m.TransformPoint(pose.restFootLocalR).y;
+                m.position -= Vector3.up * Mathf.Min(dl, dr);
+            }
+
+            Vector3 rootRight = Vector3.Cross(Vector3.up, forward).normalized;
+            Vector3 rootUp = Vector3.up;
+            Vector3 pelvisPos = pose.pelvis ? pose.pelvis.position : ground + rootUp * (0.98f * hs);
+            float cosPhase = phase < 0f ? 0f : Mathf.Cos(phase * Mathf.PI * 2f);
+
+            Vector3 lIdleTarget = pelvisPos + forward * (0.21f * hs) - rootRight * (0.04f * hs) + rootUp * (0.05f * hs);
+            Vector3 lIdlePole = pose.upperArmL.position - rootRight * (0.38f * hs) - rootUp * (0.34f * hs) - forward * (0.18f * hs);
+
+            Vector3 rIdleTarget = pelvisPos + rootRight * (0.25f * hs) + forward * (0.04f * hs) - rootUp * (0.11f * hs);
+            Vector3 rIdlePole = pose.upperArmR.position + rootRight * (0.28f * hs) - rootUp * (0.35f * hs) - forward * (0.26f * hs);
+
+            Vector3 lWalkTarget = pelvisPos - rootRight * (0.26f * hs) + forward * ((0.03f - cosPhase * 0.24f) * hs) - rootUp * (0.08f * hs);
+            Vector3 lWalkPole = pose.upperArmL.position - rootRight * (0.24f * hs) - rootUp * (0.35f * hs) - forward * (0.25f * hs);
+
+            Vector3 rWalkTarget = pelvisPos + rootRight * (0.26f * hs) + forward * ((0.03f + cosPhase * 0.24f) * hs) - rootUp * (0.08f * hs);
+            Vector3 rWalkPole = pose.upperArmR.position + rootRight * (0.24f * hs) - rootUp * (0.35f * hs) - forward * (0.25f * hs);
+
+            SolveTwoBoneIK(pose.upperArmL, pose.lowerArmL, pose.handL,
+                Vector3.Lerp(lIdleTarget, lWalkTarget, blend),
+                Vector3.Lerp(lIdlePole, lWalkPole, blend));
+            SolveTwoBoneIK(pose.upperArmR, pose.lowerArmR, pose.handR,
+                Vector3.Lerp(rIdleTarget, rWalkTarget, blend),
+                Vector3.Lerp(rIdlePole, rWalkPole, blend));
         }
 
         static void SolveTwoBoneIK(Transform upper, Transform lower, Transform end, Vector3 targetPos, Vector3 polePos)

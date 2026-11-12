@@ -3,12 +3,17 @@ guid: 645a81fee26e1ac4bb81e77df0a1526a
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Vex_MeshyPBR
+    second: {fileID: 2100000, guid: 391595efacd9e8c46981d0d84d00ed46, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
-    materialLocation: 1
+    materialLocation: 0
     searchTexturesGlobally: 0
   animations:
     legacyGenerateAnimations: 4

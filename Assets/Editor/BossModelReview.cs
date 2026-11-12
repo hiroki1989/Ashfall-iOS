@@ -13,12 +13,50 @@ namespace NeonVault
             ConfigureTextureAssets();
             Directory.CreateDirectory(OutDir);
 
-            RenderLineup("unity_bosses_front.png", new Vector3(0f, 1.25f, -4.6f), new Vector3(0f, 1.02f, 0f), 1.40f, false, 1.25f);
-            RenderLineup("unity_bosses_combat_iso.png", new Vector3(-3.6f, 4.4f, -3.6f), new Vector3(0f, 0.90f, 0.1f), 1.65f, true, 1.35f);
-            RenderLineup("unity_bosses_closeup.png", new Vector3(0f, 1.78f, -2.8f), new Vector3(0f, 1.62f, 0.05f), 0.78f, false, 0.92f);
+            RenderLineup("unity_bosses_front.png", new Vector3(0f, 1.25f, -4.6f), new Vector3(0f, 1.08f, 0f), 1.45f, false, 1.35f);
+            RenderLineup("unity_bosses_combat_iso.png", new Vector3(-3.6f, 4.4f, -3.6f), new Vector3(0f, 0.96f, 0.1f), 1.70f, true, 1.35f);
+            RenderLineup("unity_bosses_closeup.png", new Vector3(0f, 1.85f, -2.8f), new Vector3(0f, 1.72f, 0.05f), 0.78f, false, 0.96f);
             RenderMotionVerificationStrip("unity_bosses_motions.png");
+            RenderAll4VsPlayer("unity_all4_vs_player_scale.png");
 
             Debug.Log("BOSS_MODEL_REVIEW_COMPLETE");
+        }
+
+        public static void RunAll4()
+        {
+            Directory.CreateDirectory(OutDir);
+            RenderAll4VsPlayer("unity_all4_vs_player_scale.png");
+            Debug.Log("BOSS_MODEL_REVIEW_ALL4_COMPLETE");
+        }
+
+        public static void RunMotionQA()
+        {
+            Directory.CreateDirectory(OutDir);
+            RenderMotionVerificationStrip("unity_raven_vex_motion.png");
+            var root = CreateStudioStage(out var floorMat);
+            try
+            {
+                string[] poses = { "idle", "walk", "attack", "death" };
+                float[] times = { .20f, .45f, .20f, .70f };
+                for (int i = 0; i < poses.Length; i++)
+                {
+                    var actor = ImportedEnemyVisual.TryCreateBossNPC(root.transform,
+                        new Vector3((i - 1.5f) * 1.45f, 0f, 0f));
+                    if (!actor) throw new System.InvalidOperationException("Vale motion prefab missing");
+                    var driver = actor.GetComponent<ImportedEnemyVisual>();
+                    driver.enabled = false;
+                    driver.ReviewPose(poses[i], times[i]);
+                    Debug.Log("VALE_MOTION_QA " + poses[i] + " " + driver.DiagnosticReport());
+                }
+                RenderShot(root, "unity_vale_motion.png", new Vector3(0f, 3.2f, -7f),
+                    new Vector3(0f, 1f, 0f), 2f, 1800, 900);
+            }
+            finally
+            {
+                Object.DestroyImmediate(floorMat);
+                Object.DestroyImmediate(root);
+            }
+            Debug.Log("BOSS_MODEL_MOTION_QA_COMPLETE");
         }
 
         static void ConfigureTextureAssets()
@@ -128,7 +166,7 @@ namespace NeonVault
             {
                 var p = new GameObject("RavenActor").transform;
                 var v = HumanFactionVisual.CreateFactionBoss(p, 1);
-                v.transform.localScale = Vector3.one * 1.15f;
+                v.transform.localScale = Vector3.one * 1.20f;
                 return (p, v);
             });
 
@@ -144,7 +182,7 @@ namespace NeonVault
             if (valeNpc)
             {
                 valeNpc.localRotation = actorRot;
-                valeNpc.localScale = Vector3.one * 0.94f;
+                valeNpc.localScale = Vector3.one;
                 var drv = valeNpc.GetComponent<ImportedEnemyVisual>();
                 if (drv) drv.enabled = false;
             }
@@ -194,6 +232,76 @@ namespace NeonVault
             Object.DestroyImmediate(root);
         }
 
+        static void RenderAll4VsPlayer(string fileName)
+        {
+            var root = CreateStudioStage(out var floorMat);
+            try
+            {
+                var player = new GameObject("Player scale reference").transform;
+                player.SetParent(root.transform, false);
+                player.localPosition = new Vector3(-2.5f, .65f, 0f);
+                player.localRotation = Quaternion.identity;
+                DetailedHeroPlayer3D.Create(player);
+                var keys = new[] { "Iona", "Briggs", "Raven", "ValeBoss" };
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    var position = new Vector3((i - .5f) * 1.25f, 0f, 0f);
+                    if (keys[i] == "ValeBoss")
+                    {
+                        var live = ImportedEnemyVisual.TryCreateBossNPC(root.transform, position);
+                        if (!live) throw new System.InvalidOperationException("ValeBoss runtime prefab missing");
+                        var driver = live.GetComponent<ImportedEnemyVisual>();
+                        if (driver) driver.enabled = false;
+                        LogHeight(keys[i] + " live", live);
+                        continue;
+                    }
+                    if (keys[i] == "Raven")
+                    {
+                        var live = new GameObject("Raven live actor").transform;
+                        live.SetParent(root.transform, false);
+                        live.localPosition = position;
+                        var visual = HumanFactionVisual.CreateFactionBoss(live, 1);
+                        visual.transform.localScale = Vector3.one * 1.13f;
+                        visual.transform.localPosition = Vector3.up * .10f;
+                        visual.enabled = false;
+                        LogHeight(keys[i] + " live", live);
+                        continue;
+                    }
+                    var prefab = Resources.Load<GameObject>("Characters/" + keys[i] + "/" + keys[i]);
+                    if (!prefab) { Debug.LogWarning("BossModelReview missing model: " + keys[i]); continue; }
+                    var actor = new GameObject(keys[i] + " scale review").transform;
+                    actor.SetParent(root.transform, false);
+                    actor.localPosition = position;
+                    actor.localRotation = Quaternion.Euler(0f, 175f, 0f);
+                    var model = Object.Instantiate(prefab, actor, false);
+                    model.transform.localScale = Vector3.one * (keys[i] == "Iona" ? 1.20f : keys[i] == "Briggs" ? 1.09f : 1.20f);
+                    foreach (var animator in model.GetComponentsInChildren<Animator>()) animator.enabled = false;
+                    LogHeight(keys[i], actor);
+                }
+                RenderShot(root, fileName, new Vector3(0f, 2.15f, -7.5f),
+                    new Vector3(0f, 1.1f, 0f), 1.85f, 2400, 900);
+            }
+            finally
+            {
+                Object.DestroyImmediate(floorMat);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        static void LogHeight(string label, Transform root)
+        {
+            Bounds bounds = default;
+            bool found = false;
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (!renderer.enabled) continue;
+                if (!found) { bounds = renderer.bounds; found = true; }
+                else bounds.Encapsulate(renderer.bounds);
+            }
+            Debug.Log("ALL4_HEIGHT " + label + "=" + (found ? bounds.size.y.ToString("F3") : "NO_RENDERER")
+                + (found ? " minY=" + bounds.min.y.ToString("F3") : ""));
+        }
+
         static void SpawnBoss(Transform parent, string label, Vector3 pos, Quaternion rot,
             bool firingPose, float phase, bool crouch, bool reload, float deathTime,
             System.Func<(Transform, HumanFactionVisual)> builder)
@@ -206,6 +314,42 @@ namespace NeonVault
                 Debug.LogWarning("BossModelReview: missing visual/muzzle on " + label);
             if (visual)
                 visual.PreviewMotion(firingPose, phase, crouch, reload, deathTime);
+        }
+
+        public static void MeasureHeights()
+        {
+            var root = new GameObject("HeightMeasure");
+            try
+            {
+                var pActor = new GameObject("Player").transform;
+                pActor.SetParent(root.transform, false);
+                var hero = DetailedHeroPlayer3D.Create(pActor);
+                Bounds pb = default;
+                bool hasPb = false;
+                foreach (var r in pActor.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (!r.enabled) continue;
+                    string rn = r.name.ToLowerInvariant();
+                    if (rn.Contains("backpack")) continue;
+                    if (!hasPb) { pb = r.bounds; hasPb = true; }
+                    else pb.Encapsulate(r.bounds);
+                }
+                Debug.Log($"HEIGHT_MEASURE Player: min={pb.min.y:F4} max={pb.max.y:F4} height={pb.size.y:F4} fullScale={pActor.localScale.x:F3}");
+
+                var vale = ImportedEnemyVisual.TryCreateBossNPC(root.transform, Vector3.zero);
+                if (vale)
+                {
+                    Bounds vb = default; bool hasVb = false;
+                    foreach (var r in vale.GetComponentsInChildren<Renderer>(true))
+                    {
+                        if (!r.enabled) continue;
+                        if (!hasVb) { vb = r.bounds; hasVb = true; }
+                        else vb.Encapsulate(r.bounds);
+                    }
+                    Debug.Log($"HEIGHT_MEASURE ValeNPC: min={vb.min.y:F4} max={vb.max.y:F4} height={vb.size.y:F4}");
+                }
+            }
+            finally { Object.DestroyImmediate(root); }
         }
     }
 }

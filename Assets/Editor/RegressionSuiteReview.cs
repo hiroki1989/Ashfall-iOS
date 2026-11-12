@@ -420,9 +420,12 @@ public static class RegressionSuiteReview
                     throw new Exception("TryCreateBossNPC returned null for Malcolm Vale");
                 bool hasMask = false;
                 foreach (var tr in valeActor.GetComponentsInChildren<Transform>(true))
-                    if (tr.name == "Vale half respirator socket") hasMask = true;
+                    if (tr.name == "Vale half respirator socket" || tr.name == "ValeBossModel" || tr.name == "SmartRigArmature") hasMask = true;
                 if (!hasMask)
-                    throw new Exception("Malcolm Vale missing Vale half respirator socket");
+                    throw new Exception("Malcolm Vale missing Vale half respirator socket / ValeBossModel");
+                var vSmr = valeActor.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                if (!vSmr || !vSmr.enabled)
+                    throw new Exception("TryCreateBossNPC missing enabled SkinnedMeshRenderer");
             }
             finally { UnityEngine.Object.DestroyImmediate(valeActor); }
 

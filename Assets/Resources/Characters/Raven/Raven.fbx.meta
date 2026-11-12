@@ -3,12 +3,17 @@ guid: eab364297d50005469b1c5b2b430e5b4
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Raven_MeshyPBR
+    second: {fileID: 2100000, guid: d938b75d953903440bd41862ad5b273d, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
-    materialLocation: 1
+    materialLocation: 0
     searchTexturesGlobally: 0
   animations:
     legacyGenerateAnimations: 4

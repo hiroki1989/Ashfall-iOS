@@ -70,7 +70,11 @@ public static class IonaModelReview
                         sm.SetFloat("_BumpScale", 0.85f);
                     }
                 }
-                if (mName.Contains("brass") || mName.Contains("canister")) { sm.SetFloat("_Metallic", 0.72f); sm.SetFloat("_Glossiness", 0.62f); }
+                if (sm.IsKeywordEnabled("_METALLICGLOSSMAP") || mName.Contains("meshypbr"))
+                {
+                    sm.color = Color.white;
+                }
+                else if (mName.Contains("brass") || mName.Contains("canister")) { sm.SetFloat("_Metallic", 0.72f); sm.SetFloat("_Glossiness", 0.62f); }
                 else if (mName.Contains("steel") || (key == "Sera" && mName.Contains("armor"))) { sm.SetFloat("_Metallic", 0.58f); sm.SetFloat("_Glossiness", 0.52f); }
                 else if (mName.Contains("helmet") || mName.Contains("vent")) { sm.SetFloat("_Metallic", 0.42f); sm.SetFloat("_Glossiness", 0.48f); }
                 else if (mName.Contains("lens") || mName.Contains("dial")) { sm.SetFloat("_Metallic", 0.25f); sm.SetFloat("_Glossiness", 0.88f); }

@@ -8,7 +8,7 @@ namespace NeonVault
     [DefaultExecutionOrder(600)]
     public sealed class ImportedEnemyVisual : MonoBehaviour
     {
-        public AnimationClip idleClip, walkClip, attackClip, deathClip;
+        public AnimationClip idleClip, walkClip, runClip, attackClip, deathClip;
         public Transform model;
         public Animator nativeAnimator;
         // Imported humanoids without an animation controller may have an avatar
@@ -21,6 +21,9 @@ namespace NeonVault
         Transform[] scaleTransforms; Vector3[] authoredScales;
         public Transform raiderRifle;
         public Transform rifleGripSocket,rifleSupportSocket;
+        DetailedHeroEquipment3D.WeaponSockets bossWeapon;
+        FactionBossVisuals.CustomRigPose playerRig;
+        float playerMotionPhase=-1f, playerMotionBlend;
         Limb rifleRight,rifleLeft;
         sealed class Finger { public Transform bone; public Quaternion rest; public Vector3 axis; public float curl; }
         readonly List<Finger> fingers=new List<Finger>();
@@ -94,16 +97,73 @@ namespace NeonVault
                 raiderRifle.SetParent(transform,true);
                 CacheGripFingers(rifleRight);CacheGripFingers(rifleLeft);
             }
-            Animate(0,0);
+            if(owner&&owner.RaiderBoss&&bossWeapon!=null&&rifleRight!=null&&rifleLeft!=null)
+            {
+                // Capture the authored bind pose once; every frame the shared player-motion
+                // retargeter copies the player's full skeleton pose onto this rig.
+                playerRig=FactionBossVisuals.CaptureRigPose(model,false);
+                if(!playerRig.pelvis||!playerRig.upperArmL||!playerRig.upperArmR||!playerRig.thighL||!playerRig.thighR)playerRig=null;
+            }
+            if(owner||!name.Contains("RaiderBossNPC"))Animate(0,0);
             NormalizeVisibleModel(targetHeight);
             bool isVale = name.Contains("RaiderBossNPC") || (owner && owner.RaiderBoss && name.Contains("Enemy_11"));
-            if (isVale)
+            if (isVale && !suppressMask)
             {
                 FactionBossVisuals.CustomizeImportedVale(transform, model, actor, targetHeight);
             }
             else if(!suppressMask&&((owner&&(owner.kind==10||owner.RaiderBoss))||(!owner&&name.Contains("RaiderBossNPC")))) AttachRaiderMask();
+            // For self-contained Veil Meshy prefab, match exact authored height & ground soles to targetHeight.
+            if (isVale && suppressMask && model)
+            {
+                var smr = model.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                if (smr && smr.sharedMesh)
+                {
+                    var baked = new Mesh();
+                    smr.BakeMesh(baked);
+                    var verts = baked.vertices;
+                    float minY = float.PositiveInfinity, maxY = float.NegativeInfinity;
+                    for (int i = 0; i < verts.Length; i++)
+                    {
+                        float wy = smr.transform.TransformPoint(verts[i]).y;
+                        if (wy < minY) minY = wy;
+                        if (wy > maxY) maxY = wy;
+                    }
+                    DestroyImmediate(baked);
+                    float curH = maxY - minY;
+                    if (curH > 0.05f)
+                    {
+                        float sFix = targetHeight / curH;
+                        Vector3 pivot = model.position;
+                        model.localScale *= sFix;
+                        float newMinY = pivot.y + (minY - pivot.y) * sFix;
+                        model.position += Vector3.up * (transform.position.y - newMinY);
+                        modelPosition = model.localPosition;
+                    }
+                    // BakeMesh can report an inflated bind-pose span for this imported
+                    // Mixamo skin. Fit once more against the renderer's actual visible
+                    // world bounds, which is what the camera and player see.
+                    var visible = smr.bounds;
+                    if (visible.size.y > 0.05f && Mathf.Abs(visible.size.y - targetHeight) > 0.035f)
+                    {
+                        float fit = targetHeight / visible.size.y;
+                        model.localScale *= fit;
+                    }
+                    // Ground against the updated skinned bounds rather than a
+                    // pivot estimate; the imported bind pose is offset.
+                    model.position += Vector3.up * (transform.position.y - smr.bounds.min.y);
+                    modelPosition = model.localPosition;
+                    Debug.Log("VALE_BIND_SIZE height=" + smr.bounds.size.y.ToString("F3")
+                        + " target=" + targetHeight.ToString("F3"));
+                }
+            }
             // Normalization becomes the persistent scale, including during sampled animation.
             for(int i=0;i<scaleTransforms.Length;i++)authoredScales[i]=scaleTransforms[i].localScale;
+            if(!owner&&name.Contains("RaiderBossNPC")&&playerRig==null)
+            {
+                playerRig=FactionBossVisuals.CaptureRigPose(model,false);
+                if(playerRig!=null&&(!playerRig.pelvis||!playerRig.upperArmL||!playerRig.upperArmR||!playerRig.thighL||!playerRig.thighR))playerRig=null;
+                Animate(0,0);
+            }
         }
         void AttachRaiderMask()
         {
@@ -158,6 +218,16 @@ namespace NeonVault
             modelPosition=model.localPosition;
         }
         void Start(){if(actor&&!owner)owner=actor.GetComponent<Foe>();}
+#if UNITY_EDITOR
+        public void ReviewPose(string pose,float time)
+        {
+            state=pose=="fire_walk"?"walk":pose;
+            stateTime=Mathf.Max(0f,time);
+            deathTime=pose=="death"?stateTime:-1f;
+            attackTime=(pose=="attack"||pose=="fire_walk")?.5f:0f;
+            Animate(0f,(pose=="walk"||pose=="fire_walk")?2.5f:0f);
+        }
+#endif
         float animationAccumulator;
         void LateUpdate()
         {
@@ -175,10 +245,15 @@ namespace NeonVault
         {
             int kind=owner?owner.kind:11;
             bool heavy=kind==3||kind==8||(owner&&owner.HeavyMelee);
+            if(playerRig!=null&&deathTime<0)
+            {
+                if(owner&&owner.RaiderBoss){AnimateLikePlayer(dt,speed);return;}
+                if(!owner){AnimateValeNPC(dt,speed);return;}
+            }
             phase+=dt*Mathf.Max(1,speed*(heavy?1.85f:kind==4?3.6f:2.8f));
             string next=deathTime>=0?"death":attackTime>0?"attack":speed>.12f?"walk":"idle";
             if(state!=next){state=next;stateTime=0;}stateTime+=dt;
-            AnimationClip clip=state=="death"?deathClip:state=="attack"?attackClip:state=="walk"?walkClip:idleClip;
+            AnimationClip clip=state=="death"?deathClip:state=="attack"?attackClip:state=="walk"?(runClip&&speed>3.2f?runClip:walkClip):idleClip;
             if(clip&&clip.humanMotion&&nativeAnimator&&nativeAnimator.runtimeAnimatorController)
             {
                 nativeAnimator.enabled=true;
@@ -245,6 +320,30 @@ namespace NeonVault
             PoseFirearm(speed);
             if(deathTime>=0)ApplyFallbackCollapse(heavy,kind);
         }
+        void AnimateLikePlayer(float dt,float speed)
+        {
+            if(nativeAnimator)nativeAnimator.enabled=false;
+            bool firing=attackTime>0||(owner.IsTelegraphing&&owner.BossAttackStyle==3);
+            // Identical gait clock to DetailedHeroPlayer3D.LateUpdate.
+            playerMotionBlend=dt<=0&&speed>.12f?1f:Mathf.MoveTowards(playerMotionBlend,speed>.12f?1:0,dt*7f);
+            if(playerMotionBlend>.001f){if(playerMotionPhase<0)playerMotionPhase=0;float duty=speed>3?(firing?.38f:.32f):.57f;float reach=Mathf.Lerp(.18f,.38f,Mathf.Clamp01(speed/4.5f));float cycleDistance=2*reach*1.28f/duty;playerMotionPhase+=speed*dt/Mathf.Max(.5f,cycleDistance);if(dt<=0)playerMotionPhase=stateTime;}
+            else playerMotionPhase=-1f;
+            playerRig.modelRestLocalPos=modelPosition;playerRig.modelRestLocalRot=modelRotation;
+            foreach(var finger in fingers)finger.bone.localRotation=finger.rest;
+            FactionBossVisuals.PoseLikePlayer(playerRig,bossWeapon,actor.forward,firing,playerMotionPhase,false,actor.forward*speed,playerMotionBlend,false);
+            foreach(var finger in fingers)finger.bone.localRotation=finger.rest*Quaternion.AngleAxis(finger.curl,finger.axis);
+            raiderRifle.gameObject.SetActive(true);
+        }
+        void AnimateValeNPC(float dt,float speed)
+        {
+            if(nativeAnimator)nativeAnimator.enabled=false;
+            playerMotionBlend=dt<=0&&speed>.12f?1f:Mathf.MoveTowards(playerMotionBlend,speed>.12f?1:0,dt*7f);
+            if(playerMotionBlend>.001f){if(playerMotionPhase<0)playerMotionPhase=0;float duty=.57f;float reach=Mathf.Lerp(.18f,.38f,Mathf.Clamp01(speed/4.5f));float cycleDistance=2*reach*1.28f/duty;playerMotionPhase+=speed*dt/Mathf.Max(.5f,cycleDistance);if(dt<=0)playerMotionPhase=stateTime;}
+            else playerMotionPhase=-1f;
+            playerRig.modelRestLocalPos=modelPosition;playerRig.modelRestLocalRot=modelRotation;
+            FactionBossVisuals.PoseValeOpeningAndWalk(playerRig,actor.forward,playerMotionPhase,playerMotionBlend);
+            if(raiderRifle)raiderRifle.gameObject.SetActive(false);
+        }
         void PoseZombieWalk(float speed,int kind)
         {
             if(!owner || owner.RaiderBoss || kind==3 || kind==5 || kind==10 || speed<.12f || deathTime>=0 || attackTime>0 || owner.IsTelegraphing)return;
@@ -263,9 +362,12 @@ namespace NeonVault
         {
             if(owner&&owner.RaiderBoss&&raiderRifle)
             {
-                bool firing=owner.BossAttackStyle==3&&(owner.IsTelegraphing||attackTime>0);
-                raiderRifle.gameObject.SetActive(firing);
-                if(!firing)return;
+                // Keep the rifle visible throughout combat. During other boss moves,
+                // use the same two-hand grip as the gunfire pose.
+                raiderRifle.gameObject.SetActive(deathTime<0);
+                if(deathTime>=0)return;
+                // Keep the same two-hand grip during idle, movement and gunfire.
+                // The former one-hand carry left the support arm behind the coat.
             }
             if(raiderRifle&&deathTime<0)
             {
@@ -277,8 +379,8 @@ namespace NeonVault
                     float recoil=attackTime>0?Mathf.Sin((1-attackTime/.5f)*Mathf.PI):0;
                     float moving=Mathf.Clamp01(speed/2f);
                     float shoulders=(rifleRight.upper.position.y+rifleLeft.upper.position.y)*.5f;
-                    Vector3 grip=actor.position+actor.right*(handgun?.19f:.12f)+actor.forward*(handgun?.29f:.12f)-(handgun?actor.forward*.07f:actor.forward*.045f)*recoil;
-                    grip.y=shoulders-(handgun?.12f:.23f)+.055f*aiming-.025f*moving;
+                    Vector3 grip=actor.position+actor.right*(handgun?.19f:.12f)+actor.forward*(handgun?.29f:owner&&owner.RaiderBoss?.38f:.12f)-(handgun?actor.forward*.07f:actor.forward*.045f)*recoil;
+                    grip.y=shoulders-(handgun?.12f:owner&&owner.RaiderBoss?.18f:.23f)+.055f*aiming-.025f*moving;
                     raiderRifle.rotation=Quaternion.LookRotation((actor.forward+actor.up*(.025f*aiming+(handgun?.28f:.16f)*recoil-.12f*moving)).normalized,actor.up);
                     raiderRifle.position=grip;
                     if(rifleGripSocket)raiderRifle.position+=grip-rifleGripSocket.position;
@@ -379,6 +481,7 @@ namespace NeonVault
             Material steel=AccessoryMaterial("Boss rifle steel",new Color(.27f,.31f,.33f));
             Material wood=AccessoryMaterial("Boss rifle stock",new Color(.24f,.18f,.13f));
             var sockets=DetailedHeroEquipment3D.BuildRifle(transform,key=>key=="Wood"?wood:steel);
+            bossWeapon=sockets;
             raiderRifle=sockets.root;rifleGripSocket=sockets.trigger;
             rifleSupportSocket=sockets.support;handgunMuzzle=sockets.muzzle;
         }
