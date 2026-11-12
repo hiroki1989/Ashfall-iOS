@@ -108,12 +108,8 @@ namespace NeonVault
         {
             target=Vector3.zero;
             if(smoke || !IsOverworld || screen!=Screen.Playing)return false;
-            if(FirstStepsStage==3)
-            {
-                int id=PlayerPrefs.GetInt(FirstStepsTargetKey,-1);
-                if(id>=0&&id<ExpeditionMap.StageCount){target=WorldGeography.Entrances[id];return true;}
-            }
             if(FirstStepsStage==4||FirstStepsStage==6){target=WorldGeography.Camps[LastVisitedCamp];return true;}
+            // Stage 3 does not force Dungeon 01; Briggs sets the contract waypoint when a mission is accepted.
             // Stage 8 guides the player toward 30% faction conquest with no waypoint marker.
             return false;
         }
@@ -126,18 +122,16 @@ namespace NeonVault
         void BeginFirstStepsTutorial()
         {
             if (smoke || FirstStepsStage != 0) return;
-            int target = 0;
-            PlayerPrefs.SetInt(FirstStepsTargetKey, target);
+            PlayerPrefs.DeleteKey(FirstStepsTargetKey);
             SetFirstStepsStage(1);
-            if (target >= 0) SetOverworldWaypoint(2, target);
         }
-        void FirstStepsDungeonCleared(){if(FirstStepsStage==3&&SelectedStageId==0)SetFirstStepsStage(4);}
+        void FirstStepsDungeonCleared(){if(FirstStepsStage==3||FirstStepsStage==2)SetFirstStepsStage(4);}
         void FirstStepsEquipmentSold(){if(FirstStepsStage==4)SetFirstStepsStage(6);}
         void FirstStepsDebtPaid()
         {
-            if(FirstStepsStage!=6)return;
+            if(FirstStepsStage<2||FirstStepsStage>6||FirstStepsStage==5)return;
             if(DebtLevel>=2)SetFirstStepsStage(7);
-            else { SetFirstStepsStage(3);PlayerPrefs.SetInt(FirstStepsTargetKey,0);SetOverworldWaypoint(2,0); }
+            else SetFirstStepsStage(3);
         }
         void FirstStepsSkillUpgraded(){if(smoke)return;if(FirstStepsStage==7){SetFirstStepsStage(8);PlayerPrefs.DeleteKey(FirstStepsTargetKey);if(OverworldWaypointKind==1)SetOverworldWaypoint(0,-1);Notify("FIRST STEPS / Conquer 30% of any hostile faction's bases or infected dungeons","次の目標 / 敵対勢力の拠点か感染者ダンジョンの30%を制圧しよう");CheckFirstStepsConquestMilestone();}}
         void CheckFirstStepsConquestMilestone(){if(smoke||FirstStepsStage!=8)return;if(FactionClearPercent(DungeonFaction.Raiders)>=30||FactionClearPercent(DungeonFaction.Gang)>=30||FactionClearPercent(DungeonFaction.None)>=30){SetFirstStepsStage(5);Notify("FIRST STEPS COMPLETE / 30% conquered. Keep repaying the billion","チュートリアル完了 / 30%制圧を達成！ 10億スクラップの返済を進めよう");}}
@@ -146,20 +140,22 @@ namespace NeonVault
             if (smoke || InventoryOpen || manufacturerRegistry || WorldBossConversationVisible || worldTransitionPending) return;
             int stage = FirstStepsStage;
             if (stage == 0 || stage == 5 || screen == Screen.Menu || screen == Screen.Dead) return;
+            if (stage >= 2 && stage <= 6 && DebtLevel >= 2) { SetFirstStepsStage(7); stage = 7; }
             if (stage == 2 && IsOverworld && screen == Screen.Playing) { SetFirstStepsStage(3); stage = 3; }
-            if ((stage == 4 || stage == 6) && DebtLevel >= 2) { SetFirstStepsStage(7); stage = 7; }
             if (stage == 1 && screen == Screen.Hub)
             {
                 Box(new Rect(0,0,1440,900),new Color(0,0,0,.72f));
                 Panel(new Rect(230,190,980,490),Gold);
                 Text(270,225,T("YOUR SAFEHOUSE","拠点について"),heading,Gold,900);
-                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage.\nBriggs handles debt repayments and hands out jobs for payouts.\nOpen the daily chest once for free, then watch ads for up to 3 extra opens each day.\nUse the exit to explore the city.\nYour nearest level 1 dungeon has been marked on the map.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。\nブリッグスでは借金の返済と仕事の受注・報酬の受け取りができます。\n日次の箱は毎日1回無料で開けられ、広告視聴でさらに最大3回開けられます。\n出口から街へ出ましょう。\n最も近いレベル1のダンジョンを地図に示しました。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
+                Text(270,310,T("Talk to the weapons merchant to buy, sell and expand storage.\nBriggs handles debt repayments and hands out jobs for payouts.\nOpen the daily chest once for free, then watch ads for up to 3 extra opens each day.\nAccept a mission from Briggs, clear the target dungeon, and repay your debt to reach Level 2.","武器商人に話しかけると装備の売買や倉庫の拡張ができます。\nブリッグスでは借金の返済と仕事の受注・報酬の受け取りができます。\n日次の箱は毎日1回無料で開けられ、広告視聴でさらに最大3回開けられます。\nまずはブリッグスからミッションを受注してダンジョンを攻略し、レベル2に上げましょう。"),new GUIStyle(label){fontSize=26,wordWrap=true},Color.white,900);
                 if(WorldButton(new Rect(510,570,420,75),T("CONTINUE","続ける"))) SetFirstStepsStage(2);
                 return;
             }
             if (AnyNpcOrStoryDialogueActive || DebtIntroVisible || actionSkillTutorialVisible || legendaryWeaponTutorialVisible || screen == Screen.Pause) return;
-            string en = stage == 2 ? "Leave the safehouse through the exit." : stage == 3 ? (screen == Screen.Hub ? "Leave the safehouse and return to dungeon 01 (accept a job from Briggs for payout)." : IsOverworld ? "Follow the marker and clear dungeon 01." : "Complete the mission and leave the dungeon.") : stage == 4 ? "Return to a safehouse and sell spare equipment to Sera." : stage == 6 ? "Talk to Briggs and repay your debt." : stage == 8 ? "Conquer 30% of any enemy faction's bases or infected dungeons." : (MobileTouchControls.Enabled ? "Open Inventory and upgrade an action skill with your skill point." : "Open Inventory [I] and upgrade an action skill with your skill point.");
-            string ja = stage == 2 ? "出口を調べて街へ出よう。" : stage == 3 ? (screen == Screen.Hub ? "街へ出て01のダンジョンへ（報酬が要るなら先にブリッグスで仕事を受注）。" : IsOverworld ? "目的地へ向かい、01のダンジョンを攻略しよう。" : "ミッションを達成してダンジョンから脱出しよう。") : stage == 4 ? "拠点に戻り、セラに不要な装備を売ろう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済しよう。" : stage == 8 ? "敵対勢力の拠点か感染者ダンジョンの30%制圧を目指そう。" : "装備画面を開き、スキルポイントでアクションスキルを強化しよう。";
+            bool hasMission = HasActiveBriggsMission;
+            bool missionDone = ActiveBriggsMissionReadyToTurnIn;
+            string en = stage == 2 ? (hasMission ? "Leave the safehouse and clear your target dungeon to reach Level 2." : "Accept a mission from Briggs, clear the dungeon, and reach Level 2.") : stage == 3 ? (screen == Screen.Hub ? (missionDone ? "Report to Briggs to claim your reward and repay debt to reach Level 2." : hasMission ? "Leave the safehouse and head to the mission dungeon to reach Level 2." : "Accept a mission from Briggs, clear the dungeon, and reach Level 2.") : IsOverworld ? (hasMission ? "Head to the mission dungeon and clear it to reach Level 2." : "Accept a mission from Briggs at a safehouse, clear a dungeon, and reach Level 2.") : "Complete the mission and clear the dungeon to reach Level 2.") : stage == 4 ? "Return to a safehouse, claim your mission reward, sell spare gear, and repay Briggs to reach Level 2." : stage == 6 ? "Talk to Briggs and repay your debt to reach Level 2." : stage == 8 ? "Conquer 30% of any enemy faction's bases or infected dungeons." : (MobileTouchControls.Enabled ? "Open Inventory and upgrade an action skill with your skill point." : "Open Inventory [I] and upgrade an action skill with your skill point.");
+            string ja = stage == 2 ? (hasMission ? "出口から街へ出て対象のダンジョンを攻略し、レベル2に上げよう。" : "ブリッグスからミッションを受注してダンジョンを攻略し、レベル2に上げよう。") : stage == 3 ? (screen == Screen.Hub ? (missionDone ? "ブリッグスに報告して報酬を受け取り、借金を返済してレベル2に上げよう。" : hasMission ? "街へ出て受注したミッションのダンジョンを攻略し、レベル2に上げよう。" : "ブリッグスからミッションを受注してダンジョンを攻略し、レベル2に上げよう。") : IsOverworld ? (hasMission ? "受注したミッションのダンジョンへ向かって攻略し、レベル2に上げよう。" : "拠点でミッションを受注してダンジョンを攻略し、レベル2に上げよう。") : "ミッションを達成してダンジョンを攻略し、レベル2に上げよう。") : stage == 4 ? "拠点に戻り、報酬の受取や不要装備の売却を行って借金を返済し、レベル2に上げよう。" : stage == 6 ? "ブリッグスに話しかけ、借金を返済してレベル2に上げよう。" : stage == 8 ? "敵対勢力の拠点か感染者ダンジョンの30%制圧を目指そう。" : "装備画面を開き、スキルポイントでアクションスキルを強化しよう。";
             if (screen == Screen.Hub || screen == Screen.Playing)
             {
                 bool mobile = MobileTouchControls.Enabled;

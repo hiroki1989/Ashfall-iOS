@@ -8,6 +8,117 @@ namespace NeonVault
         bool aerialAtlas;
         readonly Texture2D[] aerialDetailTiles=new Texture2D[4];
         bool aerialTilesLoaded;
+        const int FogGridSize=256;
+        const string OverworldFogKey="Vault.OverworldFog.v1";
+        byte[] worldFogBits;
+        Color32[] worldFogPixels;
+        Texture2D worldFogTexture;
+        int worldFogLoadedSlot=-1;
+        string worldFogLoadedRaw;
+        bool worldFogTextureDirty,worldFogSaveDirty;
+        float worldFogNextSave;
+        void EnsureOverworldFog()
+        {
+            const int byteCount=FogGridSize*FogGridSize/8;
+            if(worldFogBits==null||worldFogBits.Length!=byteCount)worldFogBits=new byte[byteCount];
+            if(worldFogPixels==null||worldFogPixels.Length!=FogGridSize*FogGridSize)worldFogPixels=new Color32[FogGridSize*FogGridSize];
+            if(worldFogTexture==null)
+            {
+                worldFogTexture=new Texture2D(FogGridSize,FogGridSize,TextureFormat.RGBA32,false){name="Overworld fog of war",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+                worldFogTextureDirty=true;
+            }
+            string raw=SaveSlotPrefs.GetString(OverworldFogKey,"");
+            if(worldFogLoadedSlot!=SaveSlotPrefs.Current||worldFogLoadedRaw!=raw)
+            {
+                worldFogLoadedSlot=SaveSlotPrefs.Current;
+                worldFogLoadedRaw=raw;
+                System.Array.Clear(worldFogBits,0,byteCount);
+                if(!string.IsNullOrEmpty(raw))
+                {
+                    try
+                    {
+                        byte[] decoded=System.Convert.FromBase64String(raw);
+                        System.Array.Copy(decoded,0,worldFogBits,0,Mathf.Min(decoded.Length,byteCount));
+                    }
+                    catch{}
+                }
+                worldFogTextureDirty=true;
+                if(WorldGeography!=null&&WorldGeography.Camps!=null)
+                {
+                    for(int i=0;i<WorldGeography.Camps.Length;i++)
+                        if(IsCampVisited(i))RevealOverworldFogRect(WorldGeography.Camps[i],100f,75f,false);
+                }
+            }
+            if(IsOverworld)RevealOverworldFogRect(PlayerPosition,100f,75f,true);
+            if(worldFogTextureDirty)
+            {
+                worldFogTextureDirty=false;
+                var hidden=new Color32(6,11,15,255);
+                var clear=new Color32(6,11,15,0);
+                for(int i=0;i<FogGridSize*FogGridSize;i++)
+                {
+                    bool seen=(worldFogBits[i>>3]&(1<<(i&7)))!=0;
+                    worldFogPixels[i]=seen?clear:hidden;
+                }
+                worldFogTexture.SetPixels32(worldFogPixels);
+                worldFogTexture.Apply(false,false);
+            }
+            if(worldFogSaveDirty&&!smoke&&Time.unscaledTime>=worldFogNextSave)
+            {
+                worldFogSaveDirty=false;
+                worldFogNextSave=Time.unscaledTime+2.5f;
+                worldFogLoadedRaw=System.Convert.ToBase64String(worldFogBits);
+                SaveSlotPrefs.SetString(OverworldFogKey,worldFogLoadedRaw);
+            }
+        }
+        public void RevealOverworldFogRect(Vector3 center,float halfWidth=100f,float halfDepth=75f,bool allowSave=true)
+        {
+            const int byteCount=FogGridSize*FogGridSize/8;
+            if(worldFogBits==null||worldFogBits.Length!=byteCount)return;
+            int x0=Mathf.Clamp(Mathf.FloorToInt(((center.x-halfWidth)/10000f+.5f)*FogGridSize),0,FogGridSize-1);
+            int x1=Mathf.Clamp(Mathf.FloorToInt(((center.x+halfWidth)/10000f+.5f)*FogGridSize),0,FogGridSize-1);
+            int y0=Mathf.Clamp(Mathf.FloorToInt(((center.z-halfDepth)/10000f+.5f)*FogGridSize),0,FogGridSize-1);
+            int y1=Mathf.Clamp(Mathf.FloorToInt(((center.z+halfDepth)/10000f+.5f)*FogGridSize),0,FogGridSize-1);
+            bool changed=false;
+            for(int y=y0;y<=y1;y++)for(int x=x0;x<=x1;x++)
+            {
+                int idx=y*FogGridSize+x;
+                int b=idx>>3,mask=1<<(idx&7);
+                if((worldFogBits[b]&mask)==0)
+                {
+                    worldFogBits[b]=(byte)(worldFogBits[b]|mask);
+                    changed=true;
+                }
+            }
+            if(changed)
+            {
+                worldFogTextureDirty=true;
+                if(allowSave)worldFogSaveDirty=true;
+            }
+        }
+        public bool IsOverworldMapRevealed(Vector3 worldPos)
+        {
+            EnsureOverworldFog();
+            int x=Mathf.Clamp(Mathf.FloorToInt((worldPos.x/10000f+.5f)*FogGridSize),0,FogGridSize-1);
+            int y=Mathf.Clamp(Mathf.FloorToInt((worldPos.z/10000f+.5f)*FogGridSize),0,FogGridSize-1);
+            int idx=y*FogGridSize+x;
+            return (worldFogBits[idx>>3]&(1<<(idx&7)))!=0;
+        }
+        void DrawUnknownMapLocationIcon(Vector2 p,bool selected,bool waypoint,Color tint)
+        {
+            float size=selected?34f:28f;
+            var r=new Rect(p.x-size*.5f,p.y-size*.5f,size,size);
+            Box(new Rect(r.x-2,r.y-2,r.width+4,r.height+4),new Color(.015f,.025f,.035f,.94f));
+            Color border=waypoint?Gold:selected?new Color(1f,.64f,.24f):tint;
+            Box(new Rect(r.x,r.y,r.width,2),border);
+            Box(new Rect(r.x,r.yMax-2,r.width,2),border);
+            Box(new Rect(r.x,r.y,2,r.height),border);
+            Box(new Rect(r.xMax-2,r.y,2,r.height),border);
+            var qStyle=new GUIStyle(centered){fontSize=selected?20:17,fontStyle=FontStyle.Bold};
+            qStyle.normal.textColor=border;
+            GUI.Label(r,"?",qStyle);
+            if(waypoint)WorldLabel(new Rect(p.x+12,p.y-22,26,28),"▲",Gold,19);
+        }
         void DrawAerialSurvey(Rect bounds,Rect uv)
         {
             GUI.DrawTextureWithTexCoords(bounds,overworldAtlasTexture,uv);
@@ -311,7 +422,7 @@ namespace NeonVault
         void DrawWorldLocalMap(Rect map)
         {
             if(GUI.Button(map,GUIContent.none,GUIStyle.none))OpenOverworldMap();
-            EnsureOverworldAtlas();if(overworldAtlasTexture==null)return;
+            EnsureOverworldAtlas();EnsureOverworldFog();if(overworldAtlasTexture==null)return;
             Panel(map,Cyan);Rect inside=new Rect(map.x+10,map.y+30,map.width-20,map.height-40);
             var l=WorldGeography.Layout;float u=PlayerPosition.x/(l.Columns*l.CellSize)+.5f,v=PlayerPosition.z/(l.Rows*l.CellSize)+.5f;
             float uw=Mathf.Min(1,200f/(l.CellSize*l.Columns)),vh=Mathf.Min(1,150f/(l.CellSize*l.Rows));float left=Mathf.Clamp(u-uw*.5f,0,1-uw),bottom=Mathf.Clamp(v-vh*.5f,0,1-vh);
@@ -544,7 +655,7 @@ namespace NeonVault
         }
         public void DrawOverworldAtlas()
         {
-            EnsureOverworldAtlas();Box(new Rect(0,0,1440,900),new Color(.025f,.045f,.06f,.98f));
+            EnsureOverworldAtlas();EnsureOverworldFog();Box(new Rect(0,0,1440,900),new Color(.025f,.045f,.06f,.98f));
             WorldLabel(new Rect(30,20,560,55),T("ASHFALL / REGIONAL MAP","アッシュフォール / 広域地図"),UiPaper,32);
             DrawFactionConquestBars(new Rect(590,10,590,82));
             if(WorldButton(new Rect(1195,16,215,66),T("BACK","戻る")))CloseOverworldMap();
@@ -566,6 +677,7 @@ namespace NeonVault
             DrawAerialSurvey(map,uv);
             DrawWorldBuildingAtlas(map,uv);
             if(!aerialAtlas)FieldUIArt.MapSurface(map);
+            if(worldFogTexture!=null)GUI.DrawTextureWithTexCoords(map,worldFogTexture,uv,true);
             DrawAtlasDistrictLabels(map);
             WorldLabel(new Rect(50,110,650,35),T("ASHFALL  /  REGIONAL SURVEY","アッシュフォール / 地方調査図"),UiPaper,20);
             DrawWorldMapScale(map);
@@ -573,44 +685,81 @@ namespace NeonVault
             if(GUI.Button(new Rect(map.xMax-66,map.yMax-58,52,44),GUIContent.none,GUIStyle.none)){var pos=IsOverworld?PlayerPosition:WorldGeography.Camps[LastVisitedCamp];worldMapCenter=new Vector2(pos.x/10000f+.5f,pos.z/10000f+.5f);ClampWorldMapCenter();}
             for(int i=0;i<WorldGeography.Entrances.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,WorldGeography.Entrances[i]);if(!map.Contains(p))continue;var stage=ExpeditionMap.Get(i,DebtLevel);bool selected=overworldSelectedCamp<0&&overworldSelectedLandmark<0&&expeditionMapSelection==i;
-                Color color=OverworldWaypointKind==2&&OverworldWaypointId==i?Gold:selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):IsOverworldDungeonDiscovered(i)?UiPaper:Mist;
-                const float iconSize=42f;
-                if(selected)Box(new Rect(p.x-23,p.y-23,46,46),new Color(.02f,.04f,.06f,.9f));
-                DrawDungeonMapArt(new Rect(p.x-iconSize*.5f,p.y-iconSize*.5f,iconSize,iconSize),i,color);
-                if(OverworldWaypointKind==2&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+12,p.y-22,26,28),"▲",Gold,19);
+                Vector3 entrancePos=WorldGeography.Entrances[i];
+                Vector2 p=WorldAtlasPoint(map,entrancePos);if(!map.Contains(p))continue;bool selected=overworldSelectedCamp<0&&overworldSelectedLandmark<0&&expeditionMapSelection==i;
+                bool waypoint=OverworldWaypointKind==2&&OverworldWaypointId==i;
+                bool revealed=IsOverworldMapRevealed(entrancePos)||IsOverworldDungeonDiscovered(i)||clearedExpeditionStages.Contains(i)||(HasActiveBriggsMission&&activeBriggsMissionStage==i);
+                if(!revealed)
+                {
+                    DrawUnknownMapLocationIcon(p,selected,waypoint,Mist);
+                }
+                else
+                {
+                    Color color=waypoint?Gold:selected?new Color(.95f,.55f,.28f):clearedExpeditionStages.Contains(i)?new Color(.63f,.79f,.72f):IsOverworldDungeonDiscovered(i)?UiPaper:Mist;
+                    const float iconSize=42f;
+                    if(selected)Box(new Rect(p.x-23,p.y-23,46,46),new Color(.02f,.04f,.06f,.9f));
+                    DrawDungeonMapArt(new Rect(p.x-iconSize*.5f,p.y-iconSize*.5f,iconSize,iconSize),i,color);
+                    if(waypoint)WorldLabel(new Rect(p.x+12,p.y-22,26,28),"▲",Gold,19);
+                }
                 if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none)){expeditionMapSelection=i;overworldSelectedCamp=-1;overworldSelectedLandmark=-1;}
             }
             for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,WorldGeography.Camps[i]);if(!map.Contains(p))continue;DrawMapArt(new Rect(p.x-21,p.y-21,42,42),0,IsCampVisited(i)?Color.white:Color.gray);
-                if(OverworldWaypointKind==1&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+15,p.y-24,28,28),"▲",Gold,20);
+                Vector3 campPos=WorldGeography.Camps[i];
+                Vector2 p=WorldAtlasPoint(map,campPos);if(!map.Contains(p))continue;
+                bool selected=overworldSelectedCamp==i;
+                bool waypoint=OverworldWaypointKind==1&&OverworldWaypointId==i;
+                bool revealed=IsCampVisited(i)||IsOverworldMapRevealed(campPos);
+                if(!revealed)
+                {
+                    DrawUnknownMapLocationIcon(p,selected,waypoint,Cyan);
+                }
+                else
+                {
+                    DrawMapArt(new Rect(p.x-21,p.y-21,42,42),0,IsCampVisited(i)?Color.white:Color.gray);
+                    if(waypoint)WorldLabel(new Rect(p.x+15,p.y-24,28,28),"▲",Gold,20);
+                }
                 if(GUI.Button(new Rect(p.x-21,p.y-21,42,42),GUIContent.none,GUIStyle.none)){overworldSelectedCamp=i;overworldSelectedLandmark=-1;}
             }
             for(int i=0;i<WorldGeography.Landmarks.Length;i++)
             {
-                Vector2 p=WorldAtlasPoint(map,WorldGeography.Landmarks[i]);if(!map.Contains(p))continue;
+                Vector3 lmPos=WorldGeography.Landmarks[i];
+                Vector2 p=WorldAtlasPoint(map,lmPos);if(!map.Contains(p))continue;
                 bool selected=overworldSelectedLandmark==i;
                 bool fought=IsLandmarkBossFought(i),defeated=IsLandmarkBossDefeated(i);
-                Color pinColor=OverworldWaypointKind==3&&OverworldWaypointId==i?Gold:selected?new Color(1f,.64f,.24f):defeated?Cyan:fought?new Color(1f,.42f,.32f):Gold;
-                float size=selected?14f:10f;
-                Box(new Rect(p.x-size-2,p.y-size-2,(size+2)*2,(size+2)*2),new Color(.02f,.04f,.06f,.88f));
-                Diamond(p.x,p.y,size,pinColor);
-                Diamond(p.x,p.y,size*.6f,Color.white);
-                Box(new Rect(p.x-3,p.y-3,6,6),pinColor);
-                if(OverworldWaypointKind==3&&OverworldWaypointId==i)WorldLabel(new Rect(p.x+11,p.y-22,26,28),"▲",Gold,19);
+                bool waypoint=OverworldWaypointKind==3&&OverworldWaypointId==i;
+                bool revealed=fought||defeated||IsOverworldMapRevealed(lmPos);
+                if(!revealed)
+                {
+                    DrawUnknownMapLocationIcon(p,selected,waypoint,Gold);
+                }
+                else
+                {
+                    Color pinColor=waypoint?Gold:selected?new Color(1f,.64f,.24f):defeated?Cyan:fought?new Color(1f,.42f,.32f):Gold;
+                    float size=selected?14f:10f;
+                    Box(new Rect(p.x-size-2,p.y-size-2,(size+2)*2,(size+2)*2),new Color(.02f,.04f,.06f,.88f));
+                    Diamond(p.x,p.y,size,pinColor);
+                    Diamond(p.x,p.y,size*.6f,Color.white);
+                    Box(new Rect(p.x-3,p.y-3,6,6),pinColor);
+                    if(waypoint)WorldLabel(new Rect(p.x+11,p.y-22,26,28),"▲",Gold,19);
+                }
                 if(GUI.Button(new Rect(p.x-18,p.y-18,36,36),GUIContent.none,GUIStyle.none)){overworldSelectedLandmark=i;overworldSelectedCamp=-1;}
             }
             for(int i=0;i<factionCamps.Count;i++)
             {
                 var camp=factionCamps[i];if(IsOverworldActivityCompleted(FactionCampReadyBase+camp.id))continue;
                 Vector2 p=WorldAtlasPoint(map,camp.position);if(!map.Contains(p))continue;
+                if(!IsOverworldMapRevealed(camp.position))
+                {
+                    DrawUnknownMapLocationIcon(p,false,false,Mist);
+                    continue;
+                }
                 Color c=camp.faction==1?new Color(.96f,.34f,.26f):new Color(.94f,.72f,.30f);
                 Diamond(p.x,p.y,7,c);Box(new Rect(p.x-3,p.y-3,6,6),c);
             }
             if(IsOverworld)foreach(var site in NearbyOverworldActivitySites)
             {
-                if(site.completed)continue;
+                if(site.completed||!IsOverworldMapRevealed(site.position))continue;
                 Vector2 p=WorldAtlasPoint(map,site.position);
                 if(map.Contains(p))DrawMapArt(new Rect(p.x-18,p.y-18,36,36),site.type==1?2:site.type==2?4:3,Color.white);
             }
@@ -621,8 +770,8 @@ namespace NeonVault
             Panel(new Rect(950,100,460,650),Gold);
             if(overworldSelectedCamp>=0)
             {
-                int camp=overworldSelectedCamp;bool visited=IsCampVisited(camp);bool travel=visited&&CanWorldFastTravel;
-                WorldLabel(new Rect(975,125,410,100),OverworldCampName(camp,VaultLanguage.Japanese),Gold,32);
+                int camp=overworldSelectedCamp;bool visited=IsCampVisited(camp);bool revealed=visited||IsOverworldMapRevealed(WorldGeography.Camps[camp]);bool travel=visited&&CanWorldFastTravel;
+                WorldLabel(new Rect(975,125,410,100),revealed?OverworldCampName(camp,VaultLanguage.Japanese):"?",Gold,32);
                 WorldLabel(new Rect(975,250,410,210),visited?T("Discovered refuge. Travel here to rest and trade. Fast travel is unavailable inside dungeons.","発見済みの避難所。休息と取引のために移動できます。ダンジョン内からは移動できません。"):T("Undiscovered. Reach this camp on foot to unlock fast travel.","未訪問。歩いて到達するとファストトラベルが解放されます。"),Mist,26);
                 bool tracking=OverworldWaypointKind==1&&OverworldWaypointId==camp;
                 if(WorldButton(new Rect(975,500,410,75),tracking?T("CLEAR DESTINATION","目的地指定を解除"):T("SET DESTINATION","目的地に指定")))SetOverworldWaypoint(tracking?0:1,camp);
@@ -633,10 +782,14 @@ namespace NeonVault
                 DrawWorldLandmarkBriefing(overworldSelectedLandmark);
             }
             else DrawWorldStageBriefing();
-            for(int i=0;i<WorldGeography.Camps.Length;i++)if(WorldButton(new Rect(30+(i%7)*198,784+(i/7)*52,188,46),(i+1)+" / "+OverworldCampName(i,VaultLanguage.Japanese),IsCampVisited(i)))
+            for(int i=0;i<WorldGeography.Camps.Length;i++)
             {
-                overworldSelectedCamp=i;overworldSelectedLandmark=-1;
-                Vector3 camp=WorldGeography.Camps[i];worldMapCenter=new Vector2(camp.x/10000f+.5f,camp.z/10000f+.5f);ClampWorldMapCenter();
+                bool campKnown=IsCampVisited(i)||IsOverworldMapRevealed(WorldGeography.Camps[i]);
+                if(WorldButton(new Rect(30+(i%7)*198,784+(i/7)*52,188,46),(i+1)+" / "+(campKnown?OverworldCampName(i,VaultLanguage.Japanese):"?"),IsCampVisited(i)))
+                {
+                    overworldSelectedCamp=i;overworldSelectedLandmark=-1;
+                    Vector3 camp=WorldGeography.Camps[i];worldMapCenter=new Vector2(camp.x/10000f+.5f,camp.z/10000f+.5f);ClampWorldMapCenter();
+                }
             }
         }
 
@@ -670,6 +823,7 @@ namespace NeonVault
             for(int i=0;i<WorldGeography.Landmarks.Length;i++)
             {
                 Vector3 lm=WorldGeography.Landmarks[i];
+                if(!IsOverworldMapRevealed(lm)&&!IsLandmarkBossFought(i)&&!IsLandmarkBossDefeated(i))continue;
                 Vector2 p=WorldAtlasPoint(map,lm);
                 if(p.x<map.x+16||p.x>map.xMax-190||p.y<map.y+50||p.y>map.yMax-30)continue;
                 string title=worldMapZoom>2.8f?OverworldGeography.LandmarkTitle(i,VaultLanguage.Japanese):OverworldGeography.LandmarkShortTitle(i,VaultLanguage.Japanese);
@@ -801,10 +955,11 @@ namespace NeonVault
             landmarkId=Mathf.Clamp(landmarkId,0,OverworldGeography.LandmarkCount-1);
             bool fought=IsLandmarkBossFought(landmarkId);
             bool defeated=IsLandmarkBossDefeated(landmarkId);
+            bool revealed=fought||defeated||IsOverworldMapRevealed(WorldGeography.Landmarks[landmarkId]);
             int bossLevel=OverworldGeography.LandmarkBossLevel(landmarkId,DebtLevel);
             WorldLabel(new Rect(975,114,410,26),T("LANDMARK ","ランドマーク ")+(landmarkId+1).ToString("00")+" / "+OverworldGeography.LandmarkCount.ToString("00"),Cyan,17);
-            WorldLabel(new Rect(975,140,410,66),OverworldGeography.LandmarkTitle(landmarkId,VaultLanguage.Japanese),Gold,25);
-            WorldLabel(new Rect(975,208,410,82),OverworldGeography.LandmarkDescription(landmarkId,VaultLanguage.Japanese),Mist,18);
+            WorldLabel(new Rect(975,140,410,66),revealed?OverworldGeography.LandmarkTitle(landmarkId,VaultLanguage.Japanese):"?",Gold,25);
+            WorldLabel(new Rect(975,208,410,82),revealed?OverworldGeography.LandmarkDescription(landmarkId,VaultLanguage.Japanese):T("Unexplored location. Approach this area on the map to reveal it.","未踏のロケーション。近くまで探索すると詳細が判明します。"),Mist,18);
             Box(new Rect(975,296,410,1),new Color(.45f,.58f,.60f,.38f));
             WorldLabel(new Rect(975,304,410,24),T("LANDMARK BOSS","ランドマークボス"),Gold,17);
             string bossInfo=fought
@@ -853,7 +1008,7 @@ namespace NeonVault
         }
         void DrawWorldStageBriefing()
         {
-            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id)||IsFactionHeadquarters(stage.id);
+            var stage=ExpeditionMap.Get(Mathf.Clamp(expeditionMapSelection,0,ExpeditionMap.StageCount-1),DebtLevel);bool discovered=IsOverworldMapRevealed(WorldGeography.Entrances[stage.id])||IsOverworldDungeonDiscovered(stage.id)||clearedExpeditionStages.Contains(stage.id)||(HasActiveBriggsMission&&activeBriggsMissionStage==stage.id);
             bool hqUnlocked=FactionHeadquartersUnlocked(stage.id);
             bool bossFought=IsDungeonBossFought(stage.id);
             WorldLabel(new Rect(975,112,410,72),(stage.id+1).ToString("00")+" / "+(discovered?stage.Name:"?"),Gold,27);

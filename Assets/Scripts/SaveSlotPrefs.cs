@@ -24,7 +24,7 @@ namespace NeonVault
             string prefix=slot==1?"":"Vault.SaveSlot."+slot+".";
             string[] knownKeys = {
                 "Vault.Progression.v1", "Vault.Loadout.v1", "Vault.DebtSkills.v1", "Vault.ExpeditionCheckpoint.v1",
-                "Vault.Overworld.v1", "Vault.Missions.v1", "Vault.ActionSkills.v1", "Vault.EquipmentDiscovery.v1", "Vault.ActionSkillTutorial.v1",
+                "Vault.Overworld.v1", "Vault.OverworldFog.v1", "Vault.Missions.v1", "Vault.ActionSkills.v1", "Vault.EquipmentDiscovery.v1", "Vault.ActionSkillTutorial.v1",
                 "Vault.LegendaryWeaponTutorial.v1", "Vault.FirstSteps.v1", "Vault.FirstSteps.target.v1", "Vault.DebtBoss.defeated.v1",
                 "Vault.Cores", "Vault.Rank", "Vault.FirstBossLegendaryD0", "Vault.SeraIntro", "Vault.BriggsIntro",
                 "Vault.Pet.Adopted.v1", "Vault.Pet.IonaIntro.v1", "Vault.PetSkills.v1.OverworldCooldown",
