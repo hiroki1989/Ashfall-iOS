@@ -400,10 +400,9 @@ namespace NeonVault
                 return;
             }
             if(VaultMobileInputBridge.Pressed(MobileAction.Inventory,KeyCode.I))ToggleInventory();
-            bool menuBack = VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape)
-                ;
             if(InventoryOpen)
             {
+                bool menuBack = VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape);
                 if(menuBack)
                 {
                     if(!string.IsNullOrEmpty(pendingSaleKey)){pendingSaleKey=null;eqPendingDiscard=null;}
