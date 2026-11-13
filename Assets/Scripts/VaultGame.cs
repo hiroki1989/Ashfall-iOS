@@ -20,7 +20,7 @@ namespace NeonVault
             Time.timeScale=1;
         }
         bool AnyNpcOrStoryDialogueActive=>FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||collectorOpen||(!smoke&&screen==Screen.Hub&&FirstStepsStage==1);
-        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible&&!legendaryWeaponTutorialVisible;
+        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible&&!legendaryWeaponTutorialVisible&&!OverworldActivityChoiceOpen;
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
         public Vector3 ScreenMovement(float horizontal,float vertical)
@@ -289,7 +289,7 @@ namespace NeonVault
                 bool infectedDungeonBoss=!IsOverworld&&kind==3&&room==CurrentDungeon.AreaCount-1&&ExpeditionMap.IsInfectedDungeonStage(SelectedStageId);
                 bool useFantastic=(landmarkMutant&&spawningWorldEnemy.landmarkId%2==0)||(infectedDungeonBoss&&rng.NextDouble()<.35);
                 if(useFantastic&&FantasticCreatureVisual.TryAttach(f.gameObject)) { }
-                else if(!((kind==0||kind==4||kind==8)&&rng.NextDouble()<.25&&FemaleZombieVisual.TryAttach(f.gameObject)))
+                else if(!((kind==0||kind==4)&&rng.NextDouble()<.25&&FemaleZombieVisual.TryAttach(f.gameObject)))
                     ImportedEnemyVisual.TryAttach(f.gameObject,raiderBoss?11:kind);
             }
             Enemies.Add(f);

@@ -178,6 +178,7 @@ namespace NeonVault
                 var visuals=world?world.GetComponent<OverworldActivityVisuals>():null;if(visuals)visuals.OpenReward(rewardSite.id);
                 GrantActivityGear(rewardSite.id, rewardSite.position + Vector3.right * 2);
                 if (!IsFactionCampReward(rewardSite.id)) { overworldRushRewardReady = false; overworldRushSite = null; }
+                PlayUserSound("transaction", .35f);
                 SaveInventory();
                 Notify("CHALLENGE CHEST / equipment recovered", "挑戦の報酬箱 / 装備を回収"); RefreshOverworldActivities();
             }
@@ -244,9 +245,10 @@ namespace NeonVault
             }
             else
             {
-                if (choice == 0) { Notify("CLUE FOUND / follow the map marker to the cache", "手掛かり発見 / 地図の印を辿って物資を回収"); RefreshOverworldActivities(); }
-                else { GrantActivityScrap(roll); Notify("COORDINATES SOLD / scrap received", "座標売却 / スクラップを入手"); }
+                if (choice == 0) { PlayUserSound("transaction", .35f); Notify("CLUE FOUND / follow the map marker to the cache", "手掛かり発見 / 地図の印を辿って物資を回収"); RefreshOverworldActivities(); }
+                else { GrantActivityScrap(roll); PlayUserSound("transaction", .35f); Notify("COORDINATES SOLD / scrap received", "座標売却 / スクラップを入手"); }
             }
+            if (site.type == 0 || site.type == 1) PlayUserSound("transaction", .35f);
             SaveInventory();
         }
     }

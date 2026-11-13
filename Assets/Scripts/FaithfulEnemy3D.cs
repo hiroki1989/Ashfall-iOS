@@ -327,9 +327,9 @@ namespace NeonVault
             Rod("Optical scope",gun,V(0,.10f,-.07f),V(0,.10f,.13f),.023f,dark);
             muzzle=Joint("Visible enemy muzzle",gun,V(0,.02f,.59f));
         }
-        static readonly float[] GaitStride={1.42f,1.18f,1.65f,2.65f,1.08f,1.36f,1.95f,1.17f,2.05f,1.22f};
-        static readonly float[] GaitHunch={18,26,11,13,46,23,18,8,16,27};
-        static readonly float[] GaitRoll={4,9,3,5,7,3,6,12,4,8};
+        static readonly float[] GaitStride={1.26f,1.10f,1.42f,2.35f,1.12f,1.28f,1.48f,1.02f,1.46f,1.18f};
+        static readonly float[] GaitHunch={19,26,12,13,44,22,17,9,16,25};
+        static readonly float[] GaitRoll={6,9,4,5,8,4,6,11,5,7};
         float nextAnimAt;
         void LateUpdate()
         {
@@ -361,49 +361,48 @@ namespace NeonVault
             int variant=owner?owner.AttackVariant:0;
             float crouch=anticipate*(kind==4?19:kind==8?10:kind==7?7:kind==0?8:0)+(variant==1?anticipate*11:0);
             float rear=anticipate*(kind==1?-13:kind==2?-5:kind==3?-10:kind==5?-7:kind==6?-8:kind==9?-9:0);
-            float lean=(kind==4?12:GaitHunch[kind])+crouch+rear;
+            float lean=(kind==4?12:GaitHunch[kind])+crouch+rear+beat*(kind==0?4.5f:kind==7?2.5f:3f)*moving;
             float pitchAttack=kind==1?-24:kind==3?28:kind==4?-23:kind==7?-12:kind==9?-7:-17;
             float hitPulse=hit>0?Mathf.Sin((1-hit/.23f)*Mathf.PI)*Mathf.Clamp01(hit/.12f):0;
             float recoil=kind==2||kind==5?strike*7:0;
             rig.localRotation=Quaternion.Euler(lean+strike*pitchAttack+recoil+hitLocal.z*hitPulse*11,0,wave*GaitRoll[kind]*moving+breath*(kind==9?2:0)+hitLocal.x*hitPulse*9);
-            float bob=kind==3?-.035f*Mathf.Pow(Mathf.Abs(wave),.5f):kind==4?.035f*Mathf.Abs(wave):kind==7?-.018f*Mathf.Abs(wave):.018f*Mathf.Abs(wave);
-            rig.localPosition=V(wave*(kind==7?.025f:kind==1?.017f:.008f)*moving,bob*moving+(kind==4?-.10f:0),strike*(kind==4?.16f:kind==3?.06f:0));
+            float bob=kind==3?-.035f*Mathf.Pow(Mathf.Abs(wave),.5f):kind==4?.035f*Mathf.Abs(wave):kind==7?-.022f*Mathf.Abs(wave):.020f*Mathf.Abs(wave);
+            rig.localPosition=V(wave*(kind==7?.028f:kind==1?.017f:.011f)*moving,bob*moving+(kind==4?-.10f:0),strike*(kind==4?.16f:kind==3?.06f:0));
             chest.localPosition=V(0,1.34f+breath*(kind==7?.018f:.007f),0);
             float vTwist=kind!=3?(variant==1?(-26*anticipate+42*strike):variant==2?(38*anticipate-64*strike):0):0;
-            chest.localRotation=Quaternion.Euler((kind==4?30:0)+anticipate*(kind==1?-16:kind==3?-9:kind==9?-12:kind==7?8:kind==6?-6:0)+(variant==2?-14*anticipate+22*strike:0)+strike*(kind==3?18:kind==7?15:9)+breath*(kind==1?2:0),wave*(kind==3?6:kind==7?3:kind==4?10:5)*moving+vTwist,breath*(kind==9?3:0));
-            pelvis.localRotation=Quaternion.Euler(kind==4?12:0,-wave*(kind==3?7:4)*moving,wave*(kind==7?5:1)*moving);
+            chest.localRotation=Quaternion.Euler((kind==4?30:0)+anticipate*(kind==1?-16:kind==3?-9:kind==9?-12:kind==7?8:kind==6?-6:0)+(variant==2?-14*anticipate+22*strike:0)+strike*(kind==3?18:kind==7?15:9)+breath*(kind==1?2:0),wave*(kind==3?6:kind==7?4:kind==4?10:kind==0?8:5)*moving+vTwist,breath*(kind==9?3:0));
+            pelvis.localRotation=Quaternion.Euler(kind==4?12:0,-wave*(kind==3?7:5)*moving,wave*(kind==7?6:2)*moving);
             for(int i=0;i<2;i++)
             {
                 int side=i==0?-1:1;float w=i==0?wave:-wave;
-                float legSwing=kind==0?27:kind==1?22:kind==2?24:kind==3?19:kind==4?39:kind==5?27:kind==6?30:kind==7?14:kind==8?18:15;
-                float spread=kind==3?side*8:kind==4?side*12:kind==7?side*7:kind==8?side*5:0;
-                float lift=Mathf.Max(0,-w)*moving;
+                bool limp=i==1&&(kind==0||kind==1||kind==8);
+                float legSwing=(kind==0?30:kind==1?24:kind==2?26:kind==3?21:kind==4?40:kind==5?28:kind==6?29:kind==7?18:kind==8?23:20)*(limp?.76f:1f);
+                float spread=kind==3?side*8:kind==4?side*12:kind==7?side*8:kind==8?side*5:0;
+                float lift=Mathf.Max(0,-w)*moving*(limp?.68f:1f);
                 thighs[i].localRotation=Quaternion.Euler(w*legSwing*moving*forward+(kind==4?-10:0)+strike*(kind==3?-13:kind==4?20:0),side*(kind==7?9:0),spread-lateral*w*10*moving);
-                shins[i].localRotation=Quaternion.Euler((kind==4?18:0)+lift*(kind==4?57:kind==3?29:kind==7?20:kind==8?28:37)+strike*(kind==3?12:0),0,0);
-                feet[i].localRotation=Quaternion.Euler(-lift*(kind==4?25:13),0,side*(kind==7?9:4));
+                shins[i].localRotation=Quaternion.Euler((kind==4?18:limp?8:4)+lift*(kind==4?58:kind==3?32:kind==7?26:kind==8?32:42)+strike*(kind==3?12:0),0,0);
+                feet[i].localRotation=Quaternion.Euler(-lift*(kind==4?25:limp?22:14),0,side*(kind==7?9:4));
                 bool gun=kind==2||kind==5;
                 float armPitch=gun?-62:-12-w*(kind==3?9:kind==4?31:kind==7?7:19)*moving;
                 float elbow=gun?-60:kind==4?-44:kind==9?-68:-18;
                 float abduction=side*(kind==3?22:kind==4?29:kind==7?27:kind==9?36:10);
-                if(kind==0){armPitch=-24-w*15*moving-anticipate*36-strike*72;elbow=-35-anticipate*18-strike*22;}
-                else if(kind==1){armPitch=-28-w*12*moving-anticipate*34-strike*25;elbow=-55-anticipate*19-strike*16;}
+                if(kind==0){armPitch=(i==0?-52:-38)-w*(i==0?18:11)*moving-anticipate*36-strike*72;elbow=(i==0?-32:-44)-anticipate*18-strike*22;abduction=side*(i==0?12:18);}
+                else if(kind==1){armPitch=-34-w*14*moving-anticipate*34-strike*25;elbow=-58-anticipate*19-strike*16;abduction=side*(16+anticipate*14);}
                 else if(kind==2){armPitch=-62-anticipate*8+strike*10;elbow=-60-anticipate*12;}
                 else if(kind==3){armPitch-=anticipate*105;armPitch+=strike*65;elbow=-32-anticipate*36+strike*15;}
-                else if(kind==4){armPitch=-35-w*25*moving-anticipate*55+strike*85;elbow=-15+strike*18;}
+                else if(kind==4){armPitch=-42-w*28*moving-anticipate*55+strike*85;elbow=-24+strike*18;}
                 else if(kind==5){armPitch=-71-anticipate*13+strike*13;elbow=-66-anticipate*9;}
-                else if(kind==6){armPitch=-32-w*11*moving-anticipate*42+strike*32;elbow=-42-anticipate*23;abduction+=side*(anticipate*13+strike*8);}
-                else if(kind==7){armPitch=-22-anticipate*32-strike*52;elbow=-35-anticipate*18;abduction+=side*anticipate*8;}
-                else if(kind==8){armPitch=-30-w*8*moving-anticipate*27-strike*75;elbow=-25-strike*35;}
-                else if(kind==9){armPitch=-48+Mathf.Sin(Time.time*1.7f+side)*5-anticipate*42-strike*35;elbow=-70+breath*8-anticipate*15;abduction+=side*(anticipate*24+strike*16);}
-                if(ImportedShapeActive&&kind==8){armPitch=-5-w*8*moving-anticipate*27-strike*75;elbow=-10-strike*35;abduction=side*(38+anticipate*8);}
-                if(kind!=3&&kind!=5&&moving>.1f&&anticipate<.01f&&strike<.01f&&death<0)
-                {armPitch=-57-w*5*moving;elbow=24;abduction=side*13;}
+                else if(kind==6){armPitch=-36-w*14*moving-anticipate*42+strike*32;elbow=-42-anticipate*23;abduction+=side*(anticipate*13+strike*8);}
+                else if(kind==7){armPitch=-26-w*12*moving-anticipate*32-strike*52;elbow=-35-anticipate*18;abduction+=side*(8+anticipate*8);}
+                else if(kind==8){armPitch=-34-w*14*moving-anticipate*27-strike*75;elbow=-28-strike*35;abduction=side*16;}
+                else if(kind==9){armPitch=-48+Mathf.Sin(Time.time*1.7f+side)*6-anticipate*42-strike*35;elbow=-70+breath*8-anticipate*15;abduction+=side*(anticipate*24+strike*16);}
+                if(ImportedShapeActive&&kind==8){armPitch=-12-w*12*moving-anticipate*27-strike*75;elbow=-16-strike*35;abduction=side*(36+anticipate*8);}
                 if(kind!=3&&variant==1){if(i==0){armPitch-=anticipate*28+strike*45;abduction-=18*strike;}else{armPitch+=anticipate*15-strike*15;}}
                 else if(kind!=3&&variant==2){armPitch-=anticipate*35-strike*50;abduction+=side*(28*anticipate-18*strike);}
                 arms[i].localRotation=Quaternion.Euler(armPitch,gun?side*-18:side*(kind==4?12:0),abduction);
                 forearms[i].localRotation=Quaternion.Euler(elbow,0,side*strike*(kind==4?15:0));
             }
-            head.localRotation=Quaternion.Euler((kind==4?-58:-lean*.48f)+anticipate*(kind==1?-18:kind==7?12:kind==9?-10:kind==0?8:0)+strike*(kind==1?-30:kind==3?20:kind==9?-12:8)-hitLocal.z*hitPulse*7,breath*(kind==4?5:kind==0?4:2),breath*(kind==0?3:kind==9?4:0)-hitLocal.x*hitPulse*7);
+            head.localRotation=Quaternion.Euler((kind==4?-58:-lean*.48f)+anticipate*(kind==1?-18:kind==7?12:kind==9?-10:kind==0?8:0)+strike*(kind==1?-30:kind==3?20:kind==9?-12:8)-hitLocal.z*hitPulse*7,breath*(kind==4?5:kind==0?4:2),breath*(kind==0?6:kind==1?-5:kind==9?4:0)-hitLocal.x*hitPulse*7);
             if(kind==3) AnimateColossusAttack(anticipate,strike);
             GroundContact(strike);
         }

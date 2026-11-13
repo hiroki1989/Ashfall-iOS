@@ -143,6 +143,7 @@ namespace NeonVault
                 if (allDefeated)
                 {
                     CompleteOverworldActivity(FactionCampReadyBase + camp.id);
+                    PlayUserSound("transaction", .35f);
                     Notify("CAMP CLEARED / open the reward chest", "野営地制圧 / 報酬箱を開けよう");
                 }
             }

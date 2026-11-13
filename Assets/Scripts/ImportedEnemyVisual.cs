@@ -40,6 +40,10 @@ namespace NeonVault
             public int side; public bool arm; public Vector3 palmLocal;
         }
         readonly List<Limb> limbs=new List<Limb>();
+        Transform pelvisBone,spineBone,chestBone,neckBone,headBone;
+        Quaternion pelvisRest,spineRest,chestRest,neckRest,headRest;
+        Vector3 pelvisRestPos,restFootLocalL,restFootLocalR;
+        float legLength=.85f;
         float phase, stateTime, attackTime, deathTime=-1; bool wasCharging; string state="";
         public void NotifyShot(){if(deathTime<0)attackTime=.5f;}
         public static bool TryAttach(GameObject actor,int kind)
@@ -248,6 +252,9 @@ namespace NeonVault
             model.localScale*=scale;feet=pivot+(feet-pivot)*scale;
             model.position+=new Vector3(actor.position.x-feet.x,transform.position.y+height*.055f-feet.y,actor.position.z-feet.z);
             modelPosition=model.localPosition;
+            legLength=Mathf.Max(.45f,legs*scale);
+            restFootLocalL=model.InverseTransformPoint(leftLeg.end.position);
+            restFootLocalR=model.InverseTransformPoint(rightLeg.end.position);
         }
         void Start(){if(actor&&!owner)owner=actor.GetComponent<Foe>();}
 #if UNITY_EDITOR
@@ -282,9 +289,15 @@ namespace NeonVault
                 if(owner&&owner.RaiderBoss){AnimateLikePlayer(dt,speed);return;}
                 if(!owner){AnimateValeNPC(dt,speed);return;}
             }
-            phase+=dt*Mathf.Max(1,speed*(heavy?1.85f:kind==4?3.6f:2.8f));
             string next=deathTime>=0?"death":attackTime>0?"attack":speed>.12f?"walk":"idle";
-            if(state!=next){state=next;stateTime=0;}stateTime+=dt;
+            if(state!=next){state=next;stateTime=0;}
+            float clipRate=next=="walk"?Mathf.Clamp(speed/1.85f,.55f,2.35f):1f;
+            stateTime+=dt*clipRate;
+            float duty=kind==4?(speed>2.8f?.44f:.54f):heavy?.64f:.58f;
+            float stepReach=legLength*(kind==4?.44f:kind==7?.26f:heavy?.30f:.35f)*Mathf.Clamp(speed/1.8f,.55f,1.25f);
+            float cycleDistance=Mathf.Max(.45f,2f*stepReach/duty);
+            if(speed>.05f)phase+=(speed*dt/cycleDistance)*Mathf.PI*2f;
+            else phase+=dt*1.35f;
             AnimationClip clip=state=="death"?deathClip:state=="attack"?attackClip:state=="walk"?(runClip&&speed>3.2f?runClip:walkClip):idleClip;
             if(clip&&clip.humanMotion&&nativeAnimator&&nativeAnimator.runtimeAnimatorController)
             {
@@ -303,50 +316,41 @@ namespace NeonVault
             }
             model.localPosition=modelPosition;
             model.localRotation=modelRotation;
+            if(pelvisBone){pelvisBone.localRotation=pelvisRest;pelvisBone.localPosition=pelvisRestPos;}
+            if(spineBone)spineBone.localRotation=spineRest;
+            if(chestBone)chestBone.localRotation=chestRest;
+            if(neckBone)neckBone.localRotation=neckRest;
+            if(headBone)headBone.localRotation=headRest;
             foreach(var limb in limbs)
             {
                 limb.upper.localRotation=limb.upperRest;
                 limb.lower.localRotation=limb.lowerRest;
                 if(limb.end)limb.end.localRotation=limb.endRest;
             }
+            float moveBlend=Mathf.Clamp01(speed/.85f);
+            float cycle=Mathf.Repeat(phase/(Mathf.PI*2f),1f);
+            float strike=attackTime>0?Mathf.Sin((1-attackTime/.5f)*Mathf.PI):0;
+            float prepare=owner&&owner.IsTelegraphing?owner.TelegraphProgress:0;
+            float dying=deathTime>=0?Mathf.SmoothStep(0,1,deathTime/(heavy?1.05f:.8f)):0;
+            PoseZombieSpineAndHead(kind,moveBlend,cycle,prepare,strike,dying);
             foreach(var limb in limbs)
             {
-                float stride=Mathf.Sin(phase+limb.side*Mathf.PI*.5f)*Mathf.Clamp01(speed/1.5f);
-                float strike=attackTime>0?Mathf.Sin((1-attackTime/.5f)*Mathf.PI):0;
-                float prepare=owner&&owner.IsTelegraphing?1:0;
-                float dying=deathTime>=0?Mathf.SmoothStep(0,1,deathTime/(heavy?1.05f:.8f)):0;
+                float stride=Mathf.Sin(phase+limb.side*Mathf.PI*.5f)*moveBlend;
                 Vector3 upperDirection,lowerDirection;
                 if(limb.arm)
                 {
-                    upperDirection=new Vector3(limb.side*.16f,-.94f,.22f+stride*.23f+strike*1.4f);
-                    lowerDirection=new Vector3(-limb.side*.08f,-.73f,.48f-stride*.12f+strike*1.25f);
-                    // Different silhouettes: dangling corpse, low pouncer, broad heavy, and guarded caster.
-                    if(kind==0){upperDirection=new Vector3(limb.side*.19f,-.95f,.3f-stride*.25f+strike);lowerDirection=new Vector3(0,-.72f,.58f-stride*.14f+strike*.7f);}
-                    else if(kind==4){upperDirection=new Vector3(limb.side*.36f,-.62f,.6f-stride*.25f+strike);lowerDirection=new Vector3(limb.side*.15f,-.45f,.85f);}
-                    else if(heavy){upperDirection=new Vector3(limb.side*.32f,-.94f,.12f-stride*.35f+strike*.95f-prepare*.35f);lowerDirection=new Vector3(-limb.side*.12f,-.8f,.4f-stride*.20f+strike*.85f);}
-                    else if(kind==5||kind==10||owner&&owner.RaiderBoss&&owner.BossAttackStyle==3){upperDirection=new Vector3(limb.side*.24f,-.82f,.38f+strike*.35f);lowerDirection=new Vector3(-limb.side*.1f,-.25f,.95f+prepare*.2f);}
-                    if(kind==3&&owner&&owner.BossAttackStyle==1){upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.3f,.8f,.4f),prepare);lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(0,.6f,.8f),prepare);}
-                    if(kind==3&&owner&&owner.BossAttackStyle==2){upperDirection=new Vector3(limb.side*(.45f+prepare*.6f),-.25f,.4f+strike);lowerDirection=new Vector3(-limb.side*.65f*strike,-.2f,.9f);}
-                    if(kind==3&&owner&&(owner.BossAttackStyle>=4||owner.IsSpinning)){float spin=owner.IsSpinning||owner.BossAttackStyle==7?1f:0f;upperDirection=new Vector3(limb.side*(.55f+spin*.35f),spin>0?-.05f:-.35f+prepare*.45f,.45f+strike*.85f);lowerDirection=new Vector3(-limb.side*.35f*strike,-.15f,.9f);}
-                    else if(kind!=3&&kind!=10&&owner&&owner.AttackVariant>0){int v=owner.AttackVariant;upperDirection+=new Vector3(limb.side*(v==2?.35f:-.15f)*(prepare+strike),v==2?.35f*prepare:-.2f*prepare,strike*.45f);}
-                    upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.5f,-.75f,.25f),dying);
-                    lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(limb.side*.2f,-.5f,.8f),dying);
+                    PoseZombieArmDirections(limb.side,kind,heavy,stride,moveBlend,prepare,strike,dying,out upperDirection,out lowerDirection);
+                    Aim(limb.upper,limb.lower,actor.TransformDirection(upperDirection));
+                    Aim(limb.lower,limb.end,actor.TransformDirection(lowerDirection));
+                    if(limb.end&&limb.tip)
+                        Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(limb.side*.08f,-.82f,.48f+strike*.3f)));
                 }
                 else
                 {
-                    if(speed<.1f&&dying<=0)continue;
-                    upperDirection=new Vector3(limb.side*.025f,-1,stride*.35f);
-                    lowerDirection=new Vector3(0,-1,-Mathf.Max(0,-stride)*(heavy?.25f:.42f));
-                    upperDirection.x=limb.side*(heavy?.11f:kind==4?.08f:.025f);
-                    upperDirection.z*=heavy?.65f:kind==4?1.3f:1;
-                    upperDirection=Vector3.Lerp(upperDirection,new Vector3(limb.side*.12f,-1,-.1f),dying);
-                    lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(0,-1,.16f),dying);
+                    PoseZombieLeg(limb,kind,heavy,cycle,duty,stepReach,moveBlend,prepare,strike,dying);
                 }
-                Aim(limb.upper,limb.lower,actor.TransformDirection(upperDirection));
-                Aim(limb.lower,limb.end,actor.TransformDirection(lowerDirection));
-                if(limb.arm&&limb.end&&limb.tip)
-                    Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(0,-.8f,.5f)));
             }
+            GroundProceduralFeet(moveBlend,dying);
             ApplySecondaryMotion(speed,kind);
             PoseZombieWalk(speed,kind);
             PoseFirearm(speed);
@@ -376,18 +380,177 @@ namespace NeonVault
             FactionBossVisuals.PoseValeOpeningAndWalk(playerRig,actor.forward,playerMotionPhase,playerMotionBlend);
             if(raiderRifle)raiderRifle.gameObject.SetActive(false);
         }
+        void PoseZombieSpineAndHead(int kind,float moveBlend,float cycle,float prepare,float strike,float dying)
+        {
+            if(kind==10||owner&&owner.RaiderBoss||dying>.01f)return;
+            float wave=Mathf.Sin(cycle*Mathf.PI*2f),beat=Mathf.Sin(cycle*Mathf.PI*4f);
+            float breath=Mathf.Sin(Time.time*(kind==7?.9f:kind==4?3.2f:1.6f)+kind);
+            float hunch=kind==4?32f:kind==1?24f:kind==9?22f:kind==0?17f:kind==5?18f:kind==6?15f:kind==8?14f:kind==2?11f:kind==7?7f:12f;
+            float lurch=kind==4?Mathf.Abs(wave)*9f:kind==0?Mathf.Max(0f,beat)*7f:kind==7?beat*3.5f:beat*4.5f;
+            int v=owner?owner.AttackVariant:0;
+            float windupPitch=prepare*(kind==1||kind==7&&v==2?-18f:kind==4?16f:kind==9?-14f:v==2?-14f:8f);
+            float strikePitch=strike*(kind==1||kind==7&&v==2?24f:kind==4?-18f:20f);
+            float twistYaw=wave*(kind==7?8f:kind==0?11f:kind==4?13f:7f)*moveBlend+(v==1?(-18f*prepare+32f*strike):v==2?(28f*prepare-48f*strike):0f);
+            float swayRoll=wave*(kind==7?9f:kind==0?6.5f:kind==1?5.5f:kind==8?4.5f:3.5f)*moveBlend+(kind==0?4f:kind==1?-3.5f:0f);
+            Quaternion rRight=Quaternion.AngleAxis((hunch+lurch*moveBlend+windupPitch+strikePitch+breath*1.8f)*.5f,actor.right);
+            Quaternion rUp=Quaternion.AngleAxis(twistYaw*.5f,actor.up);
+            Quaternion rFwd=Quaternion.AngleAxis(swayRoll*.5f,actor.forward);
+            if(spineBone)spineBone.rotation=rFwd*rUp*rRight*spineBone.rotation;
+            if(chestBone)chestBone.rotation=rFwd*rUp*rRight*chestBone.rotation;
+            if(pelvisBone)
+            {
+                Quaternion pRot=Quaternion.AngleAxis(-twistYaw*.35f,actor.up)*Quaternion.AngleAxis(-swayRoll*.4f,actor.forward);
+                pelvisBone.rotation=pRot*pelvisBone.rotation;
+            }
+            if(headBone)
+            {
+                float headPitch=-hunch*.55f+breath*3f+prepare*(kind==1?-20f:kind==4?-15f:6f)+strike*(kind==1?25f:10f);
+                float headRoll=(kind==0?13f:kind==1?-10f:kind==6?8f:kind==9?11f:0f)+wave*5f*moveBlend;
+                float headYaw=-twistYaw*.35f+Mathf.Sin(Time.time*2.1f+kind)*(kind==1||kind==5?6f:3f);
+                Quaternion hRot=Quaternion.AngleAxis(headRoll,actor.forward)*Quaternion.AngleAxis(headYaw,actor.up)*Quaternion.AngleAxis(headPitch,actor.right);
+                headBone.rotation=hRot*headBone.rotation;
+            }
+        }
+        void PoseZombieArmDirections(int side,int kind,bool heavy,float stride,float moveBlend,float prepare,float strike,float dying,out Vector3 upperDirection,out Vector3 lowerDirection)
+        {
+            int v=owner?owner.AttackVariant:0;
+            float asym=side<0?1f:.72f;
+            float breath=Mathf.Sin(Time.time*1.9f+side+kind)*.06f;
+            if(kind==0)
+            {
+                // Shambler: asymmetric reaching zombie arms (left clawing higher, right dragging lower, lurching with stride)
+                float reach=moveBlend*.38f;
+                upperDirection=new Vector3(side*(.20f+(side<0?.04f:.08f)),-.62f+(side<0?.12f:-.08f)+breath,.52f+reach-stride*.28f*asym-prepare*.32f+strike*1.15f);
+                lowerDirection=new Vector3(-side*.08f,-.45f+(side<0?.18f:-.05f),.82f-stride*.18f+prepare*.25f+strike*.95f);
+            }
+            else if(kind==1)
+            {
+                // Acid Spitter: twitchy hunched claws held near swollen throat/chest, flinging wide when spitting
+                upperDirection=new Vector3(side*(.28f+prepare*.22f+strike*.15f),-.68f+prepare*.25f-strike*.18f,.38f-stride*.20f-prepare*.28f+strike*.75f);
+                lowerDirection=new Vector3(-side*(.16f-prepare*.28f),-.32f+prepare*.35f,.86f+strike*.45f);
+            }
+            else if(kind==2)
+            {
+                // Rad Gunner: heavy armored tactical stagger, bracing forearm cannon/launcher
+                upperDirection=new Vector3(side*.26f,-.65f+prepare*.12f,.48f-stride*.16f+strike*.55f);
+                lowerDirection=new Vector3(-side*.14f,-.22f+prepare*.18f,.92f+strike*.35f);
+            }
+            else if(kind==4)
+            {
+                // Pouncer: low predatory feral stalk, wide clawed forelimbs sweeping close to the ground
+                upperDirection=new Vector3(side*(.38f+prepare*.18f),-.58f-prepare*.18f+strike*.25f,.68f-stride*.36f-prepare*.25f+strike*1.25f);
+                lowerDirection=new Vector3(side*(.12f-strike*.22f),-.48f+strike*.20f,.86f+prepare*.20f+strike*.65f);
+            }
+            else if(kind==5)
+            {
+                // Needle Stalker: skittering hunched spine-shooter, arms poised in sharp mantis-like guard
+                upperDirection=new Vector3(side*(.24f+prepare*.14f),-.72f+prepare*.16f,.44f-stride*.18f+strike*.65f);
+                lowerDirection=new Vector3(-side*.12f,-.20f+prepare*.22f,.95f+strike*.40f);
+            }
+            else if(kind==6)
+            {
+                // Rad Cycler: isotope-mutated hulking walk, arms wide around glowing chest canisters
+                upperDirection=new Vector3(side*(.34f+prepare*.24f+strike*.18f),-.78f+prepare*.28f,.32f-stride*.24f-prepare*.22f+strike*.85f);
+                lowerDirection=new Vector3(-side*(.10f-prepare*.20f),-.48f+prepare*.25f,.82f+strike*.55f);
+            }
+            else if(kind==7)
+            {
+                // Bloater: massive distended belly forces arms wide out to the sides, swinging heavily
+                upperDirection=new Vector3(side*(.46f+prepare*.18f),-.78f+prepare*.32f-strike*.22f,.18f-stride*.32f-prepare*.25f+strike*.95f);
+                lowerDirection=new Vector3(side*(.08f-strike*.18f),-.62f+prepare*.28f,.68f-stride*.18f+strike*.75f);
+            }
+            else if(kind==8)
+            {
+                // Plated Corpse: armored juggernaut, heavy Asymmetric guard and brutal overhead/cleave swings
+                upperDirection=new Vector3(side*(.32f+(v==2?prepare*.25f:0f)),-.76f+(v==2?prepare*.55f:prepare*.22f)-strike*.35f,.34f-stride*.26f-prepare*.25f+strike*1.10f);
+                lowerDirection=new Vector3(-side*(.12f+strike*.18f),-.52f+prepare*.30f,.78f-stride*.16f+strike*.85f);
+            }
+            else if(kind==9)
+            {
+                // Flesh Weaver: eerie writhing necromancer/healer posture, arms raised in bio-ritual gesture
+                float writhe=Mathf.Sin(Time.time*2.4f+side*1.3f)*.12f;
+                upperDirection=new Vector3(side*(.36f+prepare*.26f)+writhe,-.52f+prepare*.38f+breath,.54f-stride*.18f+strike*.75f);
+                lowerDirection=new Vector3(-side*(.08f-prepare*.22f),-.18f+prepare*.36f-writhe,.92f+strike*.45f);
+            }
+            else
+            {
+                upperDirection=new Vector3(side*.16f,-.94f,.22f+stride*.23f+strike*1.4f);
+                lowerDirection=new Vector3(-side*.08f,-.73f,.48f-stride*.12f+strike*1.25f);
+                if(kind==3&&owner&&owner.BossAttackStyle==1){upperDirection=Vector3.Lerp(upperDirection,new Vector3(side*.3f,.8f,.4f),prepare);lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(0,.6f,.8f),prepare);}
+                if(kind==3&&owner&&owner.BossAttackStyle==2){upperDirection=new Vector3(side*(.45f+prepare*.6f),-.25f,.4f+strike);lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(-side*.65f*strike,-.2f,.9f),1f);}
+                if(kind==3&&owner&&(owner.BossAttackStyle>=4||owner.IsSpinning)){float spin=owner.IsSpinning||owner.BossAttackStyle==7?1f:0f;upperDirection=new Vector3(side*(.55f+spin*.35f),spin>0?-.05f:-.35f+prepare*.45f,.45f+strike*.85f);lowerDirection=new Vector3(-side*.35f*strike,-.15f,.9f);}
+            }
+            if(kind!=3&&kind!=10&&v>0)
+            {
+                upperDirection+=new Vector3(side*(v==2?.28f:-.12f)*(prepare+strike),v==2?.32f*prepare:-.16f*prepare,strike*.38f);
+            }
+            upperDirection=Vector3.Lerp(upperDirection,new Vector3(side*.5f,-.75f,.25f),dying);
+            lowerDirection=Vector3.Lerp(lowerDirection,new Vector3(side*.2f,-.5f,.8f),dying);
+        }
+        void PoseZombieLeg(Limb limb,int kind,bool heavy,float cycle,float duty,float stepReach,float moveBlend,float prepare,float strike,float dying)
+        {
+            float legPhase=Mathf.Repeat(cycle+(limb.side>0?.5f:0f),1f);
+            // Shamblers and Plated Corpses drag their right leg slightly for an authentic undead limp
+            bool limpLeg=limb.side>0&&(kind==0||kind==1||kind==8);
+            float reach=stepReach*(limpLeg?.78f:1f);
+            float stepLift=legLength*(kind==4?.26f:kind==7?.12f:limpLeg?.08f:heavy?.14f:.18f)*moveBlend;
+            float along,lift,kneeExtra=0f;
+            if(legPhase<duty)
+            {
+                float u=legPhase/duty;
+                along=Mathf.Lerp(reach,-reach,u);
+                lift=0f;
+                // Subtle knee flexion on heel-strike/weight acceptance
+                kneeExtra=Mathf.Sin(u*Mathf.PI)*.035f*legLength*moveBlend;
+            }
+            else
+            {
+                float u=(legPhase-duty)/Mathf.Max(.01f,1f-duty);
+                float smoothU=u*u*(3f-2f*u);
+                along=Mathf.Lerp(-reach,reach,smoothU);
+                lift=Mathf.Sin(Mathf.Pow(u,.82f)*Mathf.PI)*stepLift;
+            }
+            float crouch=(kind==4?.12f:kind==0||kind==1?.045f:kind==7?.035f:.025f)*legLength+prepare*(kind==4?.14f:.06f)*legLength;
+            float stanceWidth=limb.side*(kind==7?.15f:kind==4?.12f:heavy?.10f:.055f)*legLength;
+            Vector3 hip=limb.upper.position;
+            Vector3 desiredAnkle=hip+actor.right*stanceWidth-actor.up*(legLength-crouch-lift+kneeExtra)+actor.forward*(along*moveBlend);
+            if(dying>.01f)
+            {
+                desiredAnkle=Vector3.Lerp(desiredAnkle,hip+actor.right*(limb.side*.12f*legLength)-actor.up*(legLength*.72f)-actor.forward*(.12f*legLength),dying);
+            }
+            Vector3 kneePole=actor.forward+actor.right*(limb.side*(kind==7?.28f:kind==4?.22f:.10f));
+            SolveArm(limb,desiredAnkle,kneePole);
+            if(limb.end&&limb.tip)
+            {
+                float footPitch=legPhase>=duty?Mathf.Sin((legPhase-duty)/(1f-duty)*Mathf.PI)*(limpLeg?-28f:-16f):0f;
+                Vector3 toeDir=Quaternion.AngleAxis(footPitch*moveBlend,actor.right)*actor.forward;
+                Aim(limb.end,limb.tip,toeDir);
+            }
+        }
+        void GroundProceduralFeet(float moveBlend,float dying)
+        {
+            if(dying>.01f)return;
+            var leftLeg=limbs.Find(l=>!l.arm&&l.side<0);
+            var rightLeg=limbs.Find(l=>!l.arm&&l.side>0);
+            if(leftLeg==null||rightLeg==null||!leftLeg.end||!rightLeg.end)return;
+            float dl=leftLeg.end.position.y-model.TransformPoint(restFootLocalL).y;
+            float dr=rightLeg.end.position.y-model.TransformPoint(restFootLocalR).y;
+            float offset=Mathf.Clamp(Mathf.Min(dl,dr),-.18f,.18f)*moveBlend;
+            model.position-=Vector3.up*offset;
+        }
         void PoseZombieWalk(float speed,int kind)
         {
-            if(!owner || owner.RaiderBoss || kind==3 || kind==5 || kind==10 || speed<.12f || deathTime>=0 || attackTime>0 || owner.IsTelegraphing)return;
-            float sway=Mathf.Sin(phase)*.08f;
+            // Retained only for generic clip models (Enemy_8 / Enemy_3) when walking without attack/telegraph
+            if(!walkClip || !owner || owner.RaiderBoss || kind==3 || kind==5 || kind==10 || speed<.12f || deathTime>=0 || attackTime>0 || owner.IsTelegraphing)return;
+            float sway=Mathf.Sin(phase)*.12f;
             foreach(var limb in limbs)
             {
                 if(!limb.arm)continue;
-                Vector3 upper=new Vector3(limb.side*.18f,-.55f,.84f+limb.side*sway);
-                Vector3 lower=new Vector3(limb.side*.04f,-.84f,.50f-limb.side*sway);
+                Vector3 upper=new Vector3(limb.side*.22f,-.58f,.78f+limb.side*sway);
+                Vector3 lower=new Vector3(limb.side*.04f,-.76f,.58f-limb.side*sway);
                 Aim(limb.upper,limb.lower,actor.TransformDirection(upper));
                 Aim(limb.lower,limb.end,actor.TransformDirection(lower));
-                if(limb.end&&limb.tip)Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(0,-.94f,.25f)));
+                if(limb.end&&limb.tip)Aim(limb.end,limb.tip,actor.TransformDirection(new Vector3(0,-.90f,.32f)));
             }
         }
         void PoseFirearm(float speed)
@@ -628,8 +791,32 @@ namespace NeonVault
                 AddLimb(side,false,
                     human?human.GetBoneTransform(left?HumanBodyBones.LeftUpperLeg:HumanBodyBones.RightUpperLeg):FindBone(side,"thigh","upleg","hip"),
                     human?human.GetBoneTransform(left?HumanBodyBones.LeftLowerLeg:HumanBodyBones.RightLowerLeg):FindBone(side,"calf","leg","knee"),
-                    human?human.GetBoneTransform(left?HumanBodyBones.LeftFoot:HumanBodyBones.RightFoot):FindBone(side,"foot","ankle"),null);
+                    human?human.GetBoneTransform(left?HumanBodyBones.LeftFoot:HumanBodyBones.RightFoot):FindBone(side,"foot","ankle"),
+                    human?human.GetBoneTransform(left?HumanBodyBones.LeftToes:HumanBodyBones.RightToes):FindBone(side,"toebase","ball","toe"));
             }
+            pelvisBone=human?human.GetBoneTransform(HumanBodyBones.Hips):FindCenterBone("pelvis","hips");
+            spineBone=human?human.GetBoneTransform(HumanBodyBones.Spine):FindCenterBone("spine01","spine1","spine");
+            chestBone=(human?human.GetBoneTransform(HumanBodyBones.UpperChest):null)??(human?human.GetBoneTransform(HumanBodyBones.Chest):null)??FindCenterBone("spine03","spine2","spine02","spine1");
+            neckBone=human?human.GetBoneTransform(HumanBodyBones.Neck):FindCenterBone("neck01","neck");
+            headBone=human?human.GetBoneTransform(HumanBodyBones.Head):FindCenterBone("head");
+            if(pelvisBone){pelvisRest=pelvisBone.localRotation;pelvisRestPos=pelvisBone.localPosition;}
+            if(spineBone)spineRest=spineBone.localRotation;
+            if(chestBone)chestRest=chestBone.localRotation;
+            if(neckBone)neckRest=neckBone.localRotation;
+            if(headBone)headRest=headBone.localRotation;
+        }
+        Transform FindCenterBone(params string[] tokens)
+        {
+            var all=model.GetComponentsInChildren<Transform>();
+            foreach(string token in tokens)
+                foreach(var candidate in all)
+                {
+                    string n=candidate.name.ToLowerInvariant();
+                    if(n.Contains("ctrl")||n.Contains("effector")||n.Contains("twist")||n.Contains("end")||n.Contains("top")||n.Contains("front")||n.Contains("eye")||n.Contains("jaw"))continue;
+                    string canonical=n.Replace("_","");
+                    if(canonical==token||canonical.EndsWith(token))return candidate;
+                }
+            return null;
         }
         void AddLimb(int side,bool arm,Transform upper,Transform lower,Transform end,Transform tip)
         {

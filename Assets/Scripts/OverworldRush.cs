@@ -86,6 +86,7 @@ namespace NeonVault
             {
                 ClearOverworldRushEnemies(); ClearSurvivalBoundary(); overworldRushRewardReady = true;
                 RefreshOverworldActivities();
+                PlayUserSound("transaction", .35f);
                 Notify("CHALLENGE COMPLETE / open the reward chest", "挑戦成功 / 報酬箱を開けよう");
                 return;
             }

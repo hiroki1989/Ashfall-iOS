@@ -69,6 +69,7 @@ namespace NeonVault
             previous = current;
             if (owner.dead)
             {
+                animator.speed = 1f;
                 if (!dead) { dead = true; Play("thc4_arma|st_death", .08f); }
                 return;
             }
@@ -81,8 +82,23 @@ namespace NeonVault
                 attackUntil = Time.time + owner.TelegraphSeconds + .25f;
             }
             wasCharging = owner.IsTelegraphing;
-            if (Time.time < attackUntil) return;
-            Play(speed > .2f ? "thc4_arma|st_run" : "thc4_arma|st_idle_battle", .12f);
+            if (Time.time < attackUntil)
+            {
+                animator.speed = 1f;
+                return;
+            }
+            if (speed > .15f)
+            {
+                bool run = speed > 3.1f && animator.HasState(0, Animator.StringToHash("thc4_arma|st_run"));
+                bool hasWalk = animator.HasState(0, Animator.StringToHash("thc4_arma|st_walk"));
+                Play(run || !hasWalk ? "thc4_arma|st_run" : "thc4_arma|st_walk", .12f);
+                animator.speed = Mathf.Clamp(speed / (run || !hasWalk ? 3.4f : 1.9f), .55f, 1.85f);
+            }
+            else
+            {
+                animator.speed = 1f;
+                Play("thc4_arma|st_idle_battle", .12f);
+            }
         }
         void Play(string state, float blend)
         {
