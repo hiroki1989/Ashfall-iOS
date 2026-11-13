@@ -42,7 +42,7 @@ namespace NeonVault
             get
             {
                 int limit=Mathf.Max(0,Mathf.Min(Credits,DebtRemaining));
-                return FreeVersionBlocksProgress?Mathf.Min(limit,FreeVersionRepaymentAllowance(debtPaid,DebtTotalForLevel(3))):limit;
+                return FreeVersionBlocksProgress?Mathf.Min(limit,FreeVersionRepaymentAllowance(debtPaid,DebtTotalForLevel(2))):limit;
             }
         }
         void SetDebtPaymentFraction(float fraction)
@@ -65,7 +65,8 @@ namespace NeonVault
             {
                 int level=1;
                 while(level<DebtLevelCap&&debtPaid>=DebtTotalForLevel(level+1))level++;
-                return level;
+                // Keep the original paid amount; restore its level after purchase.
+                return FreeVersionBlocksProgress?Mathf.Min(level,2):level;
             }
         }
         // Legacy expedition token saves now contribute to the same spendable pool.
@@ -132,7 +133,7 @@ namespace NeonVault
             PlayerPrefs.SetString(DebtSaveKey,JsonUtility.ToJson(data));PlayerPrefs.Save();
         }
         void MarkDebtIntroSeen(){debtIntroSeen=true;SaveDebtSkills();}
-        internal static int FreeVersionRepaymentAllowance(int paid,int levelThreeTotal)=>Mathf.Max(0,levelThreeTotal-paid);
+        internal static int FreeVersionRepaymentAllowance(int paid,int levelLimitTotal)=>Mathf.Max(0,levelLimitTotal-paid);
         public bool RepayDebt(int requested)
         {
             if(requested<=0||Credits<=0||DebtRemaining<=0)return false;
@@ -140,8 +141,8 @@ namespace NeonVault
 #if UNITY_IOS && !UNITY_EDITOR
             if(!IosPremiumAccess.IsUnlocked)
             {
-                amount=Mathf.Min(amount,FreeVersionRepaymentAllowance(debtPaid,DebtTotalForLevel(3)));
-                if(amount<=0){Notify("FREE VERSION / Unlock the full game to advance beyond level 3.","無料版 / レベル3以降は完全版の購入で解放されます。");return false;}
+                amount=Mathf.Min(amount,FreeVersionRepaymentAllowance(debtPaid,DebtTotalForLevel(2)));
+                if(amount<=0){Notify("FREE VERSION / Unlock the full game to advance beyond level 2.","無料版 / レベル3以降は完全版の購入で解放されます。");return false;}
             }
 #endif
             int before=DebtLevel;int paidBefore=InitialDebt-DebtRemaining;Credits-=amount;debtPaid+=amount;SaveDebtSkills();SaveProgression();FirstStepsDebtPaid();UpdateFactionBossUnlocks(paidBefore);PlayUserSound("transaction",.35f);

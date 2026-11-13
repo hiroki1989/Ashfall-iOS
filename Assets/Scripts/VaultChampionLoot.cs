@@ -23,7 +23,7 @@ namespace NeonVault {public partial class VaultGame {
  }
  void DropChampionReward(Foe foe,bool boss){
   // Each champion guarantees one quality reward; ordinary drops remain separate.
-  double roll=rng.NextDouble();Rarity rarity=roll<(boss?.2375:.076)?Rarity.Legendary:roll<(boss?.7625:.4315)?Rarity.Epic:Rarity.Rare;
+  double roll=rng.NextDouble();Rarity rarity=roll<.05?Rarity.Legendary:roll<.30?Rarity.Epic:Rarity.Rare;
   petEnemyLootRoll=true;try{rarity=PetImproveEnemyRarity(rng,rarity,boss);}finally{petEnemyLootRoll=false;}
   int level=ExpeditionLootLevel(rng);var p=foe.transform.position+Vector3.right*.7f;
   if(boss&&rarity==Rarity.Legendary&&IsOverworld&&TryGetLandmarkBossId(foe,out int landmarkId)&&DungeonBossExclusive.TryGetLandmarkExclusive(landmarkId,out var lExcl)&&rng.NextDouble()<.5)

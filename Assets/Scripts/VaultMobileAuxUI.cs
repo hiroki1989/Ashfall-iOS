@@ -173,9 +173,9 @@ namespace NeonVault
             MobileCopyAt(40,155,T("WALLET ","所持金 ")+Credits.ToString("N0")+T(" / POINTS "," / スキルポイント ")+DebtSkillPoints,Cyan,1300);
             if(!debtSkillTreePage)
             {
-                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&(DebtLevel>=3||mobilePremiumPage))
+                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&(DebtLevel>=2||mobilePremiumPage))
                 {
-                    MobileCopyAt(40,220,DebtLevel>=3?T("LEVEL 3 REACHED / FULL GAME LOCKED","レベル3到達 / 製品版はロック中"):T("FULL GAME","製品版"),Gold,1360);
+                    MobileCopyAt(40,220,DebtLevel>=2?T("LEVEL 2 REACHED / FULL GAME LOCKED","レベル2到達 / 製品版はロック中"):T("FULL GAME","製品版"),Gold,1360);
                     MobileCopyAt(40,290,T("Unlock the full game to continue repayment and progression.","製品版を購入すると、返済とレベルアップを続けられます。"),Mist,1360);
                     string price=IosPremiumAccess.PriceText;
                     string purchaseCaption=T("UNLOCK FULL GAME","製品版を購入")+"\n"+(string.IsNullOrWhiteSpace(price)?T("PRICE NOT AVAILABLE YET","価格を取得できていません"):price);
@@ -193,7 +193,7 @@ namespace NeonVault
                 if(MobileButton(new Rect(40,485,655,110),T("MAX AMOUNT","全額を選択")))debtPaymentAmount=limit;
                 if(MobileButton(new Rect(720,485,680,110),T("REPAY SELECTED","指定額を返済"))&&debtPaymentAmount>0)RepaySelectedDebt();
                 if(MobileButton(new Rect(40,650,655,110),T("TAKE A JOB","仕事を探す"))){GetCampMissionOffers(LastVisitedCamp);briggsMissionPage=true;}
-                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&DebtLevel<3&&MobileButton(new Rect(720,650,680,110),T("FULL GAME / RESTORE","製品版の購入・復元"),30))mobilePremiumPage=true;
+                if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&DebtLevel<2&&MobileButton(new Rect(720,650,680,110),T("FULL GAME / RESTORE","製品版の購入・復元"),30))mobilePremiumPage=true;
                 if(DebtRemaining==0&&PlayerPrefs.GetInt(DebtBossDefeatedKey,0)!=0&&MobileButton(new Rect(400,780,640,90),T("VALE REMATCH","ヴェイル再戦")))StartValeRematch();
                 return;
             }

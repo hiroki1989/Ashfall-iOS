@@ -98,6 +98,7 @@ namespace NeonVault
         public bool FastTravelToCamp(int camp)
         {
             EnsureOverworldState();if(!CanWorldFastTravel||!IsCampVisited(camp))return false;
+            if(FreeWorldDestinationBlocked(WorldGeography.Camps[camp]))return false;
             VisitOverworldCamp(camp);RememberOverworldPosition(WorldGeography.Camps[camp],false);SetOverworldReturnStage(-1);
             EnterHub();Notify("SAFE CAMP / "+OverworldCampName(camp,false),"拠点へ移動 / "+OverworldCampName(camp,true));return true;
         }
@@ -106,6 +107,7 @@ namespace NeonVault
             EnsureOverworldState();
             if(!CanWorldFastTravel||stage<0||stage>=ExpeditionMap.StageCount||!IsDungeonFastTravelUnlocked(stage))return false;
             Vector3 outsidePos=WorldGeography.Entrances[stage]+Vector3.back*2.2f;
+            if(FreeWorldDestinationBlocked(outsidePos))return false;
             RememberOverworldPosition(outsidePos,true);
             SetOverworldReturnStage(-1);
             BuildOverworld(outsidePos);
@@ -133,6 +135,7 @@ namespace NeonVault
         public void BuildOverworld(Vector3 position) {if(QueueWorldTransition(()=>BuildOverworldImmediate(position)))return;BuildOverworldImmediate(position);}
         void BuildOverworldImmediate(Vector3 position)
         {
+            position=RestrictFreeWorldPosition(position,false);
             pausedFromHub=false;EnsureProgressionAndInventoryLoaded();
             EnsureOverworldState();SaveInventory();ResetGameplayOverlays();ClearRunCheckpoint();ClearWorldScene();
             IsOverworld=true;SetOverworldReturnStage(-1);SelectedStageId=-1;room=0;kills=0;shake=0;cleared=false;missionCompleted=false;missionKills=0;

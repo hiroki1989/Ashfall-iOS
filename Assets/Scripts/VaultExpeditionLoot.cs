@@ -27,13 +27,13 @@ namespace NeonVault
             return PetImproveEnemyRarity(random,rarity,boss);
         }
         // Contract equipment has its own rarity table; ordinary enemy/cache drops
-        // keep their existing rates. A first-clear cache adds ten percentage points
-        // to legendary by taking them from the lowest eligible tier.
+        // keep their existing rates. First-clear and repeat contract rewards
+        // use the same 55/35/10 table for first clears and repeat clears.
         public static Rarity RollExpeditionRewardRarity(System.Random random,bool firstClear=false)
         {
             double roll=random.NextDouble();
-            if(roll<(firstClear?.25:.15))return Rarity.Legendary;
-            if(roll<(firstClear?.60:.50))return Rarity.Epic;
+            if(roll<.10)return Rarity.Legendary;
+            if(roll<.45)return Rarity.Epic;
             return Rarity.Rare;
         }
         public Gun RollExpeditionGun(System.Random random,Rarity rewardRarity)

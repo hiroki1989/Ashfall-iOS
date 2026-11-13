@@ -27,13 +27,11 @@ namespace NeonVault {
   void SaveProgression(){if(smoke)return;EquipmentDiscovery.RecordCurrent(null,null,ArtifactInventory,null);PlayerPrefs.SetString("Vault.Progression.v1",JsonUtility.ToJson(new ProgressSave{dungeon=DungeonIndex,unlocked=HighestUnlocked,credits=Credits,cycle=shopCycle,stage=SelectedStageId,hasSelectedStage=SelectedStageId>=0,tokens=ExpeditionTokens,collectorClaims=collectorClaims,collectorIntroSeen=collectorIntroSeen,moduleCapacityTier=ModuleCapacityTier,clearedStages=clearedExpeditionStages,artifacts=ArtifactInventory,equipped=new[]{EquippedArtifacts[0]?.id,EquippedArtifacts[1]?.id},purchased=shopPurchased}));PlayerPrefs.Save();}
   public void EnterHub(){pausedFromHub=false;finalDebtBossFight=false;briggsMissionPage=false;ClearBriggsReceipt();ClearActiveActionSkill();SaveInventory();EnsureOverworldState();IsOverworld=false;ClearRunCheckpoint();shake=0;runDamage=runFire=runVitality=runDash=runChain=runHarvest=0;damageBonus=fireBonus=0;ClearRunUpgradeHistory();shopSellingPage=false;pendingSaleKey=null;SelectedStageId=-1;room=0;kills=0;npcConversation=0;npcBeat=0;dialogueOpenedFrame=0;ResetGameplayOverlays();ResetArtifactCombat();RefreshPermanentStats();hp=maxHp;RememberOverworldPosition(WorldGeography.Camps[LastVisitedCamp],false);screen=Screen.Hub;BuildHub();}
   public bool EnterDungeon(int index){if(!smoke||index<0||index>HighestUnlocked||index>=3)return false;SelectedStageId=-1;ResetExpeditionMission();DungeonIndex=index;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}
-  internal static bool FreeVersionAllowsDungeonLevel(int level)=>level<=3;
+  internal static bool FreeVersionAllowsDungeonLevel(int level)=>level<=2;
   bool CanAccessFreeVersionStage(int stageId)
   {
-#if UNITY_IOS && !UNITY_EDITOR
-   if(!IosPremiumAccess.IsUnlocked && !FreeVersionAllowsDungeonLevel(stageId<0 ? DebtLevel : ExpeditionMap.Get(stageId,DebtLevel).level))
-   {Notify("FREE VERSION / Unlock the full game to enter dungeons above level 3.","無料版 / レベル4以上のダンジョンは完全版の購入で解放されます。");return false;}
-#endif
+   if(FreeVersionBlocksProgress && !FreeVersionAllowsDungeonLevel(stageId<0 ? DebtLevel : ExpeditionMap.Get(stageId,DebtLevel).level))
+   {Notify("FREE VERSION / Unlock the full game to enter dungeons above level 2.","無料版 / レベル3以上のダンジョンは完全版の購入で解放されます。");return false;}
    return true;
   }
   public bool EnterExpeditionStage(int stageId){if(stageId<0||stageId>=ExpeditionMap.StageCount||!FactionHeadquartersUnlocked(stageId)||!CanAccessFreeVersionStage(stageId))return false;var stage=ExpeditionMap.Get(stageId,DebtLevel);if(!smoke&&stage.level>DebtLevel){Notify("LEVEL TOO LOW / Requires level "+stage.level,"レベル不足 / 必要レベル "+stage.level);return false;}if(!smoke&&(!IsOverworld||(WorldGeography.Entrances[stageId]-PlayerPosition).sqrMagnitude>3.5f*3.5f))return false;MarkDungeonFastTravelUnlocked(stageId);SelectedStageId=stageId;ResetExpeditionMission();DungeonIndex=stage.legacyDungeonIndex;ClearRunUpgradeHistory();ResetArtifactCombat();SaveProgression();StartRun();return true;}

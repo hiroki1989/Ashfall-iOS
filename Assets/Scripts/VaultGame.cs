@@ -373,6 +373,7 @@ namespace NeonVault
         }
         void Update()
         {
+            if(freeWorldBoundaryPrompt){if(Input.GetKeyDown(KeyCode.Escape))CloseFreeWorldBoundaryPrompt();return;}
             UpdateMobilePowerState();
             TickHealNumber();
             if(screen==Screen.Dead)
@@ -465,7 +466,7 @@ namespace NeonVault
             Vector3 movement=ReadPlayerMovement();
             if(VaultMobileInputBridge.Pressed(MobileAction.Dodge,KeyCode.Space)&&dodgeCooldown<=0) { dodgeTimer=.19f; dodgeCooldown=EffectiveDodgeCooldown/(1+runDash); invincible=.3f; dodgeDirection=movement.sqrMagnitude>0?movement.normalized:aim; Burst(player.position,Cyan,8);ArtifactOnDash();RunDashPulse(); }
             if(dodgeTimer>0) { dodgeTimer-=Time.deltaTime; movement=dodgeDirection*3.3f; }
-            Vector3 previousPosition=player.position;player.position=MoveWithinRoom(player.position,movement*EffectiveMoveSpeed*Time.deltaTime,.45f);TickFootsteps(previousPosition,player.position);
+            Vector3 previousPosition=player.position;player.position=RestrictFreeWorldPosition(MoveWithinRoom(player.position,movement*EffectiveMoveSpeed*Time.deltaTime,.45f),true);TickFootsteps(previousPosition,player.position);
             TickFieldEconomy();
             if(NearbyAmmoCrate)OpenNearbyAmmoCrate(true);
             if(reload>0) { reload-=Time.deltaTime; if(reload<=0)CompleteAmmoReload(); }

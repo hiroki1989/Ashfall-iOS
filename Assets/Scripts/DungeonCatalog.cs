@@ -14,6 +14,24 @@ namespace NeonVault {
   };
   public static DungeonProfile Get(int index)=>All[Mathf.Clamp(index,0,All.Length-1)];
   public static int ItemLevel(System.Random random,int index){var d=Get(index);return random.Next(d.minLevel,d.maxLevel+1);}
-  public static Rarity RollRarity(System.Random random,bool boss=false){double p=random.NextDouble()*100;float multiplier=VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.legendaryDropMultiplier:1f;double legendaryChance=Mathf.Clamp((boss?5f:.5f)*.95f*multiplier,0,100);if(p<legendaryChance)return Rarity.Legendary;p=(p-legendaryChance)/(100-legendaryChance)*99.5;return boss?(p<56.7?Rarity.Common:p<88.15?Rarity.Uncommon:p<96.5?Rarity.Rare:Rarity.Epic):(p<58.8?Rarity.Common:p<90.2?Rarity.Uncommon:p<97.3?Rarity.Rare:Rarity.Epic);}
+  public static Rarity RollRarity(System.Random random,bool boss=false)
+  {
+   // Raise the original common/uncommon probabilities by 5/3 percentage points;
+   // share the remaining probability among higher rarities in their original ratio.
+   double oldLegendary=boss?4.75:.475, oldNonLegendary=100-oldLegendary;
+   double common=oldNonLegendary*(boss?56.7:58.8)/99.5+5;
+   double uncommon=oldNonLegendary*(boss?31.45:31.4)/99.5+3;
+   double rare=oldNonLegendary*(boss?8.35:7.1)/99.5;
+   double epic=oldNonLegendary*(boss?3.0:2.2)/99.5;
+   double multiplier=VaultBalanceProfile.Current!=null?Mathf.Max(0f,VaultBalanceProfile.Current.legendaryDropMultiplier):1f;
+   double legendary=oldLegendary*multiplier;
+   double roll=random.NextDouble()*100;
+   if(roll<common)return Rarity.Common;
+   if(roll<common+uncommon)return Rarity.Uncommon;
+   double highRoll=(roll-common-uncommon)*(rare+epic+legendary)/(100-common-uncommon);
+   if(highRoll<rare)return Rarity.Rare;
+   if(highRoll<rare+epic)return Rarity.Epic;
+   return Rarity.Legendary;
+  }
  }
 }

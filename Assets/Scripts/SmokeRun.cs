@@ -249,8 +249,8 @@ namespace NeonVault
             Check(mapValid,"expedition catalog has 100 level-gated sites across five 20-site regions");
             var rewardRandom=new System.Random(24680);int[] normalRewardRarities=new int[5],firstRewardRarities=new int[5];
             for(int i=0;i<10000;i++){normalRewardRarities[(int)VaultGame.RollExpeditionRewardRarity(rewardRandom)]++;firstRewardRarities[(int)VaultGame.RollExpeditionRewardRarity(rewardRandom,true)]++;}
-            Check(normalRewardRarities[(int)Rarity.Common]==0&&normalRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(normalRewardRarities[(int)Rarity.Rare]-5000)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Legendary]-1500)<200,"contract equipment rarity is rare 50%, epic 35%, legendary 15%");
-            Check(firstRewardRarities[(int)Rarity.Common]==0&&firstRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(firstRewardRarities[(int)Rarity.Rare]-4000)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Legendary]-2500)<220,"first-clear contract equipment raises legendary chance by ten points");
+            Check(normalRewardRarities[(int)Rarity.Common]==0&&normalRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(normalRewardRarities[(int)Rarity.Rare]-5500)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(normalRewardRarities[(int)Rarity.Legendary]-1000)<200,"contract equipment rarity is rare 55%, epic 35%, legendary 10%");
+            Check(firstRewardRarities[(int)Rarity.Common]==0&&firstRewardRarities[(int)Rarity.Uncommon]==0&&Mathf.Abs(firstRewardRarities[(int)Rarity.Rare]-5500)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Epic]-3500)<250&&Mathf.Abs(firstRewardRarities[(int)Rarity.Legendary]-1000)<200,"first-clear contract equipment uses rare 55%, epic 35%, legendary 10%");
             Check(game.ScrapLevelMultiplier>=1&&game.ScaleScrap(10000)>=100,"scrap transactions use the reduced base scale and level growth");
             Check(game.AmmoPickupEnglish(AmmoType.Handgun,9)=="Handgun rounds ×9"&&game.AmmoPickupJapanese(AmmoType.Shotgun,4)=="ショットガン弾 ×4","ammo pickup labels identify type and exact quantity in both languages");
             int scrapDrops=0;bool scrapRange=true;for(int i=0;i<1000;i++)if(game.TryRollScrapDrop(false,out int amount)){scrapDrops++;scrapRange&=amount>=game.ScaleScrap(12000+game.DungeonIndex*3000)&&amount<=game.ScaleScrap(32000+game.DungeonIndex*3000);}
@@ -1294,10 +1294,10 @@ namespace NeonVault
             VaultLanguage.Set(true,false);yield return Capture("shop-ja.png");VaultLanguage.Set(false,false);yield return Capture("shop-en.png");
             game.screen=VaultGame.Screen.DungeonSelect;VaultLanguage.Set(true,false);yield return Capture("dungeons-ja.png");VaultLanguage.Set(false,false);
             var roll=new System.Random(6173);int[] ordinary=new int[5];for(int i=0;i<40000;i++)ordinary[(int)DungeonCatalog.RollRarity(roll)]++;
-            Check(ordinary[4]>120&&ordinary[4]<280,"ordinary legendary rate is approximately 0.5 percent, not guaranteed");
-            Check(ordinary[0]>21000&&ordinary[0]<23000&&ordinary[3]>1100&&ordinary[3]<1700,"common and epic rarity proportions match their documented rates");
+            Check(ordinary[4]>15&&ordinary[4]<60,"ordinary legendary rate is approximately 0.09 percent, not guaranteed");
+            Check(ordinary[0]>24900&&ordinary[0]<26100&&ordinary[3]>100&&ordinary[3]<240,"common and epic rarity proportions match their documented rates");
             int bossLegends=0;for(int i=0;i<20000;i++)if(DungeonCatalog.RollRarity(roll,true)==Rarity.Legendary)bossLegends++;
-            Check(bossLegends>800&&bossLegends<1200,"boss legendary rate is approximately five percent");
+            Check(bossLegends>380&&bossLegends<560,"boss ordinary legendary rate is approximately 2.3 percent");
             for(int dungeon=0;dungeon<3;dungeon++){
                 var profile=DungeonCatalog.Get(dungeon);bool valid=true;for(int i=0;i<400;i++){var g=Arsenal.RollForDungeon(roll,dungeon);var a=Armory.RollForDungeon(roll,dungeon);var relic=ArtifactCatalog.RollForDungeon(roll,dungeon);valid&=g.level>=profile.minLevel&&g.level<=profile.maxLevel&&a.level>=profile.minLevel&&a.level<=profile.maxLevel&&relic.level>=profile.minLevel&&relic.level<=profile.maxLevel;}
                 Check(valid,"all weapon armor and artifact rolls stay in dungeon level band "+dungeon);
