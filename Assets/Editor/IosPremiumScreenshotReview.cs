@@ -50,9 +50,9 @@ public sealed class IosPremiumScreenshotOverlay : MonoBehaviour
     IEnumerator Start()
     {
         var holder=new GameObject("Inactive save-free game"); holder.SetActive(false); game=holder.AddComponent<VaultGame>();
-        Set(game,"font",Resources.Load<Font>("Fonts/JNRfont_n")); Set(game,"englishHeadingFont",Resources.Load<Font>("Fonts/JNRfont_n"));
+        Set(game,"font",Resources.Load<Font>("Fonts/Corporate-Logo-Medium-ver3")); Set(game,"englishHeadingFont",Resources.Load<Font>("Fonts/Corporate-Logo-Medium-ver3"));
         var pixel=new Texture2D(1,1);pixel.SetPixel(0,0,Color.white);pixel.Apply(); Set(game,"pixel",pixel); Set(game,"smoke",true);
-        var total=typeof(VaultGame).GetMethod("DebtTotalForLevel",Flags); Set(game,"debtPaid",total.Invoke(game,new object[]{3}));
+        var total=typeof(VaultGame).GetMethod("DebtTotalForLevel",Flags); Set(game,"debtPaid",0); Set(game,"mobilePremiumPage",true);
         typeof(IosPremiumAccess).GetField("price",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,"JPY 490");
         VaultLanguage.Set(true,false); styles=typeof(VaultGame).GetMethod("Styles",Flags); draw=typeof(VaultGame).GetMethod("DrawMobileDebt",Flags); ready=true;
         for(int i=0;i<20;i++) yield return null;
@@ -62,7 +62,7 @@ public sealed class IosPremiumScreenshotOverlay : MonoBehaviour
             if(!tex) failure="Screenshot unavailable";
             else { bool ipad=Array.IndexOf(Environment.GetCommandLineArgs(), "--ios-premium-ipad") >= 0; int width=ipad?2752:2868, height=ipad?2064:1320; File.WriteAllBytes(Output+(ipad?"/purchase-ja-ipad-editor.png":"/purchase-ja-iphone-editor.png"),tex.EncodeToPNG()); if(tex.width!=width||tex.height!=height) failure="Unexpected size "+tex.width+"x"+tex.height; Destroy(tex); }
         }
-        ready=false; File.WriteAllText(Output+"/result.txt",failure==null?"PASS / Unity Editor / simulated level 3 and JPY 490 / no saves / no StoreKit":"FAIL "+failure);
+        ready=false; File.WriteAllText(Output+"/result.txt",failure==null?"PASS / Unity Editor / simulated level 1 and JPY 490 / no saves / no StoreKit":"FAIL "+failure);
     }
     void OnGUI()
     {

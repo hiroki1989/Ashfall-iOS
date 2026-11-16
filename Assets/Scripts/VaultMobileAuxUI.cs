@@ -176,7 +176,8 @@ namespace NeonVault
                 if(PremiumIosReviewPlatform&&!IosPremiumAccess.IsUnlocked&&(DebtLevel>=2||mobilePremiumPage))
                 {
                     MobileCopyAt(40,220,DebtLevel>=2?T("LEVEL 2 REACHED / FULL GAME LOCKED","レベル2到達 / 製品版はロック中"):T("FULL GAME","製品版"),Gold,1360);
-                    MobileCopyAt(40,290,T("Unlock the full game to continue repayment and progression.","製品版を購入すると、返済とレベルアップを続けられます。"),Mist,1360);
+                    MobileCopyAt(40,275,T("FREE: Up to Level 2 and within 600 m of the starting outpost.","無料版：レベル2まで、最初の拠点から半径600mまで探索できます。"),Mist,1360);
+                    MobileCopyAt(40,330,T("FULL GAME: Unlock Level 3 and beyond and the entire world.","製品版：レベル3以降と、全体マップの全域を解放します。"),Mist,1360);
                     string price=IosPremiumAccess.PriceText;
                     string purchaseCaption=T("UNLOCK FULL GAME","製品版を購入")+"\n"+(string.IsNullOrWhiteSpace(price)?T("PRICE NOT AVAILABLE YET","価格を取得できていません"):price);
                     if(MobileButton(new Rect(40,405,655,110),purchaseCaption,30))IosPremiumAccess.Purchase();

@@ -27,6 +27,16 @@ namespace NeonVault
             npcBeat=PlayerPrefs.GetInt("Vault.BriggsIntro",0)==0?0:12;
             briggsChoiceSelection=0;
         }
+        void OpenBriggsFullGame()
+        {
+            npcConversation=0;
+            debtPage=true;
+            briggsMissionPage=false;
+            debtSkillTreePage=false;
+            mobilePremiumPage=true;
+            screen=Screen.Shop;
+        }
+
         void DrawNpcConversation()
         {
             if(npcConversation==3){DrawPetAdoptionConversation();return;}
@@ -110,15 +120,19 @@ namespace NeonVault
 
             if(npcConversation==2 && npcBeat==12)
             {
+                bool showFullGame = PremiumIosReviewPlatform && !IosPremiumAccess.IsUnlocked;
+                int choiceCount = showFullGame ? 4 : 3;
+                briggsChoiceSelection = Mathf.Clamp(briggsChoiceSelection, 0, choiceCount - 1);
                 if(Event.current.type==EventType.Layout)
                 {
                     if(Input.GetKeyDown(KeyCode.Escape)||Input.GetKeyDown(KeyCode.JoystickButton1)){npcConversation=0;return;}
-                    if(Input.GetKeyDown(KeyCode.LeftArrow)||Input.GetKeyDown(KeyCode.A))briggsChoiceSelection=(briggsChoiceSelection+2)%3;
-                    if(Input.GetKeyDown(KeyCode.RightArrow)||Input.GetKeyDown(KeyCode.D))briggsChoiceSelection=(briggsChoiceSelection+1)%3;
+                    if(Input.GetKeyDown(KeyCode.LeftArrow)||Input.GetKeyDown(KeyCode.A))briggsChoiceSelection=(briggsChoiceSelection+choiceCount-1)%choiceCount;
+                    if(Input.GetKeyDown(KeyCode.RightArrow)||Input.GetKeyDown(KeyCode.D))briggsChoiceSelection=(briggsChoiceSelection+1)%choiceCount;
                     if(Input.GetKeyDown(KeyCode.Return)||Input.GetKeyDown(KeyCode.Space))
                     {
                         if(briggsChoiceSelection==0){npcConversation=0;debtPage=true;briggsMissionPage=false;debtSkillTreePage=false;screen=Screen.Shop;return;}
                         if(briggsChoiceSelection==1){npcConversation=0;debtPage=true;briggsMissionPage=true;debtSkillTreePage=false;GetCampMissionOffers(LastVisitedCamp);screen=Screen.Shop;return;}
+                        if(showFullGame && briggsChoiceSelection==2){OpenBriggsFullGame();return;}
                         npcConversation=0;return;
                     }
                 }
@@ -126,15 +140,22 @@ namespace NeonVault
                 string activeHint=HasActiveBriggsMission?T("ACTIVE JOB: ","受注中の仕事: ")+ExpeditionMap.Get(activeBriggsMissionStage,DebtLevel).Name:T("CONTRACT LIMIT: 1 JOB AT A TIME","受注中のミッションは1件まで");
                 DrawUnifiedDialogueScene("briggs",false,T("BRIGGS","ブリッグス"),choicePrompt,Gold);
                 Text(UnifiedDialogueBox.x+35f,UnifiedDialogueBox.y+210f,activeHint,small,HasActiveBriggsMission?Gold:Cyan,UnifiedDialogueBox.width-70f);
-                if(Button(new Rect(145,725,360,65),T("REPAY DEBT","返済する"),briggsChoiceSelection==0))
+                float choiceWidth=showFullGame?275f:360f;
+                float choiceStep=showFullGame?290f:385f;
+                if(Button(new Rect(145,725,choiceWidth,65),T("REPAY DEBT","返済する"),briggsChoiceSelection==0))
                 {
                     npcConversation=0;debtPage=true;briggsMissionPage=false;debtSkillTreePage=false;screen=Screen.Shop;
                 }
-                if(Button(new Rect(530,725,360,65),T("TAKE A JOB","仕事がほしい"),briggsChoiceSelection==1))
+                if(Button(new Rect(145+choiceStep,725,choiceWidth,65),T("TAKE A JOB","仕事がほしい"),briggsChoiceSelection==1))
                 {
                     npcConversation=0;debtPage=true;briggsMissionPage=true;debtSkillTreePage=false;GetCampMissionOffers(LastVisitedCamp);screen=Screen.Shop;
                 }
-                if(Button(new Rect(920,725,370,65),T("CLOSE","立ち去る"),briggsChoiceSelection==2))
+                if(showFullGame && Button(new Rect(145+choiceStep*2,725,choiceWidth,65),T("FULL GAME","製品版の購入"),briggsChoiceSelection==2))
+                {
+                    OpenBriggsFullGame();
+                    return;
+                }
+                if(Button(new Rect(145+choiceStep*(choiceCount-1),725,showFullGame?choiceWidth:370,65),T("CLOSE","立ち去る"),briggsChoiceSelection==choiceCount-1))
                 {
                     npcConversation=0;
                 }
