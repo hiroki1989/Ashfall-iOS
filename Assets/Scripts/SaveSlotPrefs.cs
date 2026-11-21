@@ -29,7 +29,8 @@ namespace NeonVault
                 "Vault.Cores", "Vault.Rank", "Vault.FirstBossLegendaryD0", "Vault.SeraIntro", "Vault.BriggsIntro",
                 "Vault.Pet.Adopted.v1", "Vault.Pet.IonaIntro.v1", "Vault.PetSkills.v1.OverworldCooldown",
                 "Vault.PetSkills.v1.Points", "Vault.PetSkills.v1.Equipped",
-                "Vault.Junk.v1", "Vault.Stash.v1", "Vault.Stash.Move.v1", "Vault.Stash.Upgrade.v1"
+                "Vault.Junk.v1", "Vault.Stash.v1", "Vault.Stash.Move.v1", "Vault.Stash.Upgrade.v1",
+                "Vault.OpeningMovieSeen.v1"
             };
             foreach(var k in knownKeys) UnityEngine.PlayerPrefs.DeleteKey(prefix+k);
             for(int i=0;i<300;i++)

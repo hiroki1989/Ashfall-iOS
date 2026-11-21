@@ -16,7 +16,7 @@ namespace NeonVault
             try
             {
                 Color color=boss==0?new Color(1f,.3f,.1f):boss==1?new Color(.5f,.8f,1f):new Color(1f,.7f,.2f);
-                float power=Mathf.Max(12f,gun!=null?gun.damage*1.1f:20f);
+                float power=Mathf.Max(12f,gun!=null?gun.damage*1.1f:20f)*LegendaryProcEffectMultiplier;
                 Vector3 source=origin+Vector3.up*.65f;
                 Vector3 forward=aim.sqrMagnitude>.01f?aim.normalized:Vector3.forward;
                 Vector3 side=Vector3.Cross(Vector3.up,forward).normalized;
@@ -33,11 +33,11 @@ namespace NeonVault
                         case 2: for(int i=0;i<Mathf.Min(3,targets.Count);i++)LegendaryHomingShot(source,targets[i],power*.85f,color,null);break;
                         case 3: if(targets.Count>0)LegendaryHomingShot(source,targets[targets.Count-1],power*2.3f,color,null);break;
                         case 4: for(int i=0;i<8;i++){float a=i*Mathf.PI/4;LegendaryGunShot(source,new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),power*.7f,color);}break;
-                        case 5: HealPlayer(maxHp*.10f);break;
-                        case 6: ArmorBarrier(20);break;
+                        case 5: HealPlayer(maxHp*.10f*LegendaryProcEffectMultiplier);break;
+                        case 6: ArmorBarrier(20f*LegendaryProcEffectMultiplier);break;
                         case 7: dodgeCooldown=0;break;
-                        case 8: invincible=Mathf.Max(invincible,.8f);break;
-                        case 9: if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+18);}break;
+                        case 8: invincible=Mathf.Max(invincible,.8f*LegendaryProcEffectMultiplier);break;
+                        case 9: if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.RoundToInt(18*LegendaryProcEffectMultiplier));}break;
                         case 10: LegendaryGunBlast(origin,3.5f,power*1.6f,color,false);break;
                     }
                     return;
@@ -70,28 +70,28 @@ namespace NeonVault
                         break;
                     case 5:
                         if(boss==0)ScheduleLegendaryPulse(origin,power*.8f,2.8f,3,4);
-                        else if(boss==1)HealPlayer(maxHp*.12f);
-                        else ArmorBarrier(18);
+                        else if(boss==1)HealPlayer(maxHp*.12f*LegendaryProcEffectMultiplier);
+                        else ArmorBarrier(18f*LegendaryProcEffectMultiplier);
                         break;
                     case 6:
                         if(boss==0){for(int i=0;i<Mathf.Min(3,targets.Count);i++)LegendaryHomingShot(source,targets[i],power*.85f,color,null);}
-                        else if(boss==1)legendaryPrecisionUntil=legendaryClock+4f;
+                        else if(boss==1)legendaryPrecisionUntil=legendaryClock+4f*LegendaryProcEffectMultiplier;
                         else if(first!=null)LegendaryGunShot(source,first.transform.position-source,power*1.8f,color,GunEffect.Singularity);
                         break;
                     case 7:
                         if(boss==0){for(int i=0;i<3;i++)ScheduleLegendaryPulse(origin-forward*i*1.2f,power*.75f,1.6f,2,4,.18f*i);}
                         else if(boss==1)dodgeCooldown=0;
-                        else invincible=Mathf.Max(invincible,.6f);
+                        else invincible=Mathf.Max(invincible,.6f*LegendaryProcEffectMultiplier);
                         break;
                     case 8:
                         if(boss==0){for(int i=0;i<8;i++){float a=i*Mathf.PI/4;LegendaryGunShot(source,new Vector3(Mathf.Sin(a),0,Mathf.Cos(a)),power*.6f,color);}}
-                        else if(boss==1)HealPlayer(maxHp*.15f);
-                        else ArmorBarrier(14);
+                        else if(boss==1)HealPlayer(maxHp*.15f*LegendaryProcEffectMultiplier);
+                        else ArmorBarrier(14f*LegendaryProcEffectMultiplier);
                         break;
                     case 9:
                         if(boss==0){for(int i=-2;i<=2;i++)LegendaryGunShot(source+side*i*.5f,forward,power*.72f,color);}
-                        else if(boss==1)HealPlayer(maxHp*.18f);
-                        else if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+12);}
+                        else if(boss==1)HealPlayer(maxHp*.18f*LegendaryProcEffectMultiplier);
+                        else if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.RoundToInt(12*LegendaryProcEffectMultiplier));}
                         break;
                     case 10:
                         if(boss==0){for(int i=0;i<3;i++)ScheduleLegendaryPulse(origin+forward*i*1.3f,power*.85f,1.6f,1,4,.18f*i);}

@@ -19,7 +19,7 @@ namespace NeonVault
             else screen=world!=null&&!IsOverworld&&CurrentDungeon!=null?Screen.Playing:(player!=null&&IsOverworld?Screen.Playing:Screen.Hub);
             Time.timeScale=1;
         }
-        bool AnyNpcOrStoryDialogueActive=>FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||collectorOpen||(!smoke&&screen==Screen.Hub&&FirstStepsStage==1);
+        bool AnyNpcOrStoryDialogueActive=>OpeningMoviePlaying||FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||collectorOpen||(!smoke&&screen==Screen.Hub&&FirstStepsStage==1);
         public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible&&!legendaryWeaponTutorialVisible&&!OverworldActivityChoiceOpen;
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
@@ -358,23 +358,24 @@ namespace NeonVault
             if(!Application.isMobilePlatform&&!MobileTouchControls.Enabled)return;
             bool touched=Input.touchCount>0||Input.GetMouseButton(0)||MobileTouchControls.Movement.sqrMagnitude>.001f||MobileTouchControls.Firing;
             if(touched||worldTransitionPending||screen==Screen.Dead||toastTimer>0)mobileIdleUntil=Time.unscaledTime+1.5f;
-            bool modalOrStatic=screen!=Screen.Playing&&screen!=Screen.Hub||InventoryOpen||manufacturerRegistry||collectorOpen||VaultStorageVisible||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||(IsOverworld&&OverworldActivityChoiceOpen);
+            bool modalOrStatic=OpeningMoviePlaying||screen!=Screen.Playing&&screen!=Screen.Hub||InventoryOpen||manufacturerRegistry||collectorOpen||VaultStorageVisible||NpcConversationVisible||FactionBossConversationVisible||DebtFinalConversationVisible||DebtIntroVisible||WorldBossConversationVisible||actionSkillTutorialVisible||(IsOverworld&&OverworldActivityChoiceOpen);
             bool active3D= !modalOrStatic && (screen==Screen.Playing||screen==Screen.Hub);
             if(cam!=null)
             {
-                bool fullScreen2D=screen==Screen.Menu||screen==Screen.DungeonSelect||screen==Screen.Shop||InventoryOpen||manufacturerRegistry||VaultStorageVisible||DebtIntroVisible;
+                bool fullScreen2D=OpeningMoviePlaying||screen==Screen.Menu||screen==Screen.DungeonSelect||screen==Screen.Shop||InventoryOpen||manufacturerRegistry||VaultStorageVisible||DebtIntroVisible;
                 int desiredMask=fullScreen2D&&!smoke?0:-1;
                 if(cam.cullingMask!=desiredMask)cam.cullingMask=desiredMask;
             }
-            int desiredFps=active3D?30:(Time.unscaledTime<mobileIdleUntil?30:15);
+            int desiredFps=(active3D||OpeningMoviePlaying)?30:(Time.unscaledTime<mobileIdleUntil?30:15);
             if(Application.targetFrameRate!=desiredFps)Application.targetFrameRate=desiredFps;
-            int interval=(!active3D&&Time.unscaledTime>=mobileIdleUntil)?2:1;
+            int interval=(!active3D&&!OpeningMoviePlaying&&Time.unscaledTime>=mobileIdleUntil)?2:1;
             if(UnityEngine.Rendering.OnDemandRendering.renderFrameInterval!=interval)UnityEngine.Rendering.OnDemandRendering.renderFrameInterval=interval;
         }
         void Update()
         {
             if(freeWorldBoundaryPrompt){if(Input.GetKeyDown(KeyCode.Escape))CloseFreeWorldBoundaryPrompt();return;}
             UpdateMobilePowerState();
+            if(OpeningMoviePlaying){TickOpeningMovie();return;}
             TickHealNumber();
             if(screen==Screen.Dead)
             {
@@ -750,7 +751,7 @@ namespace NeonVault
             }
             toastTimer=4;
         }
-        void OnDestroy() { foreach(var m in materials)if(m!=null)Destroy(m); if(pixel!=null)Destroy(pixel);if(overworldAtlasTexture!=null)Destroy(overworldAtlasTexture); }
+        void OnDestroy() { CleanupOpeningMovieResources(); foreach(var m in materials)if(m!=null)Destroy(m); if(pixel!=null)Destroy(pixel);if(overworldAtlasTexture!=null)Destroy(overworldAtlasTexture); }
 
     }
 }

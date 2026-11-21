@@ -56,7 +56,8 @@ namespace NeonVault {
    bossIntroBeat=Mathf.Clamp(bossIntroBeat,0,linesEn.Length-1);
    if(Event.current.type==EventType.Repaint&&cam&&player)
    {
-    Vector3 focus=bossIntroBeat==0?player.position+Vector3.up*.7f:new Vector3(-3,1.15f,7);
+    Vector3 valePos=departingRaiderBoss!=null?departingRaiderBoss.position:new Vector3(1f,0f,7f);
+    Vector3 focus=bossIntroBeat==0?player.position+Vector3.up*.7f:new Vector3(valePos.x,.75f,valePos.z);
     float distance=bossIntroBeat==0?27:24;
     cam.orthographicSize=(bossIntroBeat==0?7.2f:6.2f)/CameraZoom;
     cam.transform.position=Vector3.Lerp(cam.transform.position,focus-cam.transform.forward*distance,Mathf.Clamp01(Time.unscaledDeltaTime*2.8f));

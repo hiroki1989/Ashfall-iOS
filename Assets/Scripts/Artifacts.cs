@@ -67,24 +67,24 @@ namespace NeonVault {
   {
    switch(LegendaryModuleMode(a))
    {
-    case 0:return VaultLanguage.T("gain 20 shield (cap 30)","シールドを20得る（上限30）");
-    case 1:return VaultLanguage.T("strike up to 3 visible enemies within 2.6m for ","2.6m以内の見える敵最大3体に")+(12*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
+    case 0:return VaultLanguage.T("gain 30 shield (cap 45)","シールドを30得る（上限45）");
+    case 1:return VaultLanguage.T("strike up to 3 visible enemies within 2.6m for ","2.6m以内の見える敵最大3体に")+(12*VaultGame.LegendaryProcEffectMultiplier*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
     case 2:return VaultLanguage.T("fire five rounds in a forward fan","前方に弾を5発扇状に放つ");
-    case 3:return VaultLanguage.T("blast up to 5 visible enemies within 3m for ","3m以内の見える敵最大5体に")+(12*a.power).ToString("0.0")+VaultLanguage.T(" damage","の爆発ダメージ");
-    case 4:return VaultLanguage.T("grant at least 1.25s of invulnerability","最低1.25秒の無敵を得る");
+    case 3:return VaultLanguage.T("blast up to 5 visible enemies within 3m for ","3m以内の見える敵最大5体に")+(12*VaultGame.LegendaryProcEffectMultiplier*a.power).ToString("0.0")+VaultLanguage.T(" damage","の爆発ダメージ");
+    case 4:return VaultLanguage.T("grant at least 1.9s of invulnerability","最低1.9秒の無敵を得る");
     case 5:return VaultLanguage.T("create three explosive pulses within 3m","周囲3mに爆発を3回起こす");
     case 6:return VaultLanguage.T("create three spore pulses within 3m","周囲3mに胞子の波動を3回起こす");
-    case 7:return VaultLanguage.T("pierce up to 3 visible enemies ahead in a 4m by 0.8m line for ","前方4mの直線上0.8m幅の見える敵最大3体へ")+(5*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
+    case 7:return VaultLanguage.T("pierce up to 3 visible enemies ahead in a 4m by 0.8m line for ","前方4mの直線上0.8m幅の見える敵最大3体へ")+(5*VaultGame.LegendaryProcEffectMultiplier*a.power).ToString("0.0")+VaultLanguage.T(" damage","ダメージ");
     case 8:return VaultLanguage.T("fire eight rounds in all directions","全方向へ弾を8発放つ");
-    case 9:return VaultLanguage.T("strike up to 2 visible enemies within 2.5m for ","2.5m以内の見える敵最大2体へ")+(10*a.power).ToString("0.0")+VaultLanguage.T(" damage with electrical arcs","の電撃ダメージを与える");
+    case 9:return VaultLanguage.T("strike up to 2 visible enemies within 2.5m for ","2.5m以内の見える敵最大2体へ")+(10*VaultGame.LegendaryProcEffectMultiplier*a.power).ToString("0.0")+VaultLanguage.T(" damage with electrical arcs","の電撃ダメージを与える");
     case 10:return VaultLanguage.T("launch guided rounds at up to three nearby enemies","近くの敵最大3体へ誘導弾を放つ");
     case 11:return VaultLanguage.T("fire a gravity-well round forward","前方に重力渦を作る弾を放つ");
     case 12:return VaultLanguage.T("detonate a large blast within 4m","周囲4mに大爆発を起こす");
-    case 13:return VaultLanguage.T("restore 8% of maximum health","最大HPの8%を回復する");
-    case 14:return VaultLanguage.T("below half health, restore 15% of maximum health","HP半分未満なら最大HPの15%を回復する");
-    case 15:return VaultLanguage.T("restore 10% of the active weapon reserve capacity","現在の銃の予備弾を所持上限の10%補充する");
+    case 13:return VaultLanguage.T("restore 12% of maximum health","最大HPの12%を回復する");
+    case 14:return VaultLanguage.T("below half health, restore 22.5% of maximum health","HP半分未満なら最大HPの22.5%を回復する");
+    case 15:return VaultLanguage.T("restore 15% of the active weapon reserve capacity","現在の銃の予備弾を所持上限の15%補充する");
     case 16:return VaultLanguage.T("launch six rounds outward in a circle","周囲6方向に弾を放つ");
-    case 17:return VaultLanguage.T("while equipped, companion bite damage +75% and attack speed +25%","装備中、犬のかみつき威力 +75%、攻撃速度 +25%");
+    case 17:return VaultLanguage.T("while equipped, companion bite damage +112.5% and attack speed +37.5%","装備中、犬のかみつき威力 +112.5%、攻撃速度 +37.5%");
     case 18:return VaultLanguage.T("place a three-pulse blast at the nearest enemy","最も近い敵の位置で3回爆発を起こす");
     case 19:return VaultLanguage.T("release three explosions in a line ahead","前方に3回の爆発を連続して起こす");
     case 20:return VaultLanguage.T("fire a round that divides into three while flying","飛行中に3発に分かれる弾を放つ");
@@ -107,19 +107,19 @@ namespace NeonVault {
      if(mode>=35&&mode<55){string[] en={"reverse and return","curve sharply left","curve sharply right","orbit before continuing","weave in a wider arc","accelerate over its flight","decelerate over its flight","release a blast along its path","release a fiery blast along its path","release a spore blast along its path","burst forward after a delay","release rounds while orbiting","release rounds to both sides","release rounds behind itself","curve toward the nearest enemy","sweep its direction back and forth","form a gravity well at the end of its flight","drop an explosive charge at the end of its flight","release guided rounds at the end of its flight","release a radial volley at the end of its flight"};string[] ja={"反転して戻る","左へ大きく曲がる","右へ大きく曲がる","円を描いてから進む","大きく蛇行する","飛行中に加速する","飛行中に減速する","飛行中に爆発を起こす","飛行中に炎の爆発を起こす","飛行中に胞子の爆発を起こす","一定時間後に加速する","周回しながら弾を放つ","飛行中に左右へ弾を放つ","飛行中に後方へ弾を放つ","近くの敵を追う","左右に大きく方向を振る","飛行の終点に重力渦を作る","飛行の終点に爆発する罠を残す","飛行の終点から誘導弾を放つ","飛行の終点から全方向に弾を放つ"};return VaultLanguage.T("fire a round that will ","弾を放ち、")+VaultLanguage.T(en[mode-35],ja[mode-35]);}
      switch(mode)
      {
-      case 55:return VaultLanguage.T("restore 20% of the action skill gauge","アクションスキルのゲージを20%回復する");
-      case 56:return VaultLanguage.T("move up to a quarter of the magazine from reserves into the current magazine","予備弾からマガジン容量の4分の1を装填する");
+      case 55:return VaultLanguage.T("restore 30% of the action skill gauge","アクションスキルのゲージを30%回復する");
+      case 56:return VaultLanguage.T("move up to 37.5% of the magazine from reserves into the current magazine","予備弾からマガジン容量の37.5%を装填する");
       case 57:return VaultLanguage.T("finish the current reload instantly","リロード中なら即座に完了する");
-      case 58:return VaultLanguage.T("extend an active action device by four seconds","発動中の装置の持続時間を4秒延長する");
-      case 59:return VaultLanguage.T("intercept up to 12 nearby hostile projectiles","近くの敵弾を最大12発迎撃する");
+      case 58:return VaultLanguage.T("extend an active action device by six seconds","発動中の装置の持続時間を6秒延長する");
+      case 59:return VaultLanguage.T("intercept up to 18 nearby hostile projectiles","近くの敵弾を最大18発迎撃する");
       case 60:return VaultLanguage.T("strike every visible enemy in a narrow forward lane","前方の細い直線上にいる敵全員を攻撃する");
       case 61:return VaultLanguage.T("blast the most distant visible enemy","視界内の最も遠い敵の位置を爆破する");
       case 62:return VaultLanguage.T("fire a bouncing round that ricochets among enemies","敵の間を跳ねる弾を放つ");
-      case 63:return VaultLanguage.T("restore 5% of each ammunition reserve capacity","全銃種の予備弾をそれぞれ所持上限の5%補充する");
+      case 63:return VaultLanguage.T("restore 7.5% of each ammunition reserve capacity","全銃種の予備弾をそれぞれ所持上限の7.5%補充する");
       case 64:return VaultLanguage.T("recover health by spending the active shield","シールドを消費してHPを回復する");
-      case 65:return VaultLanguage.T("freeze the nearest enemy for two seconds","最寄りの敵を2秒間凍結する");
+      case 65:return VaultLanguage.T("freeze the nearest enemy for three seconds","最寄りの敵を3秒間凍結する");
       case 66:return VaultLanguage.T("execute the weakest visible non-elite enemy below 25% health","視界内でHP25%未満の最も弱い通常敵を処刑する");
-      case 67:return VaultLanguage.T("for six seconds, each kill restores 4% maximum health","6秒間、敵を倒すたび最大HPの4%を回復する");
+      case 67:return VaultLanguage.T("for six seconds, each kill restores 6% maximum health","6秒間、敵を倒すたび最大HPの6%を回復する");
       case 68:return VaultLanguage.T("deploy a six-second healing field","6秒間の回復エリアを設置する");
       case 69:return VaultLanguage.T("deploy a six-second ammunition supply field","6秒間の弾薬補給エリアを設置する");
       case 70:return VaultLanguage.T("deploy a six-second damage field","6秒間の攻撃エリアを設置する");
@@ -131,7 +131,7 @@ namespace NeonVault {
       case 76:return VaultLanguage.T("deploy a rotating projectile emitter for six seconds","6秒間、回転しながら弾を放つ装置を設置する");
       case 77:return VaultLanguage.T("deploy a six-second action gauge charging field","6秒間、アクションゲージを回復するエリアを設置する");
       case 78:return VaultLanguage.T("deploy a six-second field that extends the active action device","6秒間、発動中の装置を延長するエリアを設置する");
-      case 79:return VaultLanguage.T("for six seconds, heal 25% of maximum HP when health falls below 25%","6秒間、HPが25%未満になったら最大HPの25%を回復する");
+      case 79:return VaultLanguage.T("for six seconds, heal 37.5% of maximum HP when health falls below 25%","6秒間、HPが25%未満になったら最大HPの37.5%を回復する");
       default:return "";
      }
    }

@@ -69,6 +69,16 @@ namespace NeonVault
         {
             if (!game) game = FindAnyObjectByType<VaultGame>();
             if (!game) return;
+            if (game.OpeningMoviePlaying)
+            {
+                for (int i = 0; i < sources.Length; i++)
+                {
+                    sources[i].volume = 0;
+                    if (sources[i].isPlaying) sources[i].Stop();
+                }
+                selected = Music.None;
+                return;
+            }
             Music desired = selected;
             if (game.screen == VaultGame.Screen.Menu) { desired = Music.Menu; combatRemaining = 0; }
             else if (game.screen == VaultGame.Screen.Hub || game.screen == VaultGame.Screen.Shop)

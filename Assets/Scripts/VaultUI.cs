@@ -99,7 +99,7 @@ namespace NeonVault
         void OnGUI()
         {
             try { OnGUIInternal(); }
-            finally { DrawMenuCrosshair(); }
+            finally { if(!OpeningMoviePlaying||OpeningMovieSkipVisible)DrawMenuCrosshair(); }
         }
         void OnGUIInternal()
         {
@@ -112,10 +112,12 @@ namespace NeonVault
                 else GUI.DrawTexture(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),Texture2D.blackTexture);
             }
             if(InventoryOpen&&!manufacturerRegistry&&!actionSkillInventoryOpen){GUI.matrix=Matrix4x4.identity;Box(new Rect(0,0,UnityEngine.Screen.width,UnityEngine.Screen.height),EqCanvas);}
-            GUI.matrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
+            Matrix4x4 canvasMatrix=MobileTouchControls.Enabled?MobileCanvasMatrix:Matrix4x4.TRS(new Vector3((UnityEngine.Screen.width-1440*scale)/2,(UnityEngine.Screen.height-900*scale)/2,0),Quaternion.identity,Vector3.one*scale);
+            GUI.matrix=canvasMatrix;
             if(screen!=Screen.Shop)debtPage=false;
             if(freeWorldBoundaryPrompt){DrawFreeWorldBoundaryPrompt();return;}
             if(worldTransitionPending){DrawWorldLoading();return;}
+            if(OpeningMoviePlaying){DrawOpeningMovie(canvasMatrix);return;}
             if(FactionUnlockDialogVisible){DrawFactionUnlockDialog();return;}
             if(DebtFinalConversationVisible){DrawDebtFinalConversation();return;}
             if(FactionBossConversationVisible){DrawFactionBossConversation();return;}

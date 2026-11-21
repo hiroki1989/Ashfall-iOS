@@ -23,12 +23,12 @@ public static class BossRelicCombatV2Review
     static float Precision(VaultGame g)=>(float)Get(g,"legendaryPrecisionUntil");
     static readonly string[,] En={
         {"guided","five-round","guided","guided","Detonate","trap","guided","traps","eight directions","parallel","explosions"},
-        {"guided","explosions","six directions","Detonate","five-round","12%","aim","dodge","15%","18%","guided"},
-        {"eight directions","gravity","parallel","gravity","guided","18 shield","gravity","0.6","14 shield","12 reserve","Blast"}};
+        {"guided","explosions","six directions","Detonate","five-round","18%","aim","dodge","22.5%","27%","guided"},
+        {"eight directions","gravity","parallel","gravity","guided","27 shield","gravity","0.9","21 shield","18 reserve","Blast"}};
     static readonly string[,] Ja={
         {"誘導弾","5発","誘導弾","誘導弾","爆発","火炎罠","援護弾","火炎罠","8方向","援護弾","爆発"},
-        {"誘導弾","爆発","6方向","爆発","5発","12%","照準","回避","15%","18%","誘導弾"},
-        {"8方向","重力渦","5発","重力渦","誘導弾","18","重力渦","0.6","14","12","爆破"}};
+        {"誘導弾","爆発","6方向","爆発","5発","18%","照準","回避","22.5%","27%","誘導弾"},
+        {"8方向","重力渦","5発","重力渦","誘導弾","27","重力渦","0.9","21","18","爆破"}};
     public static void Run()
     {
         checks=0;failures.Clear();

@@ -12,7 +12,7 @@ namespace NeonVault
             if(gun==null||world==null||maker<0||maker>=6||variant<0||variant>=15)return;
             if(variant>=5){ResolveExpandedLegendaryGun(maker,variant-5,origin,struck);return;}
             int id=maker*5+variant;
-            float power=gun.damage;
+            float power=gun.damage*LegendaryProcEffectMultiplier;
             Color color=LegendaryEffectColor(maker);
             Vector3 source=origin+Vector3.up*.65f;
             var targets=LegendaryGunTargets(origin,10);
@@ -138,7 +138,7 @@ namespace NeonVault
         // so no two makers are stat-only reskins of the same relic.
         void ResolveExpandedLegendaryGun(int maker,int mechanism,Vector3 origin,Foe struck)
         {
-            float power=gun.damage;Color color=LegendaryEffectColor(maker);
+            float power=gun.damage*LegendaryProcEffectMultiplier;Color color=LegendaryEffectColor(maker);
             Vector3 source=origin+Vector3.up*.65f;
             var targets=LegendaryGunTargets(origin,10);
             Foe first=struck!=null&&!struck.dead?struck:targets.Count>0?targets[0]:null;
@@ -317,8 +317,8 @@ namespace NeonVault
             foreach(var foe in LegendaryGunTargets(point,radius))
             {LegendaryStrike(foe,damage,color);if(push)LegendaryGunPush(foe,foe.transform.position-point,1.1f);}
         }
-        void LegendaryGunHeal(float amount){HealPlayer(amount);}
-        void LegendaryGunBarrier(float amount){ArtifactShield=Mathf.Min(60,ArtifactShield+amount);UpdateBarrierVisual();}
+        void LegendaryGunHeal(float amount){HealPlayer(amount*LegendaryProcEffectMultiplier);}
+        void LegendaryGunBarrier(float amount){ArtifactShield=Mathf.Min(60,ArtifactShield+amount*LegendaryProcEffectMultiplier);UpdateBarrierVisual();}
 
         static string DistinctLegendaryGunDescription(int maker,int variant,bool ja)
         {
@@ -346,67 +346,67 @@ namespace NeonVault
             if(variant>=5){int s=variant-5;string[] mechanismEn={"Three crossing projectiles fan through a narrow prism lane.","Two guided rounds seek separate nearby targets.","Four diagonal rounds form a crossfire.","A delayed impact echoes twice at offset positions.","A thin long lane hits harder at greater distance.","One heavy round seeks the farthest visible enemy.","Two rounds cross in from opposite flanks.","A kill releases up to three homing rounds aimed at survivors.","Three guided rounds converge on the target.","A compact heavy blast ripples outward a moment later."};string[] mechanismJa={"狭い交差射線へ3発の分光弾。","別々の近くの敵を追う誘導弾2発。","斜め4方向へ交差射撃。","命中地点とその先で遅延衝撃が2回発生。","遠い敵ほど強い細い長距離射線。","見えている最遠の敵を狙う重弾1発。","左右から2発の弾が交差。","撃破地点から最大3発の弾が生存する敵を追尾。","3発の誘導弾が敵を追い、集中攻撃。","小さな重爆発のあと外側へ衝撃が広がる。"};string[] makerEn={" Precise sight for 1.2s."," Push the first target."," Interrupt the first target."," Siphon a little HP."," Scatter fragments at the first target."," Gain a small barrier."};string[] makerJa={" 1.2秒間、照準を強化。"," 最初の敵を押し出す。"," 最初の敵の攻撃を遅らせる。"," 少量のHPを吸収。"," 最初の敵に破片を散らす。"," 少量のシールドを得る。"};return (ja?mechanismJa:mechanismEn)[s];}
             string[] trigger=ja?new[]{"3射ごと（クールダウン1秒）：","銃弾命中時（クールダウン2秒）：","撃破時（クールダウン2秒）：","リロード時（クールダウン3秒）：","ダッシュ時（クールダウン3秒）："}:new[]{"Every third shot (1s cooldown): ","On bullet hit (2s cooldown): ","On kill (2s cooldown): ","On reload (3s cooldown): ","On dash (3s cooldown): "};
             string[] en={
-                "Strike the nearest foe for 150% bonus damage; shots gain 25% damage and perfect accuracy for 3s.",
-                "Aim up to three short-lived shots at separate nearby foes, each for 42% bonus damage.",
-                "Strike the weakest nearby foe for 220% bonus damage below 40% HP, otherwise 80%.",
-                "Pierce up to three foes in an 8m straight lane for 100%, 80%, then 60% bonus damage.",
-                "Fire three short-lived rearward shots at -18°, 0°, and 18° for 42% bonus damage each.",
-                "Fire eight radial rounds, each dealing 55% weapon damage.",
-                "The hit releases up to four guided rounds toward other enemies, each dealing 65% weapon damage.",
+                "Strike the nearest foe for 225% bonus damage; shots gain 37.5% damage and perfect accuracy for 3s.",
+                "Aim up to three short-lived shots at separate nearby foes, each for 63% bonus damage.",
+                "Strike the weakest nearby foe for 330% bonus damage below 40% HP, otherwise 120%.",
+                "Pierce up to three foes in an 8m straight lane for 150%, 120%, then 90% bonus damage.",
+                "Fire three short-lived rearward shots at -18°, 0°, and 18° for 63% bonus damage each.",
+                "Fire eight radial rounds, each dealing 82.5% weapon damage.",
+                "The hit releases up to four guided rounds toward other enemies, each dealing 97.5% weapon damage.",
                 "Leave three delayed shock pulses at the kill site, with radii 1.1m, 1.8m, and 2.5m.",
-                "Launch a singularity round dealing 160% weapon damage and creating a gravity well.",
-                "Three staggered explosions advance along the dash path, each dealing 80% weapon damage.",
-                "Chain strikes through up to three nearby foes for 100%, 80%, then 60% bonus damage.",
-                "Three guided electric rounds converge on the hit enemy, each dealing 55% weapon damage.",
-                "Six electric bolts burst outward from the kill, each dealing 50% weapon damage.",
-                "Fire six short-lived radial bolts for 30% bonus damage each.",
-                "Strike all foes in a narrow 9m lane for 85% bonus damage each.",
-                "Siphon the nearest foe for 90% bonus damage and restore 3 HP on contact.",
-                "Strike the hit foe for 45% bonus damage and restore 4 HP.",
+                "Launch a singularity round dealing 240% weapon damage and creating a gravity well.",
+                "Three staggered explosions advance along the dash path, each dealing 120% weapon damage.",
+                "Chain strikes through up to three nearby foes for 150%, 120%, then 90% bonus damage.",
+                "Three guided electric rounds converge on the hit enemy, each dealing 82.5% weapon damage.",
+                "Six electric bolts burst outward from the kill, each dealing 75% weapon damage.",
+                "Fire six short-lived radial bolts for 45% bonus damage each.",
+                "Strike all foes in a narrow 9m lane for 127.5% bonus damage each.",
+                "Siphon the nearest foe for 135% bonus damage and restore 4.5 HP on contact.",
+                "Strike the hit foe for 67.5% bonus damage and restore 6 HP.",
                 "Plant three spore zones around the kill site; each pulses twice.",
-                "Restore 9 HP if below 35% health, otherwise restore 4 HP.",
+                "Restore 13.5 HP if below 35% health, otherwise restore 6 HP.",
                 "Plant three spore zones behind the dash; each pulses twice.",
-                "Fire three short-lived forward slugs at -9°, 0°, and 9° for 52% bonus damage each.",
-                "Throw two short-lived shards around the hit foe for 40% bonus damage each.",
-                "Detonate the kill site, damaging foes within 3m for 80% bonus damage.",
-                "Launch one short-lived singularity round for 150% bonus damage; impact or expiry creates a gravity well.",
+                "Fire three short-lived forward slugs at -9°, 0°, and 9° for 78% bonus damage each.",
+                "Throw two short-lived shards around the hit foe for 60% bonus damage each.",
+                "Detonate the kill site, damaging foes within 3m for 120% bonus damage.",
+                "Launch one short-lived singularity round for 225% bonus damage; impact or expiry creates a gravity well.",
                 "Leave three overlapping ember zones behind the dash; each pulses twice.",
-                "Gain 5 barrier and strike foes within 1.8m for 40% bonus damage.",
-                "On hit, gain 4 barrier and strike that foe for 65% bonus damage.",
-                "Gain 7 barrier and create two ward pulses within 1.7m of the player.",
-                "Gain 6 barrier and fire two short-lived cover shots at ±22° for 45% bonus damage each.",
-                "Gain 3 barrier and fire two short-lived forward shots from the dash flanks for 45% bonus damage each."};
+                "Gain 7.5 barrier and strike foes within 1.8m for 60% bonus damage.",
+                "On hit, gain 6 barrier and strike that foe for 97.5% bonus damage.",
+                "Gain 10.5 barrier and create two ward pulses within 1.7m of the player.",
+                "Gain 9 barrier and fire two short-lived cover shots at ±22° for 67.5% bonus damage each.",
+                "Gain 4.5 barrier and fire two short-lived forward shots from the dash flanks for 67.5% bonus damage each."};
             string[] jp={
-                "最寄の敵へ追加威力150%の追撃。3秒間、銃弾威力25%増・精度100。",
-                "近くの別々の敵へ短命弾を最大3発狙って発射。各追加威力42%。",
-                "近くの最もHP割合が低い敵へ追撃。HP40%以下なら追加威力220%、それ以外は80%。",
-                "前方8mの直線内で最大3体を貫く追撃。追加威力100%・80%・60%。",
-                "後方へ-18°・0°・18°の短命弾3発。各追加威力42%。",
-                "全周に8発の弾を放つ。各弾は武器威力の55%。",
-                "命中地点から別の敵を追う誘導弾を最大4発放つ。各弾は武器威力の65%。",
+                "最寄の敵へ追加威力225%の追撃。3秒間、銃弾威力37.5%増・精度100。",
+                "近くの別々の敵へ短命弾を最大3発狙って発射。各追加威力63%。",
+                "近くの最もHP割合が低い敵へ追撃。HP40%以下なら追加威力330%、それ以外は120%。",
+                "前方8mの直線内で最大3体を貫く追撃。追加威力150%・120%・90%。",
+                "後方へ-18°・0°・18°の短命弾3発。各追加威力63%。",
+                "全周に8発の弾を放つ。各弾は武器威力の82.5%。",
+                "命中地点から別の敵を追う誘導弾を最大4発放つ。各弾は武器威力の97.5%。",
                 "撃破地点に半径1.1m・1.8m・2.5mの遅延衝撃波を残す。",
-                "武器威力160%の特異弾を発射し、着弾地点に重力渦を作る。",
-                "ダッシュ方向へ3回の爆発が順に進む。各爆発は武器威力の80%。",
-                "近くの最大3体へ追加威力100%・80%・60%の連鎖追撃。",
-                "命中した敵へ3発の電撃誘導弾が集中する。各弾は武器威力の55%。",
-                "撃破地点から6方向へ電撃弾が広がる。各弾は武器威力の50%。",
-                "全周6方向へ短命の電撃弾。各追加威力30%。",
-                "前方9mの細い直線内の敵すべてへ追加威力85%の追撃。",
-                "最寄の敵へ追加威力90%の吸命追撃、命中時HP3回復。",
-                "命中した敵へ追加威力45%の追撃、HP4回復。",
+                "武器威力240%の特異弾を発射し、着弾地点に重力渦を作る。",
+                "ダッシュ方向へ3回の爆発が順に進む。各爆発は武器威力の120%。",
+                "近くの最大3体へ追加威力150%・120%・90%の連鎖追撃。",
+                "命中した敵へ3発の電撃誘導弾が集中する。各弾は武器威力の82.5%。",
+                "撃破地点から6方向へ電撃弾が広がる。各弾は武器威力の75%。",
+                "全周6方向へ短命の電撃弾。各追加威力45%。",
+                "前方9mの細い直線内の敵すべてへ追加威力127.5%の追撃。",
+                "最寄の敵へ追加威力135%の吸命追撃、命中時HP4.5回復。",
+                "命中した敵へ追加威力67.5%の追撃、HP6回復。",
                 "撃破地点の周囲に胞子領域3つを設置。各2回脈動。",
-                "HP35%未満ならHP9、それ以外はHP4回復。",
+                "HP35%未満ならHP13.5、それ以外はHP6回復。",
                 "ダッシュ後方へ胞子領域3つを設置。各2回脈動。",
-                "前方-9°・0°・9°へ短命弾3発。各追加威力52%。",
-                "命中した敵の左右へ短命の破片弾2発。各追加威力40%。",
-                "撃破地点から半径3mを追加威力80%で爆破。",
-                "追加威力150%の短命特異弾を1発発射。着弾か寿命切れで重力渦を作る。",
+                "前方-9°・0°・9°へ短命弾3発。各追加威力78%。",
+                "命中した敵の左右へ短命の破片弾2発。各追加威力60%。",
+                "撃破地点から半径3mを追加威力120%で爆破。",
+                "追加威力225%の短命特異弾を1発発射。着弾か寿命切れで重力渦を作る。",
                 "ダッシュ後方へ重なった火種領域3つを設置。各2回脈動。",
-                "シールド5獲得、半径1.8mの敵へ追加威力40%の追撃。",
-                "命中時にシールド4獲得、その敵へ追加威力65%の追撃。",
-                "シールド7獲得、プレイヤー周囲1.7mへ2回の守護波。",
-                "シールド6獲得、左右22°へ短命の援護弾2発。各追加威力45%。",
-                "シールド3獲得、ダッシュ両側から短命の前方援護弾2発。各追加威力45%。"};
+                "シールド7.5獲得、半径1.8mの敵へ追加威力60%の追撃。",
+                "命中時にシールド6獲得、その敵へ追加威力97.5%の追撃。",
+                "シールド10.5獲得、プレイヤー周囲1.7mへ2回の守護波。",
+                "シールド9獲得、左右22°へ短命の援護弾2発。各追加威力67.5%。",
+                "シールド4.5獲得、ダッシュ両側から短命の前方援護弾2発。各追加威力67.5%。"};
             return trigger[variant]+(ja?jp:en)[maker*5+variant];
         }
     }

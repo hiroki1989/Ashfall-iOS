@@ -17,8 +17,9 @@ namespace NeonVault
             Color color=LegendaryEffectColor(maker);
             Vector3 center=struck.transform.position;
             Burst(center,color,5);
-            if(weapon.designVariant>=8){ResolveExtendedMeleeSignature(weapon,struck,hitDamage,color,center);return;}
-            ResolveIndividualMeleeSignature(weapon,struck,hitDamage,color,center);return;
+            float procDamage=hitDamage*LegendaryProcEffectMultiplier;
+            if(weapon.designVariant>=8){ResolveExtendedMeleeSignature(weapon,struck,procDamage,color,center);return;}
+            ResolveIndividualMeleeSignature(weapon,struck,procDamage,color,center);return;
         }
 
 
@@ -34,9 +35,9 @@ namespace NeonVault
             {
                 case 35:{var targets=LegendaryGunTargets(center,8);int n=0;foreach(var target in targets)if(target!=struck){LegendaryHomingShot(center+Vector3.up*.7f,target,damage*.8f,color,struck);if(++n>=4)break;}break;}
                 case 36:CombatVisuals.ElementBlast(center,4,world);StrikeNearby(center,struck,4,8,damage,color);break;
-                case 37:ArtifactShield=Mathf.Min(30,ArtifactShield+20);UpdateBarrierVisual();break;
-                case 38:invincible=Mathf.Max(invincible,1.25f);break;
-                case 39:HealPlayer(maxHp*.12f);break;
+                case 37:ArtifactShield=Mathf.Min(45,ArtifactShield+20*LegendaryProcEffectMultiplier);UpdateBarrierVisual();break;
+                case 38:invincible=Mathf.Max(invincible,1.25f*LegendaryProcEffectMultiplier);break;
+                case 39:HealPlayer(maxHp*.12f*LegendaryProcEffectMultiplier);break;
             }
         }
 
@@ -59,7 +60,7 @@ namespace NeonVault
                 case 6:for(int i=-2;i<=2;i++)LegendaryGunShot(source,Quaternion.Euler(0,i*13,0)*forward,damage*.65f,color);break;
                 case 7:for(int i=-1;i<=1;i+=2)LegendaryGunShot(source+side*i,Quaternion.Euler(0,-i*20,0)*forward,damage,color);break;
                 case 8:{var targets=LegendaryGunTargets(center,10f);for(int i=targets.Count-1;i>=0;i--)if(targets[i]!=struck){LegendaryHomingShot(center+Vector3.up*.7f,targets[i],damage*1.6f,color,struck);break;}break;}
-                case 9:HealPlayer(maxHp*.16f);break;
+                case 9:HealPlayer(maxHp*.16f*LegendaryProcEffectMultiplier);break;
             }
         }
 
@@ -77,19 +78,19 @@ namespace NeonVault
             Vector3 center=field.transform.position;bool inside=(PlayerPosition-center).sqrMagnitude<=9f;
             switch(field.mode)
             {
-                case 67:if(kills>field.lastKills){HealPlayer(maxHp*.04f*(kills-field.lastKills));field.lastKills=kills;}break;
-                case 68:if(inside)HealPlayer(maxHp*.02f);break;
-                case 69:if(inside&&gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.015f)));}break;
+                case 67:if(kills>field.lastKills){HealPlayer(maxHp*.04f*LegendaryProcEffectMultiplier*(kills-field.lastKills));field.lastKills=kills;}break;
+                case 68:if(inside)HealPlayer(maxHp*.02f*LegendaryProcEffectMultiplier);break;
+                case 69:if(inside&&gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.015f*LegendaryProcEffectMultiplier)));}break;
                 case 70:CombatVisuals.ElementBlast(center,3f,world);StrikeNearby(center,null,3f,8,8*field.power,field.color);break;
                 case 71:{var foes=LegendaryGunTargets(center,5f);for(int i=0;i<Mathf.Min(3,foes.Count);i++){CombatVisuals.ElementArc(center+Vector3.up*.5f,foes[i].transform.position+Vector3.up*.7f,world);LegendaryStrike(foes[i],8*field.power,field.color);}break;}
                 case 72:ArmorInterceptShots(center,3f,4,field.color);break;
                 case 73:{var foes=LegendaryGunTargets(center,10f);if(foes.Count>0)LegendaryGunShot(center+Vector3.up*.7f,foes[0].transform.position-center,8*field.power,field.color);break;}
-                case 74:{var foes=LegendaryGunTargets(center,3f);foreach(var foe in foes)LegendaryFreeze.Apply(foe,1.2f);break;}
+                case 74:{var foes=LegendaryGunTargets(center,3f);foreach(var foe in foes)LegendaryFreeze.Apply(foe,1.2f*LegendaryProcEffectMultiplier);break;}
                 case 75:{var foes=LegendaryGunTargets(center,2f);if(foes.Count>0){CombatVisuals.ElementBlast(center,3f,world);StrikeNearby(center,null,3f,8,25*field.power,field.color);return false;}break;}
                 case 76:{float angle=field.elapsed*160f*Mathf.Deg2Rad;LegendaryGunShot(center+Vector3.up*.7f,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),8*field.power,field.color);break;}
-                case 77:if(inside)ActionSkillOnBulletHit(ActionSkillChargeMax*.035f);break;
-                case 78:if(inside&&actionSkillObject&&actionSkillDuration>0)actionSkillDuration+=.4f;break;
-                case 79:if(hp<maxHp*.25f){HealPlayer(maxHp*.25f);return false;}break;
+                case 77:if(inside)ActionSkillOnBulletHit(ActionSkillChargeMax*.035f*LegendaryProcEffectMultiplier);break;
+                case 78:if(inside&&actionSkillObject&&actionSkillDuration>0)actionSkillDuration+=.4f*LegendaryProcEffectMultiplier;break;
+                case 79:if(hp<maxHp*.25f){HealPlayer(maxHp*.25f*LegendaryProcEffectMultiplier);return false;}break;
             }
             return true;
         }
@@ -143,55 +144,56 @@ namespace NeonVault
             try
             {
                 Vector3 center=PlayerPosition;
+                float power=item.power*LegendaryProcEffectMultiplier;
                 Color color=LegendaryEffectColor(Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)));
                 switch(mode)
                 {
-                    case 0: ArtifactShield=Mathf.Min(30,ArtifactShield+20);UpdateBarrierVisual();break;
-                    case 1: CombatVisuals.ElementBlast(center,2.6f,world);StrikeNearby(center,null,2.6f,3,12*item.power,color);break;
-                    case 2: for(int i=-2;i<=2;i++)LegendaryGunShot(center+Vector3.up*.7f,Quaternion.Euler(0,i*12,0)*aim,10*item.power,color);break;
+                    case 0: ArtifactShield=Mathf.Min(45,ArtifactShield+20*LegendaryProcEffectMultiplier);UpdateBarrierVisual();break;
+                    case 1: CombatVisuals.ElementBlast(center,2.6f,world);StrikeNearby(center,null,2.6f,3,12*power,color);break;
+                    case 2: for(int i=-2;i<=2;i++)LegendaryGunShot(center+Vector3.up*.7f,Quaternion.Euler(0,i*12,0)*aim,10*power,color);break;
                     case 3:
-                        CombatVisuals.ElementBlast(center,3f,world);StrikeNearby(center,null,3f,5,12*item.power,color);
+                        CombatVisuals.ElementBlast(center,3f,world);StrikeNearby(center,null,3f,5,12*power,color);
                         break;
-                    case 4: invincible=Mathf.Max(invincible,1.25f);break;
-                    case 5: ScheduleLegendaryPulse(center,10*item.power,3f,3,4);break;
-                    case 6: CombatVisuals.ElementImpact(center,GunElement.Poison,world);ScheduleLegendaryPulse(center,7*item.power,3f,3,3);break;
-                    case 7: StrikeLine(center,aim,null,4f,.8f,3,5*item.power,color);break;
-                    case 8: for(int i=0;i<8;i++){float angle=i*Mathf.PI/4;LegendaryGunShot(center+Vector3.up*.7f,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),8*item.power,color);}break;
+                    case 4: invincible=Mathf.Max(invincible,1.25f*LegendaryProcEffectMultiplier);break;
+                    case 5: ScheduleLegendaryPulse(center,10*power,3f,3,4);break;
+                    case 6: CombatVisuals.ElementImpact(center,GunElement.Poison,world);ScheduleLegendaryPulse(center,7*power,3f,3,3);break;
+                    case 7: StrikeLine(center,aim,null,4f,.8f,3,5*power,color);break;
+                    case 8: for(int i=0;i<8;i++){float angle=i*Mathf.PI/4;LegendaryGunShot(center+Vector3.up*.7f,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),8*power,color);}break;
                     case 9:
                         int staggered=0;
                         foreach(var foe in Enemies.ToArray())
                         {
                             if(foe==null||foe.dead||(foe.transform.position-center).sqrMagnitude>6.25f||!LineOfSight(center,foe.transform.position))continue;
-                            CombatVisuals.ElementArc(center+Vector3.up*.7f,foe.transform.position+Vector3.up*.7f,world);foe.Hit(10*item.power,null,color,100,Shot.LegendaryDamageColor);
+                            CombatVisuals.ElementArc(center+Vector3.up*.7f,foe.transform.position+Vector3.up*.7f,world);foe.Hit(10*power,null,color,100,Shot.LegendaryDamageColor);
                             if(++staggered>=2)break;
                         }
                         break;
-                    case 10: {var targets=LegendaryGunTargets(center,9f);for(int i=0;i<Mathf.Min(3,targets.Count);i++)LegendaryHomingShot(center+Vector3.up*.7f,targets[i],12*item.power,color,null);break;}
-                    case 11: LegendaryGunShot(center+Vector3.up*.7f,aim,18*item.power,color,GunEffect.Singularity);break;
-                    case 12: CombatVisuals.ElementBlast(center,4f,world);StrikeNearby(center,null,4f,8,16*item.power,color);break;
-                    case 13: HealPlayer(maxHp*.08f);break;
-                    case 14: if(hp<maxHp*.5f)HealPlayer(maxHp*.15f);break;
-                    case 15: if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.1f)));}break;
-                    case 16: for(int i=0;i<6;i++){float angle=i*Mathf.PI/3;LegendaryGunShot(center+Vector3.up*.7f,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),12*item.power,color);}break;
+                    case 10: {var targets=LegendaryGunTargets(center,9f);for(int i=0;i<Mathf.Min(3,targets.Count);i++)LegendaryHomingShot(center+Vector3.up*.7f,targets[i],12*power,color,null);break;}
+                    case 11: LegendaryGunShot(center+Vector3.up*.7f,aim,18*power,color,GunEffect.Singularity);break;
+                    case 12: CombatVisuals.ElementBlast(center,4f,world);StrikeNearby(center,null,4f,8,16*power,color);break;
+                    case 13: HealPlayer(maxHp*.08f*LegendaryProcEffectMultiplier);break;
+                    case 14: if(hp<maxHp*.5f)HealPlayer(maxHp*.15f*LegendaryProcEffectMultiplier);break;
+                    case 15: if(gun!=null){var type=AmmoForGun(gun);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.1f*LegendaryProcEffectMultiplier)));}break;
+                    case 16: for(int i=0;i<6;i++){float angle=i*Mathf.PI/3;LegendaryGunShot(center+Vector3.up*.7f,new Vector3(Mathf.Sin(angle),0,Mathf.Cos(angle)),12*power,color);}break;
                     case 17: break; // Companion bonus is passive while this module is equipped.
-                    case 18: {var targets=LegendaryGunTargets(center,9f);if(targets.Count>0)ScheduleLegendaryPulse(targets[0].transform.position,12*item.power,2f,3,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)));break;}
-                    case 19: {Vector3 forward=aim.sqrMagnitude>.001f?aim.normalized:transform.forward;for(int i=1;i<=3;i++)ScheduleLegendaryPulse(center+forward*i*1.5f,12*item.power,1.5f,1,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)),i*.2f);break;}
-                    case 55: ActionSkillOnBulletHit(ActionSkillChargeMax*.2f);break;
-                    case 56: if(gun!=null){var type=AmmoForGun(gun);int take=Mathf.Min(ammoReserves[(int)type],Mathf.Min(EffectiveMagazine-ammo,Mathf.Max(1,EffectiveMagazine/4)));if(take>0){ammo+=take;ammoReserves[(int)type]-=take;}}break;
+                    case 18: {var targets=LegendaryGunTargets(center,9f);if(targets.Count>0)ScheduleLegendaryPulse(targets[0].transform.position,12*power,2f,3,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)));break;}
+                    case 19: {Vector3 forward=aim.sqrMagnitude>.001f?aim.normalized:transform.forward;for(int i=1;i<=3;i++)ScheduleLegendaryPulse(center+forward*i*1.5f,12*power,1.5f,1,Mathf.Max(0,ManufacturerCatalog.Index(item.manufacturerId)),i*.2f);break;}
+                    case 55: ActionSkillOnBulletHit(ActionSkillChargeMax*.2f*LegendaryProcEffectMultiplier);break;
+                    case 56: if(gun!=null){var type=AmmoForGun(gun);int take=Mathf.Min(ammoReserves[(int)type],Mathf.Min(EffectiveMagazine-ammo,Mathf.Max(1,Mathf.RoundToInt(EffectiveMagazine*.25f*LegendaryProcEffectMultiplier))));if(take>0){ammo+=take;ammoReserves[(int)type]-=take;}}break;
                     case 57: if(reload>0){reload=0;CompleteAmmoReload();}break;
-                    case 58: if(actionSkillObject&&actionSkillDuration>0)actionSkillDuration+=4f;break;
-                    case 59: ArmorInterceptShots(center,3f,12,color);break;
-                    case 60: {Vector3 forward=aim;forward.y=0;if(forward.sqrMagnitude>.01f){forward.Normalize();foreach(var foe in LegendaryGunTargets(center,10f))if(LegendaryGunInLane(center,forward,foe.transform.position,10f,.65f))LegendaryStrike(foe,12*item.power,color);}break;}
-                    case 61: {var targets=LegendaryGunTargets(center,10f);if(targets.Count>0){Vector3 pos=targets[targets.Count-1].transform.position;CombatVisuals.ElementBlast(pos,2f,world);foreach(var foe in LegendaryGunTargets(pos,2f))LegendaryStrike(foe,14*item.power,color);}break;}
-                    case 62: {var shot=SpawnBullet(center+Vector3.up*.7f,aim,true,12*item.power,22,color,GunEffect.Ricochet,100);shot.life=1.5f;shot.legendaryEffect=true;shot.skillProjectile=true;break;}
-                    case 63: for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.05f)));}break;
-                    case 64: if(ArtifactShield>0){float charge=ArtifactShield;ArtifactShield=0;HealPlayer(charge);UpdateBarrierVisual();}break;
-                    case 65: {var targets=LegendaryGunTargets(center,8f);if(targets.Count>0)LegendaryFreeze.Apply(targets[0],2f);break;}
-                    case 66: {Foe weakest=null;float ratio=.25f;foreach(var foe in LegendaryGunTargets(center,10f)){if(foe.kind==3||foe.elite)continue;float r=foe.hp/Mathf.Max(1,foe.maxHp);if(r<ratio){ratio=r;weakest=foe;}}if(weakest!=null)LegendaryStrike(weakest,(weakest.hp+1)*2,color);break;}
+                    case 58: if(actionSkillObject&&actionSkillDuration>0)actionSkillDuration+=4f*LegendaryProcEffectMultiplier;break;
+                    case 59: ArmorInterceptShots(center,3f,Mathf.RoundToInt(12*LegendaryProcEffectMultiplier),color);break;
+                    case 60: {Vector3 forward=aim;forward.y=0;if(forward.sqrMagnitude>.01f){forward.Normalize();foreach(var foe in LegendaryGunTargets(center,10f))if(LegendaryGunInLane(center,forward,foe.transform.position,10f,.65f))LegendaryStrike(foe,12*power,color);}break;}
+                    case 61: {var targets=LegendaryGunTargets(center,10f);if(targets.Count>0){Vector3 pos=targets[targets.Count-1].transform.position;CombatVisuals.ElementBlast(pos,2f,world);foreach(var foe in LegendaryGunTargets(pos,2f))LegendaryStrike(foe,14*power,color);}break;}
+                    case 62: {var shot=SpawnBullet(center+Vector3.up*.7f,aim,true,12*power,22,color,GunEffect.Ricochet,100);shot.life=1.5f;shot.legendaryEffect=true;shot.skillProjectile=true;break;}
+                    case 63: for(int i=0;i<ActiveAmmoTypeCount;i++){var type=ActiveAmmoTypeAt(i);ammoReserves[(int)type]=Mathf.Min(AmmoCapacity(type),ammoReserves[(int)type]+Mathf.Max(1,Mathf.RoundToInt(AmmoCapacity(type)*.05f*LegendaryProcEffectMultiplier)));}break;
+                    case 64: if(ArtifactShield>0){float charge=ArtifactShield;ArtifactShield=0;HealPlayer(charge*LegendaryProcEffectMultiplier);UpdateBarrierVisual();}break;
+                    case 65: {var targets=LegendaryGunTargets(center,8f);if(targets.Count>0)LegendaryFreeze.Apply(targets[0],2f*LegendaryProcEffectMultiplier);break;}
+                    case 66: {Foe weakest=null;float ratio=.25f;foreach(var foe in LegendaryGunTargets(center,10f)){if(foe.kind==3||foe.elite)continue;float r=foe.hp/Mathf.Max(1,foe.maxHp);if(r<ratio){ratio=r;weakest=foe;}}if(weakest!=null)LegendaryStrike(weakest,(weakest.hp+1)*2*LegendaryProcEffectMultiplier,color);break;}
                     default:
-                        if(mode>=67&&mode<=79)CreateLegendaryModuleField(mode,item.power,color);
-                        else if(mode>=20&&mode<=34)LegendarySpecialFlight(center+Vector3.up*.7f,aim,12*item.power,color,mode-20);
-                        else if(mode>=35&&mode<55){var shot=SpawnBullet(center+Vector3.up*.7f,aim,true,12*item.power,20,color,GunEffect.Normal,100);shot.life=1.2f;shot.legendaryEffect=true;shot.skillProjectile=true;var flight=shot.gameObject.AddComponent<LegendaryModuleFlight>();flight.shot=shot;flight.mode=mode-35;}
+                        if(mode>=67&&mode<=79)CreateLegendaryModuleField(mode,power,color);
+                        else if(mode>=20&&mode<=34)LegendarySpecialFlight(center+Vector3.up*.7f,aim,12*power,color,mode-20);
+                        else if(mode>=35&&mode<55){var shot=SpawnBullet(center+Vector3.up*.7f,aim,true,12*power,20,color,GunEffect.Normal,100);shot.life=1.2f;shot.legendaryEffect=true;shot.skillProjectile=true;var flight=shot.gameObject.AddComponent<LegendaryModuleFlight>();flight.shot=shot;flight.mode=mode-35;}
                         break;
                 }
                 Burst(center,color,4);
