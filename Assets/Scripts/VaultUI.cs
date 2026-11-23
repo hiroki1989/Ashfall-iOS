@@ -86,12 +86,26 @@ namespace NeonVault
         void PopControllerViewport(){}
         bool ClickableButton(Rect r,string value,GUIStyle style)=>GUI.Button(r,value,style);
         bool ClickableButton(Rect r,GUIContent content,GUIStyle style)=>GUI.Button(r,content,style);
+        public float ControllerHorizontalSlider(Rect trackRect,float current,float min,float max,GUIStyle sliderStyle,GUIStyle thumbStyle)
+            =>GUI.HorizontalSlider(trackRect,current,min,max,sliderStyle,thumbStyle);
+        bool SliderStepButton(Rect r,string symbol,bool mobile)
+        {
+            bool hover=r.Contains(Event.current.mousePosition);
+            Panel(r,hover?Gold:Cyan);
+            FieldUIArt.Plate(r,hover);
+            var style=new GUIStyle(centered){fontSize=mobile?26:20,fontStyle=FontStyle.Bold};
+            style.normal.textColor=hover?Gold:UiPaper;
+            bool clicked=GUI.Button(r,symbol,style);
+            if(clicked)PlayUserSound("skill",.09f);
+            return clicked;
+        }
         void LanguageSelector()
         {
-            Panel(new Rect(1190,838,226,40),Gold*.6f);
+            float ly=screen==Screen.Pause?806f:838f;
+            Panel(new Rect(1190,ly,226,40),Gold*.6f);
             for(int i=0;i<2;i++)
             {
-                bool chosen=i==0?VaultLanguage.Japanese:!VaultLanguage.Japanese;Rect r=new Rect(1198+i*106,843,104,30);
+                bool chosen=i==0?VaultLanguage.Japanese:!VaultLanguage.Japanese;Rect r=new Rect(1198+i*106,ly+5,104,30);
                 if(chosen)Box(r,new Color(.3f,.23f,.11f,.7f));
                 GUI.color=chosen?Gold:Mist;if(GUI.Button(r,i==0?"日本語":"ENGLISH",centered))VaultLanguage.Set(i==0,!smoke);GUI.color=Color.white;
             }
@@ -125,6 +139,7 @@ namespace NeonVault
             if(screen==Screen.Hub&&collectorOpen){DrawCollectorDialog();return;}
             if(screen==Screen.Dead){DrawDeathScreen();return;}
             if(VaultStorageVisible){DrawVaultStorage();return;}
+            if(overworldLoreArchiveOpen){DrawOverworldLoreArchiveOverlay();return;}
             if(screen==Screen.Menu&&HandleSaveSlotMenu())return;
             if(MobileTouchControls.Enabled)
             {
@@ -140,7 +155,7 @@ namespace NeonVault
                 else if(screen==Screen.Pause){bool prevGui=GUI.enabled;GUI.enabled=false;if(pausedFromHub)DrawMobileHub();else if(IsOverworld)DrawOverworldHUD();else DrawMobileHUD();GUI.enabled=prevGui;DrawMobilePause();}
                 else DrawMobileOverlay();
                 DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
-                if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
+                if((screen==Screen.Menu||screen==Screen.Pause)&&!InventoryOpen&&!manufacturerRegistry)DrawMobileLanguageButton();return;
             }
             if(WorldBossConversationVisible){DrawWorldBossConversation();return;}
             if(DebtIntroVisible){DrawDebtIntro();return;}
@@ -169,7 +184,7 @@ namespace NeonVault
                 if(screen==Screen.Playing){DrawActionSkillHUD();DrawPetSkillHUD();}else DrawOverlay();
             }
             DrawFirstStepsTutorial();DrawActionSkillTutorial();DrawLegendaryWeaponTutorial();
-            if(screen==Screen.Menu&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
+            if((screen==Screen.Menu||screen==Screen.Pause)&&!InventoryOpen&&!manufacturerRegistry)LanguageSelector();
         }
         void DrawDeathScreen()
         {

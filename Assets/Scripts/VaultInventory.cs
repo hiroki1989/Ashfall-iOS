@@ -82,13 +82,13 @@ namespace NeonVault
                 default:return 0;
             }
         }
-        public float EffectiveDamage=>gun==null?0:gun.damage*(1+damageBonus+EquippedMeleeAffix("damage")+DebtDamageBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage")+ArtifactGunDamageBonus(gun)+ActionSkillGunBonus(gun)+ActionPositionBonus("turret_near_damage","medic_field_damage")+PetPlayerDamageBonus)*(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier*(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
+        public float EffectiveDamage=>gun==null?0:gun.damage*(1+damageBonus+EquippedMeleeAffix("damage")+DebtDamageBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage")+ArtifactGunDamageBonus(gun)+ActionSkillGunBonus(gun)+ActionPositionBonus("turret_near_damage","medic_field_damage")+PetPlayerDamageBonus+LandmarkDamageBonus)*(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier*(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
         public float EffectiveFireRate=>gun==null?0:(1+fireBonus+EquippedMeleeAffix("fireRate")+DebtFireRateBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.fireBonus)+ArtifactAffixBonus("fireRate")+ActionSkillExtraValue("fire_rate"))/gun.interval;
         public float EffectiveReload=>gun==null?1:Mathf.Max(.35f,gun.reloadSeconds/(1+DebtReloadBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.reloadBonus)+ArtifactAffixBonus("reload")+ActionSkillExtraValue("reload_speed")+ActionPositionBonus("turret_near_reload","medic_field_reload")));
         public float EffectiveAccuracy=>gun==null?0:Mathf.Clamp(Arsenal.Accuracy(gun)+100*DebtAccuracyBonus(VaultLanguage.DisplayModel(gun))+100*ArmorTotal(a=>a.accuracyBonus)+100*ArtifactAffixBonus("accuracy")+100*ActionSkillExtraValue("accuracy"),1,100);
         public float RangeRetentionBonus=>ArmorTotal(a=>GearScoring.AffixTotal(a.affixes,"rangeRetention"))+ArtifactAffixBonus("rangeRetention");
-        public float EffectiveMoveSpeed=>7*(1+Mathf.Min(.65f,ArmorTotal(a=>a.moveBonus)+EquippedWeaponAffixBonus("moveSpeed")+ArtifactAffixBonus("moveSpeed")+ActionSkillExtraValue("move_speed")));
-        public float DamageReduction=>Mathf.Clamp(ArmorTotal(a=>a.damageReduction)+EquippedWeaponAffixBonus("mitigation")+ArtifactAffixBonus("mitigation")+DebtDamageReductionBonus+ActionSkillExtraValue("damage_reduction"),0,.65f);
+        public float EffectiveMoveSpeed=>7*(1+Mathf.Min(.65f,ArmorTotal(a=>a.moveBonus)+EquippedWeaponAffixBonus("moveSpeed")+ArtifactAffixBonus("moveSpeed")+ActionSkillExtraValue("move_speed")+LandmarkMoveSpeedBonus));
+        public float DamageReduction=>Mathf.Clamp(ArmorTotal(a=>a.damageReduction)+EquippedWeaponAffixBonus("mitigation")+ArtifactAffixBonus("mitigation")+DebtDamageReductionBonus+ActionSkillExtraValue("damage_reduction")+LandmarkMitigationBonus,0,.65f);
         public float HealthRegen=>ArmorTotal(a=>a.regenBonus)+EquippedWeaponAffixBonus("regen")+ArtifactAffixBonus("regen")+DebtRecoveryBonus;
         public float EffectiveDodgeCooldown=>Mathf.Max(.4f,1.1f/(1+ArmorTotal(a=>a.dodgeBonus)));
         public ArmorItem NearbyArmor {get {var d=NearArmor();return d==null?null:d.item;}}
@@ -258,7 +258,7 @@ namespace NeonVault
         {if(!Armory.IsActiveArmor(item)||!ArmorInventory.Contains(item))return;if(EquippedArmor[(int)item.slot]!=item)PlayWeaponSound(gun,"equip",.5f);EquippedArmor[(int)item.slot]=item;RecalculateArmor();PlayerAppearance?.ApplyArmor(EquippedArmor);SaveInventory();}
         public void UnequipArmor(int slot)
         {if(slot<0||slot>=EquippedArmor.Length||EquippedArmor[slot]==null)return;EquippedArmor[slot]=null;RecalculateArmor();PlayerAppearance?.ApplyArmor(EquippedArmor);SaveInventory();}
-        void RecalculateArmor(){EquippedArmor[0]=null;maxHp=(baseMaxHp+DebtHealthBonus+ArmorTotal(a=>a.maxHealth)+EquippedWeaponAffixBonus("health")+ArtifactAffixBonus("health"))*(1+ActionSkillExtraValue("max_health"));hp=Mathf.Min(hp,maxHp);}
+        void RecalculateArmor(){EquippedArmor[0]=null;maxHp=(baseMaxHp+DebtHealthBonus+ArmorTotal(a=>a.maxHealth)+EquippedWeaponAffixBonus("health")+ArtifactAffixBonus("health"))*(1+ActionSkillExtraValue("max_health")+LandmarkHealthBonus);hp=Mathf.Min(hp,maxHp);}
         public void DiscardWeapon(int index)
         {
             if(Weapons.Count<=1||index<0||index>=Weapons.Count)return;

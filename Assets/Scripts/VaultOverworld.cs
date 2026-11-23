@@ -65,7 +65,10 @@ namespace NeonVault
             EnsureOverworldState();if(!WorldStorySeen)return;
             Vector3 exit=WorldGeography.Camps[LastVisitedCamp]+Vector3.back*2.2f;
             BuildOverworld(exit);
-            Notify("ASHFALL / Travel on foot to a dungeon entrance. Camps are safe.","アッシュフォール / ダンジョン入口へ歩いて向かおう。拠点は安全地帯です。");
+            if(TotalDefeatedLandmarkCount==0&&OverworldWaypointKind==0)
+                Notify("ASHFALL / Press [M] for Regional Map, Landmarks & Bounties.","アッシュフォール / ランドマーク制圧や賞金首の追跡は全体地図 [M] から確認できます。");
+            else
+                Notify("ASHFALL / Travel on foot to a dungeon entrance. Camps are safe.","アッシュフォール / ダンジョン入口へ歩いて向かおう。拠点は安全地帯です。");
         }
         bool worldAtlasFromDungeon;Screen worldAtlasReturnScreen;
         public void OpenOverworldMap()
@@ -112,6 +115,18 @@ namespace NeonVault
             SetOverworldReturnStage(-1);
             BuildOverworld(outsidePos);
             Notify("FAST TRAVEL / Dungeon entrance unlocked", "ファストトラベル / ダンジョン前へ移動");
+            return true;
+        }
+        public bool FastTravelToLandmark(int landmarkId)
+        {
+            EnsureOverworldState();
+            if(!CanWorldFastTravel||landmarkId<0||landmarkId>=OverworldGeography.LandmarkCount||!IsLandmarkBossDefeated(landmarkId))return false;
+            Vector3 dest=FindClearOffsetNear(WorldGeography.Landmarks[landmarkId],new Vector3(0f,.65f,-14.5f));
+            if(FreeWorldDestinationBlocked(dest))return false;
+            RememberOverworldPosition(dest,true);
+            SetOverworldReturnStage(-1);
+            BuildOverworld(dest);
+            Notify("FAST TRAVEL / "+OverworldGeography.LandmarkShortTitle(landmarkId,false),"ファストトラベル / "+OverworldGeography.LandmarkShortTitle(landmarkId,true));
             return true;
         }
         public bool EnterNearbyWorldDungeon(int stage)
@@ -198,7 +213,7 @@ namespace NeonVault
         void TickOverworld()
         {
             TickOverworldRush();
-            bool keepActiveMissionWaypoint=OverworldWaypointKind==2&&HasActiveBriggsMission&&!ActiveBriggsMissionReadyToTurnIn&&OverworldWaypointId==ActiveBriggsMissionStage;
+            bool keepActiveMissionWaypoint=(OverworldWaypointKind==2&&HasActiveBriggsMission&&!ActiveBriggsMissionReadyToTurnIn&&OverworldWaypointId==ActiveBriggsMissionStage)||OverworldWaypointKind==4;
             if(OverworldWaypointKind!=0&&!keepActiveMissionWaypoint)
             {
                 float reachDist=OverworldWaypointKind==1?6.5f:OverworldWaypointKind==2?5.0f:18f;
@@ -281,16 +296,23 @@ namespace NeonVault
                     });
                 }
             }
+            AddOverworldBountySpawns();
         }
 
         public void OnOverworldEnemyKilled(Foe foe)
         {
             if(foe==null||!worldEnemyInstances.TryGetValue(foe,out var spawn))return;
+            bool wasBounty=ReferenceEquals(spawn,activeBountySpawn);
             if(!spawn.defeated){spawn.defeated=true;worldEnemyDefeated++;}
             if(spawn.landmarkBoss&&spawn.landmarkId>=0)
             {
+                bool firstKill=!IsLandmarkBossDefeated(spawn.landmarkId);
                 MarkLandmarkBossDefeated(spawn.landmarkId);
-                Notify("LANDMARK BOSS DEFEATED / "+OverworldGeography.LandmarkBossName(spawn.landmarkId,false),"ランドマークボス撃破 / "+OverworldGeography.LandmarkBossName(spawn.landmarkId,true));
+                OnLandmarkConquered(spawn.landmarkId,foe.transform.position,firstKill);
+            }
+            else if(wasBounty)
+            {
+                OnOverworldBountyKilled(foe.transform.position);
             }
             spawn.active=null;worldEnemyInstances.Remove(foe);worldEnemyLevels.Remove(foe);
         }

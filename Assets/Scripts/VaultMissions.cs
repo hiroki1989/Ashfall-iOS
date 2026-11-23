@@ -554,6 +554,10 @@ namespace NeonVault
                 debtPage = false;
                 screen = Screen.Hub;
             }
+            if (Button(new Rect(398, 796, 520, 52), T("TRACK OUTDOOR BOUNTY: ", "賞金首を追跡: ") + ActiveBountyName(VaultLanguage.Japanese), OverworldWaypointKind == 4))
+            {
+                TrackActiveOverworldBounty();
+            }
         }
 
         void DrawMobileBriggsMissions()
@@ -644,11 +648,13 @@ namespace NeonVault
 
             if (pageCount > 1)
             {
-                if (MobileButton(new Rect(40, 780, 360, 105), T("PREV", "前へ")))
+                if (MobileButton(new Rect(40, 780, 320, 105), T("PREV", "前へ")))
                     briggsMobileOfferPage = Mathf.Max(0, briggsMobileOfferPage - 1);
-                if (MobileButton(new Rect(1040, 780, 360, 105), T("NEXT", "次へ")))
+                if (MobileButton(new Rect(1080, 780, 320, 105), T("NEXT", "次へ")))
                     briggsMobileOfferPage = Mathf.Min(pageCount - 1, briggsMobileOfferPage + 1);
             }
+            if (MobileButton(new Rect(380, 780, 680, 105), T("BOUNTY: ", "賞金首: ") + ActiveBountyName(VaultLanguage.Japanese)))
+                TrackActiveOverworldBounty();
         }
     }
 }

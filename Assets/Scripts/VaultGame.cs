@@ -20,7 +20,7 @@ namespace NeonVault
             Time.timeScale=1;
         }
         bool AnyNpcOrStoryDialogueActive=>OpeningMoviePlaying||FactionUnlockDialogVisible||FactionBossConversationVisible||WorldBossConversationVisible||DebtFinalConversationVisible||NpcConversationVisible||collectorOpen||(!smoke&&screen==Screen.Hub&&FirstStepsStage==1);
-        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible&&!legendaryWeaponTutorialVisible&&!OverworldActivityChoiceOpen;
+        public bool Active => screen==Screen.Playing&&!InventoryOpen&&!worldTransitionPending&&!actionSkillTutorialVisible&&!legendaryWeaponTutorialVisible&&!OverworldActivityChoiceOpen&&!OverworldExplorationModalOpen;
         public Vector3 PlayerPosition => player==null?Vector3.zero:player.position;
         public Camera GameCamera => cam;
         public Vector3 ScreenMovement(float horizontal,float vertical)
@@ -396,6 +396,11 @@ namespace NeonVault
             if(screen==Screen.Playing&&Active)TickPetSkillAura();
             if(VaultStorageVisible){if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))VaultStorageClose();return;}
             Cursor.visible=false;
+            if(OverworldExplorationModalOpen)
+            {
+                if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))CloseOverworldExplorationModal();
+                return;
+            }
             if(IsOverworld&&OverworldActivityChoiceOpen)
             {
                 if(VaultMobileInputBridge.Pressed(MobileAction.Pause,KeyCode.Escape))OpenNearbyOverworldActivity();
@@ -518,7 +523,7 @@ namespace NeonVault
                 var shot=SpawnBullet(origin,direction,true,UnityEngine.Random.Range(EffectiveDamageMin,EffectiveDamageMax),gun.speed,gun.effect==GunEffect.Ricochet?Cyan:gun.color,gun.effect,EffectiveAccuracy);
                 shot.ConfigureDamageFalloff(gun,RangeRetentionBonus);
                 shot.element=gun.element;shot.elementPercent=gun.elementPercent;shot.elementRadius=gun.elementRadius;shot.elementDuration=gun.elementDuration;shot.elementChains=gun.elementChains;shot.elementBonus=1f+ArtifactAffixBonus("elementDamage")+ActionSkillElementBonus(gun.element);
-                shot.actionCharge=ActionSkillChargeMax*.01f*7.7f/Mathf.Max(.1f,EffectiveFireRate)/Mathf.Max(1,gun.pellets)*(1+ActionSkillExtraValue("action_charge")+(ActionTurretActive?ActionSkillExtraValue("turret_hit_charge"):0)+(PlayerInActionHealingField?ActionSkillExtraValue("medic_field_charge"):0));
+                shot.actionCharge=ActionSkillChargeMax*.01f*7.7f/Mathf.Max(.1f,EffectiveFireRate)/Mathf.Max(1,gun.pellets)*(1+ActionSkillExtraValue("action_charge")+(ActionTurretActive?ActionSkillExtraValue("turret_hit_charge"):0)+(PlayerInActionHealingField?ActionSkillExtraValue("medic_field_charge"):0)+LandmarkSkillCooldownBonus);
                 shot.critical=UnityEngine.Random.value<EffectiveCriticalChance;shot.moduleAmplified=ArtifactDamageMultiplier>1.0001f||ArtifactAffixBonus("damage")>0||ArtifactGunDamageBonus(gun)>0;
                 if(shot.critical)shot.damage*=EffectiveCriticalMultiplier;
                 LegendaryModifyShot(shot);
@@ -529,7 +534,7 @@ namespace NeonVault
         public float MeleeDamage(MeleeWeaponItem item)
         {
             if(item==null)return 0;
-            return item.damage*(1+damageBonus+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage"))
+            return item.damage*(1+damageBonus+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage")+LandmarkDamageBonus)
                 *(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier
                 *(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
         }

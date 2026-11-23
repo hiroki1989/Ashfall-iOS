@@ -15,11 +15,11 @@ namespace NeonVault
         public static AmmoType ActiveAmmoTypeAt(int index)=>ActiveAmmoTypes[Mathf.Clamp(index,0,ActiveAmmoTypeCount-1)];
         public static AmmoType NormalizeAmmoType(AmmoType type)=>type;
         public int ScrapLevelMultiplier=>Mathf.Clamp(1+Mathf.Max(0,DebtLevel-1)/2,1,20);
-        public int ScaleScrap(int baseHundredths)=>Mathf.Max(1,Mathf.RoundToInt(baseHundredths/100f*ScrapLevelMultiplier*Mathf.Max(0f,VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.scrapGainMultiplier:1f)));
+        public int ScaleScrap(int baseHundredths)=>Mathf.Max(1,Mathf.RoundToInt(baseHundredths/100f*ScrapLevelMultiplier*(1f+LandmarkScrapBonus)*Mathf.Max(0f,VaultBalanceProfile.Current!=null?VaultBalanceProfile.Current.scrapGainMultiplier:1f)));
         static readonly int[] AmmoPackSizes={30,12,30,6,60};
         static readonly int[] BaseAmmoCapacities={240,96,360,60,480};
         public int AmmoCapacitySkillBonus(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*DebtAmmoCapacityBonus(AmmoModel(type))):0;}
-        public int AmmoCapacity(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?BaseAmmoCapacities[(int)type]+AmmoCapacitySkillBonus(type)+Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*.1f*AmmoCapacityTierFor(type)):0;}
+        public int AmmoCapacity(AmmoType type){type=NormalizeAmmoType(type);return ValidAmmo(type)?BaseAmmoCapacities[(int)type]+AmmoCapacitySkillBonus(type)+Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*.1f*AmmoCapacityTierFor(type))+Mathf.RoundToInt(BaseAmmoCapacities[(int)type]*LandmarkAmmoCapacityBonus):0;}
         // Match the salvage-credit economy used by the safehouse vendors.
         static readonly int[] AmmoPackCosts={1800,2400,2000,2200,2800};
         readonly int[] ammoReserves=new int[AmmoTypeCount];

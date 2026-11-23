@@ -3,7 +3,180 @@ namespace NeonVault
 {
     public static class VaultLanguage
     {
-        public static bool Japanese {get;private set;}=PlayerPrefs.GetInt("Vault.Language",Application.systemLanguage==SystemLanguage.Japanese?0:1)==0;
+        public static bool Japanese {get;private set;}
+        static VaultLanguage()
+        {
+            Japanese=PlayerPrefs.GetInt("Vault.Language",Application.systemLanguage==SystemLanguage.Japanese?0:1)==0;
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            SyncSteamLanguage();
+#endif
+        }
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("advapi32.dll", CharSet=System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern int RegGetValueW(System.IntPtr hkey, string lpSubKey, string lpValue, int dwFlags, out int pdwType, System.Text.StringBuilder pvData, ref int pcbData);
+
+        static string ReadSteamRegistryValue(string valueName)
+        {
+            try
+            {
+                var hklmOrHkcu=new System.IntPtr(unchecked((int)0x80000001));
+                int size=1024;
+                var sb=new System.Text.StringBuilder(size/2);
+                int type;
+                if(RegGetValueW(hklmOrHkcu, @"Software\Valve\Steam", valueName, 0x00000002, out type, sb, ref size)==0)
+                    return sb.ToString();
+            }
+            catch {}
+            return null;
+        }
+
+        static string DetectSteamAppLanguage()
+        {
+            string envLang=System.Environment.GetEnvironmentVariable("SteamAppLanguage")??System.Environment.GetEnvironmentVariable("STEAM_LANGUAGE");
+            if(!string.IsNullOrEmpty(envLang))return envLang.Trim();
+
+            var dirs=new System.Collections.Generic.List<string>();
+            try
+            {
+                string gameDir=System.IO.Directory.GetParent(Application.dataPath)?.FullName;
+                string steamApps=string.IsNullOrEmpty(gameDir)?null:System.IO.Path.GetFullPath(System.IO.Path.Combine(gameDir,"..",".."));
+                if(!string.IsNullOrEmpty(steamApps)&&System.IO.Directory.Exists(steamApps))dirs.Add(steamApps);
+            }
+            catch {}
+
+            string steamPath=ReadSteamRegistryValue("SteamPath");
+            if(!string.IsNullOrEmpty(steamPath))
+            {
+                string mainApps=System.IO.Path.Combine(steamPath.Replace('/','\\'),"steamapps");
+                if(System.IO.Directory.Exists(mainApps)&&!dirs.Contains(mainApps))dirs.Add(mainApps);
+                string libVdf=System.IO.Path.Combine(mainApps,"libraryfolders.vdf");
+                if(System.IO.File.Exists(libVdf))
+                {
+                    try
+                    {
+                        foreach(string line in System.IO.File.ReadAllLines(libVdf))
+                        {
+                            string p=ExtractVdfPair(line,"path");
+                            if(!string.IsNullOrEmpty(p))
+                            {
+                                string candidate=System.IO.Path.Combine(p.Replace("\\\\","\\"),"steamapps");
+                                if(System.IO.Directory.Exists(candidate)&&!dirs.Contains(candidate))dirs.Add(candidate);
+                            }
+                        }
+                    }
+                    catch {}
+                }
+            }
+
+            string folderName=null;
+            try { folderName=System.IO.Directory.GetParent(Application.dataPath)?.Name; } catch {}
+            bool isDemo=!string.IsNullOrEmpty(folderName)&&folderName.IndexOf("Demo",System.StringComparison.OrdinalIgnoreCase)>=0;
+            string envId=System.Environment.GetEnvironmentVariable("SteamAppId")??System.Environment.GetEnvironmentVariable("SteamGameId");
+            var appIds=new System.Collections.Generic.List<string>();
+            if(!string.IsNullOrEmpty(envId))appIds.Add(envId.Trim());
+            appIds.Add(isDemo?"5620390":"5614640");
+            appIds.Add(isDemo?"5614640":"5620390");
+
+            foreach(string dir in dirs)
+            {
+                foreach(string appId in appIds)
+                {
+                    string acf=System.IO.Path.Combine(dir,"appmanifest_"+appId+".acf");
+                    if(System.IO.File.Exists(acf))
+                    {
+                        string lang=ParseAcfLanguage(acf);
+                        if(!string.IsNullOrEmpty(lang))return lang;
+                    }
+                }
+                if(!string.IsNullOrEmpty(folderName))
+                {
+                    try
+                    {
+                        foreach(string acf in System.IO.Directory.GetFiles(dir,"appmanifest_*.acf"))
+                        {
+                            string text=System.IO.File.ReadAllText(acf);
+                            if(text.IndexOf("\""+folderName+"\"",System.StringComparison.OrdinalIgnoreCase)>=0)
+                            {
+                                string lang=ParseAcfLanguageText(text);
+                                if(!string.IsNullOrEmpty(lang))return lang;
+                            }
+                        }
+                    }
+                    catch {}
+                }
+            }
+            return null;
+        }
+
+        static string ParseAcfLanguage(string path)
+        {
+            try { return ParseAcfLanguageText(System.IO.File.ReadAllText(path)); }
+            catch { return null; }
+        }
+
+        static string ParseAcfLanguageText(string text)
+        {
+            if(string.IsNullOrEmpty(text))return null;
+            string lang=ExtractAcfSectionKey(text,"UserConfig","language");
+            if(!string.IsNullOrEmpty(lang))return lang;
+            return ExtractAcfSectionKey(text,"MountedConfig","language");
+        }
+
+        static string ExtractAcfSectionKey(string text, string section, string key)
+        {
+            int idx=text.IndexOf("\""+section+"\"",System.StringComparison.OrdinalIgnoreCase);
+            if(idx<0)return null;
+            int open=text.IndexOf('{',idx);
+            if(open<0)return null;
+            int close=text.IndexOf('}',open+1);
+            if(close<0)return null;
+            string body=text.Substring(open+1,close-open-1);
+            foreach(string line in body.Split('\n'))
+            {
+                string val=ExtractVdfPair(line,key);
+                if(!string.IsNullOrEmpty(val))return val;
+            }
+            return null;
+        }
+
+        static string ExtractVdfPair(string line, string expectedKey)
+        {
+            if(string.IsNullOrEmpty(line))return null;
+            int q1=line.IndexOf('"');if(q1<0)return null;
+            int q2=line.IndexOf('"',q1+1);if(q2<0)return null;
+            string key=line.Substring(q1+1,q2-q1-1);
+            if(!string.Equals(key,expectedKey,System.StringComparison.OrdinalIgnoreCase))return null;
+            int q3=line.IndexOf('"',q2+1);if(q3<0)return null;
+            int q4=line.IndexOf('"',q3+1);if(q4<0)return null;
+            return line.Substring(q3+1,q4-q3-1).Trim();
+        }
+
+        static void SyncSteamLanguage()
+        {
+            try
+            {
+                string appLang=DetectSteamAppLanguage();
+                if(!string.IsNullOrEmpty(appLang))
+                {
+                    string prev=PlayerPrefs.GetString("Vault.SteamAppLanguage","");
+                    if(!PlayerPrefs.HasKey("Vault.Language")||!string.Equals(appLang,prev,System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        Japanese=string.Equals(appLang,"japanese",System.StringComparison.OrdinalIgnoreCase);
+                        PlayerPrefs.SetInt("Vault.Language",Japanese?0:1);
+                        PlayerPrefs.SetString("Vault.SteamAppLanguage",appLang);
+                        PlayerPrefs.Save();
+                    }
+                }
+                else if(!PlayerPrefs.HasKey("Vault.Language"))
+                {
+                    string regLang=ReadSteamRegistryValue("Language");
+                    if(!string.IsNullOrEmpty(regLang))
+                        Japanese=string.Equals(regLang.Trim(),"japanese",System.StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch {}
+        }
+#endif
         public static string T(string english,string japanese)=>Japanese?japanese:english;
         public static void Set(bool japanese,bool persist=true){Japanese=japanese;if(persist){PlayerPrefs.SetInt("Vault.Language",japanese?0:1);PlayerPrefs.Save();}}
         public static string RarityName(Rarity rarity)

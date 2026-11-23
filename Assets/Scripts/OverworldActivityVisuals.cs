@@ -46,18 +46,19 @@ namespace NeonVault
                     Destroy(existing); visible.Remove(site.id); visibleTypes.Remove(site.id);
                 }
                 visibleTypes[site.id]=site.type;
-                if (site.type == 5)
+                if (site.type == 5 || site.type == 7)
                 {
                     var chest = new GameObject("Travel activity reward / " + site.id);
                     chest.transform.SetParent(transform, false);
                     chest.transform.position = new Vector3(site.position.x, 0, site.position.z);
                     chest.transform.rotation = Quaternion.Euler(0, site.id % 4 * 90, 0);
-                    EquipmentChestVisual.Create(chest.transform, site.id >= 100100 && site.id < 100150);
-                    ObjectiveGroundRing.Create(chest.transform, site.position, 1.15f);
+                    bool rareChest = site.type == 7 || (site.id >= 100100 && site.id < 100150);
+                    EquipmentChestVisual.Create(chest.transform, rareChest);
+                    ObjectiveGroundRing.Create(chest.transform, site.position, 1.15f, site.type == 7 ? new Color(1f, .82f, .24f, .95f) : (Color?)null);
                     visible.Add(site.id, chest);
                     continue;
                 }
-                int kind = site.type == 4 ? 1 : Mathf.Clamp(site.type, 0, 2);
+                int kind = site.type == 4 || site.type == 6 ? 1 : Mathf.Clamp(site.type, 0, 2);
                 GameObject marker = source[kind] != null
                     ? Instantiate(source[kind], transform)
                     : GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -84,7 +85,8 @@ namespace NeonVault
                 // handles interaction, so imported colliders cannot trap the player.
                 foreach (var collider in marker.GetComponentsInChildren<Collider>()) collider.enabled = false;
                 if (source[kind] == null) marker.transform.localScale = new Vector3(.8f, .4f, .8f);
-                ObjectiveGroundRing.Create(marker.transform, site.position, 1.15f);
+                Color? ringColor = site.type == 6 ? new Color(.36f, .89f, .82f, .95f) : (Color?)null;
+                ObjectiveGroundRing.Create(marker.transform, site.position, 1.15f, ringColor);
                 visible.Add(site.id, marker);
             }
             expired.Clear();
@@ -98,7 +100,7 @@ namespace NeonVault
     static class ObjectiveGroundRing
     {
         static Material material;
-        public static void Create(Transform parent, Vector3 center, float radius)
+        public static void Create(Transform parent, Vector3 center, float radius, Color? colorOverride = null)
         {
             if (!material)
             {
@@ -114,7 +116,7 @@ namespace NeonVault
             line.positionCount = 64;
             line.widthMultiplier = .07f;
             line.sharedMaterial = material;
-            line.startColor = line.endColor = new Color(1f, .43f, .055f, .9f);
+            line.startColor = line.endColor = colorOverride ?? new Color(1f, .43f, .055f, .9f);
             line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             line.receiveShadows = false;
             for (int i = 0; i < line.positionCount; i++)

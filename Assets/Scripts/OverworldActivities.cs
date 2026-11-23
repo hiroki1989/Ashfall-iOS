@@ -42,7 +42,9 @@ namespace NeonVault
                     type == 2 ? VaultLanguage.T("Hidden supply clue", "隠し物資の手掛かり") :
                     type == 3 ? VaultLanguage.T("Buried supply cache", "隠された物資箱") :
                     type == 4 ? VaultLanguage.T("Hostile surge", "敵襲") :
-                    type == 5 ? VaultLanguage.T("Challenge reward chest", "挑戦の報酬箱") : "";
+                    type == 5 ? VaultLanguage.T("Challenge reward chest", "挑戦の報酬箱") :
+                    type == 6 ? VaultLanguage.T("Field record terminal", "調査記録端末") :
+                    type == 7 ? VaultLanguage.T("Landmark sealed cache", "封印物資庫") : "";
             }
         }
         public string OverworldActivityDescription
@@ -155,6 +157,7 @@ namespace NeonVault
             if (overworldRushRewardReady && overworldRushSite != null)
                 nearbyOverworldActivities.Add(new OverworldActivitySite { id = overworldRushSite.id, type = 5, position = overworldRushSite.position });
             AddFactionCampRewards();
+            AddLandmarkExplorationActivities();
             // Keep the tracked destination on the atlas after fast travel or restart.
             if (HasActiveOverworldClue && (overworldRushSite == null || overworldRushSite.id != 30000 + ActiveOverworldClueId))
                 nearbyOverworldActivities.Add(new OverworldActivitySite { id = 30000 + ActiveOverworldClueId, type = 3, position = ActiveOverworldCluePosition });
@@ -169,6 +172,13 @@ namespace NeonVault
                 if (!site.completed && d < best) { best = d; selectedOverworldActivity = site; }
             }
             if (selectedOverworldActivity == null) return false;
+            if (selectedOverworldActivity.type == 6 || selectedOverworldActivity.type == 7)
+            {
+                var customSite = selectedOverworldActivity;
+                selectedOverworldActivity = null;
+                HandleCustomOverworldSite(customSite);
+                return true;
+            }
             if (selectedOverworldActivity.type == 5)
             {
                 var rewardSite = selectedOverworldActivity; selectedOverworldActivity = null;

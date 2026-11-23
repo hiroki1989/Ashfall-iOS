@@ -224,7 +224,7 @@ namespace NeonVault
         {
             if(!equipmentHeroPreview)equipmentHeroPreview=gameObject.AddComponent<EquipmentHeroPreview>();
             if(Event.current.type==EventType.Repaint)GUI.DrawTexture(rect,equipmentHeroPreview.Render(this),ScaleMode.ScaleToFit,false);
-            equipmentHeroPreview.Angle=GUI.HorizontalSlider(new Rect(rect.x+50,rect.yMax-25,rect.width-100,22),equipmentHeroPreview.Angle,-155,205);
+            equipmentHeroPreview.Angle=ControllerHorizontalSlider(new Rect(rect.x+50,rect.yMax-25,rect.width-100,22),equipmentHeroPreview.Angle,-155,205,GUI.skin.horizontalSlider,GUI.skin.horizontalSliderThumb);
         }
     }
 }

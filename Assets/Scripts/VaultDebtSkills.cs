@@ -251,7 +251,7 @@ namespace NeonVault
             thumb.fixedWidth=36;thumb.fixedHeight=42;
             Box(new Rect(bounds.x,bounds.center.y-9,bounds.width,18),new Color(.19f,.24f,.27f));
             Box(new Rect(bounds.x,bounds.center.y-9,bounds.width*Mathf.Clamp01(fraction),18),new Color(1f,.48f,.18f));
-            float selected=GUI.HorizontalSlider(bounds,fraction,0f,1f,GUIStyle.none,thumb);
+            float selected=ControllerHorizontalSlider(bounds,fraction,0f,1f,GUIStyle.none,thumb);
             Box(new Rect(bounds.x+Mathf.Clamp01(selected)*bounds.width-4,bounds.center.y-17,8,34),new Color(1f,.68f,.30f));
             return selected;
         }

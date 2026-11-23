@@ -89,7 +89,7 @@ namespace NeonVault
         public int ActiveOverworldClueId { get { EnsureOverworldState(); return activeOverworldClueId; } }
         public IReadOnlyList<bool> VisitedOverworldCamps { get { EnsureOverworldState(); return Array.AsReadOnly(visitedOverworldCamps); } }
         public IReadOnlyList<int> OverworldChestOpenedAt { get { EnsureOverworldState(); return Array.AsReadOnly(overworldChestOpenedAt); } }
-        // 0: none, 1: camp, 2: dungeon entrance, 3: landmark.
+        // 0: none, 1: camp, 2: dungeon entrance, 3: landmark, 4: bounty.
         int overworldWaypointKind, overworldWaypointId = -1;
         public int OverworldWaypointKind { get { EnsureOverworldState(); return overworldWaypointKind; } }
         public int OverworldWaypointId { get { EnsureOverworldState(); return overworldWaypointId; } }
@@ -100,14 +100,16 @@ namespace NeonVault
                 EnsureOverworldState();
                 return overworldWaypointKind == 1 ? WorldGeography.Camps[overworldWaypointId] :
                     overworldWaypointKind == 2 ? WorldGeography.Entrances[overworldWaypointId] :
-                    overworldWaypointKind == 3 ? WorldGeography.Landmarks[overworldWaypointId] : Vector3.zero;
+                    overworldWaypointKind == 3 ? WorldGeography.Landmarks[overworldWaypointId] :
+                    overworldWaypointKind == 4 ? ActiveBountyPosition : Vector3.zero;
             }
         }
         public void SetOverworldWaypoint(int kind, int id)
         {
             EnsureOverworldState();
-            if (kind != 1 && kind != 2 && kind != 3) { kind = 0; id = -1; }
-            else if (id < 0 || id >= (kind == 1 ? OverworldCampCount : kind == 2 ? ExpeditionMap.StageCount : OverworldGeography.LandmarkCount)) return;
+            if (kind < 1 || kind > 4) { kind = 0; id = -1; }
+            else if (kind != 4 && (id < 0 || id >= (kind == 1 ? OverworldCampCount : kind == 2 ? ExpeditionMap.StageCount : OverworldGeography.LandmarkCount))) return;
+            else if (kind == 4 && id < 0) return;
             if (overworldWaypointKind == kind && overworldWaypointId == id) return;
             overworldWaypointKind = kind; overworldWaypointId = id;
             SaveOverworldState();
@@ -163,8 +165,9 @@ namespace NeonVault
                 { activeOverworldClueId = s.activeClueId; activeOverworldCluePosition = s.activeCluePosition; }
                 if (s.waypointKind == 1 && s.waypointId >= 0 && s.waypointId < OverworldCampCount ||
                     s.waypointKind == 2 && ValidOverworldStage(s.waypointId) ||
-                    s.waypointKind == 3 && s.waypointId >= 0 && s.waypointId < OverworldGeography.LandmarkCount)
-                { overworldWaypointKind = s.waypointKind; overworldWaypointId = s.waypointId; }
+                    s.waypointKind == 3 && s.waypointId >= 0 && s.waypointId < OverworldGeography.LandmarkCount ||
+                    s.waypointKind == 4 && s.waypointId >= 0)
+                { overworldWaypointKind = s.waypointKind; overworldWaypointId = s.waypointKind == 4 ? ActiveBountyIndex : s.waypointId; }
                 if (s.version == OverworldSaveVersion && FiniteOverworldPosition(s.position))
                 {
                     SavedOverworldPosition = s.position;

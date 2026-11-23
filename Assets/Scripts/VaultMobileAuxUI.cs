@@ -30,7 +30,8 @@ namespace NeonVault
         void DrawMobileManufacturer()
         {
             Box(new Rect(0,0,1440,900),PanelInk);string maker=ManufacturerCatalog.Id(makerSelection);
-            ManufacturerBranding.Badge(new Rect(30,15,105,105),maker);MobileCopyAt(155,35,ManufacturerCatalog.Name(maker,VaultLanguage.Japanese),Gold,660);
+            ManufacturerBranding.Badge(new Rect(30,15,105,105),maker);MobileCopyAt(155,35,ManufacturerCatalog.Name(maker,VaultLanguage.Japanese),Gold,390);
+            if(MobileButton(new Rect(555,15,270,100),T("LOGS ","記録 ")+CollectedLoreCount+"/30"))OpenOverworldLoreArchive();
             if(MobileButton(new Rect(840,10,125,110),"‹",38,VaultFont.Legacy())){makerSelection=(makerSelection+5)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
             if(MobileButton(new Rect(980,10,125,110),"›",38,VaultFont.Legacy())){makerSelection=(makerSelection+1)%6;mobileCatalogPage=0;BuildManufacturerProducts();}
             if(MobileButton(new Rect(1120,10,280,110),T("BACK","戻る")))manufacturerRegistry=false;

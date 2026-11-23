@@ -24,6 +24,8 @@ namespace NeonVault
             var stage=SelectedExpeditionStage;
             if(stage!=null&&random.NextDouble()<(.08+stage.region*.04+(int)stage.mission*.02)*.95)
                 rarity=(Rarity)Mathf.Max((int)rarity,(int)DungeonCatalog.RollRarity(random,boss));
+            if(!smoke&&LandmarkRareFindBonus>0&&random.NextDouble()<LandmarkRareFindBonus)
+                rarity=(Rarity)Mathf.Max((int)rarity,(int)DungeonCatalog.RollRarity(random,boss));
             return PetImproveEnemyRarity(random,rarity,boss);
         }
         // Contract equipment has its own rarity table; ordinary enemy/cache drops

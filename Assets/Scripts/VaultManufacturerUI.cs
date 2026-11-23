@@ -66,7 +66,8 @@ namespace NeonVault
         void DrawManufacturerRegistry()
         {
             Box(new Rect(0,0,1440,900),PanelInk);
-            Text(44,45,T("EQUIPMENT CATALOG","装備図鑑"),heading,Gold,1160);
+            Text(44,45,T("EQUIPMENT CATALOG","装備図鑑"),heading,Gold,980);
+            if(Button(new Rect(1040,42,355,48),T("FIELD RECORDS ","調査記録 ")+CollectedLoreCount+"/30"))OpenOverworldLoreArchive();
             if(Button(new Rect(1230,848,165,42),T("BACK","戻る")))manufacturerRegistry=false;
             for(int maker=0;maker<6;maker++)
             {

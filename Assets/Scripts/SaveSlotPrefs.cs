@@ -24,7 +24,7 @@ namespace NeonVault
             string prefix=slot==1?"":"Vault.SaveSlot."+slot+".";
             string[] knownKeys = {
                 "Vault.Progression.v1", "Vault.Loadout.v1", "Vault.DebtSkills.v1", "Vault.ExpeditionCheckpoint.v1",
-                "Vault.Overworld.v1", "Vault.OverworldFog.v1", "Vault.Missions.v1", "Vault.ActionSkills.v1", "Vault.EquipmentDiscovery.v1", "Vault.ActionSkillTutorial.v1",
+                "Vault.Overworld.v1", "Vault.OverworldFog.v1", "Vault.OverworldFogRewardTier.v1", "Vault.OverworldBounty.v1", "Vault.OverworldLore.v1", "Vault.Missions.v1", "Vault.ActionSkills.v1", "Vault.EquipmentDiscovery.v1", "Vault.ActionSkillTutorial.v1",
                 "Vault.LegendaryWeaponTutorial.v1", "Vault.FirstSteps.v1", "Vault.FirstSteps.target.v1", "Vault.DebtBoss.defeated.v1",
                 "Vault.Cores", "Vault.Rank", "Vault.FirstBossLegendaryD0", "Vault.SeraIntro", "Vault.BriggsIntro",
                 "Vault.Pet.Adopted.v1", "Vault.Pet.IonaIntro.v1", "Vault.PetSkills.v1.OverworldCooldown",
@@ -40,6 +40,7 @@ namespace NeonVault
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.DungeonBossFought."+i);
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.LandmarkBossDefeated."+i);
                 UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.LandmarkBossFought."+i);
+                UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.LandmarkCacheOpened."+i);
             }
             for(int b=0;b<10;b++) UnityEngine.PlayerPrefs.DeleteKey(prefix+"Vault.BossRelic.Defeated."+b);
             for(int t=0;t<3;t++) for(int s=0;s<10;s++)
