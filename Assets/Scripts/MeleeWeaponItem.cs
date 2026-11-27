@@ -9,7 +9,7 @@ namespace NeonVault
     public sealed class MeleeWeaponItem
     {
         public string id, catalogId, manufacturerId, bossRelicId;
-        public int designVariant;
+        public int designVariant, fireRateCapVersion;
         public MeleeWeaponFamily family;
         public Rarity rarity;
         public bool uniqueEffect;
@@ -33,7 +33,7 @@ namespace NeonVault
             if(string.IsNullOrEmpty(item.catalogId))item.catalogId="melee-"+((int)item.family).ToString("00")+"-"+item.designVariant.ToString("00");
         }
         public static MeleeWeaponItem StarterKnife()=>new MeleeWeaponItem
-        {id=Guid.NewGuid().ToString("N"),catalogId="melee-00-00",manufacturerId="kestrel",family=MeleeWeaponFamily.Knife,level=1,damage=18,interval=.65f,range=1.15f,arcDegrees=75};
+        {id=Guid.NewGuid().ToString("N"),catalogId="melee-00-00",manufacturerId="kestrel",family=MeleeWeaponFamily.Knife,level=1,damage=18,interval=.65f,range=1.15f,arcDegrees=75,fireRateCapVersion=GearBalance.CurrentFireRateCapVersion};
 
         public static MeleeWeaponItem Create(System.Random random,int level)
         {random=random??new System.Random();return Create(random,level,DungeonCatalog.RollRarity(random));}
@@ -81,13 +81,17 @@ namespace NeonVault
             int count=Mathf.Clamp((int)item.rarity,0,4);
             item.affixes=new GearAffix[count];var used=new System.Collections.Generic.HashSet<int>();
             float scale=GearBalance.LevelPower(item.rarity,item.level);
+            float frScale=GearBalance.FireRateScale(item.rarity,item.level);
             for(int i=0;i<count;i++)
             {
                 int pick;do{pick=random.Next(types.Length);}while(!used.Add(pick));
-                var x=new GearAffix{type=types[pick],value=Arsenal.Range(random,low[pick],high[pick])*scale};item.affixes[i]=x;
+                float useScale=types[pick]=="fireRate"?frScale:scale;
+                var x=new GearAffix{type=types[pick],value=Arsenal.Range(random,low[pick],high[pick])*useScale};item.affixes[i]=x;
                 if(x.type=="damage")item.damage=Mathf.Max(1,Mathf.RoundToInt(item.damage*(1+x.value)));
                 else if(x.type=="fireRate")item.interval/=1+x.value;
             }
+            item.interval=Mathf.Max(.18f,item.interval);
+            item.fireRateCapVersion=GearBalance.CurrentFireRateCapVersion;
         }
         public static MeleeWeaponItem RollForDungeon(System.Random random,int dungeon,bool boss=false)
         {random=random??new System.Random();return Create(random,DungeonCatalog.ItemLevel(random,dungeon),DungeonCatalog.RollRarity(random,boss));}

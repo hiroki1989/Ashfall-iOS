@@ -17,6 +17,7 @@ namespace NeonVault
         public bool EquipmentMenuVisible=>InventoryOpen||(screen==Screen.Shop&&!debtPage)||debtSkillTreePage;
         public int EquipmentGestureRegion(Vector2 point)
         {
+            if(eqExpandedCardOpen)return new Rect(64,32,1312,836).Contains(point)?8:0;
             if(actionSkillInventoryTree||debtSkillTreePage)
             {
                 if(new Rect(46,190,882,650).Contains(point))return 5;
@@ -32,6 +33,7 @@ namespace NeonVault
             float top=InventoryOpen?122:196,gridTop=top+86;
             if(new Rect(36,gridTop+8,432,766-gridTop).Contains(point))return 1;
             if(new Rect(938,top+8,470,618-(top+8)).Contains(point))return 2;
+            if(eqCompareEquipped&&new Rect(488,top+36,432,618-(top+36)).Contains(point))return 9;
             if(new Rect(502,652,406,126).Contains(point))return 4;
             if(new Rect(494,top+8,422,(InventoryOpen?526:452)-45).Contains(point))return 3;
             return 0;
@@ -40,12 +42,14 @@ namespace NeonVault
         {
             float top=InventoryOpen?122:196;
             if(region==1)eqGridScroll.y=Mathf.Clamp(eqGridScroll.y-delta.y,0,Mathf.Max(0,eqGridExtent-(680-top)));
-            if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-220f));
+            if(region==2)eqDetailScroll.y=Mathf.Clamp(eqDetailScroll.y-delta.y,0,Mathf.Max(0,eqDetailExtent-110f));
             if(region==3&&equipmentHeroPreview)equipmentHeroPreview.Angle=Mathf.Repeat(equipmentHeroPreview.Angle-delta.x*.55f+155,360)-155;
             if(region==4)eqLoadoutScroll.y=Mathf.Max(0,eqLoadoutScroll.y-delta.y);
             if(region==5)actionTreeScroll=new Vector2(Mathf.Clamp(actionTreeScroll.x-delta.x,0,actionTreeMaxScroll.x),Mathf.Clamp(actionTreeScroll.y-delta.y,0,actionTreeMaxScroll.y));
             if(region==6)actionTreeDescriptionScroll.y=Mathf.Max(0,actionTreeDescriptionScroll.y-delta.y);
             if(region==7)petSkillScroll=new Vector2(Mathf.Clamp(petSkillScroll.x-delta.x,0,petSkillMaxScroll.x),Mathf.Clamp(petSkillScroll.y-delta.y,0,petSkillMaxScroll.y));
+            if(region==8)eqExpandedCardScroll.y=Mathf.Clamp(eqExpandedCardScroll.y-delta.y,0,Mathf.Max(0,eqExpandedCardExtent-300f));
+            if(region==9)eqCompareDetailScroll.y=Mathf.Clamp(eqCompareDetailScroll.y-delta.y,0,Mathf.Max(0,eqCompareDetailExtent-110f));
         }
         sealed class EqCard
         {
@@ -164,14 +168,14 @@ namespace NeonVault
             if(merchant&&debtPage)return false;
             int copyFontSize=MobileTouchControls.Enabled?31:23;
             eqCopy=new GUIStyle(label){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip,richText=true};eqCaption=new GUIStyle(eqCopy){font=this.font,fontSize=MobileTouchControls.Enabled?30:27,fontStyle=FontStyle.Normal};eqButtonStyle=new GUIStyle(centered){fontSize=copyFontSize,fontStyle=FontStyle.Normal,wordWrap=true,clipping=TextClipping.Clip};eqButtonStyle.normal.textColor=Color.white;eqButtonStyle.hover.textColor=Color.white;eqButtonStyle.active.textColor=Color.white;
-            if(eqLastMerchant!=merchant||eqLastSelling!=shopSellingPage){eqSelectedKey=null;eqShowFullDetails=false;eqPendingDiscard=null;eqGridScroll=eqDetailScroll=Vector2.zero;eqLastMerchant=merchant;eqLastSelling=shopSellingPage;if(!merchant)eqUpgradePage=false;}
-            LoadJunk();bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey)&&eqPendingDiscard==null&&!confirmJunkSale;
+            if(eqLastMerchant!=merchant||eqLastSelling!=shopSellingPage){eqSelectedKey=null;eqShowFullDetails=false;eqPendingDiscard=null;CloseExpandedEquipmentCard();eqGridScroll=eqDetailScroll=Vector2.zero;eqLastMerchant=merchant;eqLastSelling=shopSellingPage;if(!merchant)eqUpgradePage=false;}
+            LoadJunk();bool eqPreviousEnabled=GUI.enabled;GUI.enabled=eqPreviousEnabled&&string.IsNullOrEmpty(pendingSaleKey)&&eqPendingDiscard==null&&!confirmJunkSale&&!eqExpandedCardOpen;
             Box(new Rect(0,0,1440,900),EqCanvas);
             Box(new Rect(28,12,44,3),EqAccent);
             Box(new Rect(28,103,1384,1),EqLine);
             EqText(new Rect(28,18,950,44),merchant?T("SERA / SALVAGE EXCHANGE","セラ / 回収品交換所"):T("INVENTORY","インベントリ"),EqInk,new GUIStyle(eqCaption){fontSize=34});
             if(merchant)EqText(new Rect(28,66,900,44),T("SCRAP ","所持スクラップ ")+Credits.ToString("N0"),EqMuted);
-            if(EqButton(new Rect(1172,16,240,76),T("CLOSE","閉じる"))){if(merchant){screen=Screen.Hub;pendingSaleKey=null;}else ToggleInventory();return true;}
+            if(EqButton(new Rect(1172,16,240,76),T("CLOSE","閉じる"))){CloseExpandedEquipmentCard();if(merchant){screen=Screen.Hub;pendingSaleKey=null;}else ToggleInventory();return true;}
             if(merchant)
             {
                 if(EqNavigation(new Rect(28,112,212,72),T("BUY","購入"),!shopSellingPage&&!eqUpgradePage)){shopSellingPage=false;eqUpgradePage=false;pendingSaleKey=null;}
@@ -215,7 +219,9 @@ namespace NeonVault
             {
                 Box(new Rect(488,top+8,432,26),new Color(.06f,.12f,.10f,.92f));
                 EqText(new Rect(496,top+10,416,22),T("◀ CURRENTLY EQUIPPED (COMPARISON)","◀ 現在の装備中アイテム（比較対象）"),new Color(.48f,1f,.72f),new GUIStyle(eqCopy){fontSize=15,alignment=TextAnchor.MiddleCenter});
-                DrawBorderlandsItemCard(new Rect(488,top+36,432,618-(top+36)),compareTarget,ref eqCompareDetailScroll,out _,true,0,false,ItemSaleValueOf(compareTarget),false);
+                Rect cmpCardRect=new Rect(488,top+36,432,618-(top+36));
+                DrawBorderlandsItemCard(cmpCardRect,compareTarget,ref eqCompareDetailScroll,out eqCompareDetailExtent,true,0,false,ItemSaleValueOf(compareTarget),false);
+                HandleEquipmentCardTapToExpand(cmpCardRect,compareTarget,true,0,false,ItemSaleValueOf(compareTarget),false,2);
             }
             else
             {
@@ -265,7 +271,10 @@ namespace NeonVault
                 else if(selected.item is ArtifactItem sm)refScore=MobileModuleComparison(sm,out hasCmp);
                 else if(selected.item is MeleeWeaponItem sw)refScore=MobileMeleeComparison(sw,out hasCmp);
                 int cardPrice=merchant&&selected.offer>=0?ShopOfferPrice(shopStock[selected.offer]):merchant&&selected.sale!=null?selected.sale.price:ItemSaleValueOf(selected.item);
-                DrawBorderlandsItemCard(new Rect(938,top+8,470,618-(top+8)),selected.item,ref eqDetailScroll,out eqDetailExtent,selected.equipped,refScore,hasCmp,cardPrice,junkKeys.Contains(JunkItemKey(selected.item)));
+                bool isJunk=junkKeys.Contains(JunkItemKey(selected.item));
+                Rect rightCardRect=new Rect(938,top+8,470,618-(top+8));
+                DrawBorderlandsItemCard(rightCardRect,selected.item,ref eqDetailScroll,out eqDetailExtent,selected.equipped,refScore,hasCmp,cardPrice,isJunk);
+                HandleEquipmentCardTapToExpand(rightCardRect,selected.item,selected.equipped,refScore,hasCmp,cardPrice,isJunk,1);
                 EqActions(selected,merchant);
             }
             else
@@ -293,13 +302,13 @@ namespace NeonVault
                 }
                 else{Box(new Rect(r.x,r.y,r.width,1),EqLine);EqText(new Rect(r.x+10,r.y+10,r.width-20,r.height-12),caption,EqMuted,new GUIStyle(eqCopy){fontSize=16});}
             }
-            GUI.enabled=eqPreviousEnabled;if(confirmJunkSale)DrawJunkConfirmation();else if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();else if(!merchant&&eqPendingDiscard!=null)EqDiscardConfirmation();return true;
+            GUI.enabled=eqPreviousEnabled;if(eqExpandedCardOpen)DrawExpandedEquipmentCardModal();else if(confirmJunkSale)DrawJunkConfirmation();else if(merchant&&!string.IsNullOrEmpty(pendingSaleKey))EqSaleConfirmation();else if(!merchant&&eqPendingDiscard!=null)EqDiscardConfirmation();return true;
         }
         void DrawEquippedTotals()
         {
             var rows=new List<(int icon,string text,Color tint)>
             {
-                (9,"HP "+maxHp.ToString("0")+T("   ·   MOVE ","   ·   移動 ")+EffectiveMoveSpeed.ToString("0.1"),new Color(.45f,.95f,.65f)),
+                (9,"HP "+maxHp.ToString("0")+T("   ·   MOVE ","   ·   移動 ")+EffectiveMoveSpeed.ToString("0.0"),new Color(.45f,.95f,.65f)),
                 (8,T("DAMAGE REDUCTION ","被ダメージ軽減 ")+(DamageReduction*100).ToString("0")+"%",new Color(.45f,.88f,1f))
             };
             float health=EquippedWeaponAffixBonus("health")+ArtifactAffixBonus("health");

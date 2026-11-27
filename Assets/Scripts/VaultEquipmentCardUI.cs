@@ -51,7 +51,6 @@ namespace NeonVault
                 eqHeaderGradTex = new Texture2D(1, 32, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
                 for (int y = 0; y < 32; y++)
                 {
-                    // Unity Texture2D y=0 is bottom, y=31 is top
                     float t = y / 31f;
                     float alpha = Mathf.Lerp(0.18f, 0.58f, t * t);
                     eqHeaderGradTex.SetPixel(0, y, new Color(1f, 1f, 1f, alpha));
@@ -63,7 +62,7 @@ namespace NeonVault
                 eqBodyGradTex = new Texture2D(1, 64, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
                 for (int y = 0; y < 64; y++)
                 {
-                    float t = y / 63f; // 0 = bottom, 1 = top
+                    float t = y / 63f;
                     float edge = Mathf.Pow(t, 1.8f) * 0.28f + Mathf.Pow(1f - t, 2.4f) * 0.14f;
                     eqBodyGradTex.SetPixel(0, y, new Color(1f, 1f, 1f, edge));
                 }
@@ -178,7 +177,6 @@ namespace NeonVault
                     GUI.DrawTexture(hr, eqHeaderGradTex, ScaleMode.StretchToFill, true);
                     GUI.color = prev;
                 }
-                // Diagonal / chevron rarity accent stripe under header
                 Box(new Rect(hr.x, hr.yMax - 2f, hr.width, 2f), new Color(theme.r, theme.g, theme.b, 0.80f));
             }
 
@@ -195,7 +193,7 @@ namespace NeonVault
             Box(new Rect(r.x + 4f, r.y + 4f, r.width - 8f, 1f), inner);
             Box(new Rect(r.x + 4f, r.yMax - 5f, r.width - 8f, 1f), inner);
 
-            // Tactical corner notches (Borderlands card frame flair)
+            // Tactical corner notches
             float cLen = Mathf.Min(16f, Mathf.Min(r.width, r.height) * 0.16f);
             Color cornerCol = Color.Lerp(theme, Color.white, selected ? 0.6f : 0.28f);
             Box(new Rect(r.x, r.y, cLen, 3f), cornerCol);
@@ -321,7 +319,6 @@ namespace NeonVault
         static string HighlightNumbersInText(string raw, string numHex = "#5CE1FF")
         {
             if (string.IsNullOrEmpty(raw)) return "";
-            // Avoid double-wrapping if rich text tags already exist
             if (raw.Contains("<color=")) return raw;
             return RxHighlightNums.Replace(raw, "<color=" + numHex + ">$1</color>");
         }
@@ -332,7 +329,6 @@ namespace NeonVault
             subStats = new List<EqStatCell>();
             features = new List<EqFeatureRow>();
             bool ja = VaultLanguage.Japanese;
-            string maker = ItemMakerOf(item);
 
             Color cWhite = new Color(0.95f, 0.96f, 0.98f);
             Color cGold  = new Color(1.00f, 0.84f, 0.32f);
@@ -341,17 +337,18 @@ namespace NeonVault
 
             if (item is Gun g)
             {
+                GearBalance.Migrate(g);
                 float avgDmg = g.damage;
                 string dmgStr = avgDmg >= 100f ? Mathf.RoundToInt(avgDmg).ToString("N0") : avgDmg.ToString("0.0");
                 if (g.pellets > 1) dmgStr += "×" + g.pellets;
-                float rate = 1f / Mathf.Max(0.001f, g.interval);
+                float rate = 1f / Mathf.Max(0.05f, g.interval);
                 primaryStats.Add(new EqStatCell(0, dmgStr, T("DMG", "威力"), cWhite));
                 primaryStats.Add(new EqStatCell(1, Arsenal.Accuracy(g).ToString("0") + "%", T("ACC", "精度"), cWhite));
-                primaryStats.Add(new EqStatCell(2, g.reloadSeconds.ToString("0.1") + T("s", "秒"), T("RELOAD", "装填"), cWhite));
-                primaryStats.Add(new EqStatCell(3, rate.ToString("0.1") + T("/s", "/秒"), T("RATE", "連射"), cWhite));
+                primaryStats.Add(new EqStatCell(2, g.reloadSeconds.ToString("0.0") + T("s", "秒"), T("RELOAD", "装填"), cWhite));
+                primaryStats.Add(new EqStatCell(3, rate.ToString("0.0") + T("/s", "/秒"), T("RATE", "連射"), cWhite));
                 primaryStats.Add(new EqStatCell(4, g.magazine.ToString(), T("MAG", "弾数"), cWhite));
 
-                // Sub-banner stats: Crit + 30m Range Retention + Bullet Speed
+                // Sub-banner stats: Crit + 30m Range Retention
                 float critPct = GunCriticalChance(g) * 100f;
                 float critMul = GunCriticalMultiplier(g);
                 subStats.Add(new EqStatCell(5, critPct.ToString("0.#") + "% (×" + critMul.ToString("0.0#") + ")", T("CRIT", "会心"), cGold));
@@ -410,7 +407,7 @@ namespace NeonVault
                     });
                 }
 
-                // 4) Rolled Affixes (each with dedicated stat icon!)
+                // 4) Rolled Affixes (each with dedicated stat icon)
                 if (g.affixes != null)
                 {
                     foreach (var af in g.affixes)
@@ -427,28 +424,13 @@ namespace NeonVault
                         });
                     }
                 }
-
-                // 5) Manufacturer Trait Row
-                if (!string.IsNullOrEmpty(maker))
-                {
-                    Color mkCol = ManufacturerCatalog.Color(maker);
-                    string mkHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(mkCol, Color.white, 0.30f));
-                    features.Add(new EqFeatureRow
-                    {
-                        icon = 19,
-                        badgeBg = new Color(mkCol.r * 0.20f, mkCol.g * 0.20f, mkCol.b * 0.20f, 0.90f),
-                        iconTint = Color.Lerp(mkCol, Color.white, 0.25f),
-                        borderTint = new Color(mkCol.r, mkCol.g, mkCol.b, 0.55f),
-                        richText = "<color=#" + mkHex + ">" + ManufacturerCatalog.Name(maker, ja) + "</color> - " + ManufacturerCatalog.Description(maker, ja)
-                    });
-                }
             }
             else if (item is ArmorItem a)
             {
+                GearBalance.MigrateFireRate(a);
                 primaryStats.Add(new EqStatCell(8, (a.damageReduction * 100f).ToString("0.#") + "%", T("GUARD", "軽減"), cCyan));
                 primaryStats.Add(new EqStatCell(9, "+" + a.maxHealth.ToString("0.#"), T("MAX HP", "最大HP"), cGreen));
 
-                // Pick top 2 other non-zero stats on this armor piece for the stat tiles
                 var extras = new List<EqStatCell>();
                 if (Mathf.Abs(a.damageBonus) > 0.0001f) extras.Add(new EqStatCell(0, "+" + (a.damageBonus * 100f).ToString("0.#") + "%", T("DMG", "威力"), cWhite));
                 if (Mathf.Abs(a.moveBonus) > 0.0001f) extras.Add(new EqStatCell(11, (a.moveBonus >= 0 ? "+" : "") + (a.moveBonus * 100f).ToString("0.#") + "%", T("MOVE", "移動"), cWhite));
@@ -456,7 +438,7 @@ namespace NeonVault
                 if (Mathf.Abs(a.reloadBonus) > 0.0001f) extras.Add(new EqStatCell(2, "+" + (a.reloadBonus * 100f).ToString("0.#") + "%", T("RELOAD", "装填"), cWhite));
                 if (Mathf.Abs(a.dodgeBonus) > 0.0001f) extras.Add(new EqStatCell(12, "+" + (a.dodgeBonus * 100f).ToString("0.#") + "%", T("DODGE", "回避"), cWhite));
                 if (Mathf.Abs(a.accuracyBonus) > 0.0001f) extras.Add(new EqStatCell(1, "+" + (a.accuracyBonus * 100f).ToString("0.#") + "%", T("ACC", "精度"), cWhite));
-                if (Mathf.Abs(a.regenBonus) > 0.0001f) extras.Add(new EqStatCell(10, "+" + a.regenBonus.ToString("0.1") + "/s", T("REGEN", "回復"), cGreen));
+                if (Mathf.Abs(a.regenBonus) > 0.0001f) extras.Add(new EqStatCell(10, "+" + a.regenBonus.ToString("0.0") + "/s", T("REGEN", "回復"), cGreen));
                 if (Mathf.Abs(a.ammoBonus) > 0.0001f) extras.Add(new EqStatCell(4, "+" + (a.ammoBonus * 100f).ToString("0.#") + "%", T("AMMO", "弾薬"), cWhite));
                 for (int i = 0; i < extras.Count; i++)
                 {
@@ -503,24 +485,10 @@ namespace NeonVault
                         });
                     }
                 }
-
-                if (!string.IsNullOrEmpty(maker))
-                {
-                    Color mkCol = ManufacturerCatalog.Color(maker);
-                    string mkHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(mkCol, Color.white, 0.30f));
-                    string mkDesc = ManufacturerCatalog.Description(maker, ja);
-                    features.Add(new EqFeatureRow
-                    {
-                        icon = 19,
-                        badgeBg = new Color(mkCol.r * 0.20f, mkCol.g * 0.20f, mkCol.b * 0.20f, 0.90f),
-                        iconTint = Color.Lerp(mkCol, Color.white, 0.25f),
-                        borderTint = new Color(mkCol.r, mkCol.g, mkCol.b, 0.55f),
-                        richText = "<color=#" + mkHex + ">" + ManufacturerCatalog.Name(maker, ja) + "</color> - " + mkDesc
-                    });
-                }
             }
             else if (item is ArtifactItem m)
             {
+                GearBalance.MigrateFireRate(m);
                 string outVal = m.effect == ArtifactEffect.KillShield ? "+" + (8f * m.power).ToString("0.0")
                               : m.effect == ArtifactEffect.DashPulse ? (12f * m.power).ToString("0.0")
                               : m.effect == ArtifactEffect.ReloadSurge ? "+" + (15f * m.power).ToString("0") + "%"
@@ -531,7 +499,7 @@ namespace NeonVault
                 int outIcon = m.effect == ArtifactEffect.KillShield ? 8 : m.effect == ArtifactEffect.DashPulse ? 22 : 0;
 
                 primaryStats.Add(new EqStatCell(outIcon, outVal, outLbl, cCyan));
-                primaryStats.Add(new EqStatCell(16, m.cooldown > 0.01f ? m.cooldown.ToString("0.1") + T("s", "秒") : T("PASSIVE", "常時"), T("COOLDOWN", "再発動"), cWhite));
+                primaryStats.Add(new EqStatCell(16, m.cooldown > 0.01f ? m.cooldown.ToString("0.0") + T("s", "秒") : T("PASSIVE", "常時"), T("COOLDOWN", "再発動"), cWhite));
                 primaryStats.Add(new EqStatCell(15, "×" + m.power.ToString("0.00"), T("OUTPUT", "出力倍率"), cGold));
 
                 // Core Trigger Circuit
@@ -604,28 +572,15 @@ namespace NeonVault
                         });
                     }
                 }
-
-                if (!string.IsNullOrEmpty(maker))
-                {
-                    Color mkCol = ManufacturerCatalog.Color(maker);
-                    string mkHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(mkCol, Color.white, 0.30f));
-                    features.Add(new EqFeatureRow
-                    {
-                        icon = 19,
-                        badgeBg = new Color(mkCol.r * 0.20f, mkCol.g * 0.20f, mkCol.b * 0.20f, 0.90f),
-                        iconTint = Color.Lerp(mkCol, Color.white, 0.25f),
-                        borderTint = new Color(mkCol.r, mkCol.g, mkCol.b, 0.55f),
-                        richText = "<color=#" + mkHex + ">" + ManufacturerCatalog.Name(maker, ja) + "</color> - " + ManufacturerCatalog.Description(maker, ja)
-                    });
-                }
             }
             else if (item is MeleeWeaponItem w)
             {
                 MeleeWeaponCatalog.EnsureAffixes(w);
-                float rate = 1f / Mathf.Max(0.01f, w.interval);
+                GearBalance.MigrateFireRate(w);
+                float rate = 1f / Mathf.Max(0.05f, w.interval);
                 primaryStats.Add(new EqStatCell(13, w.damage.ToString("N0"), T("DMG", "威力"), cWhite));
-                primaryStats.Add(new EqStatCell(3, rate.ToString("0.1") + T("/s", "/秒"), T("SPEED", "速度"), cWhite));
-                primaryStats.Add(new EqStatCell(6, w.effectiveRange.ToString("0.1") + "m", T("REACH", "射程"), cCyan));
+                primaryStats.Add(new EqStatCell(3, rate.ToString("0.0") + T("/s", "/秒"), T("SPEED", "速度"), cWhite));
+                primaryStats.Add(new EqStatCell(6, w.effectiveRange.ToString("0.0") + "m", T("REACH", "射程"), cCyan));
                 primaryStats.Add(new EqStatCell(14, w.arcDegrees.ToString("0") + "°", T("ARC", "範囲角"), cGold));
 
                 string legMelee = MeleeWeaponCatalog.LegendaryDescription(w);
@@ -656,20 +611,6 @@ namespace NeonVault
                             richText = "<color=#FFD166>❖</color> " + text
                         });
                     }
-                }
-
-                if (!string.IsNullOrEmpty(maker))
-                {
-                    Color mkCol = ManufacturerCatalog.Color(maker);
-                    string mkHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(mkCol, Color.white, 0.30f));
-                    features.Add(new EqFeatureRow
-                    {
-                        icon = 19,
-                        badgeBg = new Color(mkCol.r * 0.20f, mkCol.g * 0.20f, mkCol.b * 0.20f, 0.90f),
-                        iconTint = Color.Lerp(mkCol, Color.white, 0.25f),
-                        borderTint = new Color(mkCol.r, mkCol.g, mkCol.b, 0.55f),
-                        richText = "<color=#" + mkHex + ">" + ManufacturerCatalog.Name(maker, ja) + "</color> - " + ManufacturerCatalog.Description(maker, ja)
-                    });
                 }
             }
         }
@@ -711,11 +652,160 @@ namespace NeonVault
             return eqNumericFont;
         }
 
-        bool eqCompareEquipped;
+        GUIStyle EqCleanStyle(Font fontOverride, int fontSize, FontStyle fontStyle = FontStyle.Normal, TextAnchor align = TextAnchor.MiddleLeft, bool wrap = false, bool rich = false, TextClipping clip = TextClipping.Overflow)
+        {
+            var s = new GUIStyle(label)
+            {
+                font = fontOverride ?? this.font,
+                fontSize = fontSize,
+                fontStyle = fontStyle,
+                alignment = align,
+                wordWrap = wrap,
+                richText = rich,
+                clipping = clip,
+                padding = new RectOffset(0, 0, 0, 0),
+                margin = new RectOffset(0, 0, 0, 0)
+            };
+            s.normal.textColor = Color.white;
+            return s;
+        }
 
-        // Draws a full Borderlands-style inspector card inside cardRect, with scrollable feature body and fixed Maker/Price footer.
+        bool eqCompareEquipped;
+        bool eqExpandedCardOpen;
+        object eqExpandedCardItem;
+        bool eqExpandedCardEquipped;
+        int eqExpandedCardRefScore;
+        bool eqExpandedCardHasCmp;
+        int eqExpandedCardPrice;
+        bool eqExpandedCardJunk;
+        Vector2 eqExpandedCardScroll;
+        float eqExpandedCardExtent;
+
+        bool eqTapDown;
+        bool eqTapDragged;
+        Vector2 eqTapStart;
+        int eqTapTargetId;
+
+        bool eqModalTapDown;
+        bool eqModalTapDragged;
+        Vector2 eqModalTapStart;
+
+        public void CloseExpandedEquipmentCard()
+        {
+            eqExpandedCardOpen = false;
+            eqExpandedCardItem = null;
+            eqTapDown = false;
+            eqModalTapDown = false;
+        }
+
+        public void HandleEquipmentCardTapToExpand(Rect cardRect, object item, bool equipped, int refScore, bool hasCmp, int price, bool showJunk, int targetId = 1)
+        {
+            if (item == null || eqExpandedCardOpen || !GUI.enabled) return;
+            Event e = Event.current;
+            if (e == null) return;
+            if (e.type == EventType.MouseDown && e.button == 0 && cardRect.Contains(e.mousePosition))
+            {
+                eqTapDown = true;
+                eqTapDragged = false;
+                eqTapStart = e.mousePosition;
+                eqTapTargetId = targetId;
+            }
+            else if (e.type == EventType.MouseDrag && eqTapDown && eqTapTargetId == targetId)
+            {
+                if (Vector2.Distance(e.mousePosition, eqTapStart) >= 14f)
+                    eqTapDragged = true;
+            }
+            else if (e.type == EventType.MouseUp && e.button == 0 && eqTapDown && eqTapTargetId == targetId)
+            {
+                bool open = !eqTapDragged && cardRect.Contains(e.mousePosition);
+                eqTapDown = false;
+                eqTapDragged = false;
+                if (open)
+                {
+                    eqExpandedCardOpen = true;
+                    eqExpandedCardItem = item;
+                    eqExpandedCardEquipped = equipped;
+                    eqExpandedCardRefScore = refScore;
+                    eqExpandedCardHasCmp = hasCmp;
+                    eqExpandedCardPrice = price;
+                    eqExpandedCardJunk = showJunk;
+                    eqExpandedCardScroll = Vector2.zero;
+                    GUIUtility.hotControl = 0;
+                    PlayUserSound("tab", 0.1f);
+                    e.Use();
+                }
+            }
+        }
+
+        public void DrawExpandedEquipmentCardModal()
+        {
+            if (!eqExpandedCardOpen || eqExpandedCardItem == null) return;
+            Event e = Event.current;
+            if (e != null && e.type == EventType.KeyDown && (e.keyCode == KeyCode.Escape || e.keyCode == KeyCode.Backspace))
+            {
+                CloseExpandedEquipmentCard();
+                PlayUserSound("tab", 0.08f);
+                e.Use();
+                return;
+            }
+
+            Box(new Rect(0f, 0f, 1440f, 900f), new Color(0.008f, 0.015f, 0.022f, 0.93f));
+            Rect expRect = new Rect(64f, 32f, 1312f, 836f);
+
+            DrawBorderlandsItemCard(expRect, eqExpandedCardItem, ref eqExpandedCardScroll, out eqExpandedCardExtent,
+                eqExpandedCardEquipped, eqExpandedCardRefScore, eqExpandedCardHasCmp, eqExpandedCardPrice, eqExpandedCardJunk, expanded: true, showExpandHint: false);
+
+            // Top-right Close button inside the expanded card (uses ClickableButton so it works in Stash even before Inventory initializes eqButtonStyle)
+            Rect closeRect = new Rect(expRect.xMax - 186f, expRect.y + 12f, 170f, 48f);
+            bool hoverClose = e != null && closeRect.Contains(e.mousePosition);
+            Box(closeRect, hoverClose ? new Color(0.28f, 0.14f, 0.14f, 0.96f) : new Color(0.10f, 0.14f, 0.18f, 0.95f));
+            Color closeBorder = hoverClose ? new Color(1f, 0.55f, 0.45f, 0.95f) : new Color(0.55f, 0.72f, 0.82f, 0.80f);
+            Box(new Rect(closeRect.x, closeRect.y, closeRect.width, 2f), closeBorder);
+            Box(new Rect(closeRect.x, closeRect.yMax - 2f, closeRect.width, 2f), closeBorder);
+            Box(new Rect(closeRect.x, closeRect.y, 2f, closeRect.height), closeBorder);
+            Box(new Rect(closeRect.xMax - 2f, closeRect.y, 2f, closeRect.height), closeBorder);
+            var closeStyle = EqCleanStyle(this.font, 21, FontStyle.Bold, TextAnchor.MiddleCenter);
+            EqCardLabel(closeRect, T("× CLOSE", "× 閉じる"), Color.white, closeStyle);
+            if (ClickableButton(closeRect, GUIContent.none, GUIStyle.none))
+            {
+                CloseExpandedEquipmentCard();
+                PlayUserSound("tab", 0.09f);
+                return;
+            }
+
+            // Tap anywhere (inside or outside card) without dragging to close expanded view
+            if (e != null)
+            {
+                if (e.type == EventType.MouseDown && e.button == 0)
+                {
+                    eqModalTapDown = true;
+                    eqModalTapDragged = false;
+                    eqModalTapStart = e.mousePosition;
+                }
+                else if (e.type == EventType.MouseDrag && eqModalTapDown)
+                {
+                    if (Vector2.Distance(e.mousePosition, eqModalTapStart) >= 14f)
+                        eqModalTapDragged = true;
+                }
+                else if (e.type == EventType.MouseUp && e.button == 0 && eqModalTapDown)
+                {
+                    bool shouldClose = !eqModalTapDragged;
+                    eqModalTapDown = false;
+                    eqModalTapDragged = false;
+                    if (shouldClose)
+                    {
+                        CloseExpandedEquipmentCard();
+                        GUIUtility.hotControl = 0;
+                        PlayUserSound("tab", 0.08f);
+                        e.Use();
+                    }
+                }
+            }
+        }
+
+        // Draws a full Borderlands-style inspector card inside cardRect, with large portrait showcase, non-clipping stat labels, scrollable feature body, and Maker/Price footer.
         public void DrawBorderlandsItemCard(Rect cardRect, object item, ref Vector2 detailScroll, out float computedDetailExtent,
-            bool equipped = false, int compareReferenceScore = 0, bool hasComparison = false, int priceOverride = -1, bool showJunkBadge = false)
+            bool equipped = false, int compareReferenceScore = 0, bool hasComparison = false, int priceOverride = -1, bool showJunkBadge = false, bool expanded = false, bool showExpandHint = true)
         {
             computedDetailExtent = 0f;
             if (item == null) return;
@@ -729,80 +819,10 @@ namespace NeonVault
             string itemName = ItemDisplayNameOf(item);
             string typeSubtitle = ItemTypeSubtitleOf(item);
             int price = priceOverride >= 0 ? priceOverride : ItemSaleValueOf(item);
-
-            bool compact = cardRect.height < 420f;
-            float headerH = compact ? 96f : 112f;
-            float footerH = 38f;
-
-            // 1. Full-panel rarity background + glowing Borderlands header band
-            DrawRarityBackdrop(cardRect, rarity, false, true, headerH);
-
-            // 2. HEADER: Item Name (top-left), Lv badge (top-right), Rarity/Type chevrons + Hero DPS/SCORE + Item Portrait/Class Silhouette
-            float padX = 12f;
-
-            // Level badge top-right (use this.font Bold so digits and '.' never drop glyphs)
-            var lvStyle = new GUIStyle(label)
-            {
-                font = this.font,
-                fontSize = compact ? 18 : 20,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.UpperRight,
-                wordWrap = false
-            };
-            string lvText = "Lv " + level;
-            float lvW = Mathf.Max(68f, lvStyle.CalcSize(new GUIContent(lvText)).x + 8f);
-            EqCardLabel(new Rect(cardRect.xMax - padX - lvW + 1f, cardRect.y + 8f, lvW, 24f), lvText, new Color(0f, 0f, 0f, 0.88f), lvStyle);
-            EqCardLabel(new Rect(cardRect.xMax - padX - lvW, cardRect.y + 7f, lvW, 24f), lvText, Color.white, lvStyle);
-
-            // Item Portrait box on right side of header
-            float portW = compact ? 108f : 132f;
-            float portH = compact ? 60f : 72f;
-            Rect portRect = new Rect(cardRect.xMax - padX - portW, cardRect.y + headerH - portH - 6f, portW, portH);
-            Box(new Rect(portRect.x - 1f, portRect.y - 1f, portRect.width + 2f, portRect.height + 2f), new Color(theme.r, theme.g, theme.b, 0.48f));
-            DrawItemSilhouetteOrPortrait(portRect, item);
-
-            // Class silhouette mini-badge at top-left of portrait for guns
-            if (item is Gun hg)
-            {
-                Rect silRect = new Rect(portRect.x + 3f, portRect.y + 3f, 34f, 20f);
-                Box(silRect, new Color(0.02f, 0.03f, 0.04f, 0.80f));
-                FieldUIArt.GunClassIcon(new Rect(silRect.x + 2f, silRect.y + 2f, silRect.width - 4f, silRect.height - 4f), hg, Color.Lerp(theme, Color.white, 0.65f));
-            }
-            if (showJunkBadge)
-            {
-                if (!junkBinIcon) junkBinIcon = Resources.Load<Texture2D>("Art/UI/junk-bin");
-                if (junkBinIcon) GUI.DrawTexture(new Rect(portRect.xMax - 28f, portRect.y + 2f, 26f, 26f), junkBinIcon, ScaleMode.ScaleToFit, true);
-            }
-
-            // Item Name (auto-fitted, crisp shadow)
-            float nameMaxW = portRect.x - (cardRect.x + padX) - 6f;
-            var nameStyle = new GUIStyle(label)
-            {
-                font = this.font,
-                fontSize = compact ? 18 : 22,
-                fontStyle = FontStyle.Bold,
-                wordWrap = true,
-                clipping = TextClipping.Clip
-            };
             string cleanName = (itemName ?? "").Trim().Replace("\n ", "\n").Replace("\n　", "\n");
-            while (nameStyle.fontSize > 13 && nameStyle.CalcHeight(new GUIContent(cleanName), nameMaxW) > (compact ? 40f : 48f))
-                nameStyle.fontSize--;
-            Rect nameRect = new Rect(cardRect.x + padX, cardRect.y + 7f, nameMaxW, compact ? 42f : 50f);
-            Color nameColor = Color.Lerp(theme, Color.white, rarity == Rarity.Common ? 0.78f : 0.52f);
-            EqCardLabel(new Rect(nameRect.x + 1f, nameRect.y + 1f, nameRect.width, nameRect.height), cleanName, new Color(0f, 0f, 0f, 0.9f), nameStyle);
-            EqCardLabel(nameRect, cleanName, nameColor, nameStyle);
-
-            // Rarity Chevrons + Category Label
-            float typeY = cardRect.y + (compact ? 47f : 56f);
-            var typeStyle = new GUIStyle(label) { font = this.font, fontSize = compact ? 12 : 13, wordWrap = false };
             int chevCount = Mathf.Clamp((int)rarity + 1, 1, 5);
-            string chevrons = new string('▸', chevCount);
-            string catLine = chevrons + " " + typeSubtitle + "  ·  " + VaultLanguage.RarityName(rarity);
-            EqCardLabel(new Rect(cardRect.x + padX, typeY, nameMaxW + 16f, 19f), catLine, Color.Lerp(theme, new Color(1f, 0.92f, 0.55f), 0.35f), typeStyle);
+            string catLine = new string('▸', chevCount) + " " + typeSubtitle + "  ·  " + VaultLanguage.RarityName(rarity);
 
-            // Hero DPS / SCORE Pill Box (bottom-left of header, just like Borderlands "30,824 DPS")
-            float heroY = cardRect.y + headerH - (compact ? 29f : 33f);
-            float heroH = compact ? 24f : 28f;
             float heroValue = item is Gun dpsGun
                 ? (dpsGun.damage * Mathf.Max(1, dpsGun.pellets) / Mathf.Max(0.05f, dpsGun.interval))
                 : item is MeleeWeaponItem dpsMelee
@@ -813,36 +833,66 @@ namespace NeonVault
                 : score.ToString("N0");
             string heroUnit = (item is Gun || item is MeleeWeaponItem) ? "DPS" : T("SCORE", "評価");
 
-            var heroNumStyle = new GUIStyle(label)
-            {
-                font = EqNumericFont() ?? this.font,
-                fontSize = compact ? 19 : 23,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleLeft,
-                wordWrap = false
-            };
-            var heroUnitStyle = new GUIStyle(label) { font = this.font, fontSize = compact ? 11 : 13, alignment = TextAnchor.LowerLeft, wordWrap = false };
-            float numW = heroNumStyle.CalcSize(new GUIContent(heroNum)).x;
-            float unitW = heroUnitStyle.CalcSize(new GUIContent(heroUnit)).x;
-            float pillW = Mathf.Min(nameMaxW, numW + unitW + 20f);
-            Rect heroPill = new Rect(cardRect.x + padX, heroY, pillW, heroH);
-            Box(heroPill, new Color(0.02f, 0.03f, 0.04f, 0.76f));
-            Box(new Rect(heroPill.x, heroPill.y, 3f, heroPill.height), theme);
-            EqCardLabel(new Rect(heroPill.x + 8f, heroPill.y - 1f, numW + 6f, heroPill.height), heroNum, Color.white, heroNumStyle);
-            EqCardLabel(new Rect(heroPill.x + 10f + numW, heroPill.y, unitW + 8f, heroPill.height - 3f), heroUnit, new Color(0.75f, 0.82f, 0.88f), heroUnitStyle);
+            float cursorY;
+            float footerH = expanded ? 62f : 38f;
 
-            // Equipped or Score Comparison chip next to Hero Pill
-            float compX = heroPill.xMax + 8f;
-            float compMaxW = portRect.x - compX - 4f;
-            if (compMaxW > 42f)
+            if (expanded)
             {
-                var compStyle = new GUIStyle(label) { fontSize = 13, alignment = TextAnchor.MiddleLeft, richText = true, wordWrap = false };
+                float headerH = 232f;
+                DrawRarityBackdrop(cardRect, rarity, false, true, headerH);
+
+                float padX = 24f;
+                // Right side showcase portrait (leaves top-right 54px for Close button)
+                Rect portRect = new Rect(cardRect.xMax - 526f, cardRect.y + 68f, 504f, 152f);
+                Box(new Rect(portRect.x - 1f, portRect.y - 1f, portRect.width + 2f, portRect.height + 2f), new Color(theme.r, theme.g, theme.b, 0.55f));
+                Box(portRect, new Color(0.015f, 0.025f, 0.036f, 0.78f));
+                DrawItemSilhouetteOrPortrait(portRect, item);
+                if (item is Gun ehg)
+                {
+                    Rect silRect = new Rect(portRect.x + 6f, portRect.y + 6f, 54f, 32f);
+                    Box(silRect, new Color(0.02f, 0.03f, 0.04f, 0.84f));
+                    FieldUIArt.GunClassIcon(new Rect(silRect.x + 3f, silRect.y + 3f, silRect.width - 6f, silRect.height - 6f), ehg, Color.Lerp(theme, Color.white, 0.65f));
+                }
+                if (showJunkBadge)
+                {
+                    if (!junkBinIcon) junkBinIcon = Resources.Load<Texture2D>("Art/UI/junk-bin");
+                    if (junkBinIcon) GUI.DrawTexture(new Rect(portRect.xMax - 42f, portRect.y + 6f, 36f, 36f), junkBinIcon, ScaleMode.ScaleToFit, true);
+                }
+
+                // Level badge next to Close button
+                var lvStyle = EqCleanStyle(this.font, 30, FontStyle.Bold, TextAnchor.MiddleRight);
+                EqCardLabel(new Rect(portRect.x, cardRect.y + 14f, portRect.width - 184f, 44f), "Lv " + level, Color.white, lvStyle);
+
+                // Left side: Large Item Name + Category + Hero DPS/Score
+                float leftW = portRect.x - (cardRect.x + padX) - 18f;
+                var nameStyle = EqCleanStyle(this.font, 36, FontStyle.Bold, TextAnchor.UpperLeft, wrap: true, clip: TextClipping.Clip);
+                while (nameStyle.fontSize > 22 && nameStyle.CalcHeight(new GUIContent(cleanName), leftW) > 90f)
+                    nameStyle.fontSize--;
+                Color nameColor = Color.Lerp(theme, Color.white, rarity == Rarity.Common ? 0.80f : 0.54f);
+                EqCardLabel(new Rect(cardRect.x + padX + 2f, cardRect.y + 18f, leftW, 92f), cleanName, new Color(0f, 0f, 0f, 0.9f), nameStyle);
+                EqCardLabel(new Rect(cardRect.x + padX, cardRect.y + 16f, leftW, 92f), cleanName, nameColor, nameStyle);
+
+                var typeStyle = EqCleanStyle(this.font, 22, FontStyle.Bold, TextAnchor.MiddleLeft);
+                EqCardLabel(new Rect(cardRect.x + padX, cardRect.y + 114f, leftW, 30f), catLine, Color.Lerp(theme, new Color(1f, 0.92f, 0.55f), 0.35f), typeStyle);
+
+                var heroNumStyle = EqCleanStyle(EqNumericFont() ?? this.font, 40, FontStyle.Bold, TextAnchor.MiddleLeft);
+                var heroUnitStyle = EqCleanStyle(this.font, 21, FontStyle.Bold, TextAnchor.LowerLeft);
+                float numW = heroNumStyle.CalcSize(new GUIContent(heroNum)).x;
+                float unitW = heroUnitStyle.CalcSize(new GUIContent(heroUnit)).x;
+                Rect heroPill = new Rect(cardRect.x + padX, cardRect.y + 156f, Mathf.Min(leftW, numW + unitW + 34f), 56f);
+                Box(heroPill, new Color(0.02f, 0.03f, 0.04f, 0.82f));
+                Box(new Rect(heroPill.x, heroPill.y, 4f, heroPill.height), theme);
+                EqCardLabel(new Rect(heroPill.x + 12f, heroPill.y, numW + 8f, heroPill.height), heroNum, Color.white, heroNumStyle);
+                EqCardLabel(new Rect(heroPill.x + 18f + numW, heroPill.y, unitW + 10f, heroPill.height - 8f), heroUnit, new Color(0.78f, 0.86f, 0.92f), heroUnitStyle);
+
+                float compX = heroPill.xMax + 16f;
+                var compStyle = EqCleanStyle(this.font, 23, FontStyle.Bold, TextAnchor.MiddleLeft, rich: true);
                 if (equipped)
                 {
-                    Rect eqBadge = new Rect(compX, heroY + 3f, Mathf.Min(compMaxW, 96f), heroH - 6f);
-                    Box(eqBadge, new Color(0.10f, 0.28f, 0.18f, 0.90f));
-                    Box(new Rect(eqBadge.x, eqBadge.y, eqBadge.width, 1f), new Color(0.35f, 0.95f, 0.60f, 0.8f));
-                    EqCardLabel(new Rect(eqBadge.x + 6f, eqBadge.y, eqBadge.width - 8f, eqBadge.height), T("✓ EQUIPPED", "✓ 装備中"), new Color(0.48f, 1f, 0.70f), compStyle);
+                    Rect eqBadge = new Rect(compX, heroPill.y + 8f, 168f, 40f);
+                    Box(eqBadge, new Color(0.10f, 0.28f, 0.18f, 0.92f));
+                    Box(new Rect(eqBadge.x, eqBadge.y, eqBadge.width, 2f), new Color(0.35f, 0.95f, 0.60f, 0.85f));
+                    EqCardLabel(new Rect(eqBadge.x + 12f, eqBadge.y, eqBadge.width - 16f, eqBadge.height), T("✓ EQUIPPED", "✓ 装備中"), new Color(0.48f, 1f, 0.70f), compStyle);
                 }
                 else if (hasComparison)
                 {
@@ -850,45 +900,130 @@ namespace NeonVault
                     string cmpStr = delta > 0 ? "<color=#4DFF88>▲+" + delta + "</color>"
                                   : delta < 0 ? "<color=#FF5E5E>▼" + delta + "</color>"
                                   : "<color=#B0BEC5>＝0</color>";
-                    EqCardLabel(new Rect(compX, heroY, compMaxW, heroH), cmpStr, Color.white, compStyle);
+                    EqCardLabel(new Rect(compX, heroPill.y, leftW - (compX - (cardRect.x + padX)), heroPill.height), cmpStr, Color.white, compStyle);
                 }
-                else if (item is Gun || item is MeleeWeaponItem)
+
+                cursorY = cardRect.y + headerH + 8f;
+            }
+            else
+            {
+                bool compact = cardRect.height < 440f;
+                bool veryShort = cardRect.height < 395f;
+                float titleBandH = compact ? 60f : 66f;
+                // Restore full-width large equipment illustration (450x124 in Inventory, 450x104 in Shop)
+                float portH = veryShort ? 90f : compact ? 104f : 124f;
+                float headerH = titleBandH + portH + 8f;
+
+                DrawRarityBackdrop(cardRect, rarity, false, true, headerH);
+
+                float padX = 11f;
+                // Row 1: Level top-right + Item Name top-left
+                var lvStyle = EqCleanStyle(this.font, compact ? 18 : 20, FontStyle.Bold, TextAnchor.UpperRight);
+                string lvText = "Lv " + level;
+                float lvW = Mathf.Max(66f, lvStyle.CalcSize(new GUIContent(lvText)).x + 6f);
+                EqCardLabel(new Rect(cardRect.xMax - padX - lvW + 1f, cardRect.y + 7f, lvW, 24f), lvText, new Color(0f, 0f, 0f, 0.88f), lvStyle);
+                EqCardLabel(new Rect(cardRect.xMax - padX - lvW, cardRect.y + 6f, lvW, 24f), lvText, Color.white, lvStyle);
+
+                float nameMaxW = cardRect.width - padX * 2f - lvW - 6f;
+                var nameStyle = EqCleanStyle(this.font, compact ? 18 : 21, FontStyle.Bold, TextAnchor.UpperLeft, wrap: true, clip: TextClipping.Clip);
+                while (nameStyle.fontSize > 13 && nameStyle.CalcHeight(new GUIContent(cleanName), nameMaxW) > (compact ? 30f : 34f))
+                    nameStyle.fontSize--;
+                Color nameColor = Color.Lerp(theme, Color.white, rarity == Rarity.Common ? 0.78f : 0.52f);
+                EqCardLabel(new Rect(cardRect.x + padX + 1f, cardRect.y + 6f, nameMaxW, 34f), cleanName, new Color(0f, 0f, 0f, 0.9f), nameStyle);
+                EqCardLabel(new Rect(cardRect.x + padX, cardRect.y + 5f, nameMaxW, 34f), cleanName, nameColor, nameStyle);
+
+                // Row 2: Hero DPS/Score Pill + Comparison on Left, Rarity/Type on Right
+                float heroY = cardRect.y + titleBandH - (compact ? 25f : 27f);
+                float heroH = compact ? 23f : 25f;
+                var heroNumStyle = EqCleanStyle(EqNumericFont() ?? this.font, compact ? 18 : 21, FontStyle.Bold, TextAnchor.MiddleLeft);
+                var heroUnitStyle = EqCleanStyle(this.font, compact ? 11 : 12, FontStyle.Bold, TextAnchor.LowerLeft);
+                float numW = heroNumStyle.CalcSize(new GUIContent(heroNum)).x;
+                float unitW = heroUnitStyle.CalcSize(new GUIContent(heroUnit)).x;
+                float pillW = numW + unitW + 18f;
+                Rect heroPill = new Rect(cardRect.x + padX, heroY, pillW, heroH);
+                Box(heroPill, new Color(0.02f, 0.03f, 0.04f, 0.78f));
+                Box(new Rect(heroPill.x, heroPill.y, 3f, heroPill.height), theme);
+                EqCardLabel(new Rect(heroPill.x + 7f, heroPill.y, numW + 6f, heroPill.height), heroNum, Color.white, heroNumStyle);
+                EqCardLabel(new Rect(heroPill.x + 9f + numW, heroPill.y, unitW + 8f, heroPill.height - 2f), heroUnit, new Color(0.75f, 0.82f, 0.88f), heroUnitStyle);
+
+                float compX = heroPill.xMax + 6f;
+                var compStyle = EqCleanStyle(this.font, 13, FontStyle.Bold, TextAnchor.MiddleLeft, rich: true);
+                float compUsedW = 0f;
+                if (equipped)
                 {
-                    EqCardLabel(new Rect(compX, heroY, compMaxW, heroH), T("SCR ", "評価 ") + score, new Color(0.72f, 0.80f, 0.85f), compStyle);
+                    Rect eqBadge = new Rect(compX, heroY + 2f, 84f, heroH - 4f);
+                    Box(eqBadge, new Color(0.10f, 0.28f, 0.18f, 0.90f));
+                    EqCardLabel(new Rect(eqBadge.x + 5f, eqBadge.y, eqBadge.width - 6f, eqBadge.height), T("✓ EQUIPPED", "✓ 装備中"), new Color(0.48f, 1f, 0.70f), compStyle);
+                    compUsedW = 90f;
                 }
+                else if (hasComparison)
+                {
+                    int delta = score - compareReferenceScore;
+                    string cmpStr = delta > 0 ? "<color=#4DFF88>▲+" + delta + "</color>"
+                                  : delta < 0 ? "<color=#FF5E5E>▼" + delta + "</color>"
+                                  : "<color=#B0BEC5>＝0</color>";
+                    EqCardLabel(new Rect(compX, heroY, 88f, heroH), cmpStr, Color.white, compStyle);
+                    compUsedW = 76f;
+                }
+
+                float catLeft = compX + compUsedW + 4f;
+                float catW = Mathf.Max(80f, (cardRect.xMax - padX) - catLeft);
+                var typeStyle = EqCleanStyle(this.font, compact ? 12 : 13, FontStyle.Normal, TextAnchor.MiddleRight);
+                while (typeStyle.fontSize > 10 && typeStyle.CalcSize(new GUIContent(catLine)).x > catW)
+                    typeStyle.fontSize--;
+                EqCardLabel(new Rect(catLeft, heroY, catW, heroH), catLine, Color.Lerp(theme, new Color(1f, 0.92f, 0.55f), 0.35f), typeStyle);
+
+                // Dedicated Full-Width Large Equipment Illustration Box (restored to ~450x124!)
+                Rect portRect = new Rect(cardRect.x + 10f, cardRect.y + titleBandH + 2f, cardRect.width - 20f, portH);
+                Box(new Rect(portRect.x - 1f, portRect.y - 1f, portRect.width + 2f, portRect.height + 2f), new Color(theme.r, theme.g, theme.b, 0.50f));
+                Box(portRect, new Color(0.015f, 0.024f, 0.035f, 0.76f));
+                DrawItemSilhouetteOrPortrait(portRect, item);
+
+                if (item is Gun hg)
+                {
+                    Rect silRect = new Rect(portRect.x + 5f, portRect.y + 5f, 42f, 24f);
+                    Box(silRect, new Color(0.02f, 0.03f, 0.04f, 0.84f));
+                    FieldUIArt.GunClassIcon(new Rect(silRect.x + 3f, silRect.y + 2f, silRect.width - 6f, silRect.height - 4f), hg, Color.Lerp(theme, Color.white, 0.65f));
+                }
+                if (showJunkBadge)
+                {
+                    if (!junkBinIcon) junkBinIcon = Resources.Load<Texture2D>("Art/UI/junk-bin");
+                    if (junkBinIcon) GUI.DrawTexture(new Rect(portRect.xMax - 32f, portRect.y + 4f, 28f, 28f), junkBinIcon, ScaleMode.ScaleToFit, true);
+                }
+                if (showExpandHint)
+                {
+                    string hintTxt = MobileTouchControls.Enabled ? T("TAP TO ZOOM", "タップで拡大") : T("CLICK TO ZOOM", "クリックで拡大");
+                    var hintStyle = EqCleanStyle(this.font, 11, FontStyle.Normal, TextAnchor.MiddleCenter);
+                    float hw = hintStyle.CalcSize(new GUIContent(hintTxt)).x + 14f;
+                    Rect hintBox = new Rect(portRect.xMax - hw - 4f, portRect.yMax - 21f, hw, 18f);
+                    Box(hintBox, new Color(0.02f, 0.035f, 0.05f, 0.84f));
+                    Box(new Rect(hintBox.x, hintBox.y, hintBox.width, 1f), new Color(theme.r, theme.g, theme.b, 0.45f));
+                    EqCardLabel(hintBox, hintTxt, new Color(0.76f, 0.88f, 0.96f), hintStyle);
+                }
+
+                cursorY = cardRect.y + headerH + 4f;
             }
 
             // 3. BUILD STAT CELLS & FEATURE ROWS
             BuildItemCardData(item, out var primaryStats, out var subStats, out var features);
 
-            float cursorY = cardRect.y + headerH + 5f;
+            bool compactBody = !expanded && cardRect.height < 440f;
 
-            // 4. PRIMARY STAT ICON TILE STRIP (e.g. 5 columns for guns, 4 for armor/melee, 3 for modules)
+            // 4. PRIMARY STAT ICON TILE STRIP (Labels ALWAYS visible and NEVER clipped!)
             if (primaryStats.Count > 0)
             {
-                float stripH = compact ? 50f : 56f;
-                Rect stripRect = new Rect(cardRect.x + 8f, cursorY, cardRect.width - 16f, stripH);
+                float stripH = expanded ? 106f : (compactBody ? 58f : 64f);
+                Rect stripRect = new Rect(cardRect.x + (expanded ? 16f : 8f), cursorY, cardRect.width - (expanded ? 32f : 16f), stripH);
                 Box(stripRect, new Color(0.03f, 0.055f, 0.078f, 0.88f));
-                Box(new Rect(stripRect.x, stripRect.y, stripRect.width, 1f), new Color(theme.r, theme.g, theme.b, 0.35f));
-                Box(new Rect(stripRect.x, stripRect.yMax - 1f, stripRect.width, 1f), new Color(theme.r, theme.g, theme.b, 0.35f));
+                Box(new Rect(stripRect.x, stripRect.y, stripRect.width, 1f), new Color(theme.r, theme.g, theme.b, 0.38f));
+                Box(new Rect(stripRect.x, stripRect.yMax - 1f, stripRect.width, 1f), new Color(theme.r, theme.g, theme.b, 0.38f));
 
                 int cols = primaryStats.Count;
                 float cellW = stripRect.width / cols;
-                var valStyle = new GUIStyle(label)
-                {
-                    font = EqNumericFont() ?? this.font,
-                    fontSize = cols >= 5 ? (compact ? 14 : 16) : (compact ? 16 : 18),
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleCenter,
-                    wordWrap = false
-                };
-                var lblStyle = new GUIStyle(label)
-                {
-                    font = this.font,
-                    fontSize = 10,
-                    alignment = TextAnchor.UpperCenter,
-                    wordWrap = false
-                };
+                int baseValFont = expanded ? (cols >= 5 ? 28 : 31) : (cols >= 5 ? (compactBody ? 15 : 17) : (compactBody ? 17 : 19));
+                int baseLblFont = expanded ? 21 : (compactBody ? 12 : 14);
+                var valStyle = EqCleanStyle(EqNumericFont() ?? this.font, baseValFont, FontStyle.Bold, TextAnchor.MiddleCenter);
+                var lblStyle = EqCleanStyle(this.font, baseLblFont, FontStyle.Bold, TextAnchor.MiddleCenter);
 
                 for (int i = 0; i < cols; i++)
                 {
@@ -897,33 +1032,45 @@ namespace NeonVault
                     if (i > 0)
                         Box(new Rect(cx, stripRect.y + 8f, 1f, stripRect.height - 16f), new Color(0.26f, 0.44f, 0.54f, 0.55f));
 
-                    float iconSz = compact ? 18f : 21f;
-                    DrawEqCardIcon(new Rect(cx + (cellW - iconSz) * 0.5f, stripRect.y + 3f, iconSz, iconSz), st.icon, Color.Lerp(st.tint, theme, 0.22f));
+                    float iconSz = expanded ? 32f : (compactBody ? 17f : 19f);
+                    DrawEqCardIcon(new Rect(cx + (cellW - iconSz) * 0.5f, stripRect.y + (expanded ? 6f : 3f), iconSz, iconSz), st.icon, Color.Lerp(st.tint, theme, 0.22f));
 
-                    // Fit value text if needed
                     GUIStyle vStyle = valStyle;
-                    if (vStyle.CalcSize(new GUIContent(st.value)).x > cellW - 4f)
+                    if (vStyle.CalcSize(new GUIContent(st.value)).x > cellW - 6f)
                     {
-                        vStyle = new GUIStyle(valStyle) { fontSize = Mathf.Max(11, valStyle.fontSize - 3) };
+                        vStyle = EqCleanStyle(valStyle.font, baseValFont, FontStyle.Bold, TextAnchor.MiddleCenter);
+                        while (vStyle.fontSize > 11 && vStyle.CalcSize(new GUIContent(st.value)).x > cellW - 6f)
+                            vStyle.fontSize--;
                     }
-                    EqCardLabel(new Rect(cx + 1f, stripRect.y + (compact ? 21f : 24f), cellW - 2f, 19f), st.value, st.tint, vStyle);
-                    if (!compact)
-                        EqCardLabel(new Rect(cx + 1f, stripRect.y + 41f, cellW - 2f, 13f), st.label, new Color(0.58f, 0.68f, 0.75f), lblStyle);
+                    float valY = stripRect.y + (expanded ? 40f : (compactBody ? 20f : 22f));
+                    float valH = expanded ? 34f : 21f;
+                    EqCardLabel(new Rect(cx + 2f, valY, cellW - 4f, valH), st.value, st.tint, vStyle);
+
+                    GUIStyle lStyle = lblStyle;
+                    if (lStyle.CalcSize(new GUIContent(st.label)).x > cellW - 4f)
+                    {
+                        lStyle = EqCleanStyle(this.font, baseLblFont, FontStyle.Bold, TextAnchor.MiddleCenter);
+                        while (lStyle.fontSize > 10 && lStyle.CalcSize(new GUIContent(st.label)).x > cellW - 4f)
+                            lStyle.fontSize--;
+                    }
+                    float lblY = stripRect.y + (expanded ? 73f : (compactBody ? 39f : 42f));
+                    float lblH = expanded ? 30f : 20f;
+                    EqCardLabel(new Rect(cx + 1f, lblY, cellW - 2f, lblH), st.label, new Color(0.78f, 0.88f, 0.95f), lStyle);
                 }
-                cursorY += stripH + 3f;
+                cursorY += stripH + (expanded ? 6f : 3f);
             }
 
-            // 5. SECONDARY SUB-STAT BANNER (Crit / 30m Range / Extra Armor Bonuses — like Borderlands' skull +33% bar)
+            // 5. SECONDARY SUB-STAT BANNER
             if (subStats.Count > 0)
             {
-                float subH = compact ? 25f : 28f;
-                Rect subRect = new Rect(cardRect.x + 8f, cursorY, cardRect.width - 16f, subH);
+                float subH = expanded ? 46f : (compactBody ? 24f : 27f);
+                Rect subRect = new Rect(cardRect.x + (expanded ? 16f : 8f), cursorY, cardRect.width - (expanded ? 32f : 16f), subH);
                 Box(subRect, new Color(0.045f, 0.08f, 0.11f, 0.84f));
                 Box(new Rect(subRect.x, subRect.yMax - 1f, subRect.width, 1f), new Color(0.24f, 0.42f, 0.52f, 0.45f));
 
                 int sCols = Mathf.Min(3, subStats.Count);
                 float sCellW = subRect.width / sCols;
-                var sValStyle = new GUIStyle(label) { font = EqNumericFont() ?? this.font, fontSize = compact ? 12 : 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, wordWrap = false };
+                int subFont = expanded ? 22 : (compactBody ? 13 : 14);
                 for (int i = 0; i < sCols; i++)
                 {
                     var st = subStats[i];
@@ -931,123 +1078,124 @@ namespace NeonVault
                     if (i > 0)
                         Box(new Rect(sx, subRect.y + 5f, 1f, subRect.height - 10f), new Color(0.26f, 0.44f, 0.54f, 0.45f));
 
+                    var sValStyle = EqCleanStyle(EqNumericFont() ?? this.font, subFont, FontStyle.Bold, TextAnchor.MiddleLeft);
                     string combined = st.label + " " + st.value;
+                    float icSz = expanded ? 26f : 17f;
+                    while (sValStyle.fontSize > 10 && icSz + 6f + sValStyle.CalcSize(new GUIContent(combined)).x > sCellW - 8f)
+                        sValStyle.fontSize--;
                     float textW = sValStyle.CalcSize(new GUIContent(combined)).x;
-                    float totalW = Mathf.Min(sCellW - 8f, 18f + 5f + textW);
+                    float totalW = Mathf.Min(sCellW - 8f, icSz + 6f + textW);
                     float startX = sx + (sCellW - totalW) * 0.5f;
-                    DrawEqCardIcon(new Rect(startX, subRect.center.y - 9f, 18f, 18f), st.icon, st.tint);
-                    EqCardLabel(new Rect(startX + 22f, subRect.y, sCellW - (startX - sx) - 23f, subRect.height), combined, st.tint, sValStyle);
+                    DrawEqCardIcon(new Rect(startX, subRect.center.y - icSz * 0.5f, icSz, icSz), st.icon, st.tint);
+                    EqCardLabel(new Rect(startX + icSz + 5f, subRect.y, sCellW - (startX - sx) - icSz - 6f, subRect.height), combined, st.tint, sValStyle);
                 }
-                cursorY += subH + 4f;
+                cursorY += subH + (expanded ? 8f : 4f);
             }
 
-            // 6. SCROLLABLE FEATURE ROWS
-            float bodyBottom = cardRect.yMax - footerH - 3f;
-            float bodyH = Mathf.Max(48f, bodyBottom - cursorY);
-            Rect scrollViewport = new Rect(cardRect.x + 8f, cursorY, cardRect.width - 16f, bodyH);
+            // 6. SCROLLABLE FEATURE ROWS (Unique, Element, Affixes)
+            float bodyBottom = cardRect.yMax - footerH - (expanded ? 6f : 3f);
+            float bodyH = Mathf.Max(36f, bodyBottom - cursorY);
+            Rect scrollViewport = new Rect(cardRect.x + (expanded ? 16f : 8f), cursorY, cardRect.width - (expanded ? 32f : 16f), bodyH);
 
-            var featStyle = new GUIStyle(label)
-            {
-                font = this.font,
-                fontSize = MobileTouchControls.Enabled ? 18 : (compact ? 13 : 14),
-                fontStyle = FontStyle.Normal,
-                wordWrap = true,
-                richText = true,
-                alignment = TextAnchor.UpperLeft
-            };
-            featStyle.normal.textColor = new Color(0.90f, 0.93f, 0.96f);
+            int featFont = expanded ? (MobileTouchControls.Enabled ? 27 : 25) : (MobileTouchControls.Enabled ? 18 : (compactBody ? 15 : 16));
+            var featStyle = EqCleanStyle(this.font, featFont, FontStyle.Normal, TextAnchor.UpperLeft, wrap: true, rich: true, clip: TextClipping.Clip);
+            featStyle.normal.textColor = new Color(0.92f, 0.95f, 0.98f);
 
-            float contentW = scrollViewport.width - 14f;
-            float iconBoxSz = compact ? 25f : 28f;
-            float textColW = contentW - iconBoxSz - 14f;
+            float contentW = scrollViewport.width - 20f;
+            float iconBoxSz = expanded ? 42f : (compactBody ? 26f : 28f);
+            float textColW = contentW - iconBoxSz - (expanded ? 18f : 14f);
 
-            // Measure total height
             float totalH = 2f;
             var rowHeights = new float[features.Count];
             for (int i = 0; i < features.Count; i++)
             {
                 float th = featStyle.CalcHeight(new GUIContent(features[i].richText), textColW);
-                rowHeights[i] = Mathf.Max(iconBoxSz + 6f, th + 6f);
-                totalH += rowHeights[i] + 3f;
+                rowHeights[i] = Mathf.Max(iconBoxSz + (expanded ? 10f : 6f), th + (expanded ? 10f : 6f));
+                totalH += rowHeights[i] + (expanded ? 5f : 3f);
             }
             computedDetailExtent = Mathf.Max(bodyH, totalH + 2f);
 
             if (Event.current != null && Event.current.type == EventType.ScrollWheel && scrollViewport.Contains(Event.current.mousePosition) && computedDetailExtent > bodyH)
             {
-                detailScroll.y = Mathf.Clamp(detailScroll.y + Event.current.delta.y * 22f, 0f, computedDetailExtent - bodyH);
+                detailScroll.y = Mathf.Clamp(detailScroll.y + Event.current.delta.y * 24f, 0f, computedDetailExtent - bodyH);
                 Event.current.Use();
             }
 
-            detailScroll = GUI.BeginScrollView(scrollViewport, detailScroll, new Rect(0f, 0f, contentW, computedDetailExtent));
+            detailScroll = GUI.BeginScrollView(scrollViewport, detailScroll, new Rect(0f, 0f, contentW, computedDetailExtent), false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
             float ry = 1f;
             for (int i = 0; i < features.Count; i++)
             {
                 var f = features[i];
                 float rh = rowHeights[i];
                 Rect rowRect = new Rect(0f, ry, contentW, rh);
-                Box(rowRect, new Color(0.025f, 0.045f, 0.065f, 0.68f));
-                Box(new Rect(rowRect.x, rowRect.y, 2f, rowRect.height), f.borderTint);
+                Box(rowRect, new Color(0.025f, 0.045f, 0.065f, 0.72f));
+                Box(new Rect(rowRect.x, rowRect.y, expanded ? 3f : 2f, rowRect.height), f.borderTint);
 
-                // Framed Icon Badge on Left
-                Rect badgeRect = new Rect(rowRect.x + 5f, rowRect.y + (rh - iconBoxSz) * 0.5f, iconBoxSz, iconBoxSz);
+                Rect badgeRect = new Rect(rowRect.x + (expanded ? 8f : 5f), rowRect.y + (rh - iconBoxSz) * 0.5f, iconBoxSz, iconBoxSz);
                 Box(badgeRect, f.badgeBg);
                 Box(new Rect(badgeRect.x, badgeRect.y, badgeRect.width, 1f), f.borderTint);
                 Box(new Rect(badgeRect.x, badgeRect.yMax - 1f, badgeRect.width, 1f), f.borderTint);
                 Box(new Rect(badgeRect.x, badgeRect.y, 1f, badgeRect.height), f.borderTint);
                 Box(new Rect(badgeRect.xMax - 1f, badgeRect.y, 1f, badgeRect.height), f.borderTint);
 
-                Rect icRect = new Rect(badgeRect.x + 3f, badgeRect.y + 3f, badgeRect.width - 6f, badgeRect.height - 6f);
+                float padIc = expanded ? 5f : 3f;
+                Rect icRect = new Rect(badgeRect.x + padIc, badgeRect.y + padIc, badgeRect.width - padIc * 2f, badgeRect.height - padIc * 2f);
                 if (f.element != GunElement.None)
                     DrawEqElementSymbol(icRect, f.element);
                 else
                     DrawEqCardIcon(icRect, f.icon, f.iconTint);
 
-                // Rich text description on Right
                 float th = featStyle.CalcHeight(new GUIContent(f.richText), textColW);
                 float ty = rowRect.y + Mathf.Max(2f, (rh - th) * 0.5f);
-                GUI.Label(new Rect(badgeRect.xMax + 7f, ty, textColW, th + 4f), f.richText, featStyle);
+                GUI.Label(new Rect(badgeRect.xMax + (expanded ? 12f : 7f), ty, textColW, th + 4f), f.richText, featStyle);
 
-                ry += rh + 3f;
+                ry += rh + (expanded ? 6f : 3f);
             }
             GUI.EndScrollView();
 
-            // 7. FOOTER BAR: Manufacturer Wordmark Badge (Left) + Green Bracketed Scrap Value Box (Right)
+            // 7. FOOTER BAR: Manufacturer Logo & Name ONLY (Left) + Green Bracketed Scrap Value Box (Right)
             Rect footerRect = new Rect(cardRect.x + 4f, cardRect.yMax - footerH - 2f, cardRect.width - 8f, footerH);
-            Box(footerRect, new Color(0.02f, 0.032f, 0.045f, 0.92f));
+            Box(footerRect, new Color(0.02f, 0.032f, 0.045f, 0.94f));
             Box(new Rect(footerRect.x, footerRect.y, footerRect.width, 1f), new Color(theme.r, theme.g, theme.b, 0.42f));
 
             if (!string.IsNullOrEmpty(maker))
             {
                 Color mkCol = ManufacturerCatalog.Color(maker);
-                Box(new Rect(footerRect.x + 6f, footerRect.y + 5f, 146f, footerRect.height - 10f), new Color(mkCol.r * 0.16f, mkCol.g * 0.16f, mkCol.b * 0.16f, 0.65f));
-                ManufacturerBranding.Badge(new Rect(footerRect.x + 8f, footerRect.y + 3f, 68f, footerRect.height - 6f), maker);
-                var mkStyle = new GUIStyle(label) { fontSize = 13, alignment = TextAnchor.MiddleLeft, wordWrap = false };
-                EqCardLabel(new Rect(footerRect.x + 78f, footerRect.y, 110f, footerRect.height), ManufacturerCatalog.Name(maker, VaultLanguage.Japanese), Color.Lerp(mkCol, Color.white, 0.35f), mkStyle);
+                string mkName = ManufacturerCatalog.Name(maker, VaultLanguage.Japanese);
+                var mkStyle = EqCleanStyle(this.font, expanded ? 23 : 14, FontStyle.Bold, TextAnchor.MiddleLeft);
+                float badgeW = expanded ? 104f : 66f;
+                float mkTextW = mkStyle.CalcSize(new GUIContent(mkName)).x + 16f;
+                float mkBoxW = Mathf.Min(footerRect.width * 0.52f, badgeW + mkTextW + 10f);
+                Box(new Rect(footerRect.x + 6f, footerRect.y + (expanded ? 7f : 5f), mkBoxW, footerRect.height - (expanded ? 14f : 10f)), new Color(mkCol.r * 0.16f, mkCol.g * 0.16f, mkCol.b * 0.16f, 0.68f));
+                ManufacturerBranding.Badge(new Rect(footerRect.x + 8f, footerRect.y + (expanded ? 5f : 3f), badgeW, footerRect.height - (expanded ? 10f : 6f)), maker);
+                EqCardLabel(new Rect(footerRect.x + 12f + badgeW, footerRect.y, mkBoxW - badgeW - 10f, footerRect.height), mkName, Color.Lerp(mkCol, Color.white, 0.35f), mkStyle);
+            }
+
+            if (expanded)
+            {
+                var closeHintStyle = EqCleanStyle(this.font, 17, FontStyle.Normal, TextAnchor.MiddleCenter);
+                EqCardLabel(new Rect(footerRect.center.x - 210f, footerRect.y, 420f, footerRect.height),
+                    MobileTouchControls.Enabled ? T("TAP ANYWHERE TO CLOSE", "画面をタップで閉じる") : T("CLICK ANYWHERE OR PRESS ESC TO CLOSE", "クリック または ESCキーで閉じる"),
+                    new Color(0.62f, 0.74f, 0.82f), closeHintStyle);
             }
 
             if (price > 0)
             {
-                float valW = Mathf.Min(195f, footerRect.width * 0.46f);
-                Rect priceBox = new Rect(footerRect.xMax - valW - 8f, footerRect.y + 6f, valW, footerRect.height - 12f);
+                float valW = expanded ? 300f : Mathf.Min(195f, footerRect.width * 0.44f);
+                Rect priceBox = new Rect(footerRect.xMax - valW - (expanded ? 12f : 8f), footerRect.y + (expanded ? 8f : 6f), valW, footerRect.height - (expanded ? 16f : 12f));
                 Color cashGreen = new Color(0.28f, 0.92f, 0.48f, 0.95f);
                 Box(priceBox, new Color(0.04f, 0.16f, 0.09f, 0.90f));
-                // Left & right green vertical brackets just like Borderlands "$ 1,415,812"
-                Box(new Rect(priceBox.x, priceBox.y, 3f, priceBox.height), cashGreen);
-                Box(new Rect(priceBox.xMax - 3f, priceBox.y, 3f, priceBox.height), cashGreen);
-                DrawEqCardIcon(new Rect(priceBox.x + 7f, priceBox.center.y - 10f, 20f, 20f), 20, cashGreen);
+                Box(new Rect(priceBox.x, priceBox.y, expanded ? 4f : 3f, priceBox.height), cashGreen);
+                Box(new Rect(priceBox.xMax - (expanded ? 4f : 3f), priceBox.y, expanded ? 4f : 3f, priceBox.height), cashGreen);
+                float cashIc = expanded ? 28f : 20f;
+                DrawEqCardIcon(new Rect(priceBox.x + (expanded ? 10f : 7f), priceBox.center.y - cashIc * 0.5f, cashIc, cashIc), 20, cashGreen);
 
-                var priceStyle = new GUIStyle(label)
-                {
-                    font = EqNumericFont() ?? this.font,
-                    fontSize = 17,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleRight,
-                    wordWrap = false
-                };
+                var priceStyle = EqCleanStyle(EqNumericFont() ?? this.font, expanded ? 28 : 17, FontStyle.Bold, TextAnchor.MiddleRight);
                 string priceText = price.ToString("N0");
-                while (priceStyle.fontSize > 12 && priceStyle.CalcSize(new GUIContent(priceText)).x > priceBox.width - 36f)
+                float textPadLeft = expanded ? 44f : 28f;
+                while (priceStyle.fontSize > 12 && priceStyle.CalcSize(new GUIContent(priceText)).x > priceBox.width - textPadLeft - 10f)
                     priceStyle.fontSize--;
-                EqCardLabel(new Rect(priceBox.x + 28f, priceBox.y, priceBox.width - 36f, priceBox.height), priceText, new Color(0.85f, 1f, 0.90f), priceStyle);
+                EqCardLabel(new Rect(priceBox.x + textPadLeft, priceBox.y, priceBox.width - textPadLeft - (expanded ? 12f : 8f), priceBox.height), priceText, new Color(0.85f, 1f, 0.90f), priceStyle);
             }
         }
 
@@ -1064,10 +1212,8 @@ namespace NeonVault
             string name = ItemDisplayNameOf(item);
             string subType = ItemTypeSubtitleOf(item);
 
-            // Rarity-tinted full card background + header strip
             DrawRarityBackdrop(r, rarity, selected, true, 54f);
 
-            // Left Item Portrait
             float portSz = Mathf.Min(r.height - 24f, 114f);
             Rect portRect = new Rect(r.x + 10f, r.y + 10f, portSz, portSz);
             Box(new Rect(portRect.x - 1f, portRect.y - 1f, portRect.width + 2f, portRect.height + 2f), new Color(theme.r, theme.g, theme.b, 0.45f));
@@ -1085,44 +1231,20 @@ namespace NeonVault
                 if (junkBinIcon) GUI.DrawTexture(new Rect(portRect.xMax - 28f, portRect.y + 2f, 26f, 26f), junkBinIcon, ScaleMode.ScaleToFit, true);
             }
 
-            // Maker badge under portrait if tall enough
             if (r.height >= 175f && !string.IsNullOrEmpty(maker))
             {
                 ManufacturerBranding.Badge(new Rect(portRect.x, portRect.yMax + 4f, 58f, 28f), maker);
-                var scoreMiniStyle = new GUIStyle(label)
-                {
-                    font = this.font,
-                    fontSize = 14,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleRight,
-                    wordWrap = false
-                };
+                var scoreMiniStyle = EqCleanStyle(this.font, 14, FontStyle.Bold, TextAnchor.MiddleRight);
                 EqCardLabel(new Rect(portRect.x + 56f, portRect.yMax + 4f, portSz - 56f, 28f), score.ToString("N0"), new Color(0.86f, 0.92f, 0.96f), scoreMiniStyle);
             }
 
             float tx = portRect.xMax + 12f;
             float tw = r.xMax - tx - 10f;
 
-            // Top row: Level right-aligned + Name left-aligned
-            var lvStyle = new GUIStyle(label)
-            {
-                font = this.font,
-                fontSize = 15,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.UpperRight,
-                wordWrap = false
-            };
-            string lvStr = "Lv " + level;
-            EqCardLabel(new Rect(r.xMax - 68f, r.y + 8f, 58f, 22f), lvStr, Color.white, lvStyle);
+            var lvStyle = EqCleanStyle(this.font, 15, FontStyle.Bold, TextAnchor.UpperRight);
+            EqCardLabel(new Rect(r.xMax - 68f, r.y + 8f, 58f, 22f), "Lv " + level, Color.white, lvStyle);
 
-            var nameStyle = new GUIStyle(label)
-            {
-                font = this.font,
-                fontSize = MobileTouchControls.Enabled ? 21 : 18,
-                fontStyle = FontStyle.Bold,
-                wordWrap = true,
-                clipping = TextClipping.Clip
-            };
+            var nameStyle = EqCleanStyle(this.font, MobileTouchControls.Enabled ? 21 : 18, FontStyle.Bold, TextAnchor.UpperLeft, wrap: true, clip: TextClipping.Clip);
             string cleanName = (name ?? "").Trim().Replace("\n ", "\n").Replace("\n　", "\n");
             float nameW = tw - 54f;
             while (nameStyle.fontSize > 13 && nameStyle.CalcHeight(new GUIContent(cleanName), nameW) > 44f)
@@ -1131,12 +1253,10 @@ namespace NeonVault
             EqCardLabel(new Rect(tx + 1f, r.y + 8f, nameW, 44f), cleanName, new Color(0f, 0f, 0f, 0.88f), nameStyle);
             EqCardLabel(new Rect(tx, r.y + 7f, nameW, 44f), cleanName, nameCol, nameStyle);
 
-            // Rarity chevrons + subtype
             int chev = Mathf.Clamp((int)rarity + 1, 1, 5);
-            var subStyle = new GUIStyle(label) { fontSize = 13, wordWrap = false };
+            var subStyle = EqCleanStyle(this.font, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
             EqCardLabel(new Rect(tx, r.y + 56f, tw, 20f), new string('▸', chev) + " " + subType + " · " + VaultLanguage.RarityName(rarity), Color.Lerp(theme, Color.white, 0.25f), subStyle);
 
-            // Mini 3-stat icon strip inside list card!
             BuildItemCardData(item, out var pStats, out _, out _);
             int miniCount = Mathf.Min(3, pStats.Count);
             if (miniCount > 0 && r.height >= 145f)
@@ -1144,14 +1264,7 @@ namespace NeonVault
                 Rect miniBar = new Rect(tx, r.y + 80f, tw, 42f);
                 Box(miniBar, new Color(0.025f, 0.045f, 0.065f, 0.82f));
                 float cw = miniBar.width / miniCount;
-                var mvStyle = new GUIStyle(label)
-                {
-                    font = EqNumericFont() ?? this.font,
-                    fontSize = 13,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleLeft,
-                    wordWrap = false
-                };
+                var mvStyle = EqCleanStyle(EqNumericFont() ?? this.font, 13, FontStyle.Bold, TextAnchor.MiddleLeft);
                 for (int i = 0; i < miniCount; i++)
                 {
                     var st = pStats[i];
@@ -1162,9 +1275,8 @@ namespace NeonVault
                 }
             }
 
-            // Bottom status line: Equipped badge / Comparison delta / Optional Price
             float botY = r.yMax - 30f;
-            var botStyle = new GUIStyle(label) { fontSize = 14, richText = true, wordWrap = false, alignment = TextAnchor.MiddleLeft };
+            var botStyle = EqCleanStyle(this.font, 14, FontStyle.Normal, TextAnchor.MiddleLeft, rich: true);
             if (equipped)
             {
                 Rect eqChip = new Rect(tx, botY + 2f, 96f, 22f);
@@ -1179,19 +1291,11 @@ namespace NeonVault
 
             if (priceBadge > 0)
             {
-                var pStyle = new GUIStyle(label)
-                {
-                    font = this.font,
-                    fontSize = 14,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleRight,
-                    wordWrap = false
-                };
+                var pStyle = EqCleanStyle(this.font, 14, FontStyle.Bold, TextAnchor.MiddleRight);
                 EqCardLabel(new Rect(r.xMax - 128f, botY, 118f, 24f), "$ " + priceBadge.ToString("N0"), new Color(0.45f, 0.96f, 0.62f), pStyle);
             }
         }
 
-        // Returns comparable currently equipped item for side-by-side Borderlands comparison
         public object GetEquippedComparisonTarget(object selectedItem)
         {
             if (selectedItem == null) return null;
@@ -1223,6 +1327,7 @@ namespace NeonVault
         }
 
         Vector2 eqCompareDetailScroll;
+        float eqCompareDetailExtent;
 
         // Compact World / Reward Card (when standing near loot drop in dungeon/overworld)
         public void DrawBorderlandsWorldLootCard(Rect card, object item, string promptLabel)
@@ -1245,18 +1350,17 @@ namespace NeonVault
             float tx = pic.xMax + 10f;
             float tw = card.xMax - tx - 10f;
 
-            var lvStyle = new GUIStyle(label) { font = this.font, fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
+            var lvStyle = EqCleanStyle(this.font, 15, FontStyle.Bold, TextAnchor.UpperRight);
             EqCardLabel(new Rect(card.xMax - 68f, card.y + 8f, 58f, 22f), "Lv " + level, Color.white, lvStyle);
 
-            var nStyle = new GUIStyle(label) { font = this.font, fontSize = 17, fontStyle = FontStyle.Bold, wordWrap = true, clipping = TextClipping.Clip };
+            var nStyle = EqCleanStyle(this.font, 17, FontStyle.Bold, TextAnchor.UpperLeft, wrap: true, clip: TextClipping.Clip);
             Color nameCol = Color.Lerp(theme, Color.white, rarity == Rarity.Common ? 0.78f : 0.45f);
             EqCardLabel(new Rect(tx, card.y + 7f, tw - 52f, 26f), name, nameCol, nStyle);
 
             int chev = Mathf.Clamp((int)rarity + 1, 1, 5);
-            var subStyle = new GUIStyle(label) { fontSize = 12, wordWrap = false };
+            var subStyle = EqCleanStyle(this.font, 12, FontStyle.Normal, TextAnchor.MiddleLeft);
             EqCardLabel(new Rect(tx, card.y + 33f, tw, 18f), new string('▸', chev) + " " + subType + " · " + VaultLanguage.RarityName(rarity), Color.Lerp(theme, Color.white, 0.25f), subStyle);
 
-            // Mini stat icons row
             BuildItemCardData(item, out var pStats, out _, out _);
             int cnt = Mathf.Min(3, pStats.Count);
             if (cnt > 0)
@@ -1264,7 +1368,7 @@ namespace NeonVault
                 Rect strip = new Rect(tx, card.y + 56f, tw, 36f);
                 Box(strip, new Color(0.02f, 0.04f, 0.06f, 0.82f));
                 float cw = strip.width / cnt;
-                var mvStyle = new GUIStyle(label) { font = this.font, fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
+                var mvStyle = EqCleanStyle(this.font, 13, FontStyle.Bold, TextAnchor.MiddleLeft);
                 for (int i = 0; i < cnt; i++)
                 {
                     float cx = strip.x + i * cw;
@@ -1274,13 +1378,12 @@ namespace NeonVault
                 }
             }
 
-            // Bottom prompt bar
             Rect promptBar = new Rect(card.x + 10f, card.yMax - 36f, card.width - 20f, 28f);
             Box(promptBar, new Color(0.03f, 0.05f, 0.07f, 0.88f));
             DrawEqCardIcon(new Rect(promptBar.x + 6f, promptBar.center.y - 9f, 18f, 18f), 23, Gold);
-            var scrStyle = new GUIStyle(label) { fontSize = 14, alignment = TextAnchor.MiddleLeft };
+            var scrStyle = EqCleanStyle(this.font, 14, FontStyle.Normal, TextAnchor.MiddleLeft);
             EqCardLabel(new Rect(promptBar.x + 28f, promptBar.y, 140f, promptBar.height), T("SCORE ", "評価 ") + score, Color.white, scrStyle);
-            var prStyle = new GUIStyle(label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleRight };
+            var prStyle = EqCleanStyle(this.font, 15, FontStyle.Bold, TextAnchor.MiddleRight);
             EqCardLabel(new Rect(promptBar.xMax - 190f, promptBar.y, 182f, promptBar.height), promptLabel, Gold, prStyle);
         }
 

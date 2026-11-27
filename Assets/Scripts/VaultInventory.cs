@@ -83,7 +83,7 @@ namespace NeonVault
             }
         }
         public float EffectiveDamage=>gun==null?0:gun.damage*(1+damageBonus+EquippedMeleeAffix("damage")+DebtDamageBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.damageBonus)+ArtifactAffixBonus("damage")+ArtifactGunDamageBonus(gun)+ActionSkillGunBonus(gun)+ActionPositionBonus("turret_near_damage","medic_field_damage")+PetPlayerDamageBonus+LandmarkDamageBonus)*(1+Mathf.Min(.75f,debtChainCount*DebtKillChainBonus))*ArtifactDamageMultiplier*(1+DebtBossDamageBonus*(room==CurrentDungeon.AreaCount-1?1:0));
-        public float EffectiveFireRate=>gun==null?0:(1+fireBonus+EquippedMeleeAffix("fireRate")+DebtFireRateBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.fireBonus)+ArtifactAffixBonus("fireRate")+ActionSkillExtraValue("fire_rate"))/gun.interval;
+        public float EffectiveFireRate=>gun==null?0:Mathf.Min(22f,(1+fireBonus+EquippedMeleeAffix("fireRate")+DebtFireRateBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.fireBonus)+ArtifactAffixBonus("fireRate")+ActionSkillExtraValue("fire_rate"))/gun.interval);
         public float EffectiveReload=>gun==null?1:Mathf.Max(.35f,gun.reloadSeconds/(1+DebtReloadBonus(VaultLanguage.DisplayModel(gun))+ArmorTotal(a=>a.reloadBonus)+ArtifactAffixBonus("reload")+ActionSkillExtraValue("reload_speed")+ActionPositionBonus("turret_near_reload","medic_field_reload")));
         public float EffectiveAccuracy=>gun==null?0:Mathf.Clamp(Arsenal.Accuracy(gun)+100*DebtAccuracyBonus(VaultLanguage.DisplayModel(gun))+100*ArmorTotal(a=>a.accuracyBonus)+100*ArtifactAffixBonus("accuracy")+100*ActionSkillExtraValue("accuracy"),1,100);
         public float RangeRetentionBonus=>ArmorTotal(a=>GearScoring.AffixTotal(a.affixes,"rangeRetention"))+ArtifactAffixBonus("rangeRetention");
@@ -118,6 +118,8 @@ namespace NeonVault
             }
             foreach(var item in Weapons)GearBalance.Migrate(item);
             foreach(var item in ArmorInventory)if(Armory.IsActiveArmor(item))GearBalance.Migrate(item);
+            foreach(var item in MeleeWeaponInventory)GearBalance.MigrateFireRate(item);
+            foreach(var item in ArtifactInventory)GearBalance.MigrateFireRate(item);
             EquippedArmor[0]=null;
             if(!loadedAmmoReserves)SeedAmmoReserves();
             if(MeleeWeaponInventory.Count==0)MeleeWeaponInventory.Add(MeleeWeaponCatalog.StarterKnife());

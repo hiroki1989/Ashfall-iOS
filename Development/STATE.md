@@ -1,3 +1,27 @@
+## 2026-11-27 / 装備説明パネル拡大表示・見切れ解消・大判イラスト復元・メーカー文削除・iOSランドマーク一覧スクロール修正・距離減衰1.5倍化・高レベル連射速度調整（iOSバージョン71更新）
+- 変更ファイル:
+  - `Assets/Scripts/VaultEquipmentCardUI.cs` / `VaultEquipmentScreen.cs` / `VaultStorage.cs`（iOS・Steam・Demo・BossDebug）:
+    - 基本性能タイル（「威力」「最大HP」「軽減」等）のパディング除去・余白拡大・常時表示化によりショップ・インベントリ・倉庫すべての画面で見切れを完全解消。
+    - 数値書式 `.ToString("0.1")` の誤記を `.ToString("0.0")` へ修正（`1.5秒`・`13.0/秒` 等の小数表示正常化）。
+    - 右側の装備説明パネル全体をクリック・タップ（ドラッグ以外のタップ）すると画面全体（1312x836）に拡大表示されるモーダルを追加。
+    - 通常表示時の装備イラスト枠を従来の大型サイズ（約450x124 / ショップ450x104）へ復元。
+    - 特性欄からメーカー特徴の説明文を除外し、フッターの価格横のメーカーロゴ・名称のみに整理。
+  - `Assets/Scripts/MobileMenuGestures.cs` / `OverworldExploration.cs` / `VaultOverworldUI.cs`（iOS・Steam・Demo）:
+    - 全体マップから開くランドマーク一覧・調査記録オーバーレイ（全30地点）で `MobileMenuGestures` の旧 `DungeonSelect` 判定がタッチイベントを横取り・破棄していた不具合を解消し、iOSタッチドラッグによるスムーズなスクロールおよび高DPI端末でのタップ選択閾値（キャンバス座標基準）を実装。
+  - `Assets/Scripts/Arsenal.cs` / `GearBalance.cs` / `Equipment.cs` / `Artifacts.cs` / `MeleeWeaponItem.cs` / `VaultInventory.cs`（iOS・Steam・Demo・BossDebug）:
+    - 銃の距離減衰（`RangeRetention`・`DamageAtDistance`）の銃種差・命中精度連動を従来の約1.5倍へ拡大（低精度ショットガン30m残存約15%〜・15m約56%に対し、高精度スナイパーライフル30m残存約96〜99%・15m約99%）。既存セーブ銃も自動マイグレーション対応。
+    - 高レベル帯（Lv70等）での `fireRate` 追加特性・防具連射補正が `LevelPower` 比例で非現実的な連射速度に達していた問題を減衰カーブ `FireRateScale`（Lv70で1枠あたり約+8〜19%）と発射間隔下限へ変更し、既存セーブ装備の過剰連射値もロード時に自動補正。
+  - `ProjectSettings/ProjectSettings.asset`（iOS）: `bundleVersion` および `buildNumber.iPhone` を `70` から `71` へ更新。
+- 結果: 装備パネルの視認性・大判イラスト・全画面拡大、iOSランドマーク一覧のタップ＆スクロール、武器ごとの距離減衰個性、高レベル連射速度の現実的バランスが全対象プロジェクトへ反映完了。
+- 検証: `verify_parity.py --unity` にて `SteamController` 隔離（iOS内参照0件）、`SaveSlotPrefs` 完全分離、Roslyn全8構成エラー0件、Unity実コンパイルエラー0件を確認。BossDebug実機スクリーンショットおよび数値検証ログにて見切れ解消・全画面拡大表示・距離減衰率・Lv70連射速度を確認。
+- 未解決: iOS実機端末での実寸タッチ確認。
+
+## 2026-11-27 / iOSバージョン70 IPAのApp Store Connectアップロード完了
+- 変更ファイル: `D:/Unity/BuildTools/upload_ashfall_70.py`、`D:/Unity/BuildTools/upload_ashfall_70.log`、`Development/STATE.md`。
+- 結果: `D:/downloads2/15669807442693-ash-8-default-ios-5.ipa`（1,735,370,459 bytes、Version `70` / Build `70`、`com.hiroki1989.ashfall`）を App Store Connect（App ID `6823882669`）へ全26パート転送・MD5コミット完了（Upload ID `6e6922a0-2a1c-4e99-89e2-c8cfb7c8b45f`、File ID `a6513225-d7ae-4a97-b6c9-fa2f5aa07fb8`、MD5 `cf28b73cc45284218f0f5f45d9ecffa9`）。
+- 検証: `buildUploadFiles` コミット応答 `200 COMPLETE`（エラー0件）、`buildUploads` 状態 `PROCESSING`（エラー0件、Apple側の2027年4月以降iOS 27 SDK移行の案内警告 `90725` のみ）でAppleサーバー側ビルド処理への引き渡しを確認。
+- 未解決: なし（数分後にApp Store Connect / TestFlight画面へビルド70が反映）。
+
 ## 2026-11-27 / 装備説明パネルの全面刷新（レア度背景・24種専用アイコン・2枚横並び比較・赤字コメント除外・iOSバージョン70更新）
 - 変更ファイル:
   - `Assets/Resources/Art/UI/equipment_card_icons.png`（iOS・Steam・Demo・BossDebug）: 威力・命中精度・装填・連射・弾数・クリティカル・射程・弾速・軽減盾・最大HP・回復・移動・回避・近接刃・範囲角・モジュール回路・クールダウン・固有星章・追加特性・メーカー歯車・スクラップ価格・ペット・属性・評価クレストの計24種高コントラストUIアイコンアトラス（768x512）を新規制作。

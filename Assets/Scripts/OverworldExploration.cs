@@ -708,6 +708,20 @@ namespace NeonVault
             return false;
         }
 
+        public bool OverworldLoreArchiveVisible => overworldLoreArchiveOpen;
+        bool loreListTouchDown, loreListTouchDragging;
+        Vector2 loreListTouchStart, loreListTouchLast;
+
+        public int LoreArchiveGestureRegion(Vector2 point) =>
+            overworldLoreArchiveOpen && new Rect(45f, 96f, 520f, 760f).Contains(point) ? 1 : 0;
+
+        public void DragOverworldLoreArchive(int region, Vector2 delta)
+        {
+            if (region != 1) return;
+            float maxScroll = Mathf.Max(0f, OverworldGeography.LandmarkCount * 58f - 736f);
+            overworldLoreScroll.y = Mathf.Clamp(overworldLoreScroll.y - delta.y, 0f, maxScroll);
+        }
+
         public bool OverworldExplorationModalOpen =>
             (IsOverworld && activeLorePopupId >= 0) || overworldLoreArchiveOpen;
 
@@ -715,6 +729,8 @@ namespace NeonVault
         {
             activeLorePopupId = -1;
             overworldLoreArchiveOpen = false;
+            loreListTouchDown = false;
+            loreListTouchDragging = false;
             if (screen == Screen.Playing && selectedOverworldActivity == null && !InventoryOpen)
                 Time.timeScale = 1f;
         }
@@ -722,8 +738,19 @@ namespace NeonVault
         public void OpenOverworldLoreArchive()
         {
             EnsureLoreLoaded();
-            for (int i = 0; i < OverworldGeography.LandmarkCount; i++)
-                if (IsOverworldLoreCollected(i)) { selectedLoreArchiveId = i; break; }
+            if (overworldSelectedLandmark >= 0 && overworldSelectedLandmark < OverworldGeography.LandmarkCount)
+            {
+                selectedLoreArchiveId = overworldSelectedLandmark;
+            }
+            else
+            {
+                bool found = false;
+                for (int i = 0; i < OverworldGeography.LandmarkCount; i++)
+                    if (IsOverworldLoreCollected(i) || IsLandmarkBossDefeated(i)) { selectedLoreArchiveId = i; found = true; break; }
+                if (!found) selectedLoreArchiveId = 0;
+            }
+            float maxScroll = Mathf.Max(0f, OverworldGeography.LandmarkCount * 58f - 736f);
+            overworldLoreScroll.y = Mathf.Clamp(selectedLoreArchiveId * 58f - 180f, 0f, maxScroll);
             overworldLoreArchiveOpen = true;
         }
 
@@ -747,41 +774,98 @@ namespace NeonVault
         {
             if (!overworldLoreArchiveOpen) return;
             EnsureLoreLoaded();
+            if (MobileTouchControls.Enabled && FindAnyObjectByType<MobileMenuGestures>() == null)
+                new GameObject("Mobile menu gestures").AddComponent<MobileMenuGestures>();
+
             Box(new Rect(0, 0, 1440, 900), new Color(.02f, .035f, .048f, .97f));
-            WorldLabel(new Rect(45, 28, 760, 48), T("ASHFALL / FIELD RECORDS (", "アッシュフォール / 調査記録（") + CollectedLoreCount + "/30" + (VaultLanguage.Japanese ? "）" : ")"), Gold, 30);
-            if (WorldButton(new Rect(1195, 24, 205, 54), T("CLOSE", "閉じる"), true))
+            string headerTitle = T("ASHFALL / LANDMARKS & RECORDS (Conquered ", "アッシュフォール / ランドマーク一覧・記録（制圧 ")
+                + TotalDefeatedLandmarkCount + "/30 · " + T("Logs ", "記録 ") + CollectedLoreCount + "/30" + (VaultLanguage.Japanese ? "）" : ")");
+            WorldLabel(new Rect(45, 28, 1120, 48), headerTitle, Gold, 27);
+            if (WorldButton(new Rect(1195, 24, 205, 56), T("CLOSE", "閉じる"), true))
             {
                 CloseOverworldExplorationModal();
                 return;
             }
 
             Rect listBox = new Rect(45, 96, 520, 760);
+            Rect listViewport = new Rect(55, 108, 500, 736);
+            const float rowStep = 58f;
+            float contentH = OverworldGeography.LandmarkCount * rowStep;
+            float maxScroll = Mathf.Max(0f, contentH - listViewport.height);
             Panel(listBox, Cyan);
-            overworldLoreScroll = GUI.BeginScrollView(new Rect(55, 108, 500, 736), overworldLoreScroll, new Rect(0, 0, 474, OverworldGeography.LandmarkCount * 54f));
+
+            Event evt = Event.current;
+            if (evt != null && evt.type == EventType.ScrollWheel && listBox.Contains(evt.mousePosition))
+            {
+                overworldLoreScroll.y = Mathf.Clamp(overworldLoreScroll.y + evt.delta.y * 28f, 0f, maxScroll);
+                evt.Use();
+            }
+            // Fallback drag-to-scroll handler when MobileMenuGestures is not intercepting (e.g. desktop drag or editor simulation)
+            if (evt != null && (!MobileTouchControls.Enabled || Input.touchCount == 0))
+            {
+                if (evt.type == EventType.MouseDown && evt.button == 0 && listViewport.Contains(evt.mousePosition))
+                {
+                    loreListTouchDown = true;
+                    loreListTouchDragging = false;
+                    loreListTouchStart = loreListTouchLast = evt.mousePosition;
+                }
+                else if (evt.type == EventType.MouseDrag && loreListTouchDown)
+                {
+                    if (!loreListTouchDragging && Vector2.Distance(evt.mousePosition, loreListTouchStart) >= 14f)
+                        loreListTouchDragging = true;
+                    if (loreListTouchDragging)
+                    {
+                        overworldLoreScroll.y = Mathf.Clamp(overworldLoreScroll.y - (evt.mousePosition.y - loreListTouchLast.y), 0f, maxScroll);
+                        GUIUtility.hotControl = 0;
+                        evt.Use();
+                    }
+                    loreListTouchLast = evt.mousePosition;
+                }
+                else if (evt.type == EventType.MouseUp && loreListTouchDown)
+                {
+                    loreListTouchDown = false;
+                    if (loreListTouchDragging) { GUIUtility.hotControl = 0; evt.Use(); }
+                    loreListTouchDragging = false;
+                }
+            }
+
+            overworldLoreScroll = GUI.BeginScrollView(listViewport, overworldLoreScroll, new Rect(0, 0, 474, contentH));
+            PushControllerViewport(listViewport, overworldLoreScroll);
             for (int i = 0; i < OverworldGeography.LandmarkCount; i++)
             {
                 bool collected = IsOverworldLoreCollected(i);
-                string tag = collected ? "✓ " : "· ";
-                string rowLabel = (i + 1).ToString("00") + " " + tag + (collected ? OverworldGeography.LandmarkShortTitle(i, VaultLanguage.Japanese) : "？？？");
-                float ry = i * 54f;
-                if (WorldButton(new Rect(4, ry + 2, 466, 48), rowLabel, true))
+                bool defeated = IsLandmarkBossDefeated(i);
+                bool known = collected || defeated || IsLandmarkBossFought(i) || IsOverworldMapRevealed(WorldGeography.Landmarks[i]);
+                string tag = defeated ? "★ " : collected ? "✓ " : known ? "◇ " : "· ";
+                string rowLabel = (i + 1).ToString("00") + " " + tag + (known ? OverworldGeography.LandmarkShortTitle(i, VaultLanguage.Japanese) : "？？？");
+                float ry = i * rowStep;
+                Rect btnRect = new Rect(4, ry + 3, 466, 52);
+                if (i == selectedLoreArchiveId)
+                    Box(new Rect(btnRect.x - 2, btnRect.y - 2, btnRect.width + 4, btnRect.height + 4), new Color(Gold.r, Gold.g, Gold.b, 0.55f));
+                if (WorldButton(btnRect, rowLabel, true))
                     selectedLoreArchiveId = i;
             }
+            PopControllerViewport();
             GUI.EndScrollView();
 
             Rect detailBox = new Rect(590, 96, 810, 760);
             Panel(detailBox, Gold);
             int id = Mathf.Clamp(selectedLoreArchiveId, 0, OverworldGeography.LandmarkCount - 1);
             bool hasRecord = IsOverworldLoreCollected(id);
-            WorldLabel(new Rect(630, 130, 730, 34), T("LANDMARK ", "ランドマーク ") + (id + 1).ToString("00") + " / 30", Cyan, 20);
-            WorldLabel(new Rect(630, 168, 730, 56), hasRecord ? OverworldGeography.LandmarkTitle(id, VaultLanguage.Japanese) : "？？？", Gold, 28);
-            Box(new Rect(630, 232, 730, 2), new Color(.45f, .58f, .60f, .45f));
+            bool lmDefeated = IsLandmarkBossDefeated(id);
+            bool lmKnown = hasRecord || lmDefeated || IsLandmarkBossFought(id) || IsOverworldMapRevealed(WorldGeography.Landmarks[id]);
+            string stateBadge = lmDefeated ? T("  [CONQUERED]", "  【制圧済】") : T("  [UNCONQUERED]", "  【未制圧】");
+            WorldLabel(new Rect(630, 126, 730, 34), T("LANDMARK ", "ランドマーク ") + (id + 1).ToString("00") + " / 30" + stateBadge, lmDefeated ? Cyan : Gold, 20);
+            WorldLabel(new Rect(630, 164, 730, 56), lmKnown ? OverworldGeography.LandmarkTitle(id, VaultLanguage.Japanese) : "？？？", Gold, 28);
+            Box(new Rect(630, 228, 730, 2), new Color(.45f, .58f, .60f, .45f));
             string detail = hasRecord
                 ? (VaultLanguage.Japanese ? LoreEntriesJa : LoreEntriesEn)[id]
-                : T("Unrecovered field terminal.\nSearch around this landmark to collect its data log.", "未回収の端末記録。\nこのランドマーク周辺を探索すると記録を回収できます。");
-            WorldLabel(new Rect(630, 260, 730, 320), detail, hasRecord ? UiPaper : Mist, 24);
-            WorldLabel(new Rect(630, 620, 730, 42), LandmarkBenefitLabel(id, VaultLanguage.Japanese), Cyan, 20);
-            if (WorldButton(new Rect(630, 690, 380, 58), T("TRACK THIS LANDMARK", "このランドマークを目的地に指定"), true))
+                : (lmKnown ? OverworldGeography.LandmarkDescription(id, VaultLanguage.Japanese) + "\n\n" : "")
+                  + T("Unrecovered field terminal.\nSearch around this landmark to collect its data log.", "未回収の端末記録。\nこのランドマーク周辺を探索すると記録を回収できます。");
+            WorldLabel(new Rect(630, 252, 730, 310), detail, hasRecord ? UiPaper : Mist, 23);
+            WorldLabel(new Rect(630, 584, 730, 36), LandmarkBenefitLabel(id, VaultLanguage.Japanese), Cyan, 19);
+            WorldLabel(new Rect(630, 626, 730, 32), T("DISTANCE: ", "現在地からの距離：") + WorldDistanceLabel(WorldGeography.Landmarks[id]), Mist, 19);
+            if (WorldButton(new Rect(630, 684, 360, 60), T("TRACK THIS LANDMARK", "このランドマークを目的地に指定"), true))
             {
                 SetOverworldWaypoint(3, id);
                 overworldSelectedLandmark = id;
@@ -792,6 +876,12 @@ namespace NeonVault
                     worldMapCenter = new Vector2(lm.x / 10000f + .5f, lm.z / 10000f + .5f);
                     ClampWorldMapCenter();
                 }
+            }
+            bool canFastTravel = lmDefeated && CanWorldFastTravel;
+            if (WorldButton(new Rect(1006, 684, 354, 60), lmDefeated ? T("FAST TRAVEL", "ファストトラベル") : T("DEFEAT BOSS FOR TRAVEL", "ボス撃破で移動解放"), canFastTravel))
+            {
+                overworldLoreArchiveOpen = false;
+                FastTravelToLandmark(id);
             }
         }
     }

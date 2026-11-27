@@ -28,6 +28,9 @@ namespace NeonVault
             if(PlayerPrefs.HasKey(StashUpgradeKey))try { var upgrade=JsonUtility.FromJson<StashUpgradeJournal>(PlayerPrefs.GetString(StashUpgradeKey));if(upgrade!=null)FinishStashUpgrade(upgrade); } catch(Exception e){Debug.LogWarning("Stash upgrade recovery failed: "+e.GetType().Name);}
             if(PlayerPrefs.HasKey(StashJournalKey))try { var move=JsonUtility.FromJson<StashMove>(PlayerPrefs.GetString(StashJournalKey)); if(move!=null)ApplyStashMove(move); } catch(Exception e){Debug.LogWarning("Stash recovery failed: "+e.GetType().Name);}
             foreach(var weapon in stash.guns)GearBalance.Migrate(weapon);
+            foreach(var armor in stash.armor)GearBalance.MigrateFireRate(armor);
+            foreach(var mod in stash.modules)GearBalance.MigrateFireRate(mod);
+            foreach(var mw in stash.melee)GearBalance.MigrateFireRate(mw);
         }
         bool BuyStashCapacity(int cost)
         {
@@ -41,7 +44,7 @@ namespace NeonVault
             if(!smoke){PlayerPrefs.DeleteKey(StashUpgradeKey);PlayerPrefs.Save();}
         }
         public void VaultStorageOpen(){if(screen!=Screen.Hub)return;VaultStorageVisible=true;stashScroll=Vector2.zero;}
-        public void VaultStorageClose(){VaultStorageVisible=false;stashPointerDown=false;stashDragging=false;}
+        public void VaultStorageClose(){VaultStorageVisible=false;stashPointerDown=false;stashDragging=false;CloseExpandedEquipmentCard();}
         bool MoveStash(object item,bool deposit)
         {
             if(item==null||screen!=Screen.Hub)return false;
@@ -86,9 +89,10 @@ namespace NeonVault
         }
         public void DrawVaultStorage()
         {
+            bool prevGui=GUI.enabled;GUI.enabled=prevGui&&!eqExpandedCardOpen;
             Box(new Rect(0,0,1440,900),PanelInk);Text(40,25,T("SAFEHOUSE STORAGE","拠点倉庫"),heading,Gold,1000);
             Text(45,90,StashCount+" / "+StashCapacity+T(" shared slots"," 共通枠"),label,Cyan,800);
-            if(Button(new Rect(1160,30,240,60),T("CLOSE","閉じる"))){VaultStorageClose();return;}
+            if(Button(new Rect(1160,30,240,60),T("CLOSE","閉じる"))){GUI.enabled=prevGui;VaultStorageClose();return;}
             if(Button(new Rect(40,145,300,55),stashViewingStored?T("VIEW CARRIED","所持品を見る"):T("VIEW STORAGE","倉庫を見る"))){stashViewingStored=!stashViewingStored;stashScroll=Vector2.zero;}
             string[] names={T("GUNS","銃"),T("ARMOR","防具"),T("MODULES","モジュール"),T("MELEE","近接")};
             for(int i=0;i<4;i++)if(Button(new Rect(365+i*245,145,230,55),names[i])){stashCategory=i;stashScroll=Vector2.zero;}
@@ -98,7 +102,7 @@ namespace NeonVault
             if(stashCategory==1){if(stashViewingStored)foreach(var x in stash.armor)items.Add(x);else foreach(var x in ArmorInventory)if(Armory.IsActiveArmor(x))items.Add(x);}
             if(stashCategory==2){if(stashViewingStored)foreach(var x in stash.modules)items.Add(x);else foreach(var x in ArtifactInventory)items.Add(x);}
             if(stashCategory==3){if(stashViewingStored)foreach(var x in stash.melee)items.Add(x);else foreach(var x in MeleeWeaponInventory)items.Add(x);}
-            HandleStashTouch(Mathf.Max(550,items.Count*162));
+            if(!eqExpandedCardOpen)HandleStashTouch(Mathf.Max(550,items.Count*162));
             if(stashSelected!=null&&!items.Contains(stashSelected))stashSelected=null;
             if(stashSelected==null&&items.Count>0)stashSelected=items[0];
             stashScroll=GUI.BeginScrollView(new Rect(40,265,760,565),stashScroll,new Rect(0,0,730,Mathf.Max(550,items.Count*162)));
@@ -108,7 +112,7 @@ namespace NeonVault
                 var x=items[i];Rect row=new Rect(0,y,724,152);
                 var c=EqMake(x);
                 DrawBorderlandsListRow(row,x,ReferenceEquals(stashSelected,x),c.equipped,c.comparison,false,ItemSaleValueOf(x));
-                if(GUI.Button(row,GUIContent.none,GUIStyle.none)){stashSelected=x;stashDetailScroll=Vector2.zero;}
+                if(ClickableButton(row,GUIContent.none,GUIStyle.none)){stashSelected=x;stashDetailScroll=Vector2.zero;}
             }
             GUI.EndScrollView();
             if(stashSelected!=null)
@@ -119,9 +123,13 @@ namespace NeonVault
                 else if(stashSelected is ArmorItem sa)refScore=MobileArmorComparison(sa,out hasCmp);
                 else if(stashSelected is ArtifactItem sm)refScore=MobileModuleComparison(sm,out hasCmp);
                 else if(stashSelected is MeleeWeaponItem sw)refScore=MobileMeleeComparison(sw,out hasCmp);
-                DrawBorderlandsItemCard(new Rect(820,265,580,488),stashSelected,ref stashDetailScroll,out _,card.equipped,refScore,hasCmp);
+                Rect stashCardRect=new Rect(820,265,580,488);
+                DrawBorderlandsItemCard(stashCardRect,stashSelected,ref stashDetailScroll,out _,card.equipped,refScore,hasCmp);
+                HandleEquipmentCardTapToExpand(stashCardRect,stashSelected,card.equipped,refScore,hasCmp,ItemSaleValueOf(stashSelected),false,3);
                 if(Button(new Rect(820,764,580,66),stashViewingStored?T("WITHDRAW","取り出す"):T("DEPOSIT","預ける"),true)){if(!MoveStash(stashSelected,!stashViewingStored))Notify("Cannot move: equipped, full, or duplicate item ID.","装備中、移動先が満杯、または装備IDが重複しています。");else stashSelected=null;}
             }
+            GUI.enabled=prevGui;
+            if(eqExpandedCardOpen)DrawExpandedEquipmentCardModal();
         }
     }
 }

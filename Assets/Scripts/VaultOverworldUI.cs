@@ -681,7 +681,7 @@ namespace NeonVault
                     worldMapCenter=new Vector2(lmp.x/10000f+.5f,lmp.z/10000f+.5f);ClampWorldMapCenter();
                 }
             }
-            if(WorldButton(new Rect(488,52,92,38),T("LOGS ","記録 ")+CollectedLoreCount+"/30"))OpenOverworldLoreArchive();
+            if(WorldButton(new Rect(488,52,96,38),T("LIST ","一覧 ")+TotalDefeatedLandmarkCount+"/30"))OpenOverworldLoreArchive();
             DrawFactionConquestBars(new Rect(590,10,590,82));
             if(WorldButton(new Rect(1195,16,215,66),T("BACK","戻る")))CloseOverworldMap();
             if(overworldAtlasTexture==null)return;
@@ -914,7 +914,14 @@ namespace NeonVault
         readonly System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<object>> worldExclusivePreview=new System.Collections.Generic.Dictionary<int,System.Collections.Generic.List<object>>();
         readonly System.Collections.Generic.Dictionary<int,object> landmarkExclusivePreview=new System.Collections.Generic.Dictionary<int,object>();
         Vector2 worldExclusiveScroll;
+        float worldExclusiveExtent;
         int worldExclusiveStage=-1;
+        public int WorldAtlasScrollGestureRegion(Vector2 point)=>
+            screen==Screen.DungeonSelect&&!overworldLoreArchiveOpen&&overworldSelectedCamp<0&&overworldSelectedLandmark<0&&new Rect(975,384,410,158).Contains(point)?1:0;
+        public void DragWorldAtlasScroll(int region,Vector2 delta)
+        {
+            if(region==1)worldExclusiveScroll.y=Mathf.Clamp(worldExclusiveScroll.y-delta.y,0,Mathf.Max(0,worldExclusiveExtent-134f));
+        }
         object LandmarkExclusiveItem(int landmarkId)
         {
             if(landmarkExclusivePreview.TryGetValue(landmarkId,out var cached))return cached;
@@ -966,6 +973,7 @@ namespace NeonVault
             float width=area.width-96;
             float height=0;
             foreach(var item in items){string detail=WorldExclusiveDetail(item,bossFought);height+=Mathf.Max(72,style.CalcHeight(new GUIContent(detail),width)+6);}
+            worldExclusiveExtent=height;
             worldExclusiveScroll=GUI.BeginScrollView(new Rect(area.x,area.y+24,area.width,area.height-24),worldExclusiveScroll,new Rect(0,0,area.width-20,height));
             float y=0;
             foreach(var item in items)

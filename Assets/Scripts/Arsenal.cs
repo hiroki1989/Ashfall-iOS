@@ -32,6 +32,8 @@ namespace NeonVault
         public int shotgunProfileVersion;
         public int weaponDamageRevision;
         public int classCorrectionVersion;
+        public int rangeRetentionVersion;
+        public int fireRateCapVersion;
         public GunElement element;
         public float elementPercent, elementRadius, elementDuration;
         public int elementChains, elementVersion, elementAffinityRevision;
@@ -100,32 +102,39 @@ namespace NeonVault
             switch(model){case 1:return 70;case 2:return 97;case 7:return 96;case 8:return 98;case 12:return 94;case 3:return 48;case 4:return 55;case 5:return 40;case 13:return 52;case 6:return 76;case 14:return 89;case 15:return 86;case 16:return 78;case 17:return 91;default:return 85;}
         }
         public static float Accuracy(Gun gun)=>gun==null?0:Mathf.Clamp(gun.accuracy>0?gun.accuracy:DefaultAccuracy(VaultLanguage.DisplayModel(gun)),1,100);
+        public const int CurrentRangeRetentionVersion=1;
         public static float RangeRetention(Gun gun)
         {
             if(gun==null)return 1f;
-            if(gun.rangeRetention>0f)return Mathf.Clamp(gun.rangeRetention,.1f,1f);
+            if(gun.rangeRetention>0f&&gun.rangeRetentionVersion>=CurrentRangeRetentionVersion)return Mathf.Clamp(gun.rangeRetention,.10f,.99f);
             float baseline;
             switch(Category(VaultLanguage.DisplayModel(gun)))
             {
-                case WeaponClass.SniperRifle: baseline=.86f;break;
-                case WeaponClass.Shotgun: baseline=.39f;break;
-                case WeaponClass.Handgun: baseline=.59f;break;
-                case WeaponClass.HeavyMachineGun: baseline=.70f;break;
-                default: baseline=.72f;break;
+                case WeaponClass.SniperRifle: baseline=.89f;break;
+                case WeaponClass.Shotgun: baseline=.26f;break;
+                case WeaponClass.Handgun: baseline=.48f;break;
+                case WeaponClass.HeavyMachineGun: baseline=.57f;break;
+                default: baseline=.68f;break;
             }
-            // Stable per-instance variation allows inaccurate guns with strong range.
+            // Expanded 1.5x spread between weapon roles and strong accuracy coupling:
+            // low-accuracy shotguns drop off steeply while high-accuracy sniper rifles retain nearly full power.
             string identity=!string.IsNullOrEmpty(gun.id)?gun.id:(!string.IsNullOrEmpty(gun.catalogId)?gun.catalogId:gun.modelVariant.ToString());
             unchecked { uint hash=2166136261;foreach(char c in identity){hash^=c;hash*=16777619;}
-                float variation=((hash%2001)/1000f-1f)*.13f;
-                gun.rangeRetention=Mathf.Clamp(baseline+variation+(Accuracy(gun)-75f)*.001f,.15f,.98f);
+                float variation=((hash%2001)/1000f-1f)*.055f;
+                gun.rangeRetention=Mathf.Clamp(baseline+variation+(Accuracy(gun)-75f)*.0045f,.12f,.99f);
+                gun.rangeRetentionVersion=CurrentRangeRetentionVersion;
             }
             return gun.rangeRetention;
         }
         public static float DamageAtDistance(float retention,float distance,float closeBonus=0f)
         {
             // Shotguns gain 25% at point-blank range, tapering to zero by 8 m.
-            // Retention affects only the distance penalty, never the close bonus.
-            float falloff=Mathf.Lerp(1f,Mathf.Clamp(retention,.1f,1f),Mathf.Clamp01((distance-5f)/25f));
+            // Low-retention / low-accuracy firearms lose force earlier over mid-range,
+            // while high-accuracy sniper rifles preserve damage cleanly out to 30 m+.
+            float clamped=Mathf.Clamp(retention,.10f,1f);
+            float norm=Mathf.Clamp01((distance-4f)/26f);
+            float curveExp=Mathf.Lerp(.68f,1.18f,clamped);
+            float falloff=Mathf.Lerp(1f,clamped,Mathf.Pow(norm,curveExp));
             float close=Mathf.Clamp01((8f-Mathf.Max(0f,distance))/6f);
             return falloff*(1f+Mathf.Max(0f,closeBonus)*close);
         }
@@ -242,7 +251,7 @@ namespace NeonVault
             for(int i=0;i<count;i++)
             {
                 int pick;do{pick=random.Next(types.Length);}while((gun.rarity!=Rarity.Legendary&&pick==7)||!used.Add(pick));
-                float scale=GearBalance.LevelPower(gun.rarity,gun.level);
+                float scale=pick==2?GearBalance.FireRateScale(gun.rarity,gun.level):GearBalance.LevelPower(gun.rarity,gun.level);
                 float[] lo={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.01f,.04f},hi={.06f,10,.06f,.06f,.05f,.025f,.05f,.4f,.12f,.025f,.10f};
                 var x=new GearAffix{type=types[pick],value=Range(random,lo[pick],hi[pick])*scale};gun.affixes[i]=x;
                 switch(x.type)
@@ -258,6 +267,8 @@ namespace NeonVault
                     case "regen":gun.regenBonus+=x.value;break;
                 }
             }
+            gun.interval=Mathf.Max(.05f,gun.interval);
+            gun.fireRateCapVersion=GearBalance.CurrentFireRateCapVersion;
         }
         internal static float Range(System.Random random,float min,float max)=>min+(float)random.NextDouble()*(max-min);
     }

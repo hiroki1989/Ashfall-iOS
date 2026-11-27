@@ -7,6 +7,7 @@ namespace NeonVault
     public static class GearBalance
     {
         public const int Version=1;
+        public const int CurrentFireRateCapVersion=1;
         // Item stats and enemy health use proportional level curves. Raising both
         // together preserves roughly the same hits-to-kill across the level range.
         public const float LevelGrowthPerStep=.24f;
@@ -20,6 +21,13 @@ namespace NeonVault
             return steps+LevelCurveBend*steps*steps/LevelCurveHorizon;
         }
         public static float LevelPower(Rarity rarity,int level)=>1f+LevelGrowthPerStep*(LevelGrowthSteps(level)+(int)rarity);
+        // Fire-rate bonuses use diminishing returns with level so high-level weapons
+        // gain realistic ~10-20% cadence bonuses rather than firing 200+ rounds/sec.
+        public static float FireRateScale(Rarity rarity,int level)
+        {
+            float steps=Mathf.Max(0f,level-1)+(int)rarity*1.25f;
+            return 1f+2.5f*(1f-Mathf.Exp(-steps/36f));
+        }
         static int Seed(string id){unchecked{uint h=2166136261;foreach(char c in id??""){h^=c;h*=16777619;}return (int)(h&0x7fffffff);}}
         public static void Migrate(Gun g)
         {
@@ -28,6 +36,7 @@ namespace NeonVault
             Arsenal.EnsureShotgunProfile(g);
             Arsenal.EnsureWeaponDamageBalance(g);
             GunElements.MigrateLegendaryAffinity(g);
+            Arsenal.RangeRetention(g);
             if(g.rarity!=Rarity.Legendary)
             {
                 g.regenBonus=0;
@@ -38,19 +47,104 @@ namespace NeonVault
                 if(g.affixes!=null)for(int i=0;i<g.affixes.Length;i++)if(g.affixes[i]!=null&&g.affixes[i].type=="regen")
                 {
                     int p;do{p=random.Next(types.Length);}while(!used.Add(types[p]));
-                    var x=new GearAffix{type=types[p],value=Arsenal.Range(random,lo[p],hi[p])*LevelPower(g.rarity,g.level)};g.affixes[i]=x;
+                    float scale=types[p]=="fireRate"?FireRateScale(g.rarity,g.level):LevelPower(g.rarity,g.level);
+                    var x=new GearAffix{type=types[p],value=Arsenal.Range(random,lo[p],hi[p])*scale};g.affixes[i]=x;
                     switch(x.type){case "damage":g.damage*=1+x.value;break;case "health":g.bonusHealth+=x.value;break;case "fireRate":g.interval/=1+x.value;break;case "reload":g.reloadSeconds/=1+x.value;break;case "accuracy":g.accuracy=Mathf.Min(100,g.accuracy*(1+x.value));break;case "mitigation":g.damageReductionBonus+=x.value;break;case "moveSpeed":g.movementBonus+=x.value;break;case "ammo":g.magazine=Mathf.Max(1,Mathf.RoundToInt(g.magazine*(1+x.value)));break;}
                 }
+            }
+            if(g.fireRateCapVersion<CurrentFireRateCapVersion)
+            {
+                float frScale=FireRateScale(g.rarity,g.level);
+                float maxAllowed=.06f*frScale;
+                float ratio=frScale/Mathf.Max(1f,LevelPower(g.rarity,g.level));
+                if(g.affixes!=null)
+                {
+                    foreach(var x in g.affixes)
+                    {
+                        if(x!=null&&x.type=="fireRate"&&x.value>maxAllowed+.0001f)
+                        {
+                            g.interval*=1f+x.value;
+                            x.value=Mathf.Clamp(x.value*ratio,.025f,maxAllowed);
+                            g.interval/=1f+x.value;
+                        }
+                    }
+                }
+                g.interval=Mathf.Max(.05f,g.interval);
+                g.fireRateCapVersion=CurrentFireRateCapVersion;
             }
             g.balanceVersion=Version;
         }
         public static void Migrate(ArmorItem a)
         {
-            if(a==null||a.balanceVersion>=Version)return;
-            // Serialized affixes are additive: take them off, convert the base once, then restore the same objects/values.
-            if(a.affixes!=null)foreach(var x in a.affixes)if(x!=null)Add(a,x,-1);
-            RebalanceArmorBase(a,null);
-            if(a.affixes!=null)foreach(var x in a.affixes)if(x!=null)Add(a,x,1);
+            if(a==null)return;
+            if(a.balanceVersion<Version)
+            {
+                // Serialized affixes are additive: take them off, convert the base once, then restore the same objects/values.
+                if(a.affixes!=null)foreach(var x in a.affixes)if(x!=null)Add(a,x,-1);
+                RebalanceArmorBase(a,null);
+                if(a.affixes!=null)foreach(var x in a.affixes)if(x!=null)Add(a,x,1);
+            }
+            MigrateFireRate(a);
+        }
+        public static void MigrateFireRate(ArmorItem a)
+        {
+            if(a==null||a.fireRateCapVersion>=CurrentFireRateCapVersion)return;
+            float frScale=FireRateScale(a.rarity,a.level);
+            float ratio=frScale/Mathf.Max(1f,LevelPower(a.rarity,a.level));
+            float maxAffix=.036f*frScale;
+            if(a.affixes!=null)
+            {
+                foreach(var x in a.affixes)
+                {
+                    if(x!=null&&x.type=="fireRate"&&x.value>maxAffix+.0001f)
+                    {
+                        a.fireBonus-=x.value;
+                        x.value=Mathf.Clamp(x.value*ratio,.024f,maxAffix);
+                        a.fireBonus+=x.value;
+                    }
+                }
+            }
+            float affixSum=GearScoring.AffixTotal(a.affixes,"fireRate");
+            float baseFire=a.fireBonus-affixSum;
+            float maxBase=.045f*frScale;
+            if(baseFire>maxBase+.0001f)
+                a.fireBonus=affixSum+Mathf.Clamp(baseFire*ratio,.025f,maxBase);
+            a.fireRateCapVersion=CurrentFireRateCapVersion;
+        }
+        public static void MigrateFireRate(ArtifactItem m)
+        {
+            if(m==null||m.fireRateCapVersion>=CurrentFireRateCapVersion)return;
+            float frScale=FireRateScale(m.rarity,m.level);
+            float maxAffix=.03f*frScale;
+            float ratio=frScale/Mathf.Max(1f,LevelPower(m.rarity,m.level));
+            if(m.affixes!=null)
+            {
+                foreach(var x in m.affixes)
+                    if(x!=null&&x.type=="fireRate"&&x.value>maxAffix+.0001f)
+                        x.value=Mathf.Clamp(x.value*ratio,.02f,maxAffix);
+            }
+            m.fireRateCapVersion=CurrentFireRateCapVersion;
+        }
+        public static void MigrateFireRate(MeleeWeaponItem w)
+        {
+            if(w==null||w.fireRateCapVersion>=CurrentFireRateCapVersion)return;
+            float frScale=FireRateScale(w.rarity,w.level);
+            float maxAffix=.06f*frScale;
+            float ratio=frScale/Mathf.Max(1f,LevelPower(w.rarity,w.level));
+            if(w.affixes!=null)
+            {
+                foreach(var x in w.affixes)
+                {
+                    if(x!=null&&x.type=="fireRate"&&x.value>maxAffix+.0001f)
+                    {
+                        w.interval*=1f+x.value;
+                        x.value=Mathf.Clamp(x.value*ratio,.025f,maxAffix);
+                        w.interval/=1f+x.value;
+                    }
+                }
+            }
+            w.interval=Mathf.Max(.18f,w.interval);
+            w.fireRateCapVersion=CurrentFireRateCapVersion;
         }
         static void Add(ArmorItem a,GearAffix x,float sign)
         {float v=x.value*sign;switch(x.type){case "damage":a.damageBonus+=v;break;case "health":a.maxHealth+=v;break;case "fireRate":a.fireBonus+=v;break;case "reload":a.reloadBonus+=v;break;case "accuracy":a.accuracyBonus+=v;break;case "mitigation":a.damageReduction+=v;break;case "moveSpeed":a.moveBonus+=v;break;case "regen":a.regenBonus+=v;break;case "ammo":a.ammoBonus+=v;break;}}
@@ -59,6 +153,7 @@ namespace NeonVault
         {
             if(a.balanceVersion>=Version)return;
             float power=LevelPower(a.rarity,a.level);
+            float firePower=FireRateScale(a.rarity,a.level);
             // Product tuning is deterministic; subtracting it exposes the original serialized base rolls.
             var product=new ArmorItem{slot=a.slot,catalogId=a.catalogId,manufacturerId=a.manufacturerId,designVariant=a.designVariant,visualVariant=a.visualVariant};
             ArmorProductCatalog.Apply(product,power);
@@ -72,8 +167,8 @@ namespace NeonVault
                 case ArmorSlot.Chest:a.maxHealth=20*power*hpRoll;break;
                 case ArmorSlot.Arms:
                     var choices=new List<int>{0,1,2,3};var roll=random??new System.Random(Seed(a.id));
-                    for(int n=0;n<2;n++){int index=roll.Next(choices.Count),choice=choices[index];choices.RemoveAt(index);switch(choice){case 0:a.maxHealth=7*power*damageRoll;break;case 1:a.damageBonus=.04f*power*damageRoll;break;case 2:a.reloadBonus=.04f*power*reloadRoll;break;case 3:a.fireBonus=.035f*power*fireRoll;break;}}break;
-                case ArmorSlot.Legs:a.maxHealth=9*power*hpRoll;a.moveBonus=.035f*power*moveRoll;break;
+                    for(int n=0;n<2;n++){int index=roll.Next(choices.Count),choice=choices[index];choices.RemoveAt(index);switch(choice){case 0:a.maxHealth=7*power*damageRoll;break;case 1:a.damageBonus=.04f*power*damageRoll;break;case 2:a.reloadBonus=.04f*power*reloadRoll;break;case 3:a.fireBonus=.035f*firePower*fireRoll;break;}}break;
+                case ArmorSlot.Legs:a.maxHealth=9*power*hpRoll;a.moveBonus=.035f*power*hpRoll;break;
                 case ArmorSlot.Feet:a.maxHealth=7*power*moveRoll;a.moveBonus=.065f*power*moveRoll;break;
             }
             a.balanceVersion=Version;

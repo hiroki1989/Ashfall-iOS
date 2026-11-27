@@ -18,7 +18,11 @@ namespace NeonVault
                 new GameObject("Mobile menu gestures").AddComponent<MobileMenuGestures>();
         }
         void Awake() { DontDestroyOnLoad(gameObject); }
-        int Mode => game == null ? 0 : game.EquipmentMenuVisible ? 1 : game.screen == VaultGame.Screen.DungeonSelect ? 2 : 0;
+        int Mode => game == null ? 0
+                  : game.OverworldLoreArchiveVisible ? 3
+                  : game.EquipmentMenuVisible ? 1
+                  : game.screen == VaultGame.Screen.DungeonSelect ? 4
+                  : 0;
         void Update()
         {
             if (!MobileTouchControls.Enabled) return;
@@ -41,50 +45,36 @@ namespace NeonVault
             if (game == null) game = FindAnyObjectByType<VaultGame>();
             if (Mode == 0) { ResetGestures(); return; }
             if (mode != Mode) { ResetGestures(); mode = Mode; }
-            Rect view = game.MobileCityView;
+            Vector2 canvasPt = Canvas(position);
             if (phase == TouchPhase.Began)
             {
-                int region=Mode==1?game.EquipmentGestureRegion(Canvas(position)):0;
-                if (Mode==1?region!=0:view.Contains(Canvas(position))) pointers[id] = new Pointer { start = position, position = position,region=region };
+                int region = Mode == 1 ? game.EquipmentGestureRegion(canvasPt)
+                           : Mode == 3 ? game.LoreArchiveGestureRegion(canvasPt)
+                           : Mode == 4 ? game.WorldAtlasScrollGestureRegion(canvasPt)
+                           : 0;
+                if (region != 0)
+                    pointers[id] = new Pointer { start = position, position = position, region = region };
                 return;
             }
             if (!pointers.TryGetValue(id, out Pointer pointer)) return;
             if (phase == TouchPhase.Ended || phase == TouchPhase.Canceled)
             {
                 if (pointer.dragged) swallowThrough = Time.frameCount + 1;
-                else if(phase==TouchPhase.Ended && Mode==2) game.TrySelectCityStage(Canvas(position));
                 pointers.Remove(id); return;
             }
             Vector2 previous = pointer.position;
             pointer.position = position;
-            if (Mode == 2 && pointers.Count >= 2)
-            {
-                Pointer other = null;
-                foreach (var pair in pointers) if (pair.Key != id) { other = pair.Value; break; }
-                if (other != null)
-                {
-                    float before = Vector2.Distance(previous, other.position);
-                    float after = Vector2.Distance(position, other.position);
-                    if (before > 1 && after > 1)
-                    {
-                        Vector2 oldCenter = (Canvas(previous) + Canvas(other.position)) * .5f;
-                        Vector2 newCenter = (Canvas(position) + Canvas(other.position)) * .5f;
-                        game.MobileAdjustCityMap(newCenter - oldCenter, after / before, oldCenter - view.position);
-                    }
-                    pointer.dragged = other.dragged = true;
-                    swallowThrough = Time.frameCount + 1;
-                }
-                return;
-            }
-            if (!pointer.dragged && Vector2.Distance(position, pointer.start) < 12) return;
-            Vector2 delta = Canvas(position) - Canvas(pointer.dragged ? previous : pointer.start);
+            // Measure drag threshold in 1440x900 canvas units so high-DPI mobile taps never get swallowed as drags.
+            if (!pointer.dragged && Vector2.Distance(canvasPt, Canvas(pointer.start)) < 14f) return;
+            Vector2 delta = canvasPt - Canvas(pointer.dragged ? previous : pointer.start);
             pointer.dragged = true;
             swallowThrough = Time.frameCount + 1;
             if (Mode == 1)
-            {
-                game.DragEquipmentMenu(pointer.region,delta);
-            }
-            else game.MobileAdjustCityMap(delta, 1, Vector2.zero);
+                game.DragEquipmentMenu(pointer.region, delta);
+            else if (Mode == 3)
+                game.DragOverworldLoreArchive(pointer.region, delta);
+            else if (Mode == 4)
+                game.DragWorldAtlasScroll(pointer.region, delta);
         }
         void OnGUI()
         {
@@ -117,4 +107,3 @@ namespace NeonVault
         }
     }
 }
-

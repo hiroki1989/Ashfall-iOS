@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace NeonVault {
  public enum ArtifactEffect { KillShield, DashPulse, ReloadSurge, ShieldConversion }
- [System.Serializable] public class ArtifactItem {public string id,name,japanese,catalogId,manufacturerId,bossRelicId;public int designVariant;public int level=1,dungeon,uniqueEffect;public Rarity rarity;public ArtifactEffect effect;public float power,cooldown;public GearAffix[] affixes;public string Name=>ArtifactCatalog.DisplayName(this);public string Description=>ArtifactCatalog.Description(this);}
+ [System.Serializable] public class ArtifactItem {public string id,name,japanese,catalogId,manufacturerId,bossRelicId;public int designVariant,fireRateCapVersion;public int level=1,dungeon,uniqueEffect;public Rarity rarity;public ArtifactEffect effect;public float power,cooldown;public GearAffix[] affixes;public string Name=>ArtifactCatalog.DisplayName(this);public string Description=>ArtifactCatalog.Description(this);}
  public static class ArtifactCatalog {
   public static ArtifactItem RollForDungeon(System.Random random,int dungeon,bool boss=false){return Create(random,dungeon,DungeonCatalog.RollRarity(random,boss),DungeonCatalog.ItemLevel(random,dungeon));}
   public static ArtifactItem Create(System.Random random,int dungeon,Rarity rarity,int level){
@@ -15,7 +15,7 @@ namespace NeonVault {
    if(product.legendary)rarity=Rarity.Legendary;
    else if(rarity==Rarity.Legendary)rarity=Rarity.Epic;
    float baseCooldown=product.effect==ArtifactEffect.KillShield?3:product.effect==ArtifactEffect.DashPulse?5:product.effect==ArtifactEffect.ReloadSurge?7:0;
-   var a=new ArtifactItem{id=System.Guid.NewGuid().ToString("N"),catalogId=product.id,manufacturerId=product.manufacturerId,designVariant=product.designVariant,dungeon=product.legendary?product.family-4:dungeon,rarity=rarity,level=Mathf.Max(1,level),effect=product.effect,name=product.name,japanese=product.japanese,power=GearBalance.LevelPower(rarity,level)*product.powerScale,cooldown=baseCooldown*product.cooldownScale,uniqueEffect=product.legendary?(int)product.effect+1:0};
+   var a=new ArtifactItem{id=System.Guid.NewGuid().ToString("N"),catalogId=product.id,manufacturerId=product.manufacturerId,designVariant=product.designVariant,fireRateCapVersion=GearBalance.CurrentFireRateCapVersion,dungeon=product.legendary?product.family-4:dungeon,rarity=rarity,level=Mathf.Max(1,level),effect=product.effect,name=product.name,japanese=product.japanese,power=GearBalance.LevelPower(rarity,level)*product.powerScale,cooldown=baseCooldown*product.cooldownScale,uniqueEffect=product.legendary?(int)product.effect+1:0};
    RollAffixes(a,random??new System.Random(31+product.family*10+product.designVariant));return a;
   }
   static void RollAffixes(ArtifactItem a,System.Random r)
@@ -23,11 +23,12 @@ namespace NeonVault {
    int count=Mathf.Clamp((int)a.rarity,0,4);string[] types={"damage","health","fireRate","reload","accuracy","mitigation","moveSpeed","regen","ammo","critChance","critDamage","elementDamage","handgunDamage","shotgunDamage","rifleDamage","sniperDamage","heavyDamage","petDamage","petSpeed","rangeRetention"};
    var used=new System.Collections.Generic.HashSet<int>();a.affixes=new GearAffix[count];
    if(r==null)return;
+   float frScale=GearBalance.FireRateScale(a.rarity,a.level);
    for(int i=0;i<count;i++)
    {
     int p;if(i==0&&!string.IsNullOrEmpty(a.manufacturerId)){var product=ModuleProductCatalog.Find(a.catalogId);p=product==null?r.Next(types.Length):System.Array.IndexOf(types,product.preferredAffix);if(p<0)p=r.Next(types.Length);used.Add(p);}else{do{p=r.Next(types.Length);}while(!used.Add(p));}
     float[] ranges={.025f,4,.025f,.025f,.02f,.01f,.02f,.15f,.05f,.015f,.06f,.04f,.04f,.04f,.04f,.04f,.04f,.08f,.06f,.025f};
-    a.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*(p>=17?Mathf.Clamp(a.power,1f,3f):a.power)*Arsenal.Range(r,.85f,1.15f)};
+    a.affixes[i]=new GearAffix{type=types[p],value=ranges[p]*(p==2?frScale:p>=17?Mathf.Clamp(a.power,1f,3f):a.power)*Arsenal.Range(r,.85f,1.15f)};
    }
   }
   public static string DisplayName(ArtifactItem a)=>DisplayName(a,VaultLanguage.Japanese);
