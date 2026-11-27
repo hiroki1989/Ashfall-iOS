@@ -85,28 +85,48 @@ namespace NeonVault
             }
             Text(1050,227,ManufacturerCatalog.Name(selected,VaultLanguage.Japanese)+" / "+manufacturerProducts.Count,small,ManufacturerCatalog.Color(selected),365);
             manufacturerScroll=GUI.BeginScrollView(new Rect(44,282,1352,560),manufacturerScroll,new Rect(0,0,1327,Mathf.Max(560,Mathf.CeilToInt(manufacturerProducts.Count/4f)*204)));
+            PushControllerViewport(new Rect(44,282,1352,560),manufacturerScroll);
             for(int i=0;i<manufacturerProducts.Count;i++)
             {
                 float x=i%4*334,y=i/4*204;if(y+194<manufacturerScroll.y||y>manufacturerScroll.y+560)continue;
-                var item=manufacturerProducts[i];Panel(new Rect(x,y,322,194),ManufacturerCatalog.Color(selected));
-                bool known=EquipmentDiscovery.Known(item);string name="?",detail="";
+                var item=manufacturerProducts[i];
+                bool known=EquipmentDiscovery.Known(item);
+                bool isLeg=CatalogIsLegendary(item);
+                Rarity cardRarity=isLeg?Rarity.Legendary:Rarity.Common;
+                Rect cardRect=new Rect(x,y,322,194);
                 if(known)
                 {
-                    if(item is Gun gun)name=VaultLanguage.GunName(gun);
-                    else if(item is ArmorItem armor)name=Armory.Name(armor);
-                    else if(item is ArtifactItem module)name=module.Name;
-                    else name=MeleeWeaponCatalog.Name((MeleeWeaponItem)item);
-                    detail=CatalogEffect(item);
-                    Rect icon=new Rect(x+10,y+10,96,96);
-                    if(item is Gun g)ItemPortraits.Draw(icon,g);
-                    else if(item is ArmorItem a)ItemPortraits.Draw(icon,a);
-                    else if(item is ArtifactItem m)ManufacturerBranding.ModulePortrait(icon,m);
-                    else ManufacturerPortraits.Melee(icon,(MeleeWeaponItem)item);
+                    DrawRarityBackdrop(cardRect,cardRarity,false,true,46f);
+                    string name=item is Gun gun?VaultLanguage.GunName(gun):item is ArmorItem armor?Armory.Name(armor):item is ArtifactItem module?module.Name:MeleeWeaponCatalog.Name((MeleeWeaponItem)item);
+                    string detail=CatalogEffect(item);
+                    Color theme=RarityThemeColor(cardRarity);
+                    Rect icon=new Rect(x+10,y+52,82,82);
+                    Box(new Rect(icon.x-1,icon.y-1,icon.width+2,icon.height+2),new Color(theme.r,theme.g,theme.b,.45f));
+                    DrawItemSilhouetteOrPortrait(icon,item);
+                    Text(x+12,y+6,name,new GUIStyle(small){fontSize=16,fontStyle=FontStyle.Bold,wordWrap=true},Color.Lerp(theme,Color.white,.48f),298);
+                    int chev=Mathf.Clamp((int)cardRarity+1,1,5);
+                    Text(x+100,y+52,new string('▸',chev)+" "+ItemTypeSubtitleOf(item),new GUIStyle(tiny){wordWrap=false},Color.Lerp(theme,Color.white,.25f),212);
+                    BuildItemCardData(item,out var pStats,out _,out _);
+                    int mc=Mathf.Min(2,pStats.Count);
+                    for(int si=0;si<mc;si++)
+                    {
+                        float sx=x+100+si*105;
+                        DrawEqCardIcon(new Rect(sx,y+74,16,16),pStats[si].icon,pStats[si].tint);
+                        Text(sx+19,y+74,pStats[si].value,tiny,pStats[si].tint,84);
+                    }
+                    if(!string.IsNullOrEmpty(detail))
+                    {
+                        DrawEqCardIcon(new Rect(x+10,y+142,18,18),isLeg?17:19,isLeg?Gold:Cyan);
+                        Text(x+32,y+140,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Mist,280);
+                    }
                 }
-                else Text(x+32,y+30,"?",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter},Mist,55);
-                Text(x+114,y+10,name,new GUIStyle(small){fontSize=18,wordWrap=true},Gold,198);
-                if(known&&!string.IsNullOrEmpty(detail))Text(x+10,y+112,detail,new GUIStyle(tiny){wordWrap=true,richText=true},Mist,302);
+                else
+                {
+                    Panel(cardRect,ManufacturerCatalog.Color(selected));
+                    Text(x+32,y+60,"???",new GUIStyle(heading){alignment=TextAnchor.MiddleCenter},Mist,258);
+                }
             }
+            PopControllerViewport();
             GUI.EndScrollView();Text(47,857,T("Product reference / Loot and merchant stock supply these designs. No free equipment is granted here.","製品図鑑 / 各製品は戦利品・商人の在庫から入手できます。"),tiny,Mist,1160);
         }
         void DrawCompanyProfile(string maker,Rect viewport,bool mobile)

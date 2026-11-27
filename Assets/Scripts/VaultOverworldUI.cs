@@ -396,34 +396,26 @@ namespace NeonVault
             void Candidate(int index,Vector3 position){float d=(position-PlayerPosition).sqrMagnitude;if(d<best){best=d;kind=index;}}
             if(drop!=null)Candidate(0,drop.position);if(armor!=null)Candidate(1,armor.position);if(module!=null)Candidate(2,module.position);if(melee!=null)Candidate(3,melee.position);
             if(kind<0)return;
-            Rarity rarity=kind==0?drop.gun.rarity:kind==1?armor.item.rarity:kind==2?module.item.rarity:melee.item.rarity;
-            int level=kind==0?drop.gun.level:kind==1?armor.item.level:kind==2?module.item.level:melee.item.level;
-            int score=kind==0?GearScoring.Score(drop.gun):kind==1?GearScoring.Score(armor.item):kind==2?GearScoring.Score(module.item):MeleeWeaponCatalog.Score(melee.item);
-            var color=Arsenal.Colors[Mathf.Clamp((int)rarity,0,Arsenal.Colors.Length-1)];
-            bool mobile=MobileTouchControls.Enabled;Rect card=mobile?new Rect(25,265,390,155):new Rect(25,190,390,155);Panel(card,color);
-            Rect picture=new Rect(card.x+12,card.y+15,100,118);
-            if(kind==0)ItemPortraits.Draw(picture,drop.gun);else if(kind==1)ItemPortraits.Draw(picture,armor.item);else if(kind==2)ManufacturerBranding.ModulePortrait(picture,module.item);else ManufacturerPortraits.Melee(picture,melee.item);
-            WorldLabel(new Rect(card.x+130,card.y+12,card.width-140,40),VaultLanguage.RarityName(rarity),color,mobile?22:27);
-            WorldLabel(new Rect(card.x+130,card.y+54,card.width-140,42),T("LEVEL ","レベル ")+level+T("   SCORE ","   評価 ")+score,UiPaper,mobile?21:25);
-            WorldLabel(new Rect(card.x+130,card.y+100,card.width-140,46),T(MobileTouchControls.Enabled?"TAKE":"TAKE / F",MobileTouchControls.Enabled?"拾う":"拾う / F"),Gold,22);
+            object item=kind==0?(object)drop.gun:kind==1?armor.item:kind==2?(object)module.item:melee.item;
+            bool mobile=MobileTouchControls.Enabled;
+            Rect card=mobile?new Rect(25,260,412,144):new Rect(25,186,412,144);
+            DrawBorderlandsWorldLootCard(card,item,T(mobile?"TAKE":"[F] TAKE",mobile?"拾う":"[F] 拾う"));
         }
         bool DrawActivityRewardPreview()
         {
             if(Time.unscaledTime>=activityRewardUntil)return false;
-            bool mobile=MobileTouchControls.Enabled;Rect card=mobile?new Rect(25,265,390,155):new Rect(25,190,390,155);
+            bool mobile=MobileTouchControls.Enabled;Rect card=mobile?new Rect(25,260,412,144):new Rect(25,186,412,144);
             object item=(object)LastActivityRewardGun??LastActivityRewardArmor??(object)LastActivityRewardModule;
             if(item==null&&LastActivityRewardScrap<=0)return false;
-            Rarity rarity=item is Gun g?g.rarity:item is ArmorItem a?a.rarity:item is ArtifactItem m?m.rarity:Rarity.Legendary;
-            Color color=Arsenal.Colors[(int)rarity];Panel(card,color);
-            if(item==null){WorldLabel(new Rect(card.x+15,card.y+15,card.width-30,50),T("SCRAP RECEIVED","スクラップ獲得"),Gold,23);WorldLabel(new Rect(card.x+15,card.y+72,card.width-30,60),LastActivityRewardScrap.ToString("N0"),UiPaper,30);return true;}
-            Rect picture=new Rect(card.x+10,card.y+16,100,120);string itemName;int level,score;
-            if(item is Gun gun){ItemPortraits.Draw(picture,gun);itemName=VaultLanguage.GunName(gun);level=gun.level;score=GearScoring.Score(gun);}
-            else if(item is ArmorItem armor){ItemPortraits.Draw(picture,armor);itemName=Armory.Name(armor);level=armor.level;score=GearScoring.Score(armor);}
-            else {var module=(ArtifactItem)item;ManufacturerBranding.ModulePortrait(picture,module);itemName=ArtifactCatalog.DisplayName(module);level=module.level;score=GearScoring.Score(module);}
-            WorldLabel(new Rect(card.x+120,card.y+8,card.width-130,37),itemName,UiPaper,20);
-            WorldLabel(new Rect(card.x+120,card.y+44,card.width-130,32),VaultLanguage.RarityName(rarity),color,20);
-            WorldLabel(new Rect(card.x+120,card.y+77,card.width-130,30),T("LEVEL ","レベル ")+level+T("  SCORE ","  評価 ")+score,UiPaper,18);
-            WorldLabel(new Rect(card.x+120,card.y+109,card.width-130,38),LastActivityRewardOnGround?T("ON GROUND / TAKE","足元に配置 / 拾う"):T("RECEIVED","獲得"),Gold,18);return true;
+            if(item==null)
+            {
+                Panel(card,Gold);
+                WorldLabel(new Rect(card.x+15,card.y+15,card.width-30,50),T("SCRAP RECEIVED","スクラップ獲得"),Gold,23);
+                WorldLabel(new Rect(card.x+15,card.y+72,card.width-30,60),LastActivityRewardScrap.ToString("N0"),UiPaper,30);
+                return true;
+            }
+            DrawBorderlandsWorldLootCard(card,item,LastActivityRewardOnGround?T("ON GROUND / TAKE","足元に配置 / 拾う"):T("RECEIVED","獲得"));
+            return true;
         }
         void DrawWorldLocalMap(Rect map)
         {

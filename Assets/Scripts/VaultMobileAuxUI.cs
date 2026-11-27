@@ -43,23 +43,42 @@ namespace NeonVault
             {
                 int index=mobileCatalogPage*4+cell;if(index>=manufacturerProducts.Count)break;object item=manufacturerProducts[index];
                 int col=cell%2,row=cell/2;float x=30+col*695,y=268+row*250;
-                Panel(new Rect(x,y,675,238),ManufacturerCatalog.Color(maker));
-                Rect icon=new Rect(x+16,y+16,136,136);bool known=EquipmentDiscovery.Known(item);string name="?",detail="";
+                Rect cardRect=new Rect(x,y,675,238);
+                bool known=EquipmentDiscovery.Known(item);
+                bool isLeg=CatalogIsLegendary(item);
+                Rarity cardRarity=isLeg?Rarity.Legendary:Rarity.Common;
                 if(known)
                 {
-                    if(item is Gun gun){ItemPortraits.Draw(icon,gun);name=VaultLanguage.GunName(gun);}
-                    else if(item is ArmorItem armor){ItemPortraits.Draw(icon,armor);name=Armory.Name(armor);}
-                    else if(item is ArtifactItem module){ManufacturerBranding.ModulePortrait(icon,module);name=module.Name;}
-                    else{var melee=(MeleeWeaponItem)item;ManufacturerPortraits.Melee(icon,melee);name=MeleeWeaponCatalog.Name(melee);}
-                    detail=CatalogEffect(item);
+                    DrawRarityBackdrop(cardRect,cardRarity,false,true,58f);
+                    Color theme=RarityThemeColor(cardRarity);
+                    Rect icon=new Rect(x+14,y+66,132,132);
+                    Box(new Rect(icon.x-1,icon.y-1,icon.width+2,icon.height+2),new Color(theme.r,theme.g,theme.b,.45f));
+                    DrawItemSilhouetteOrPortrait(icon,item);
+                    string name=item is Gun gun?VaultLanguage.GunName(gun):item is ArmorItem armor?Armory.Name(armor):item is ArtifactItem module?module.Name:MeleeWeaponCatalog.Name((MeleeWeaponItem)item);
+                    string detail=CatalogEffect(item);
+                    MobileCopyAt(x+16,y+10,name,Color.Lerp(theme,Color.white,.48f),640);
+                    int chev=Mathf.Clamp((int)cardRarity+1,1,5);
+                    Text(x+162,y+64,new string('▸',chev)+" "+ItemTypeSubtitleOf(item),new GUIStyle(label){fontSize=21,wordWrap=false},Color.Lerp(theme,Color.white,.25f),495);
+                    BuildItemCardData(item,out var pStats,out _,out _);
+                    int mc=Mathf.Min(3,pStats.Count);
+                    for(int si=0;si<mc;si++)
+                    {
+                        float sx=x+162+si*162;
+                        DrawEqCardIcon(new Rect(sx,y+94,22,22),pStats[si].icon,pStats[si].tint);
+                        Text(sx+26,y+92,pStats[si].value,new GUIStyle(label){fontSize=21,fontStyle=FontStyle.Bold},pStats[si].tint,130);
+                    }
+                    if(!string.IsNullOrEmpty(detail))
+                    {
+                        GUIStyle effStyle=new GUIStyle(label){fontSize=21,wordWrap=true,clipping=TextClipping.Clip,richText=true};
+                        float effH=Mathf.Min(98,effStyle.CalcHeight(new GUIContent(detail),462)+6);
+                        DrawEqCardIcon(new Rect(x+162,y+130,22,22),isLeg?17:19,isLeg?Gold:Cyan);
+                        GUI.color=Mist;GUI.Label(new Rect(x+190,y+126,468,effH),detail,effStyle);GUI.color=Color.white;
+                    }
                 }
-                else MobileCopyAt(x+66,y+56,"?",Mist,100);
-                MobileCopyAt(x+170,y+16,name,Gold,490);
-                if(known&&!string.IsNullOrEmpty(detail))
+                else
                 {
-                    GUIStyle effStyle=new GUIStyle(label){fontSize=24,wordWrap=true,clipping=TextClipping.Clip,richText=true};
-                    float effH=Mathf.Min(116,effStyle.CalcHeight(new GUIContent(detail),490)+6);
-                    GUI.color=Mist;GUI.Label(new Rect(x+170,y+106,490,effH),detail,effStyle);GUI.color=Color.white;
+                    Panel(cardRect,ManufacturerCatalog.Color(maker));
+                    MobileCopyAt(x+290,y+90,"???",Mist,140);
                 }
             }
             if(MobileButton(new Rect(30,780,350,110),T("PREVIOUS","前のページ")))mobileCatalogPage=Mathf.Max(0,mobileCatalogPage-1);

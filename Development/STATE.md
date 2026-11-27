@@ -1,3 +1,17 @@
+## 2026-11-27 / 装備説明パネルの全面刷新（レア度背景・24種専用アイコン・2枚横並び比較・赤字コメント除外・iOSバージョン70更新）
+- 変更ファイル:
+  - `Assets/Resources/Art/UI/equipment_card_icons.png`（iOS・Steam・Demo・BossDebug）: 威力・命中精度・装填・連射・弾数・クリティカル・射程・弾速・軽減盾・最大HP・回復・移動・回避・近接刃・範囲角・モジュール回路・クールダウン・固有星章・追加特性・メーカー歯車・スクラップ価格・ペット・属性・評価クレストの計24種高コントラストUIアイコンアトラス（768x512）を新規制作。
+  - `Assets/Scripts/VaultEquipmentCardUI.cs`（iOS・Steam・Demo・BossDebug）:
+    - レア度ごとのパネル全体グラデーション背景・発光ヘッダー帯・外枠・コーナーノッチ描画（コモン〜レジェンダリー全5段階）を実装。
+    - ヘッダーの大型DPS/評価スコアピルバッジ、銃種シルエット付きポートレート、項目別アイコン付き主要ステータスグリッド＋サブステータス帯、アイコンバッジ付き特性行（固有効果・属性・Affix・メーカー特性）、メーカーロゴ＋緑ブラケット価格フッターを実装。
+    - ユーザー確認に基づき、レジェンダリー下部の赤字フレーバーコメント表示は除外。
+    - 装備中アイテムと選択アイテムを左右2枚並べて直接比較できる `COMPARE [C] / 比較 [C]` モードを追加。
+  - `Assets/Scripts/VaultEquipmentScreen.cs` / `VaultStorage.cs` / `VaultManufacturerUI.cs` / `VaultMobileAuxUI.cs` / `VaultOverworldUI.cs` / `VaultCompletedRewardUI.cs`（iOS・Steam・Demo・BossDebug）: インベントリ、ショップ（購入・売却）、拠点倉庫、メーカー製品図鑑（PC/モバイル）、フィールドドロップ・報酬カード、現在の装備ステータス集計に新装備カードUIと項目アイコンを統合。
+  - `ProjectSettings/ProjectSettings.asset`（iOS）: `bundleVersion` および `buildNumber.iPhone` を `69` から `70` へ更新。
+- 結果: インベントリ・ショップ・倉庫・図鑑・フィールドドロップの全装備説明パネルが、レア度ごとの背景色分けと項目ごとの視覚アイコンを備えた見やすいカードUIへ刷新され、全4プロジェクトへ同期完了。
+- 検証: BossDebug実機スクリーンショット10枚で日英表示・全カテゴリ・2枚比較モードを確認。`verify_parity.py --unity` にて `SteamController` 隔離（iOS内参照0件）、`SaveSlotPrefs` 完全分離、Roslyn全8構成エラー0件、Unity Editor/バッチモード実コンパイル（iOS・Steam・Demo・BossDebug）すべてエラー0件を確認。
+- 未解決: iOS実機端末での実寸タッチ確認。
+
 ## 2026-11-12 / Veil縮尺異常修正と4プロジェクト検証
 - 変更ファイル: `Assets/Scripts/ImportedEnemyVisual.cs`（iOS・Steam・Demo・BossDebug）、`Assets/Editor/BossWeaponAttachmentReview.cs`（iOS）。
 - 結果: Veilの描画切れ防止用の広いRenderer境界を体の大きさと誤認して再縮小していた処理を修正。スキンメッシュ実寸で待機姿勢の全高を合わせ、ボス・拠点NPCとも2.350mに統一。

@@ -98,17 +98,30 @@ namespace NeonVault
             if(stashCategory==1){if(stashViewingStored)foreach(var x in stash.armor)items.Add(x);else foreach(var x in ArmorInventory)if(Armory.IsActiveArmor(x))items.Add(x);}
             if(stashCategory==2){if(stashViewingStored)foreach(var x in stash.modules)items.Add(x);else foreach(var x in ArtifactInventory)items.Add(x);}
             if(stashCategory==3){if(stashViewingStored)foreach(var x in stash.melee)items.Add(x);else foreach(var x in MeleeWeaponInventory)items.Add(x);}
-            HandleStashTouch(Mathf.Max(550,items.Count*88));
+            HandleStashTouch(Mathf.Max(550,items.Count*162));
             if(stashSelected!=null&&!items.Contains(stashSelected))stashSelected=null;
-            stashScroll=GUI.BeginScrollView(new Rect(40,265,760,565),stashScroll,new Rect(0,0,730,Mathf.Max(550,items.Count*88)));
-            for(int i=0;i<items.Count;i++){var x=items[i];float y=i*88;Panel(new Rect(0,y,710,80),Cyan);string name=x is Gun g?VaultLanguage.GunName(g):x is ArmorItem a?Armory.Name(a):x is ArtifactItem m?m.Name:MeleeWeaponCatalog.Name((MeleeWeaponItem)x);if(Button(new Rect(10,y+8,690,64),name)){stashSelected=x;stashDetailScroll=Vector2.zero;}}
+            if(stashSelected==null&&items.Count>0)stashSelected=items[0];
+            stashScroll=GUI.BeginScrollView(new Rect(40,265,760,565),stashScroll,new Rect(0,0,730,Mathf.Max(550,items.Count*162)));
+            for(int i=0;i<items.Count;i++)
+            {
+                float y=i*162;if(y+154<stashScroll.y||y>stashScroll.y+565)continue;
+                var x=items[i];Rect row=new Rect(0,y,724,152);
+                var c=EqMake(x);
+                DrawBorderlandsListRow(row,x,ReferenceEquals(stashSelected,x),c.equipped,c.comparison,false,ItemSaleValueOf(x));
+                if(GUI.Button(row,GUIContent.none,GUIStyle.none)){stashSelected=x;stashDetailScroll=Vector2.zero;}
+            }
             GUI.EndScrollView();
-            if(stashSelected!=null){var card=EqMake(stashSelected);Panel(new Rect(820,265,580,565),Gold);EqPortrait(new Rect(840,285,230,160),stashSelected,true);Text(1080,285,card.name,new GUIStyle(label){wordWrap=true},Gold,290);var detailStyle=new GUIStyle(label){fontSize=MobileTouchControls.Enabled?31:23,fontStyle=FontStyle.Normal,wordWrap=true,richText=true};
-                detailStyle.normal.textColor=UiPaper;
-                float detailHeight=Mathf.Max(250,detailStyle.CalcHeight(new GUIContent(card.fullDescription),490)+16);
-                stashDetailScroll=GUI.BeginScrollView(new Rect(845,470,525,250),stashDetailScroll,new Rect(0,0,490,detailHeight));
-                GUI.Label(new Rect(0,0,490,detailHeight),card.fullDescription,detailStyle);
-                GUI.EndScrollView();if(Button(new Rect(845,740,500,65),stashViewingStored?T("WITHDRAW","取り出す"):T("DEPOSIT","預ける"))){if(!MoveStash(stashSelected,!stashViewingStored))Notify("Cannot move: equipped, full, or duplicate item ID.","装備中、移動先が満杯、または装備IDが重複しています。");else stashSelected=null;}}
+            if(stashSelected!=null)
+            {
+                var card=EqMake(stashSelected);
+                bool hasCmp=false;int refScore=0;
+                if(stashSelected is Gun sg)refScore=EqGunComparison(out hasCmp);
+                else if(stashSelected is ArmorItem sa)refScore=MobileArmorComparison(sa,out hasCmp);
+                else if(stashSelected is ArtifactItem sm)refScore=MobileModuleComparison(sm,out hasCmp);
+                else if(stashSelected is MeleeWeaponItem sw)refScore=MobileMeleeComparison(sw,out hasCmp);
+                DrawBorderlandsItemCard(new Rect(820,265,580,488),stashSelected,ref stashDetailScroll,out _,card.equipped,refScore,hasCmp);
+                if(Button(new Rect(820,764,580,66),stashViewingStored?T("WITHDRAW","取り出す"):T("DEPOSIT","預ける"),true)){if(!MoveStash(stashSelected,!stashViewingStored))Notify("Cannot move: equipped, full, or duplicate item ID.","装備中、移動先が満杯、または装備IDが重複しています。");else stashSelected=null;}
+            }
         }
     }
 }
